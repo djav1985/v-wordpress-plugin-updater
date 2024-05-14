@@ -1,11 +1,10 @@
 <?php
 /*
 Plugin Name: WP Plugin Updater
-Plugin URI: https://vontainment.com
 Description: This plugin updates your WordPress plugins.
-Version: 1.2.0
 Author: Vontainment
 Author URI: https://vontainment.com
+Version: 2.0.0
 */
 
 // Schedule the update check to run every day
@@ -43,21 +42,19 @@ function vontmnt_plugin_updater_run_updates()
             VONTMENT_PLUGINS
         );
 
-        // Send the request to the API endpoint
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $api_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_SSL_VERIFYHOST => false,
-            CURLOPT_SSL_VERIFYPEER => false
+        // Send the request to the API endpoint using wp_remote_get
+        $response = wp_remote_get($api_url, array(
+            'timeout' => 15,
+            'sslverify' => false,
         ));
-        $response  = curl_exec($curl);
-        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
 
-        // Get the response body
-        $response_body = $response;
+        if (is_wp_error($response)) {
+            error_log("$plugin_slug : Failed to fetch updates. " . $response->get_error_message());
+            continue;
+        }
+
+        $http_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
 
         // Check if the API returned a plugin update
         if ($http_code == 204) {
@@ -72,8 +69,14 @@ function vontmnt_plugin_updater_run_updates()
 
                 // Download the zip file to the upload directory
                 require_once ABSPATH . 'wp-admin/includes/file.php';
-                $upload_dir      = wp_upload_dir();
-                $tmp_file        = download_url($download_url);
+                $tmp_file = download_url($download_url);
+
+                if (is_wp_error($tmp_file)) {
+                    error_log("$plugin_slug : Failed to download update. " . $tmp_file->get_error_message());
+                    continue;
+                }
+
+                $upload_dir = wp_upload_dir();
                 $plugin_zip_file = $upload_dir['path'] . '/' . basename($download_url);
 
                 // Move the downloaded file to the plugins directory

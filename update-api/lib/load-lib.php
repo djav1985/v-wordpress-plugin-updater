@@ -5,7 +5,8 @@
  * URL: https://vontainment.com
  * File: load-lib.php
  * Description: WordPress Update API
-*/
+ * /lib/load-lib.php
+ */
 
 $ip = $_SERVER['REMOTE_ADDR'];
 if (is_blacklisted($ip)) {

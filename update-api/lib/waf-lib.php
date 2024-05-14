@@ -5,7 +5,8 @@
  * URL: https://vontainment.com
  * File: waf-lib.php
  * Description: WordPress Update API
-*/
+ * /lib/waf-lib.php
+ */
 
 // Sanitize and validate input data
 function sanitize_input($data)

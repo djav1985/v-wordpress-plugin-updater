@@ -5,12 +5,13 @@
  * URL: https://vontainment.com
  * File: login.php
  * Description: WordPress Update API
+ * /public/login.php
 */
 
 session_start();
-require_once '../config.php';
-require_once '../lib/waf-lib.php';
-require_once '../lib/auth-lib.php';
+require_once __DIR__ .  '/../config.php';
+require_once __DIR__ .  '/../lib/waf-lib.php';
+require_once __DIR__ .  '/../lib/auth-lib.php';
 ?>
 
 <!DOCTYPE html>

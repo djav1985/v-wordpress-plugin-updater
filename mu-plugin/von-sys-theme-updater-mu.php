@@ -1,6 +1,6 @@
 <?php
 /*
-Theme Name: WP Theme Updater
+Theme Name: WP Theme Updater Multisite
 Description: This theme updates your WordPress themes.
 Author: Vontainment
 Author URI: https://vontainment.com
@@ -21,8 +21,26 @@ add_action('vontmnt_theme_updater_check_updates', 'vontmnt_theme_updater_run_upd
 
 function vontmnt_theme_updater_run_updates()
 {
-    // Get the list of installed themes
-    $themes = wp_get_themes();
+    // Only need to check for updates once in a multisite
+    if (is_multisite()) {
+        global $wpdb;
+
+        // Check if we are in the main site context
+        if (!is_main_site()) {
+            switch_to_blog($wpdb->siteid);
+        }
+
+        // Get the list of installed themes
+        $themes = wp_get_themes();
+
+        // Restore the current blog after getting the themes if switched
+        if (!is_main_site()) {
+            restore_current_blog();
+        }
+    } else {
+        // Get the list of installed themes for single site
+        $themes = wp_get_themes();
+    }
 
     // Loop through each installed theme and check for updates
     foreach ($themes as $theme) {
