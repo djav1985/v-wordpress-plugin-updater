@@ -6,12 +6,13 @@
  * File: plupdate-helper.php
  * Description: WordPress Update API
  */
+// Generate the plugins table HTML
 $plugins = glob(PLUGINS_DIR . "/*.zip");
 
 function generatePluginTableRow($plugin, $pluginName)
 {
     return '<tr>
-        <td>' . $pluginName . '</td>
+        <td><a href="/plupdate?download_plugin=' . urlencode($pluginName) . '">' . $pluginName . '</a></td>
         <td>
             <form class="delete-plugin-form" action="/plupdate" method="POST">
                 <input type="hidden" name="plugin_name" value="' . $pluginName . '">

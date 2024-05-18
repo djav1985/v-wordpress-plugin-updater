@@ -7,19 +7,20 @@
  * Description: WordPress Update API
  */
 
+// Generate the themes table HTML
 $themes = glob(THEMES_DIR . "/*.zip");
 
 function generateThemeTableRow($theme, $theme_name)
 {
     return '<tr>
-         <td>' . $theme_name . '</td>
-         <td>
-             <form name="delete_theme_form" action="/thupdate" method="POST">
-                 <input type="hidden" name="theme_name" value="' . $theme . '">
-                 <input class="th-submit" type="submit" name="delete_theme" value="Delete">
-             </form>
-         </td>
-     </tr>';
+        <td><a href="/thupdate?download_theme=' . urlencode($theme_name) . '">' . $theme_name . '</a></td>
+        <td>
+            <form name="delete_theme_form" action="/thupdate" method="POST">
+                <input type="hidden" name="theme_name" value="' . $theme_name . '">
+                <input class="th-submit" type="submit" name="delete_theme" value="Delete">
+            </form>
+        </td>
+    </tr>';
 }
 
 // Reverse the themes array
@@ -32,26 +33,26 @@ if (count($themes) > 0) {
     $themes_column2 = array_slice($themes, $half_count);
 
     $themesTableHtml = '<div class="row"><div class="column">
-         <table>
-             <thead>
-                 <tr>
-                     <th>Theme Name</th>
-                     <th>Delete</th>
-                 </tr>
-             </thead>
-             <tbody>';
+        <table>
+            <thead>
+                <tr>
+                    <th>Theme Name</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>';
     foreach ($themes_column1 as $theme) {
         $theme_name = basename($theme);
         $themesTableHtml .= generateThemeTableRow($theme, $theme_name);
     }
     $themesTableHtml .= '</tbody></table></div><div class="column"><table>
-         <thead>
-             <tr>
-                 <th>Theme Name</th>
-                 <th>Delete</th>
-             </tr>
-         </thead>
-         <tbody>';
+        <thead>
+            <tr>
+                <th>Theme Name</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>';
     foreach ($themes_column2 as $theme) {
         $theme_name = basename($theme);
         $themesTableHtml .= generateThemeTableRow($theme, $theme_name);

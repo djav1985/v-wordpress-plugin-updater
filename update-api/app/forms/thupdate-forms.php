@@ -1,54 +1,41 @@
+
 <?php
 /*
 * Project: Update API
 * Author: Vontainment
 * URL: https://vontainment.com
 * File: thupdate-form.php
-* Description: WordPress Update API
+* Description: WordPress Theme Update API with file upload and deletion functionality
 */
+
 // Handle theme file uploads
 if (isset($_FILES['theme_file'])) {
     $allowed_extensions = ['zip'];
     $total_files = count($_FILES['theme_file']['name']);
 
+    // Loop through each uploaded theme file
     for ($i = 0; $i < $total_files; $i++) {
         $file_name = $_FILES['theme_file']['name'][$i];
         $file_tmp = $_FILES['theme_file']['tmp_name'][$i];
-        $file_size = $_FILES['theme_file']['size'][$i];
-        $file_error = $_FILES['theme_file']['error'][$i];
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        // Extract the unique theme slug
-        $theme_slug = explode("_", $file_name)[0];
+        // Check if the uploaded file has no errors and has an allowed extension
+        if ($_FILES['theme_file']['error'][$i] !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
+            exit;
+        }
 
-        // Find and delete any existing themes with the same slug
+        $theme_slug = explode("_", $file_name)[0];
         $existing_themes = glob(THEMES_DIR . '/' . $theme_slug . '_*');
+
+        // Remove existing themes with the same slug
         foreach ($existing_themes as $theme) {
             if (is_file($theme)) {
                 unlink($theme);
             }
         }
 
-        if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-            echo '<script>
-                alert("Error uploading: ' . $file_name . '. Only .zip files are allowed.");
-                window.location.href = "/thupdate";
-            </script>';
-            exit;
-        }
-
         $theme_path = THEMES_DIR . '/' . $file_name;
-        if (move_uploaded_file($file_tmp, $theme_path)) {
-            echo '<script>
-                alert("' . $file_name . ' uploaded successfully.");
-                window.location.href = "/thupdate";
-            </script>';
-        } else {
-            echo '<script>
-                alert("Error uploading: ' . $file_name . '");
-                window.location.href = "/thupdate";
-            </script>';
-        }
+        move_uploaded_file($file_tmp, $theme_path);
     }
 }
 
@@ -60,7 +47,7 @@ if (isset($_POST['delete_theme'])) {
     if (file_exists($theme_path)) {
         if (unlink($theme_path)) {
             echo '<script>
-                alert("theme deleted successfully!");
+                alert("Theme deleted successfully!");
                 window.location.href = "/thupdate";
             </script>';
         } else {
@@ -69,5 +56,28 @@ if (isset($_POST['delete_theme'])) {
                 window.location.href = "/thupdate";
             </script>';
         }
+    }
+}
+
+// Handle theme downloads
+if (isset($_GET['download_theme'])) {
+    $file_name = $_GET['download_theme'];
+    $file_path = THEMES_DIR . '/' . $file_name;
+
+    if (file_exists($file_path)) {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename=' . basename($file_path));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file_path));
+        flush(); // Flush system output buffer
+        readfile($file_path);
+        exit;
+    } else {
+        http_response_code(404);
+        echo "File not found.";
+        exit;
     }
 }
