@@ -35,7 +35,7 @@
 
   .hosts-domain,
   .hosts-key {
-    width: 90%
+    width: 90%;
   }
 
   .hosts-submit {
@@ -43,7 +43,6 @@
     margin-top: 5px;
     margin-bottom: 5px;
   }
-
 
   #domain,
   #key {
@@ -65,10 +64,26 @@
     flex-direction: column;
   }
 
-
-  table tr th:last-child,
-  table tr td:last-child {
+  #hosts_table table tr th:last-child,
+  #hosts_table table tr td:last-child {
+    width: 70px;
+  }
+  #Themes_table table tr th:last-child,
+  #Themes_table table tr td:last-child,
+  #plugins_table table tr th:last-child,
+  #plugins_table table tr td:last-child {
     width: 100px;
+  }
+  #Themes_table table tr th:first-child,
+  #Themes_table table tr td:first-child,
+  #plugins_table table tr th:first-child,
+  #plugins_table table tr td:first-child {
+    max-width: 250px;
+  }
+
+  #Themes_table table tr td:first-child,
+  #plugins_table table tr td:first-child {
+    word-break: break-all;
   }
 
   .logout-btn {
@@ -77,5 +92,9 @@
 
   .log-sub-box {
     width: 100%;
+  }
+
+  .log-sub-box > h3 {
+    font-size: calc(1vw + 1em);
   }
 }
