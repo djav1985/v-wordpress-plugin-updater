@@ -29,11 +29,7 @@
 - [🚀 Getting Started](#-getting-started)
   - [⚙️ Installation](#️-installation)
   - [🤖 Usage](#-usage)
-  - [🧪 Tests](#-tests)
-- [🛠 Project Roadmap](#-project-roadmap)
-- [🤝 Contributing](#-contributing)
 - [🎗 License](#-license)
-- [🔗 Acknowledgments](#-acknowledgments)
 </details>
 <hr>
 
@@ -52,7 +48,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | 📄 | **Documentation** | Includes configuration and setup guides, inline comments, and function documentation. The repository seems well-organized, but additional user-facing documentation could enhance accessibility. |
 | 🔌 | **Integrations**  | The project integrates with WordPress installations, leveraging external APIs for plugin and theme updates. Dependencies include authentication, WAF, and configuration libraries. |
 | 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, helpers, forms, and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
-| 🧪 | **Testing**       | The documentation does not explicitly mention testing frameworks or methodologies. Incorporating unit tests and integration tests could further enhance code reliability and stability. |
 | ⚡️  | **Performance**   | The project is designed for efficiency, with secure download endpoints and optimized URL routing via `.htaccess`. However, explicit performance metrics and profiling data are not provided. |
 | 🛡️ | **Security**      | Implements robust security measures including IP blacklisting, authentication libraries, and input validation. Admin interface security is enhanced through session management and a web application firewall (WAF). |
 | 📦 | **Dependencies**  | The project relies on standard libraries like authentication, WAF, configuration management, IP blacklisting, and Dropzone for dynamic file handling. |
@@ -222,71 +217,13 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 > $ php main.php
 > ```
 
-### 🧪 Tests
-
-> Run the test suite using the command below:
-> ```console
-> $ vendor/bin/phpunit
-> ```
-
----
-
-## 🛠 Project Roadmap
-
-- [X] `► INSERT-TASK-1`
-- [ ] `► INSERT-TASK-2`
-- [ ] `► ...`
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here are several ways you can contribute:
-
-- **[Report Issues](https://local/v-wordpress-plugin-updater/issues)**: Submit bugs found or log feature requests for the `v-wordpress-plugin-updater` project.
-- **[Submit Pull Requests](https://local/v-wordpress-plugin-updater/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
-- **[Join the Discussions](https://local/v-wordpress-plugin-updater/discussions)**: Share your insights, provide feedback, or ask questions.
-
-<details closed>
-<summary>Contributing Guidelines</summary>
-
-1. **Fork the Repository**: Start by forking the project repository to your local account.
-2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
-   ```sh
-   git clone ../v-wordpress-plugin-updater
-   ```
-3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
-   ```sh
-   git checkout -b new-feature-x
-   ```
-4. **Make Your Changes**: Develop and test your changes locally.
-5. **Commit Your Changes**: Commit with a clear message describing your updates.
-   ```sh
-   git commit -m 'Implemented new feature x.'
-   ```
-6. **Push to local**: Push the changes to your forked repository.
-   ```sh
-   git push origin new-feature-x
-   ```
-7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
-8. **Review**: Once your PR is reviewed and approved, it will be merged into the main branch. Congratulations on your contribution!
-</details>
-
-<details closed>
-<summary>Contributor Graph</summary>
-<br>
-<p align="center">
-   <a href="https://local{/v-wordpress-plugin-updater/}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=v-wordpress-plugin-updater">
-   </a>
-</p>
-</details>
-
 ---
 
 ## 🎗 License
 
-This project is protected under the [SELECT-A-LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
+This project is protected under the [MIT License](https://github.com/djav1985/v-chatgpt-editor/blob/main/LICENSE) License.
+
+---
 
 ---
 
