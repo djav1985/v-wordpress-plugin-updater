@@ -21,6 +21,7 @@ function generatePluginTableRow($plugin, $pluginName)
     </tr>';
 }
 
+
 // Reverse the plugins array
 $plugins = array_reverse($plugins);
 

@@ -7,6 +7,16 @@
  * Description: WordPress Update API
 */
 
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    if (isset($_POST["logout"])) {
+        session_destroy();
+        header("Location: login.php");
+        exit();
+    } else {
+    header('Location: /home');
+    exit();
+    }
+}
 
 if (isset($_POST['username']) && isset($_POST['password'])) {
     $username = sanitize_input($_POST['username']);
@@ -19,6 +29,7 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
         $_SESSION['username'] = $username;
         $_SESSION['timeout'] = time();  // Set the session timeout time
         $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT']; // Store the User-Agent string
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         session_regenerate_id(true); // Regenerate the session ID
         header('Location: /home');
         exit();

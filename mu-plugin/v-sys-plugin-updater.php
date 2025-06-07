@@ -8,6 +8,11 @@ Author: Vontainment
 Author URI: https://vontainment.com
 */
 
+// Exit if accessed directly
+if (! defined('ABSPATH')) {
+    exit;
+}
+
 // Schedule the update check to run every day
 add_action('wp', 'vontmnt_plugin_updater_schedule_updates');
 
@@ -27,8 +32,9 @@ function vontmnt_plugin_updater_run_updates()
 
     // Loop through each installed plugin and check for updates
     foreach ($plugins as $plugin_path => $plugin) {
-        // Get the plugin slug
-        $plugin_slug = basename($plugin_path, '.php');
+        // Get the plugin folder name as the slug
+        $plugin_slug = dirname($plugin_path);
+
         // Get the installed plugin version
         $installed_version = $plugin['Version'];
 
@@ -49,19 +55,12 @@ function vontmnt_plugin_updater_run_updates()
             CURLOPT_URL => $api_url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_SSL_VERIFYHOST => 2, // Enable SSL verification
-            CURLOPT_SSL_VERIFYPEER => true // Enable SSL verification
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false
         ));
         $response  = curl_exec($curl);
         $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($curl);
         curl_close($curl);
-
-        // Check for cURL errors
-        if ($curl_error) {
-            error_log("cURL error: $curl_error");
-            continue;
-        }
 
         // Get the response body
         $response_body = $response;
@@ -75,7 +74,7 @@ function vontmnt_plugin_updater_run_updates()
             $response_data = json_decode($response_body, true);
 
             if (isset($response_data['zip_url'])) {
-                $download_url = esc_url_raw($response_data['zip_url']); // Sanitize URL
+                $download_url = $response_data['zip_url'];
 
                 // Download the zip file to the upload directory
                 require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -83,27 +82,65 @@ function vontmnt_plugin_updater_run_updates()
                 $tmp_file        = download_url($download_url);
                 $plugin_zip_file = $upload_dir['path'] . '/' . basename($download_url);
 
-                // Validate the downloaded file
-                if (is_wp_error($tmp_file)) {
-                    error_log('Error downloading plugin file: ' . $tmp_file->get_error_message());
-                    continue;
-                }
-
-                // Move the downloaded file to the plugins directory
+                // Move the downloaded file to the uploads directory
                 rename($tmp_file, $plugin_zip_file);
 
-                // Unzip the plugin zip file
-                WP_Filesystem();
-                $unzipfile = unzip_file($plugin_zip_file, WP_PLUGIN_DIR);
+                // Load necessary WordPress upgrader classes
+                require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
-                // Validate the unzipped files
-                if (is_wp_error($unzipfile)) {
-                    error_log('Error unzipping plugin file: ' . $unzipfile->get_error_message());
-                } else {
-                    // Delete the plugin zip file
-                    unlink($plugin_zip_file);
-                    error_log("$plugin_slug : Was updated");
+                // Use a silent upgrader skin to suppress output
+                if (!class_exists('Silent_Upgrader_Skin')) {
+                    class Silent_Upgrader_Skin extends WP_Upgrader_Skin
+                    {
+                        public $messages = array();
+                        public $errors = array();
+                        public function header() {}
+                        public function footer() {}
+                        public function feedback($string, ...$args)
+                        {
+                            if ($args) {
+                                $string = vsprintf($string, $args);
+                            }
+                            $this->messages[] = $string;
+                        }
+                        public function error($errors)
+                        {
+                            if (is_wp_error($errors)) {
+                                foreach ($errors->get_error_messages() as $msg) {
+                                    $this->errors[] = $msg;
+                                }
+                            } elseif (is_string($errors)) {
+                                $this->errors[] = $errors;
+                            }
+                        }
+                        public function before() {}
+                        public function after() {}
+                    }
                 }
+                $skin = new Silent_Upgrader_Skin();
+                $upgrader = new Plugin_Upgrader($skin);
+                // Set the source selection to the local zip file and force overwrite
+                add_filter('upgrader_package_options', function ($options) use ($plugin_zip_file) {
+                    $options['package'] = $plugin_zip_file;
+                    $options['clear_destination'] = true;
+                    return $options;
+                });
+                $result = $upgrader->install($plugin_zip_file);
+                remove_all_filters('upgrader_package_options');
+
+                // Improved logging for install result
+                if (is_wp_error($result)) {
+                    error_log('Error updating plugin ' . $plugin_slug . ': ' . $result->get_error_message());
+                } elseif ($result === true) {
+                    error_log("$plugin_slug : Was updated using Plugin_Upgrader");
+                } elseif (!empty($skin->errors)) {
+                    error_log("$plugin_slug : " . implode('; ', $skin->errors));
+                } else {
+                    error_log("$plugin_slug : Is up-to-date");
+                }
+
+                // Delete the plugin zip file
+                unlink($plugin_zip_file);
             } else {
                 error_log("$plugin_slug : Is up-to-date");
             }

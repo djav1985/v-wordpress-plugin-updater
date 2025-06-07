@@ -10,7 +10,7 @@
 function generateHostsTableRow($lineNumber, $domain, $key)
 {
     return '<tr>
-        <form method="post">
+        <form method="post" action="/home">
             <input type="hidden" name="id" value="' . $lineNumber . '">
             <td><input class="hosts-domain" type="text" name="domain" value="' . $domain . '"></td>
             <td><input class="hosts-key" type="text" name="key" value="' . $key . '"></td>
@@ -22,7 +22,7 @@ function generateHostsTableRow($lineNumber, $domain, $key)
     </tr>';
 }
 
-$hostsFile = '../HOSTS';
+$hostsFile = HOSTS_ACL . '/HOSTS';
 $entries = file($hostsFile, FILE_IGNORE_NEW_LINES);
 $hostsTableHtml = '';
 
@@ -31,7 +31,10 @@ if (count($entries) > 0) {
     $entriesColumn1 = array_slice($entries, 0, $halfCount);
     $entriesColumn2 = array_slice($entries, $halfCount);
 
-    $hostsTableHtml .= '<div class="row"><div class="column">
+    $hostsTableHtml .= '<div class="row">';
+
+    // Column 1
+    $hostsTableHtml .= '<div class="column">
         <table>
             <thead>
                 <tr>
@@ -42,7 +45,8 @@ if (count($entries) > 0) {
             </thead>
             <tbody>';
 
-    foreach ($entriesColumn1 as $lineNumber => $entry) {
+    foreach ($entriesColumn1 as $index => $entry) {
+        $lineNumber = $index; // Correct line number for column 1
         $fields = explode(' ', $entry);
         $domain = isset($fields[0]) ? $fields[0] : '';
         $key = isset($fields[1]) ? $fields[1] : '';
@@ -50,7 +54,10 @@ if (count($entries) > 0) {
         $hostsTableHtml .= generateHostsTableRow($lineNumber, $domain, $key);
     }
 
-    $hostsTableHtml .= '</tbody></table></div><div class="column">
+    $hostsTableHtml .= '</tbody></table></div>';
+
+    // Column 2
+    $hostsTableHtml .= '<div class="column">
         <table>
             <thead>
                 <tr>
@@ -61,7 +68,8 @@ if (count($entries) > 0) {
             </thead>
             <tbody>';
 
-    foreach ($entriesColumn2 as $lineNumber => $entry) {
+    foreach ($entriesColumn2 as $index => $entry) {
+        $lineNumber = $index + $halfCount; // Correct line number for column 2
         $fields = explode(' ', $entry);
         $domain = isset($fields[0]) ? $fields[0] : '';
         $key = isset($fields[1]) ? $fields[1] : '';
