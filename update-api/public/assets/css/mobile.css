@@ -68,12 +68,14 @@
   #hosts_table table tr td:last-child {
     width: 70px;
   }
+
   #Themes_table table tr th:last-child,
   #Themes_table table tr td:last-child,
   #plugins_table table tr th:last-child,
   #plugins_table table tr td:last-child {
     width: 100px;
   }
+
   #Themes_table table tr th:first-child,
   #Themes_table table tr td:first-child,
   #plugins_table table tr th:first-child,
@@ -94,7 +96,7 @@
     width: 100%;
   }
 
-  .log-sub-box > h3 {
+  .log-sub-box>h3 {
     font-size: calc(1vw + 1em);
   }
 }
