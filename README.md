@@ -152,10 +152,10 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 | File                                              | Summary                                                                                                                                                                                                                                                                                                                                                                       |
 | ---                                               | ---                                                                                                                                                                                                                                                                                                                                                                           |
-| [plupdate.php](update-api/app/pages/plupdate.php) | Facilitate plugin uploads and manage update statuses through a user interface integrated with Dropzone for drag-and-drop functionality. Streamline plugin management by displaying existing plugins and handling file uploads and errors dynamically, contributing to the overall flexibility and usability of the plugin updater system within the repositorys architecture. |
-| [thupdate.php](update-api/app/pages/thupdate.php) | Facilitates the management and uploading of WordPress themes, providing a user-friendly interface for theme uploads, displaying a table of available themes, and offering real-time upload status feedback through Dropzone integration for enhanced user experience.                                                                                                         |
-| [logs.php](update-api/app/pages/logs.php)         | Displays plugin and theme logs on the WordPress Update API interface, facilitating monitoring and troubleshooting within the updater architecture. Integrates dynamic content, enhancing the user experience by providing real-time log outputs for both plugins and themes.                                                                                                  |
-| [home.php](update-api/app/pages/home.php)         | Facilitates the management of allowed hosts for the WordPress Update API by displaying a current list and providing a form to add new entries. Integrates seamlessly into the update-api section, enhancing control over authorized domains within the repositorys architecture.                                                                                              |
+| [plupdate.php](update-api/views/plupdate.php) | Facilitate plugin uploads and manage update statuses through a user interface integrated with Dropzone for drag-and-drop functionality. Streamline plugin management by displaying existing plugins and handling file uploads and errors dynamically, contributing to the overall flexibility and usability of the plugin updater system within the repositorys architecture. |
+| [thupdate.php](update-api/views/thupdate.php) | Facilitates the management and uploading of WordPress themes, providing a user-friendly interface for theme uploads, displaying a table of available themes, and offering real-time upload status feedback through Dropzone integration for enhanced user experience.                                                                                                         |
+| [logs.php](update-api/views/logs.php)         | Displays plugin and theme logs on the WordPress Update API interface, facilitating monitoring and troubleshooting within the updater architecture. Integrates dynamic content, enhancing the user experience by providing real-time log outputs for both plugins and themes.                                                                                                  |
+| [home.php](update-api/views/home.php)         | Facilitates the management of allowed hosts for the WordPress Update API by displaying a current list and providing a form to add new entries. Integrates seamlessly into the update-api section, enhancing control over authorized domains within the repositorys architecture.                                                                                              |
 
 </details>
 
@@ -192,32 +192,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 <h4>From <code>source</code></h4>
 
-> 1. Clone the v-wordpress-plugin-updater repository:
->
-> ```console
-> $ git clone ../v-wordpress-plugin-updater
-> ```
->
-> 2. Change to the project directory:
-> ```console
-> $ cd v-wordpress-plugin-updater
-> ```
->
-> 3. Install the dependencies:
-> ```console
-> $ composer install
-> ```
-
-### 🤖 Usage
-
-<h4>From <code>source</code></h4>
-
-> Run v-wordpress-plugin-updater using the command below:
-> ```console
-> $ php main.php
-> ```
-
----
 
 ## 🎗 License
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Project: Update API
  * Author: Vontainment
@@ -6,6 +7,13 @@
  * File: home.php
  * Description: WordPress Update API
 */
+
+use UpdateApi\forms\HomeFormHandler;
+use UpdateApi\helpers\HomeHelper;
+
+$handler = new HomeFormHandler();
+$handler->handleRequest();
+$hostsTableHtml = HomeHelper::getHostsTableHtml();
 ?>
 
 <div class="content-box">
@@ -15,7 +23,9 @@
     </div>
     <div class="home section">
         <h2>Add Entry</h2>
-        <form class="entry-form" method="post" action="/home">
+        <form class="entry-form" method="post" action="/">
+            <input type="hidden" name="csrf_token"
+                   value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <div class="form-group">
                 <label for="domain">Domain:</label>
                 <input type="text" name="domain" id="domain" required>

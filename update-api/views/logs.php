@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Project: Update API
  * Author: Vontainment
@@ -6,8 +7,13 @@
  * File: logs.php
  * Description: WordPress Update API
 */
-?>
 
+use UpdateApi\helpers\LogsHelper;
+
+$ploutput = LogsHelper::processLogFile('plugin.log');
+$thoutput = LogsHelper::processLogFile('theme.log');
+
+?>
 <div class="content-box">
     <h2>Plugin Log</h2>
     <?php echo $ploutput; ?>

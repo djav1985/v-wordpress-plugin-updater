@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Project: Update API
  * Author: Vontainment
@@ -7,36 +8,42 @@
  * Description: WordPress Update API
 */
 
+use UpdateApi\util\Security;
+
 $ip = $_SERVER['REMOTE_ADDR'];
-if (is_blacklisted($ip)) {
-    // Stop the script and show an error if the IP is blacklisted
-    http_response_code(403); // Optional: Set HTTP status code to 403 Forbidden
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$requestUri = rtrim($requestUri, '/');
+if ($requestUri === '') {
+    $requestUri = '/';
+}
+$routes = [
+           '/'         => 'home.php',
+           '/plupdate' => 'plupdate.php',
+           '/thupdate' => 'thupdate.php',
+           '/logs'     => 'logs.php',
+    // Add more routes here as needed
+          ];
+
+// Combined blacklist, login logic, redirection, and routing
+if (Security::isBlacklisted($ip)) {
+    http_response_code(403);
     echo "Your IP address has been blacklisted. If you believe this is an error, please contact us.";
     exit();
-} elseif (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    // The user is not logged in, redirect to the login page
-    header('Location: login.php');
+} elseif ((!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) && $requestUri !== '/login') {
+    header('Location: /login');
     exit();
-} elseif (isset($_GET['page'])) {
-    $page = $_GET['page'];
-
-    $_SESSION['timeout'] = time();
-
-    // Check if $page-helper.php exists
-    $helperFile = "../app/helpers/" . $page . "-helper.php";
-    if (file_exists($helperFile)) {
-        require_once($helperFile);
+} elseif (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $requestUri === '/login') {
+    header('Location: /');
+    exit();
+} elseif (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    if (array_key_exists($requestUri, $routes)) {
+        $pageFile = dirname(__DIR__) . '/views/' . $routes[$requestUri];
+        if (file_exists($pageFile)) {
+            $pageOutput = $pageFile;
+        }
     }
-
-    // Check if $page-forms.php exists
-    $formsFile = "../app/forms/" . $page . "-forms.php";
-    if (file_exists($formsFile)) {
-        require_once($formsFile);
-    }
-
-    // Check if $page.php exists
-    $pageFile = "../app/pages/" . $page . ".php";
-    if (file_exists($pageFile)) {
-        $pageOutput = $pageFile;
-    }
+} else {
+    http_response_code(404);
+    echo "Page not found or access denied.";
+    exit();
 }

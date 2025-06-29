@@ -1,27 +1,36 @@
 <?php
+
 /*
  * Project: Update API
  * Author: Vontainment
  * URL: https://vontainment.com
- * File: thupdate.php
+ * File: plupdate.php
  * Description: WordPress Update API
  */
+
+use UpdateApi\helpers\PlHelper;
+use UpdateApi\forms\PlFormHandler;
+
+$handler = new PlFormHandler();
+$handler->handleRequest();
+$pluginsTableHtml = PlHelper::getPluginsTableHtml();
 ?>
 
 <div class="content-box">
-  <h2>Themes</h2>
-  <div id="Themes_table">
-    <?php echo $themesTableHtml; ?>
+  <h2>Plugins</h2>
+  <div id="plugins_table">
+    <?php echo $pluginsTableHtml; ?>
   </div>
   <div class="plupload section">
     <div id="upload-container">
-      <h2>Upload Theme</h2>
-      <form action="/thupdate" method="post" enctype="multipart/form-data" class="dropzone" id="upload_theme_form">
+      <h2>Upload Plugin</h2>
+      <form action="/plupdate" method="post" enctype="multipart/form-data" class="dropzone" id="upload_plugin_form">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
         <div class="fallback">
-          <input name="theme_file[]" type="file" multiple />
+          <input name="plugin_file[]" type="file" multiple />
         </div>
       </form>
-      <button class="reload-btn" onclick="window.location = '/thupdate'; window.location.reload();">Reload Page</button>
+      <button class="reload-btn" onclick="window.location = '/plupdate'; window.location.reload();">Reload Page</button>
     </div>
 
     <div id="message-container">
@@ -35,8 +44,8 @@
   Dropzone.autoDiscover = false;
 
   $(document).ready(function() {
-    var myDropzone = new Dropzone("#upload_theme_form", {
-      paramName: "theme_file[]",
+    var myDropzone = new Dropzone("#upload_plugin_form", {
+      paramName: "plugin_file[]",
       maxFilesize: 200,
       acceptedFiles: "application/zip,application/x-zip-compressed,multipart/x-zip",
       autoProcessQueue: true,

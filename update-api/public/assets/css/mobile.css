@@ -13,8 +13,8 @@
   }
 
   .content-box {
-    border: 2px solid #fff;
     margin: 0;
+    border: 2px solid #fff;
     padding: 0;
   }
 
@@ -39,9 +39,9 @@
   }
 
   .hosts-submit {
-    width: 100%;
     margin-top: 5px;
     margin-bottom: 5px;
+    width: 100%;
   }
 
   #domain,

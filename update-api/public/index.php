@@ -8,8 +8,9 @@
 */
 
 session_start();
+
 require_once '../config.php';
-require_once '../lib/waf-lib.php';
+require_once '../lib/class-lib.php';
 require_once '../lib/load-lib.php';
 ?>
 
@@ -27,7 +28,6 @@ require_once '../lib/load-lib.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.0/min/dropzone.min.css" rel="stylesheet" />
     <script src="/assets/js/header-scripts.js"></script>
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/pages.css">
     <link rel="stylesheet" href="/assets/css/mobile.css">
 
     <title>Dashboard</title>
@@ -36,7 +36,7 @@ require_once '../lib/load-lib.php';
 <body>
     <header>
         <div class="logo">
-            <a href="/home">
+            <a href="/">
                 <img src="/assets/images/logo.png" alt="Logo">
             </a>
         </div>
@@ -50,10 +50,18 @@ require_once '../lib/load-lib.php';
 
     <!-- Tab links -->
     <div class="tab">
-        <a href="/home"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/home') echo 'active'; ?>">Manage Hosts</button></a>
-        <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') echo 'active'; ?>">Manage Plugins</button></a>
-        <a href="/thupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/thupdate') echo 'active'; ?>">Manage Themes</button></a>
-        <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') echo 'active'; ?>">View Logs</button></a>
+        <a href="/"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/') {
+            echo 'active';
+                                            } ?>">Manage Hosts</button></a>
+        <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') {
+            echo 'active';
+                                                    } ?>">Manage Plugins</button></a>
+        <a href="/thupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/thupdate') {
+            echo 'active';
+                                                    } ?>">Manage Themes</button></a>
+        <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') {
+            echo 'active';
+                                                } ?>">View Logs</button></a>
     </div>
 
     <!-- Tab links -->

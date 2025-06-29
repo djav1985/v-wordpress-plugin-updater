@@ -5,31 +5,31 @@ body {
 }
 
 body {
+    display: flex;
+    justify-content: center;
     align-items: center;
-    background-color: #f1f1f1;
     background-image: url("/assets/images/background.png");
     background-repeat: repeat;
-    display: flex;
-    height: 100vh;
-    justify-content: center;
+    background-color: #f1f1f1;
     max-width: 100%;
+    height: 100vh;
     overflow-x: hidden;
 }
 
 .logo {
-    height: 60px;
     margin-bottom: 20px;
     width: 300px;
+    height: 60px;
 }
 
 .login-box {
-    background-color: #ffffff;
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     border: 2px solid #66cc33;
     border-radius: 5px;
-    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+    background-color: #ffffff;
     padding: 20px;
-    text-align: center;
     width: 400px;
+    text-align: center;
 }
 
 .login-box form {
@@ -38,40 +38,40 @@ body {
 
 input[type="text"],
 input[type="password"] {
+    box-sizing: border-box;
     border: 1px solid #66cc33;
     border-radius: 5px;
-    box-sizing: border-box;
     padding: 5px;
     width: 100%;
 }
 
 input[type="submit"] {
-    background-color: #66cc33;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     border: none;
     border-radius: 5px;
-    color: white;
-    cursor: pointer;
+    background-color: #66cc33;
     padding: 8px 20px;
-    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+    color: white;
 }
 
 input[type="submit"]:hover {
-    background-color: #3e8e41;
     box-shadow: rgba(0, 0, 0, 0.1) 1.95px 1.95px 2.6px;
+    background-color: #3e8e41;
 }
 
 #error-msg {
-    color: #ff0000;
     margin-bottom: 10px;
     padding: 10px;
+    color: #ff0000;
 }
 
 @media (max-width: 600px) {
 
     /* Adjust the logo size for smaller screens */
     .logo {
-        height: auto;
         width: 60%;
+        height: auto;
     }
 
     /* Reduce the width of the login box for smaller screens */
