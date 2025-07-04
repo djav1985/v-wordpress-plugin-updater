@@ -50,7 +50,7 @@ function vontmnt_theme_updater_run_updates()
             VONTMENT_THEMES
         );
 
-        $response      = wp_remote_get($api_url, array( 'sslverify' => false ));
+        $response      = wp_remote_get($api_url);
         $http_code     = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 

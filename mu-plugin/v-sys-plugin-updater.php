@@ -50,7 +50,7 @@ function vontmnt_plugin_updater_run_updates()
         );
 
         // Use wp_remote_get instead of cURL.
-        $response      = wp_remote_get($api_url, array( 'sslverify' => false ));
+        $response      = wp_remote_get($api_url);
         $http_code     = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 
