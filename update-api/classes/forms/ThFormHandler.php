@@ -93,8 +93,12 @@ class ThFormHandler
     private function deleteTheme($theme_name)
     {
         $theme_name = Security::sanitizeInput($theme_name);
+        $theme_name = basename($theme_name);
         $theme_path = THEMES_DIR . '/' . $theme_name;
-        if (file_exists($theme_path)) {
+        if (
+            file_exists($theme_path)
+            && dirname(realpath($theme_path)) === realpath(THEMES_DIR)
+        ) {
             if (unlink($theme_path)) {
                 echo '<script>'
                     . 'alert("Theme deleted successfully!");'
