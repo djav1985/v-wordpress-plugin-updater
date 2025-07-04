@@ -94,8 +94,12 @@ class PlFormHandler
     private function deletePlugin($plugin_name)
     {
         $plugin_name = Security::sanitizeInput($plugin_name);
+        $plugin_name = basename($plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
-        if (file_exists($plugin_path)) {
+        if (
+            file_exists($plugin_path)
+            && dirname(realpath($plugin_path)) === realpath(PLUGINS_DIR)
+        ) {
             if (unlink($plugin_path)) {
                 echo '<script>'
                     . 'alert("Plugin deleted successfully!");'
