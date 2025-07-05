@@ -31,3 +31,9 @@ RewriteCond %{REQUEST_URI} ^/(home|users|accounts|info)$
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(home|users|accounts|info)$ /index.php?page=$1 [L]
+
+# Internally rewrite /plupdate, /thupdate, /logs to index.php?page=<page>
+RewriteCond %{REQUEST_URI} ^/(plupdate|thupdate|logs)$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(plupdate|thupdate|logs)$ /index.php?page=$1 [L]
