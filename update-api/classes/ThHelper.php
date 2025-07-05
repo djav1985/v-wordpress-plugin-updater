@@ -1,0 +1,157 @@
+<?php
+// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+
+/*
+ * Project: Update API
+ * Author: Vontainment
+ * URL: https://vontainment.com
+ * File: ThHelper.php
+ * Description: WordPress Update API Helper for theme updates
+ */
+
+
+class ThHelper
+{
+    public static function handleRequest(): void
+    {
+        if (
+            $_SERVER['REQUEST_METHOD'] === 'POST' &&
+            isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+            hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+        ) {
+            if (isset($_FILES['theme_file'])) {
+                self::uploadThemeFiles();
+            } elseif (isset($_POST['delete_theme'])) {
+                $theme_name = isset($_POST['theme_name']) ? SecurityHandler::validateSlug($_POST['theme_name']) : null;
+                self::deleteTheme($theme_name);
+            } else {
+                die('Invalid form action.');
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            die('Invalid CSRF token.');
+        }
+    }
+
+    private static function uploadThemeFiles(): void
+    {
+        $allowed_extensions = ['zip'];
+        $total_files = count($_FILES['theme_file']['name']);
+
+        for ($i = 0; $i < $total_files; $i++) {
+            $file_name = isset($_FILES['theme_file']['name'][$i])
+                ? SecurityHandler::validateFilename($_FILES['theme_file']['name'][$i])
+                : '';
+            $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
+                ? $_FILES['theme_file']['tmp_name'][$i]
+                : '';
+            $file_size = isset($_FILES['theme_file']['size'][$i])
+                ? filter_var($_FILES['theme_file']['size'][$i], FILTER_VALIDATE_INT)
+                : 0;
+            $file_error = isset($_FILES['theme_file']['error'][$i])
+                ? filter_var($_FILES['theme_file']['error'][$i], FILTER_VALIDATE_INT)
+                : UPLOAD_ERR_NO_FILE;
+            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            $theme_slug = explode('_', $file_name)[0];
+            $existing_themes = glob(THEMES_DIR . '/' . $theme_slug . '_*');
+            foreach ($existing_themes as $theme) {
+                if (is_file($theme)) {
+                    unlink($theme);
+                }
+            }
+
+            if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                header('Location: /thupdate');
+                exit();
+            }
+
+            $theme_path = THEMES_DIR . '/' . $file_name;
+            if (move_uploaded_file($file_tmp, $theme_path)) {
+                $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
+            } else {
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
+            }
+            header('Location: /thupdate');
+            exit();
+        }
+    }
+
+    private static function deleteTheme(?string $theme_name): void
+    {
+        $theme_name = SecurityHandler::validateFilename($theme_name);
+        $theme_name = basename((string) $theme_name);
+        $theme_path = THEMES_DIR . '/' . $theme_name;
+        if (
+            file_exists($theme_path) &&
+            dirname(realpath($theme_path)) === realpath(THEMES_DIR)
+        ) {
+            if (unlink($theme_path)) {
+                $_SESSION['messages'][] = 'Theme deleted successfully!';
+            } else {
+                $_SESSION['messages'][] = 'Failed to delete theme file. Please try again.';
+            }
+            header('Location: /thupdate');
+            exit();
+        }
+    }
+
+    public static function generateThemeTableRow(string $theme, string $theme_name): string
+    {
+        return '<tr>
+             <td>' . htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') . '</td>
+             <td>
+                 <form name="delete_theme_form" action="/thupdate" method="POST">
+                     <input type="hidden" name="theme_name" value="' .
+                         htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') .
+                     '">
+                     <input class="th-submit" type="submit" name="delete_theme" value="Delete">
+                 </form>
+             </td>
+         </tr>';
+    }
+
+    /**
+     * Generates the HTML for the themes table.
+     *
+     * @return string
+     */
+    public static function getThemesTableHtml(): string
+    {
+        $themes = glob(THEMES_DIR . "/*.zip");
+        $themes = array_reverse($themes);
+        if (count($themes) > 0) {
+            $half_count = ceil(count($themes) / 2);
+            $themes_column1 = array_slice($themes, 0, $half_count);
+            $themes_column2 = array_slice($themes, $half_count);
+            $themesTableHtml = '<div class="row"><div class="column">
+                 <table>
+                     <thead>
+                         <tr>
+                             <th>Theme Name</th>
+                             <th>Delete</th>
+                         </tr>
+                     </thead>
+                     <tbody>';
+            foreach ($themes_column1 as $theme) {
+                $theme_name = basename($theme);
+                $themesTableHtml .= self::generateThemeTableRow($theme, $theme_name);
+            }
+            $themesTableHtml .= '</tbody></table></div><div class="column"><table>
+                 <thead>
+                     <tr>
+                         <th>Theme Name</th>
+                         <th>Delete</th>
+                     </tr>
+                 </thead>
+                 <tbody>';
+            foreach ($themes_column2 as $theme) {
+                $theme_name = basename($theme);
+                $themesTableHtml .= self::generateThemeTableRow($theme, $theme_name);
+            }
+            $themesTableHtml .= '</tbody></table></div></div>';
+        } else {
+            $themesTableHtml = "No themes found.";
+        }
+        return $themesTableHtml;
+    }
+}

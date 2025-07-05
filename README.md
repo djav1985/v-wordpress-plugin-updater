@@ -47,7 +47,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | 🔩 | **Code Quality**  | The project adheres to coding standards, with clear organization of files and comprehensive inline comments. Security measures like input sanitization and IP blacklisting are integrated throughout the codebase. |
 | 📄 | **Documentation** | Includes configuration and setup guides, inline comments, and function documentation. The repository seems well-organized, but additional user-facing documentation could enhance accessibility. |
 | 🔌 | **Integrations**  | The project integrates with WordPress installations, leveraging external APIs for plugin and theme updates. Dependencies include authentication, WAF, and configuration libraries. |
-| 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, helpers, forms, and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
+| 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, classes, and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
 | ⚡️  | **Performance**   | The project is designed for efficiency, with secure download endpoints and optimized URL routing via `.htaccess`. However, explicit performance metrics and profiling data are not provided. |
 | 🛡️ | **Security**      | Implements robust security measures including IP blacklisting, authentication libraries, and input validation. Admin interface security is enhanced through session management and a web application firewall (WAF). |
 | 📦 | **Dependencies**  | The project relies on standard libraries like authentication, WAF, configuration management, IP blacklisting, and Dropzone for dynamic file handling. |
@@ -126,27 +126,20 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | [BLACKLIST.json](update-api/storage/BLACKLIST.json) | Maintains a list of blacklisted plugins or themes, preventing them from receiving updates via the update API. This ensures security and stability by blocking disallowed or potentially harmful software components within the WordPress plugin and theme ecosystem. |
 
 </details>
+<details closed><summary>update-api.classes</summary>
 
-<details closed><summary>update-api.app.forms</summary>
-
-| File                                                          | Summary                                                                                                                                                                                                                                                                                                                       |
-| ---                                                           | ---                                                                                                                                                                                                                                                                                                                           |
-| [home-forms.php](update-api/app/forms/home-forms.php)         | Manage entries in the HOSTS file by adding, updating, or deleting domains and keys based on POST requests, enhancing the functionality of the Update API within the WordPress plugin ecosystem. This integration ensures seamless updating and administration of plugin and theme assets.                                     |
-| [thupdate-forms.php](update-api/app/forms/thupdate-forms.php) | Facilitate WordPress theme updates by enabling file uploads, deletions, and downloads. Integrates seamlessly with the broader update-api module to ensure easy management of theme files, supporting the repositorys functionality for maintaining up-to-date WordPress themes within a multi-functional plugin architecture. |
-| [plupdate-forms.php](update-api/app/forms/plupdate-forms.php) | Enables management of WordPress plugins via an update API, offering functionality for uploading, deleting, and downloading plugin files. Supports validation of file extensions and safeguards against errors, ensuring smooth file handling and operational integrity within the broader repository architecture.            |
-
-</details>
-
-<details closed><summary>update-api.app.helpers</summary>
-
-| File                                                              | Summary                                                                                                                                                                                                                                                                                                                                        |
-| ---                                                               | ---                                                                                                                                                                                                                                                                                                                                            |
-| [plupdate-helper.php](update-api/app/helpers/plupdate-helper.php) | Generate an HTML table displaying available WordPress plugin ZIP files, allowing users to delete plugins via a form submission. Divide the plugins list into two columns for better readability and user experience within the Update API section of the repository.                                                                           |
-| [home-helper.php](update-api/app/helpers/home-helper.php)         | Generate and manage an HTML table displaying domain and key entries from the HOSTS file, supporting update and delete actions. Enhance the user interface of the WordPress Update API by organizing entries into columns for ease of use and better readability.                                                                               |
-| [thupdate-helper.php](update-api/app/helpers/thupdate-helper.php) | Highlighting the themes available for updates and providing functionality to delete them, the thupdate-helper.php file within the update-api/app/helpers directory enhances the WordPress Update APIs capability to manage and display themes dynamically via HTML tables, seamlessly integrating with the parent plugins update architecture. |
-| [logs-helper.php](update-api/app/helpers/logs-helper.php)         | Processes log files to group log entries by domain name and generates formatted HTML output displaying the status of each entry, aiding in simplified log analysis and monitoring for the WordPress Update API system. Integrates within the broader architecture to offer transparency and error tracking for plugin and theme updates.       |
+| File | Summary |
+| --- | --- |
+| [HomeHelper.php](update-api/classes/HomeHelper.php) | Manage HOSTS entries and handle form requests with sanitized input. |
+| [PlHelper.php](update-api/classes/PlHelper.php) | Process plugin uploads and deletions securely. |
+| [ThHelper.php](update-api/classes/ThHelper.php) | Process theme uploads and deletions securely. |
+| [LogsHelper.php](update-api/classes/LogsHelper.php) | Group log entries by domain for easy review. |
+| [ErrorHandler.php](update-api/classes/ErrorHandler.php) | Render session messages and errors in views. |
+| [SecurityHandler.php](update-api/classes/SecurityHandler.php) | Validate input data and maintain the IP blacklist. |
 
 </details>
+
+
 
 <details closed><summary>update-api.app.pages</summary>
 
@@ -165,7 +158,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | ---                                         | ---                                                                                                                                                                                                                                                                                                                                                                |
 | [auth-lib.php](update-api/lib/auth-lib.php) | Facilitates user authentication within the WordPress Update API by managing login and logout operations, handling session security, and implementing measures against failed login attempts to enhance system security. Essential for safeguarding access to the update APIs functionalities and integrating seamlessly with the repositorys broader architecture. |
 | [waf-lib.php](update-api/lib/waf-lib.php)   | Sanitizes and validates input data, checks for disallowed characters and patterns, updates login attempt records, and manages IP blacklists for security, contributing to the broader security framework of the Update API within the v-wordpress-plugin-updater repository.                                                                                       |
-| [load-lib.php](update-api/lib/load-lib.php) | Serve as a security and routing mechanism, ensuring only authenticated users can access specific pages within the WordPress update API. It checks for blacklisted IPs, redirects unauthenticated users to the login page, and dynamically loads page-specific helper, form, and main files if they exist.                                                          |
+| [load-lib.php](update-api/lib/load-lib.php) | Serve as a security and routing mechanism, ensuring only authenticated users can access specific pages within the WordPress update API. It checks for blacklisted IPs, redirects unauthenticated users to the login page, and dynamically loads page-specific helper and main files if they exist.                                                          |
 
 </details>
 

@@ -9,8 +9,7 @@
  */
 
 
-$handler = new ThFormHandler();
-$handler->handleRequest();
+ThHelper::handleRequest();
 $themesTableHtml = ThHelper::getThemesTableHtml();
 ?>
 

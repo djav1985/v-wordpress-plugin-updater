@@ -9,8 +9,7 @@
  */
 
 
-$handler = new PlFormHandler();
-$handler->handleRequest();
+PlHelper::handleRequest();
 $pluginsTableHtml = PlHelper::getPluginsTableHtml();
 ?>
 

@@ -42,9 +42,6 @@ require_once '../lib/auth-lib.php';
             <input type="password" name="password"><br><br>
             <input type="submit" value="Log In">
         </form>
-    <?php if (isset($error_msg)) : ?>
-        <div id="error-msg"><?php echo $error_msg; ?></div>
-    <?php endif; ?>
     </div>
     <?php echo ErrorHandler::displayAndClearMessages(); ?>
 </body>
