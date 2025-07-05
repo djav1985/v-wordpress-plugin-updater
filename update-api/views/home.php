@@ -20,7 +20,7 @@ $hostsTableHtml = HomeHelper::getHostsTableHtml();
     </div>
     <div class="home section">
         <h2>Add Entry</h2>
-        <form class="entry-form" method="post" action="/">
+        <form class="entry-form" method="post" action="/home">
             <input type="hidden" name="csrf_token"
                    value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <div class="form-group">
