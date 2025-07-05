@@ -70,7 +70,7 @@ if (UtilityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') 
     }
 
 // Validate domain and key with if/else only, no boolean flag
-    $host_file = @fopen(HOSTS_ACL . 'HOSTS', 'r');
+    $host_file = @fopen(HOSTS_ACL . '/HOSTS', 'r');
     if ($host_file) {
         while (($line = fgets($host_file)) !== false) {
             $line = trim($line);
