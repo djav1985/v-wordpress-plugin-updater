@@ -14,7 +14,7 @@ use UpdateApi\util\Security;
 
 class PlFormHandler
 {
-    public function handleRequest()
+    public function handleRequest(): void
     {
         if (
             $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -35,7 +35,7 @@ class PlFormHandler
         }
     }
 
-    private function uploadPluginFiles()
+    private function uploadPluginFiles(): void
     {
         $allowed_extensions = ['zip'];
         $total_files = count($_FILES['plugin_file']['name']);
@@ -91,7 +91,7 @@ class PlFormHandler
         }
     }
 
-    private function deletePlugin($plugin_name)
+    private function deletePlugin(?string $plugin_name): void
     {
         $plugin_name = Security::sanitizeInput($plugin_name);
         $plugin_name = basename($plugin_name);

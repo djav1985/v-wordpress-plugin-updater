@@ -12,7 +12,7 @@ namespace UpdateApi\helpers;
 
 class PlHelper
 {
-    public static function generatePluginTableRow($plugin, $pluginName)
+    public static function generatePluginTableRow(string $plugin, string $pluginName): string
     {
         return '<tr>
             <td>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') . '</td>
@@ -32,7 +32,7 @@ class PlHelper
      *
      * @return string
      */
-    public static function getPluginsTableHtml()
+    public static function getPluginsTableHtml(): string
     {
         $plugins = glob(PLUGINS_DIR . "/*.zip");
         $plugins = array_reverse($plugins);

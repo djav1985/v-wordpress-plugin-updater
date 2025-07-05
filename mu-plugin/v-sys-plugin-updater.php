@@ -18,7 +18,7 @@ if (! defined('ABSPATH')) {
 /**
  * Schedule daily plugin update checks.
  */
-function vontmnt_plugin_updater_schedule_updates()
+function vontmnt_plugin_updater_schedule_updates(): void
 {
     if (! wp_next_scheduled('vontmnt_plugin_updater_check_updates')) {
         wp_schedule_event(time(), 'daily', 'vontmnt_plugin_updater_check_updates');
@@ -32,7 +32,7 @@ add_action('vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_u
 /**
  * Run plugin updates for all installed plugins.
  */
-function vontmnt_plugin_updater_run_updates()
+function vontmnt_plugin_updater_run_updates(): void
 {
     $plugins = get_plugins();
     foreach ($plugins as $plugin_path => $plugin) {

@@ -12,7 +12,7 @@ namespace UpdateApi\helpers;
 
 class ThHelper
 {
-    public static function generateThemeTableRow($theme, $theme_name)
+    public static function generateThemeTableRow(string $theme, string $theme_name): string
     {
         return '<tr>
              <td>' . htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') . '</td>
@@ -32,7 +32,7 @@ class ThHelper
      *
      * @return string
      */
-    public static function getThemesTableHtml()
+    public static function getThemesTableHtml(): string
     {
         $themes = glob(THEMES_DIR . "/*.zip");
         $themes = array_reverse($themes);

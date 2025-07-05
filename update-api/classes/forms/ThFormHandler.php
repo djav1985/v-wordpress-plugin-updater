@@ -14,7 +14,7 @@ use UpdateApi\util\Security;
 
 class ThFormHandler
 {
-    public function handleRequest()
+    public function handleRequest(): void
     {
         if (
             $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -34,7 +34,7 @@ class ThFormHandler
         }
     }
 
-    private function uploadThemeFiles()
+    private function uploadThemeFiles(): void
     {
         $allowed_extensions = ['zip'];
         $total_files = count($_FILES['theme_file']['name']);
@@ -90,7 +90,7 @@ class ThFormHandler
         }
     }
 
-    private function deleteTheme($theme_name)
+    private function deleteTheme(?string $theme_name): void
     {
         $theme_name = Security::sanitizeInput($theme_name);
         $theme_name = basename($theme_name);

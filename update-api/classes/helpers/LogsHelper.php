@@ -12,7 +12,7 @@ namespace UpdateApi\helpers;
 
 class LogsHelper
 {
-    public static function processLogFile($logFile)
+    public static function processLogFile(string $logFile): string
     {
         $log_file_path = LOG_DIR . "/$logFile";
         $output = '';

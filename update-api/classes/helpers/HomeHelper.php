@@ -12,7 +12,7 @@ namespace UpdateApi\helpers;
 
 class HomeHelper
 {
-    public static function generateHostsTableRow($lineNumber, $domain, $key)
+    public static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
     {
         return '<tr>
             <form method="post" action="/">
@@ -38,7 +38,7 @@ class HomeHelper
      *
      * @return string
      */
-    public static function getHostsTableHtml()
+    public static function getHostsTableHtml(): string
     {
         $hostsFile = HOSTS_ACL . '/HOSTS';
         $entries = file($hostsFile, FILE_IGNORE_NEW_LINES);
