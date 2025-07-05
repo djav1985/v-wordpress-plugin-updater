@@ -318,3 +318,66 @@ th {
 .success-message {
   color: #66cc33;
 }
+
+/* ================================================
+   TOAST STYLES
+================================================ */
+
+.toast {
+  position: fixed;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  transition: bottom 4s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid #66cc33;
+  border-radius: 8px;
+  background-color: #fff;
+  padding: 16px;
+  width: 300px;
+  min-height: 60px;
+  color: #333;
+  text-align: center;
+}
+
+.toast.show {
+  bottom: 80px;
+}
+
+@-webkit-keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+

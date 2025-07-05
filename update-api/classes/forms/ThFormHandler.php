@@ -61,31 +61,19 @@ class ThFormHandler
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                echo '<script>'
-                    . 'alert("Error uploading: '
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . '. Only .zip files are allowed.");'
-                    . 'window.location.href = "/thupdate";'
-                    . '</script>';
-                exit;
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                header('Location: /thupdate');
+                exit();
             }
 
             $theme_path = THEMES_DIR . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $theme_path)) {
-                echo '<script>'
-                    . 'alert("'
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . ' uploaded successfully.");'
-                    . 'window.location.href = "/thupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
-                echo '<script>'
-                    . 'alert("Error uploading: '
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . '");'
-                    . 'window.location.href = "/thupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
             }
+            header('Location: /thupdate');
+            exit();
         }
     }
 
@@ -99,16 +87,12 @@ class ThFormHandler
             && dirname(realpath($theme_path)) === realpath(THEMES_DIR)
         ) {
             if (unlink($theme_path)) {
-                echo '<script>'
-                    . 'alert("Theme deleted successfully!");'
-                    . 'window.location.href = "/thupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Theme deleted successfully!';
             } else {
-                echo '<script>'
-                    . 'alert("Failed to delete theme file. Please try again.");'
-                    . 'window.location.href = "/thupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Failed to delete theme file. Please try again.';
             }
+            header('Location: /thupdate');
+            exit();
         }
     }
 }
