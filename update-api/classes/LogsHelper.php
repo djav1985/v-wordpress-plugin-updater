@@ -21,7 +21,7 @@ class LogsHelper
             $log_array = file($log_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             $log_by_domain = [];
             foreach ($log_array as $entry) {
-                list($domain, $date, $status) = explode(' ', $entry);
+                list($domain, $date, $status) = explode(' ', $entry, 3);
                 $log_by_domain[$domain] = [
 
                                            'date'   => $date,
