@@ -12,7 +12,7 @@ require_once '../lib/class-lib.php';
 
 
 $ip = $_SERVER['REMOTE_ADDR'];
-if (Security::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(403);
     exit();
 } else {
@@ -30,9 +30,13 @@ if (Security::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(400);
             exit();
         }
-        $values[] = Security::sanitizeInput($_GET[$p]);
+        $values[] = $_GET[$p];
     }
     list($type, $domain, $key, $slug, $version) = $values;
+    $domain = SecurityHandler::validateDomain($domain);
+    $key = SecurityHandler::validateKey($key);
+    $slug = SecurityHandler::validateSlug($slug);
+    $version = SecurityHandler::validateVersion($version);
 
     if ($type === 'theme') {
         $dir = THEMES_DIR;

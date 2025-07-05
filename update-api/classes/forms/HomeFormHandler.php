@@ -20,9 +20,9 @@ class HomeFormHandler
             && isset($_POST['csrf_token'], $_SESSION['csrf_token'])
             && $_POST['csrf_token'] === $_SESSION['csrf_token']
         ) {
-            // Sanitize all POST inputs
-            $domain = isset($_POST['domain']) ? Security::sanitizeInput($_POST['domain']) : null;
-            $key = isset($_POST['key']) ? Security::sanitizeInput($_POST['key']) : null;
+            // Validate all POST inputs
+            $domain = isset($_POST['domain']) ? SecurityHandler::validateDomain($_POST['domain']) : null;
+            $key = isset($_POST['key']) ? SecurityHandler::validateKey($_POST['key']) : null;
             $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
             if (isset($_POST['add_entry'])) {
                 $this->addEntry($domain, $key);

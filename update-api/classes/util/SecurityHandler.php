@@ -10,62 +10,60 @@
  */
 
 
-class Security
+class SecurityHandler
 {
     /**
-     * Sanitize and validate input data
-     *
-     * @param string $data
-     * @return string
+     * Validate a domain string
      */
-    public static function sanitizeInput(string $data): string
+    public static function validateDomain(string $domain): ?string
     {
-        $data = trim(strip_tags($data));
-        $data = htmlspecialchars($data, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $data = str_replace(array("<?", "?>", "<%", "%>"), "", $data);
-        $data = str_replace(array("<script", "</script"), "", $data);
-        $data = str_replace(array("/bin/sh", "exec(", "system(", "passthru(", "shell_exec(", "phpinfo("), "", $data);
-        return $data;
+        $domain = strtolower(trim($domain));
+        return filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) ? $domain : null;
     }
 
     /**
-     * Check if a string contains a disallowed character
-     *
-     * @param string $str
-     * @param array $disallowedChars
-     * @return bool
+     * Validate an API key or generic token
      */
-    public static function containsDisallowedChars(string $str, array $disallowedChars): bool
+    public static function validateKey(string $key): ?string
     {
-        if (!is_array($disallowedChars)) {
-            return false;
-        }
-        foreach ($disallowedChars as $char) {
-            if (strpos($str, $char) !== false) {
-                return true;
-            }
-        }
-        return false;
+        $key = trim($key);
+        return preg_match('/^[A-Za-z0-9_-]+$/', $key) ? $key : null;
     }
 
     /**
-     * Check if a string contains a disallowed pattern
-     *
-     * @param string $str
-     * @param array $disallowedPatterns
-     * @return bool
+     * Validate plugin or theme names and slugs
      */
-    public static function containsDisallowedPatterns(string $str, array $disallowedPatterns): bool
+    public static function validateSlug(string $slug): ?string
     {
-        if (!is_array($disallowedPatterns)) {
-            return false;
-        }
-        foreach ($disallowedPatterns as $pattern) {
-            if (strpos($str, $pattern) !== false) {
-                return true;
-            }
-        }
-        return false;
+        $slug = basename(trim($slug));
+        return preg_match('/^[A-Za-z0-9._-]+$/', $slug) ? $slug : null;
+    }
+
+    /**
+     * Validate a version number such as 1.0.0
+     */
+    public static function validateVersion(string $version): ?string
+    {
+        $version = trim($version);
+        return preg_match('/^\d+(?:\.\d+)*$/', $version) ? $version : null;
+    }
+
+    /**
+     * Validate usernames for the admin interface
+     */
+    public static function validateUsername(string $username): ?string
+    {
+        $username = trim($username);
+        return preg_match('/^[A-Za-z0-9._-]{3,30}$/', $username) ? $username : null;
+    }
+
+    /**
+     * Basic password validation
+     */
+    public static function validatePassword(string $password): ?string
+    {
+        $password = trim($password);
+        return strlen($password) >= 6 ? $password : null;
     }
 
     /**
