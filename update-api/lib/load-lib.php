@@ -26,7 +26,10 @@ $routes = [
 // Combined blacklist, login logic, redirection, and routing
 if (SecurityHandler::isBlacklisted($ip)) {
     http_response_code(403);
-    echo "Your IP address has been blacklisted. If you believe this is an error, please contact us.";
+    $error = 'Your IP address has been blacklisted. If you believe this is an error, please contact us.';
+    ErrorHandler::logMessage($error);
+    $_SESSION['messages'][] = $error;
+    echo $error;
     exit();
 } elseif ((!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) && $requestUri !== '/login') {
     header('Location: /login');
@@ -43,6 +46,9 @@ if (SecurityHandler::isBlacklisted($ip)) {
     }
 } else {
     http_response_code(404);
-    echo "Page not found or access denied.";
+    $error = 'Page not found or access denied.';
+    ErrorHandler::logMessage($error);
+    $_SESSION['messages'][] = $error;
+    echo $error;
     exit();
 }

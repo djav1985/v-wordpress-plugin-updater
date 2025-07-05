@@ -31,10 +31,18 @@ class HomeHelper
             } elseif (isset($_POST['delete_entry'])) {
                 self::deleteEntry($id, $domain);
             } else {
-                die('Invalid form action.');
+                $error = 'Invalid form action.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /');
+                exit();
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            die('Invalid CSRF token.');
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /');
+            exit();
         }
     }
 
@@ -44,8 +52,13 @@ class HomeHelper
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
         $new_entry = $safe_domain . ' ' . $safe_key;
-        file_put_contents($hosts_file, $new_entry . "\n", FILE_APPEND | LOCK_EX);
-        $_SESSION['messages'][] = 'Entry added successfully.';
+        if (file_put_contents($hosts_file, $new_entry . "\n", FILE_APPEND | LOCK_EX) === false) {
+            $error = 'Failed to add entry.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+        } else {
+            $_SESSION['messages'][] = 'Entry added successfully.';
+        }
         header('Location: /home');
         exit();
     }
@@ -57,8 +70,13 @@ class HomeHelper
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
         $entries[$line_number] = $safe_domain . ' ' . $safe_key;
-        file_put_contents($hosts_file, implode("\n", $entries) . "\n");
-        $_SESSION['messages'][] = 'Entry updated successfully.';
+        if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
+            $error = 'Failed to update entry.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+        } else {
+            $_SESSION['messages'][] = 'Entry updated successfully.';
+        }
         header('Location: /home');
         exit();
     }
@@ -68,7 +86,9 @@ class HomeHelper
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
         unset($entries[$line_number]);
-        file_put_contents($hosts_file, implode("\n", $entries) . "\n");
+        if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
+            ErrorHandler::logMessage('Failed to delete entry.');
+        }
 
         $log_files = [
             'plugin.log',
@@ -82,7 +102,9 @@ class HomeHelper
                 $filtered_entries = array_filter($log_entries, function ($entry) use ($safe_domain_to_delete) {
                     return strpos($entry, $safe_domain_to_delete) !== 0;
                 });
-                file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n");
+                if (file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n") === false) {
+                    ErrorHandler::logMessage('Failed to update log file ' . $log_file_path);
+                }
             }
         }
         $_SESSION['messages'][] = 'Entry deleted successfully.';

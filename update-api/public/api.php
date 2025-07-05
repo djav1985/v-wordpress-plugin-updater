@@ -14,6 +14,7 @@ require_once '../lib/class-lib.php';
 $ip = $_SERVER['REMOTE_ADDR'];
 if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(403);
+    ErrorHandler::logMessage('Forbidden or invalid request from ' . $ip);
     exit();
 } else {
     // Sanitize, extract, and set required GET parameters, error if any missing or invalid
@@ -28,6 +29,7 @@ if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET')
     foreach ($params as $p) {
         if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
             http_response_code(400);
+            ErrorHandler::logMessage('Bad request missing parameter: ' . $p);
             exit();
         }
         $values[] = $_GET[$p];
@@ -70,6 +72,7 @@ if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET')
                                     readfile($file_path);
                                     $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
                                     file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
+                                    ErrorHandler::logMessage($log_message, 'info');
                                     exit();
                                 }
                             }
@@ -79,6 +82,7 @@ if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET')
                     http_response_code(204);
                     $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
                     file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
+                    ErrorHandler::logMessage($log_message, 'info');
                     exit();
                 }
             }
@@ -88,5 +92,6 @@ if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET')
     http_response_code(403);
     $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Failed';
     file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
+    ErrorHandler::logMessage($log_message);
     exit();
 }

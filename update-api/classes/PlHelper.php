@@ -25,10 +25,18 @@ class PlHelper
                 $plugin_name = isset($_POST['plugin_name']) ? SecurityHandler::validateSlug($_POST['plugin_name']) : null;
                 self::deletePlugin($plugin_name);
             } else {
-                die('Invalid form action.');
+                $error = 'Invalid form action.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /plupdate');
+                exit();
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            die('Invalid CSRF token.');
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /plupdate');
+            exit();
         }
     }
 
@@ -60,7 +68,9 @@ class PlHelper
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
                 header('Location: /plupdate');
                 exit();
             }
@@ -69,7 +79,9 @@ class PlHelper
             if (move_uploaded_file($file_tmp, $plugin_path)) {
                 $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
-                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
+                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
             }
             header('Location: /plupdate');
             exit();
@@ -88,7 +100,9 @@ class PlHelper
             if (unlink($plugin_path)) {
                 $_SESSION['messages'][] = 'Plugin deleted successfully!';
             } else {
-                $_SESSION['messages'][] = 'Failed to delete plugin file. Please try again.';
+                $error = 'Failed to delete plugin file. Please try again.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
             }
             header('Location: /plupdate');
             exit();

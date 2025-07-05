@@ -25,10 +25,18 @@ class ThHelper
                 $theme_name = isset($_POST['theme_name']) ? SecurityHandler::validateSlug($_POST['theme_name']) : null;
                 self::deleteTheme($theme_name);
             } else {
-                die('Invalid form action.');
+                $error = 'Invalid form action.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /thupdate');
+                exit();
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            die('Invalid CSRF token.');
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /thupdate');
+            exit();
         }
     }
 
@@ -60,7 +68,9 @@ class ThHelper
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
                 header('Location: /thupdate');
                 exit();
             }
@@ -69,7 +79,9 @@ class ThHelper
             if (move_uploaded_file($file_tmp, $theme_path)) {
                 $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
-                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
+                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
             }
             header('Location: /thupdate');
             exit();
@@ -88,7 +100,9 @@ class ThHelper
             if (unlink($theme_path)) {
                 $_SESSION['messages'][] = 'Theme deleted successfully!';
             } else {
-                $_SESSION['messages'][] = 'Failed to delete theme file. Please try again.';
+                $error = 'Failed to delete theme file. Please try again.';
+                ErrorHandler::logMessage($error);
+                $_SESSION['messages'][] = $error;
             }
             header('Location: /thupdate');
             exit();
