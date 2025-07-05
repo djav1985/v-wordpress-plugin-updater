@@ -101,10 +101,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 </details>
 
-<details closed><summary>update-api.public.themes</summary>
-
-| File                                                  | Summary                                                                                                                                                                                                                                                                                                           |
-</details>
 
 <details closed><summary>update-api.storage</summary>
 
