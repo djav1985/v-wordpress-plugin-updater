@@ -24,7 +24,7 @@ $routes = [
           ];
 
 // Combined blacklist, login logic, redirection, and routing
-if (Security::isBlacklisted($ip)) {
+if (SecurityHandler::isBlacklisted($ip)) {
     http_response_code(403);
     echo "Your IP address has been blacklisted. If you believe this is an error, please contact us.";
     exit();

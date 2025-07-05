@@ -22,8 +22,8 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 }
 
 if (isset($_POST['username']) && isset($_POST['password'])) {
-    $username = Security::sanitizeInput($_POST['username']);
-    $password = Security::sanitizeInput($_POST['password']);
+    $username = SecurityHandler::validateUsername($_POST['username']);
+    $password = SecurityHandler::validatePassword($_POST['password']);
 
     // Perform your login authentication logic here
     if ($username === VALID_USERNAME && $password === VALID_PASSWORD) {
@@ -39,12 +39,12 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
         // Failed login
         $ip = $_SERVER['REMOTE_ADDR'];
 
-        if (Security::isBlacklisted($ip)) {
+        if (SecurityHandler::isBlacklisted($ip)) {
             // Show the message that the user has been blacklisted
             $error_msg = "Your IP has been blacklisted due to multiple failed login attempts.";
         } else {
             // Update the number of failed login attempts and check if the IP should be blacklisted
-            Security::updateFailedAttempts($ip);
+            SecurityHandler::updateFailedAttempts($ip);
             $error_msg = "Invalid username or password.";
         }
     }

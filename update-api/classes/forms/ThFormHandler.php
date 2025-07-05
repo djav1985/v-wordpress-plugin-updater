@@ -23,7 +23,7 @@ class ThFormHandler
             if (isset($_FILES['theme_file'])) {
                 $this->uploadThemeFiles();
             } elseif (isset($_POST['delete_theme'])) {
-                $theme_name = isset($_POST['theme_name']) ? Security::sanitizeInput($_POST['theme_name']) : null;
+                $theme_name = isset($_POST['theme_name']) ? SecurityHandler::validateSlug($_POST['theme_name']) : null;
                 $this->deleteTheme($theme_name);
             } else {
                 die('Invalid form action.');
@@ -40,7 +40,7 @@ class ThFormHandler
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['theme_file']['name'][$i])
-                ? Security::sanitizeInput($_FILES['theme_file']['name'][$i])
+                ? SecurityHandler::validateFilename($_FILES['theme_file']['name'][$i])
                 : '';
             $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
                 ? $_FILES['theme_file']['tmp_name'][$i]
@@ -91,8 +91,8 @@ class ThFormHandler
 
     private function deleteTheme(?string $theme_name): void
     {
-        $theme_name = Security::sanitizeInput($theme_name);
-        $theme_name = basename($theme_name);
+        $theme_name = SecurityHandler::validateFilename($theme_name);
+        $theme_name = basename((string) $theme_name);
         $theme_path = THEMES_DIR . '/' . $theme_name;
         if (
             file_exists($theme_path)

@@ -20,11 +20,11 @@ class PlFormHandler
             && isset($_POST['csrf_token'], $_SESSION['csrf_token'])
             && $_POST['csrf_token'] === $_SESSION['csrf_token']
         ) {
-            // Sanitize POST and FILES inputs
+            // Validate POST and FILES inputs
             if (isset($_FILES['plugin_file'])) {
                 $this->uploadPluginFiles();
             } elseif (isset($_POST['delete_plugin'])) {
-                $plugin_name = isset($_POST['plugin_name']) ? Security::sanitizeInput($_POST['plugin_name']) : null;
+                $plugin_name = isset($_POST['plugin_name']) ? SecurityHandler::validateSlug($_POST['plugin_name']) : null;
                 $this->deletePlugin($plugin_name);
             } else {
                 die('Invalid form action.');
@@ -41,7 +41,7 @@ class PlFormHandler
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['plugin_file']['name'][$i])
-                ? Security::sanitizeInput($_FILES['plugin_file']['name'][$i])
+                ? SecurityHandler::validateFilename($_FILES['plugin_file']['name'][$i])
                 : '';
             $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
                 ? $_FILES['plugin_file']['tmp_name'][$i]
@@ -92,8 +92,8 @@ class PlFormHandler
 
     private function deletePlugin(?string $plugin_name): void
     {
-        $plugin_name = Security::sanitizeInput($plugin_name);
-        $plugin_name = basename($plugin_name);
+        $plugin_name = SecurityHandler::validateFilename($plugin_name);
+        $plugin_name = basename((string) $plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
         if (
             file_exists($plugin_path)
