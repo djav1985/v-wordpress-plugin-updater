@@ -71,8 +71,7 @@ class ThHelper
                 $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
-                header('Location: /thupdate');
-                exit();
+                continue;
             }
 
             $theme_path = THEMES_DIR . '/' . $file_name;
@@ -83,9 +82,10 @@ class ThHelper
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
             }
-            header('Location: /thupdate');
-            exit();
         }
+
+        header('Location: /thupdate');
+        exit();
     }
 
     private static function deleteTheme(?string $theme_name): void

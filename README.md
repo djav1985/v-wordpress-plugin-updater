@@ -188,6 +188,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 ## 🎗 License
 
-This project is protected under the [MIT License](https://github.com/djav1985/v-chatgpt-editor/blob/main/LICENSE) License.
+This project is licensed under the [GNU General Public License v3](LICENSE).
 
 ---
