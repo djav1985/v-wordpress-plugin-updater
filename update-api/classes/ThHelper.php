@@ -63,7 +63,9 @@ class ThHelper
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                $error = 'Error uploading: ' .
+                    htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                    '. Only .zip files are allowed.';
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
                 continue;
