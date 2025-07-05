@@ -96,7 +96,7 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public static function logMessage(string $message, string $type = 'error'): void
     {
-        $logFile = __DIR__ . '/../php_app.log';
+        $logFile = __DIR__ . '/../storage/logs/php_app.log';
         $timestamp = date("Y-m-d H:i:s");
         $logMessage = "[$timestamp] [$type]: $message\n";
         error_log($logMessage, 3, $logFile);
