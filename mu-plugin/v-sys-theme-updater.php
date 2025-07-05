@@ -19,7 +19,7 @@ if (! defined('ABSPATH')) {
 /**
  * Schedule daily theme update checks.
  */
-function vontmnt_theme_updater_schedule_updates()
+function vontmnt_theme_updater_schedule_updates(): void
 {
     if (! wp_next_scheduled('vontmnt_theme_updater_check_updates')) {
         wp_schedule_event(time(), 'daily', 'vontmnt_theme_updater_check_updates');
@@ -33,7 +33,7 @@ add_action('vontmnt_theme_updater_check_updates', 'vontmnt_theme_updater_run_upd
 /**
  * Run theme updates for all installed themes.
  */
-function vontmnt_theme_updater_run_updates()
+function vontmnt_theme_updater_run_updates(): void
 {
     $themes = wp_get_themes();
     foreach ($themes as $theme) {

@@ -14,7 +14,7 @@ use UpdateApi\util\Security;
 
 class HomeFormHandler
 {
-    public function handleRequest()
+    public function handleRequest(): void
     {
         if (
             $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -39,7 +39,7 @@ class HomeFormHandler
         }
     }
 
-    private function addEntry($domain, $key)
+    private function addEntry(?string $domain, ?string $key): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
         // Escape output for safety
@@ -51,7 +51,7 @@ class HomeFormHandler
         exit();
     }
 
-    private function updateEntry($line_number, $domain, $key)
+    private function updateEntry(?int $line_number, ?string $domain, ?string $key): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
@@ -64,7 +64,7 @@ class HomeFormHandler
         exit();
     }
 
-    private function deleteEntry($line_number, $domain_to_delete)
+    private function deleteEntry(?int $line_number, ?string $domain_to_delete): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);

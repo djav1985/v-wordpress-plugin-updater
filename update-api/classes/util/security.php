@@ -18,7 +18,7 @@ class Security
      * @param string $data
      * @return string
      */
-    public static function sanitizeInput($data)
+    public static function sanitizeInput(string $data): string
     {
         $data = trim(strip_tags($data));
         $data = htmlspecialchars($data, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -35,7 +35,7 @@ class Security
      * @param array $disallowedChars
      * @return bool
      */
-    public static function containsDisallowedChars($str, $disallowedChars)
+    public static function containsDisallowedChars(string $str, array $disallowedChars): bool
     {
         if (!is_array($disallowedChars)) {
             return false;
@@ -55,7 +55,7 @@ class Security
      * @param array $disallowedPatterns
      * @return bool
      */
-    public static function containsDisallowedPatterns($str, $disallowedPatterns)
+    public static function containsDisallowedPatterns(string $str, array $disallowedPatterns): bool
     {
         if (!is_array($disallowedPatterns)) {
             return false;
@@ -75,7 +75,7 @@ class Security
      * @param string $ip
      * @return void
      */
-    public static function updateFailedAttempts($ip)
+    public static function updateFailedAttempts(string $ip): void
     {
         $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
         $content = [];
@@ -123,7 +123,7 @@ class Security
      * @param string $ip
      * @return bool
      */
-    public static function isBlacklisted($ip)
+    public static function isBlacklisted(string $ip): bool
     {
         $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
         $blacklist = [];
