@@ -5,27 +5,25 @@
  * Project: Update API
  * Author: Vontainment
  * URL: https://vontainment.com
- * File: PluginUpdateFormHandler.php
- * Description: WordPress Update API
+ * File: PlHelper.php
+ * Description: WordPress Update API Helper for plugin updates
  */
 
 
-
-class PlFormHandler
+class PlHelper
 {
-    public function handleRequest(): void
+    public static function handleRequest(): void
     {
         if (
-            $_SERVER['REQUEST_METHOD'] === 'POST'
-            && isset($_POST['csrf_token'], $_SESSION['csrf_token'])
-            && $_POST['csrf_token'] === $_SESSION['csrf_token']
+            $_SERVER['REQUEST_METHOD'] === 'POST' &&
+            isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+            hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
-            // Validate POST and FILES inputs
             if (isset($_FILES['plugin_file'])) {
-                $this->uploadPluginFiles();
+                self::uploadPluginFiles();
             } elseif (isset($_POST['delete_plugin'])) {
                 $plugin_name = isset($_POST['plugin_name']) ? SecurityHandler::validateSlug($_POST['plugin_name']) : null;
-                $this->deletePlugin($plugin_name);
+                self::deletePlugin($plugin_name);
             } else {
                 die('Invalid form action.');
             }
@@ -34,7 +32,7 @@ class PlFormHandler
         }
     }
 
-    private function uploadPluginFiles(): void
+    private static function uploadPluginFiles(): void
     {
         $allowed_extensions = ['zip'];
         $total_files = count($_FILES['plugin_file']['name']);
@@ -53,7 +51,7 @@ class PlFormHandler
                 ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
                 : UPLOAD_ERR_NO_FILE;
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            $plugin_slug = explode("_", $file_name)[0];
+            $plugin_slug = explode('_', $file_name)[0];
             $existing_plugins = glob(PLUGINS_DIR . '/' . $plugin_slug . '_*');
             foreach ($existing_plugins as $plugin) {
                 if (is_file($plugin)) {
@@ -78,14 +76,14 @@ class PlFormHandler
         }
     }
 
-    private function deletePlugin(?string $plugin_name): void
+    private static function deletePlugin(?string $plugin_name): void
     {
         $plugin_name = SecurityHandler::validateFilename($plugin_name);
         $plugin_name = basename((string) $plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
         if (
-            file_exists($plugin_path)
-            && dirname(realpath($plugin_path)) === realpath(PLUGINS_DIR)
+            file_exists($plugin_path) &&
+            dirname(realpath($plugin_path)) === realpath(PLUGINS_DIR)
         ) {
             if (unlink($plugin_path)) {
                 $_SESSION['messages'][] = 'Plugin deleted successfully!';
@@ -95,5 +93,67 @@ class PlFormHandler
             header('Location: /plupdate');
             exit();
         }
+    }
+
+    public static function generatePluginTableRow(string $plugin, string $pluginName): string
+    {
+        return '<tr>
+            <td>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') . '</td>
+            <td>
+                <form class="delete-plugin-form" action="/plupdate" method="POST">
+                    <input type="hidden" name="plugin_name" value="' .
+                        htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') .
+                    '">
+                    <button class="pl-submit" type="submit" name="delete_plugin">Delete</button>
+                </form>
+            </td>
+        </tr>';
+    }
+
+    /**
+     * Generates the plugins table HTML for display.
+     *
+     * @return string
+     */
+    public static function getPluginsTableHtml(): string
+    {
+        $plugins = glob(PLUGINS_DIR . "/*.zip");
+        $plugins = array_reverse($plugins);
+        if (count($plugins) > 0) {
+            $halfCount = ceil(count($plugins) / 2);
+            $pluginsColumn1 = array_slice($plugins, 0, $halfCount);
+            $pluginsColumn2 = array_slice($plugins, $halfCount);
+            $pluginsTableHtml = '<div class="row"><div class="column">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plugin Name</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+            foreach ($pluginsColumn1 as $plugin) {
+                $pluginName = basename($plugin);
+                $pluginsTableHtml .= self::generatePluginTableRow($plugin, $pluginName);
+            }
+
+            $pluginsTableHtml .= '</tbody></table></div><div class="column"><table>
+                <thead>
+                    <tr>
+                        <th>Plugin Name</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>';
+            foreach ($pluginsColumn2 as $plugin) {
+                $pluginName = basename($plugin);
+                $pluginsTableHtml .= self::generatePluginTableRow($plugin, $pluginName);
+            }
+
+            $pluginsTableHtml .= '</tbody></table></div></div>';
+        } else {
+            $pluginsTableHtml = "No plugins found.";
+        }
+        return $pluginsTableHtml;
     }
 }

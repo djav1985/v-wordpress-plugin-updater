@@ -9,8 +9,7 @@
 */
 
 
-$handler = new HomeFormHandler();
-$handler->handleRequest();
+HomeHelper::handleRequest();
 $hostsTableHtml = HomeHelper::getHostsTableHtml();
 ?>
 
