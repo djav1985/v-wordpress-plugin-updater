@@ -1,13 +1,15 @@
 <?php
 
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: logs.php
  * Description: WordPress Update API
-*/
-
+ */
 
 $ploutput = LogsHelper::processLogFile('plugin.log');
 $thoutput = LogsHelper::processLogFile('theme.log');

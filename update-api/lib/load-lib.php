@@ -1,12 +1,15 @@
 <?php
 
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: load-lib.php
  * Description: WordPress Update API
-*/
+ */
 
 // Validate and sanitize the IP address
 $ip = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);

@@ -1,9 +1,15 @@
 <?php
 
 /**
- * Class ErrorHandler
- * Handles error and exception logging and display.
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * File: ErrorHandler.php
+ * Description: WordPress Update API
  */
+
 class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
@@ -17,6 +23,8 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
 
     /**
      * Registers error, exception, and shutdown handlers.
+     *
+     * @return void
      */
     public static function register(): void
     {
@@ -28,12 +36,14 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
     /**
      * Handles PHP errors by converting them to exceptions.
      *
-     * @param int $errno The level of the error raised.
-     * @param string $errstr The error message.
+     * @param int    $errno   The level of the error raised.
+     * @param string $errstr  The error message.
      * @param string $errfile The filename that the error was raised in.
-     * @param int $errline The line number the error was raised at.
-     * @return bool
-     * @throws ErrorException
+     * @param int    $errline The line number the error was raised at.
+     *
+     * @return bool True if the error was handled, false otherwise.
+     *
+     * @throws ErrorException If the error is not suppressed.
      */
     public static function handleError(int $errno, string $errstr, string $errfile, int $errline): bool
     {
@@ -47,6 +57,8 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
      * Handles uncaught exceptions.
      *
      * @param Throwable $exception The uncaught exception.
+     *
+     * @return void
      */
     public static function handleException(Throwable $exception): void
     {
@@ -60,6 +72,8 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
 
     /**
      * Handles fatal errors on shutdown.
+     *
+     * @return void
      */
     public static function handleShutdown(): void
     {
@@ -76,7 +90,9 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
      * Logs error messages to a log file.
      *
      * @param string $message The error message to log.
-     * @param string $type The type of error (default is 'error').
+     * @param string $type    The type of error (default is 'error').
+     *
+     * @return void
      */
     public static function logMessage(string $message, string $type = 'error'): void
     {

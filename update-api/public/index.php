@@ -1,19 +1,25 @@
 <?php
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: index.php
  * Description: WordPress Update API
-*/
+ */
 
 // Set secure session cookie parameters before starting the session
 $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-session_set_cookie_params([
-                           'httponly' => true,
-                           'secure'   => $secureFlag,
-                           'samesite' => 'Lax',
-                          ]);
+session_set_cookie_params(
+    [
+     'httponly' => true,
+     'secure'   => $secureFlag,
+     'samesite' => 'Lax',
+    ]
+);
 session_start();
 session_regenerate_id(true); // Regenerate session ID to prevent session fixation attacks
 
@@ -74,7 +80,7 @@ require_once '../lib/load-lib.php';
     <!-- Tab content -->
     <?php
     if (isset($pageOutput)) {
-        require_once $pageOutput;
+        include_once $pageOutput;
     }
     ?>
     <!-- Tab content -->

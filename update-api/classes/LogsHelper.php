@@ -1,18 +1,27 @@
 <?php
 
-// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
- * File: LogsHelper.php
- * Description: WordPress Update API Helper for logs display and processing
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
+ * File: LogHelper.php
+ * Description: WordPress Update API
  */
 
-
-class LogsHelper
+class LogsHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
+    /**
+     * Processes a log file and generates HTML output.
+     *
+     * Reads the log file, groups entries by domain, and generates HTML for each entry.
+     *
+     * @param string $logFile The name of the log file to process.
+     *
+     * @return string The generated HTML output or an error message if the file is not found.
+     */
     public static function processLogFile(string $logFile): string
     {
         $log_file_path = LOG_DIR . "/$logFile";

@@ -1,7 +1,18 @@
 <?php
 
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
+ * File: config.php
+ * Description: WordPress Update API
+ */
+
 define('VALID_USERNAME', 'admin');
-define('VALID_PASSWORD', 'admin');
+define('VALID_PASSWORD', 'password');
 
 define('SESSION_TIMEOUT_LIMIT', 1800);
 

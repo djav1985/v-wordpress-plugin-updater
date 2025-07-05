@@ -1,20 +1,23 @@
 <?php
 
-// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: UtilityHandler.php
- * Description: Security utilities (moved from waf-lib.php)
+ * Description: WordPress Update API
  */
 
-
-class UtilityHandler
+class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
-     * Validate a domain string
+     * Validate a domain string.
+     *
+     * @param string $domain The domain to validate.
+     * @return string|null The validated domain or null if invalid.
      */
     public static function validateDomain(string $domain): ?string
     {
@@ -23,7 +26,10 @@ class UtilityHandler
     }
 
     /**
-     * Validate an API key or generic token
+     * Validate an API key or generic token.
+     *
+     * @param string $key The key to validate.
+     * @return string|null The validated key or null if invalid.
      */
     public static function validateKey(string $key): ?string
     {
@@ -32,7 +38,10 @@ class UtilityHandler
     }
 
     /**
-     * Validate plugin or theme names and slugs
+     * Validate plugin or theme names and slugs.
+     *
+     * @param string $slug The slug to validate.
+     * @return string|null The validated slug or null if invalid.
      */
     public static function validateSlug(string $slug): ?string
     {
@@ -41,7 +50,10 @@ class UtilityHandler
     }
 
     /**
-     * Validate uploaded file names
+     * Validate uploaded file names.
+     *
+     * @param string $filename The filename to validate.
+     * @return string|null The validated filename or null if invalid.
      */
     public static function validateFilename(string $filename): ?string
     {
@@ -50,7 +62,10 @@ class UtilityHandler
     }
 
     /**
-     * Validate a version number such as 1.0.0
+     * Validate a version number such as 1.0.0.
+     *
+     * @param string $version The version to validate.
+     * @return string|null The validated version or null if invalid.
      */
     public static function validateVersion(string $version): ?string
     {
@@ -59,7 +74,10 @@ class UtilityHandler
     }
 
     /**
-     * Validate usernames for the admin interface
+     * Validate usernames for the admin interface.
+     *
+     * @param string $username The username to validate.
+     * @return string|null The validated username or null if invalid.
      */
     public static function validateUsername(string $username): ?string
     {
@@ -68,7 +86,10 @@ class UtilityHandler
     }
 
     /**
-     * Basic password validation
+     * Basic password validation.
+     *
+     * @param string $password The password to validate.
+     * @return string|null The validated password or null if invalid.
      */
     public static function validatePassword(string $password): ?string
     {
@@ -78,9 +99,8 @@ class UtilityHandler
 
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
-     * Handles file errors and uses file locking for concurrency.
      *
-     * @param string $ip
+     * @param string $ip The IP address to update.
      * @return void
      */
     public static function updateFailedAttempts(string $ip): void
@@ -125,11 +145,10 @@ class UtilityHandler
     }
 
     /**
-     * Check if an IP address is blacklisted. If the blacklist has expired, reset blacklist and login_attempts.
-     * Handles file errors and uses file locking for concurrency.
+     * Check if an IP address is blacklisted. If the blacklist has expired, reset blacklist and login attempts.
      *
-     * @param string $ip
-     * @return bool
+     * @param string $ip The IP address to check.
+     * @return bool True if the IP is blacklisted, false otherwise.
      */
     public static function isBlacklisted(string $ip): bool
     {

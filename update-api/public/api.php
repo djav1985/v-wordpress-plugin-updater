@@ -1,10 +1,14 @@
 <?php
 
 /**
- * WP Plugin/Theme Update API (Combined)
- * Version: 1.1
- * Author: Vontainment
- * Author URI: https://vontainment.com
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
+ * File: api.php
+ * Description: WordPress Update API
  */
 
 require_once '../config.php';

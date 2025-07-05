@@ -1,13 +1,15 @@
 <?php
 
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: thupdate.php
  * Description: WordPress Update API
  */
-
 
 ThHelper::handleRequest();
 $themesTableHtml = ThHelper::getThemesTableHtml();
@@ -15,7 +17,7 @@ $themesTableHtml = ThHelper::getThemesTableHtml();
 
 <div class="content-box">
   <h2>Themes</h2>
-  <div id="Themes_table">
+  <div id="themes_table">
     <?php echo $themesTableHtml; ?>
   </div>
   <div class="plupload section">

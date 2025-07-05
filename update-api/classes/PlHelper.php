@@ -1,18 +1,25 @@
 <?php
 
-// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: PlHelper.php
- * Description: WordPress Update API Helper for plugin updates
+ * Description: WordPress Update API
  */
 
-
-class PlHelper
+class PlHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
+    /**
+     * Handles the incoming request for plugin-related actions.
+     *
+     * Validates CSRF tokens and determines whether to upload or delete plugins.
+     *
+     * @return void
+     */
     public static function handleRequest(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -39,6 +46,13 @@ class PlHelper
         }
     }
 
+    /**
+     * Uploads plugin files to the server.
+     *
+     * Validates file extensions, removes existing plugins with the same slug, and moves the uploaded files.
+     *
+     * @return void
+     */
     private static function uploadPluginFiles(): void
     {
         $allowed_extensions = ['zip'];
@@ -89,6 +103,15 @@ class PlHelper
         exit();
     }
 
+    /**
+     * Deletes a plugin file from the server.
+     *
+     * Validates the plugin name and ensures the file exists before deletion.
+     *
+     * @param string|null $plugin_name The name of the plugin to delete.
+     *
+     * @return void
+     */
     private static function deletePlugin(?string $plugin_name): void
     {
         $plugin_name = UtilityHandler::validateFilename($plugin_name);
@@ -110,6 +133,13 @@ class PlHelper
         }
     }
 
+    /**
+     * Generates an HTML table row for a plugin.
+     *
+     * @param string $pluginName The name of the plugin.
+     *
+     * @return string The HTML table row for the plugin.
+     */
     public static function generatePluginTableRow(string $pluginName): string
     {
         return '<tr>
@@ -128,7 +158,9 @@ class PlHelper
     /**
      * Generates the plugins table HTML for display.
      *
-     * @return string
+     * Retrieves all plugin files and organizes them into two columns for display.
+     *
+     * @return string The HTML for the plugins table.
      */
     public static function getPluginsTableHtml(): string
     {

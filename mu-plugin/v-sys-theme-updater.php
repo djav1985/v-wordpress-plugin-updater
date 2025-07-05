@@ -1,6 +1,11 @@
 <?php
 
-/**
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
  * Theme Name: WP Theme Updater
  * Theme URI: https://vontainment.com
  * Description: This theme updates your WordPress themes.
@@ -8,17 +13,20 @@
  * Author: Vontainment
  * Author URI: https://vontainment.com
  *
- * @package VontainmentThemeUpdater
- */
+ * @package VontainmentThemeUpdater */
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
 
-/**
- * Schedule daily theme update checks.
- */
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * Schedule daily theme update checks. */
 function vontmnt_theme_updater_schedule_updates(): void
 {
     if (! wp_next_scheduled('vontmnt_theme_updater_check_updates')) {
@@ -30,9 +38,13 @@ add_action('wp', 'vontmnt_theme_updater_schedule_updates');
 
 add_action('vontmnt_theme_updater_check_updates', 'vontmnt_theme_updater_run_updates');
 
-/**
- * Run theme updates for all installed themes.
- */
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * Run theme updates for all installed themes. */
 function vontmnt_theme_updater_run_updates(): void
 {
     $themes = wp_get_themes();

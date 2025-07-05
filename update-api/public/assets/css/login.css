@@ -1,7 +1,14 @@
 html,
 body {
+    box-sizing: border-box;
     max-width: 100%;
     overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
 }
 
 body {
@@ -34,4 +41,8 @@ body {
 
 .login-box form {
     text-align: left;
+}
+
+input {
+    width: 100%;
 }

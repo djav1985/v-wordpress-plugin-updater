@@ -1,18 +1,26 @@
 <?php
 
-// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: HomeHelper.php
- * Description: WordPress Update API Helper for Home page
+ * Description: WordPress Update API
  */
 
 
-class HomeHelper
+class HomeHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
+    /**
+     * Handles the incoming request for managing hosts.
+     *
+     * Validates CSRF tokens and determines whether to add, update, or delete entries.
+     *
+     * @return void
+     */
     public static function handleRequest(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -41,8 +49,14 @@ class HomeHelper
         }
     }
 
-    // Move the private static methods outside of handleRequest and inside the class
-
+    /**
+     * Adds a new entry to the hosts file.
+     *
+     * @param string|null $domain The domain to add.
+     * @param string|null $key    The key associated with the domain.
+     *
+     * @return void
+     */
     private static function addEntry(?string $domain, ?string $key): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
@@ -60,6 +74,15 @@ class HomeHelper
         exit();
     }
 
+    /**
+     * Updates an existing entry in the hosts file.
+     *
+     * @param int|null    $line_number The line number of the entry to update.
+     * @param string|null $domain      The updated domain.
+     * @param string|null $key         The updated key.
+     *
+     * @return void
+     */
     private static function updateEntry(?int $line_number, ?string $domain, ?string $key): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
@@ -78,6 +101,14 @@ class HomeHelper
         exit();
     }
 
+    /**
+     * Deletes an entry from the hosts file and updates related log files.
+     *
+     * @param int|null    $line_number       The line number of the entry to delete.
+     * @param string|null $domain_to_delete  The domain to delete from the logs.
+     *
+     * @return void
+     */
     private static function deleteEntry(?int $line_number, ?string $domain_to_delete): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
@@ -112,6 +143,16 @@ class HomeHelper
         header('Location: /home');
         exit();
     }
+
+    /**
+     * Generates an HTML table row for a host entry.
+     *
+     * @param int    $lineNumber The line number of the entry.
+     * @param string $domain     The domain of the entry.
+     * @param string $key        The key of the entry.
+     *
+     * @return string The HTML table row for the host entry.
+     */
     public static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
     {
         return '<tr>
@@ -136,7 +177,9 @@ class HomeHelper
     /**
      * Generates the hosts table HTML for display.
      *
-     * @return string
+     * Retrieves all host entries and organizes them into two columns for display.
+     *
+     * @return string The HTML for the hosts table.
      */
     public static function getHostsTableHtml(): string
     {

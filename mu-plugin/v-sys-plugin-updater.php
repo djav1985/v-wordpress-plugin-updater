@@ -1,6 +1,11 @@
 <?php
 
-/**
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
  * Plugin Name: WP Plugin Updater
  * Plugin URI: https://vontainment.com
  * Description: This plugin updates your WordPress plugins.
@@ -8,16 +13,19 @@
  * Author: Vontainment
  * Author URI: https://vontainment.com
  *
- * @package VontainmentPluginUpdater
- */
+ * @package VontainmentPluginUpdater */
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Schedule daily plugin update checks.
- */
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * Schedule daily plugin update checks. */
 function vontmnt_plugin_updater_schedule_updates(): void
 {
     if (! wp_next_scheduled('vontmnt_plugin_updater_check_updates')) {
@@ -29,9 +37,13 @@ add_action('wp', 'vontmnt_plugin_updater_schedule_updates');
 
 add_action('vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_updates');
 
-/**
- * Run plugin updates for all installed plugins.
- */
+/** 
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * Run plugin updates for all installed plugins. */
 function vontmnt_plugin_updater_run_updates(): void
 {
     $plugins = get_plugins();

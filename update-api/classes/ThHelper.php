@@ -1,18 +1,25 @@
 <?php
 
-// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: ThHelper.php
- * Description: WordPress Update API Helper for theme updates
+ * Description: WordPress Update API
  */
 
-
-class ThHelper
+class ThHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
+    /**
+     * Handles the incoming request for theme-related actions.
+     *
+     * Validates CSRF tokens and determines whether to upload or delete themes.
+     *
+     * @return void
+     */
     public static function handleRequest(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -37,6 +44,13 @@ class ThHelper
         }
     }
 
+    /**
+     * Uploads theme files to the server.
+     *
+     * Validates file extensions, removes existing themes with the same slug, and moves the uploaded files.
+     *
+     * @return void
+     */
     private static function uploadThemeFiles(): void
     {
         $allowed_extensions = ['zip'];
@@ -87,6 +101,15 @@ class ThHelper
         exit();
     }
 
+    /**
+     * Deletes a theme file from the server.
+     *
+     * Validates the theme name and ensures the file exists before deletion.
+     *
+     * @param string|null $theme_name The name of the theme to delete.
+     *
+     * @return void
+     */
     private static function deleteTheme(?string $theme_name): void
     {
         $theme_name = UtilityHandler::validateFilename($theme_name);
@@ -108,6 +131,14 @@ class ThHelper
         }
     }
 
+    /**
+     * Generates an HTML table row for a theme.
+     *
+     * @param string $theme      The theme file path.
+     * @param string $theme_name The name of the theme.
+     *
+     * @return string The HTML table row for the theme.
+     */
     public static function generateThemeTableRow(string $theme, string $theme_name): string
     {
         return '<tr>
@@ -126,7 +157,9 @@ class ThHelper
     /**
      * Generates the HTML for the themes table.
      *
-     * @return string
+     * Retrieves all theme files and organizes them into two columns for display.
+     *
+     * @return string The HTML for the themes table.
      */
     public static function getThemesTableHtml(): string
     {

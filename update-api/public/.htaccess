@@ -1,20 +1,20 @@
 RewriteEngine On
 
-# Redirect '/', '/index.php', and '/login.php' for external requests only
-RewriteCond %{THE_REQUEST} \s(/|/index\.php|/login\.php) [NC]
-RewriteRule ^(index\.php|login\.php.*)?$ /home [L,R=301]
+# External redirect /login.php → /login
+RewriteCond %{THE_REQUEST} \s/login\.php\s [NC]
+RewriteRule ^login\.php$ /login [R=301,L]
 
-# Internally rewrite /login to login.php
-RewriteCond %{REQUEST_URI} ^/login$
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^login$ /login.php [L]
+# External redirect / or /index.php → /home
+#    (only when the raw request was exactly "/" or "/index.php")
+RewriteCond %{THE_REQUEST} \s/(?:index\.php)?\s [NC]
+RewriteRule ^(?:index\.php)?$ /home [R=301,L]
 
-# Internally rewrite /home, /plupdate, /thupdate, /logs to index.php?page=<page>
-RewriteCond %{REQUEST_URI} ^/(home|plupdate|thupdate|logs)$
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(home|plupdate|thupdate|logs)$ /index.php?page=$1 [L]
+# Internal rewrite /login → login.php
+RewriteRule ^login$ login.php [L]
+
+# Internal rewrite /home, /plupdate, /thupdate, /logs → index.php?page=$1
+RewriteRule ^(home|plupdate|thupdate|logs)$ index.php?page=$1 [L,QSA]
+
 
 # Enable caching for certain file types
 <IfModule mod_expires.c>

@@ -1,19 +1,20 @@
 <?php
 
-/*
- * Project: Update API
- * Author: Vontainment
- * URL: https://vontainment.com
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ * @version 3.0.0
+ *
  * File: auth-lib.php
  * Description: WordPress Update API
-*/
-
-
+ */
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     if (isset($_POST["logout"])) {
         session_destroy();
-        header("Location: login.php");
+        header("Location: /login");
         exit();
     } else {
         header('Location: /');
