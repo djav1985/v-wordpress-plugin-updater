@@ -17,8 +17,7 @@ class PlHelper
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return;
-        }
-        if (
+        } elseif (
             $_SERVER['REQUEST_METHOD'] === 'POST' &&
             isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
             hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
