@@ -1,4 +1,5 @@
 <?php
+
 // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
@@ -22,20 +23,14 @@ class PlHelper
             if (isset($_FILES['plugin_file'])) {
                 self::uploadPluginFiles();
             } elseif (isset($_POST['delete_plugin'])) {
-                $plugin_name = isset($_POST['plugin_name']) ? SecurityHandler::validateSlug($_POST['plugin_name']) : null;
+                $plugin_name = isset($_POST['plugin_name']) ? UtilityHandler::validateSlug($_POST['plugin_name']) : null;
                 self::deletePlugin($plugin_name);
-            } else {
-                $error = 'Invalid form action.';
-                ErrorHandler::logMessage($error);
-                $_SESSION['messages'][] = $error;
-                header('Location: /plupdate');
-                exit();
             }
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $error = 'Invalid CSRF token.';
+        } else {
+            $error = 'Invalid Form Action.';
             ErrorHandler::logMessage($error);
             $_SESSION['messages'][] = $error;
-            header('Location: /plupdate');
+            header('Location: /');
             exit();
         }
     }
@@ -47,17 +42,17 @@ class PlHelper
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['plugin_file']['name'][$i])
-                ? SecurityHandler::validateFilename($_FILES['plugin_file']['name'][$i])
-                : '';
+            ? UtilityHandler::validateFilename($_FILES['plugin_file']['name'][$i])
+            : '';
             $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
-                ? $_FILES['plugin_file']['tmp_name'][$i]
-                : '';
+            ? $_FILES['plugin_file']['tmp_name'][$i]
+            : '';
             $file_size = isset($_FILES['plugin_file']['size'][$i])
-                ? filter_var($_FILES['plugin_file']['size'][$i], FILTER_VALIDATE_INT)
-                : 0;
+            ? filter_var($_FILES['plugin_file']['size'][$i], FILTER_VALIDATE_INT)
+            : 0;
             $file_error = isset($_FILES['plugin_file']['error'][$i])
-                ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
-                : UPLOAD_ERR_NO_FILE;
+            ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
+            : UPLOAD_ERR_NO_FILE;
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
             $plugin_slug = explode('_', $file_name)[0];
             $existing_plugins = glob(PLUGINS_DIR . '/' . $plugin_slug . '_*');
@@ -90,7 +85,7 @@ class PlHelper
 
     private static function deletePlugin(?string $plugin_name): void
     {
-        $plugin_name = SecurityHandler::validateFilename($plugin_name);
+        $plugin_name = UtilityHandler::validateFilename($plugin_name);
         $plugin_name = basename((string) $plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
         if (
@@ -116,8 +111,8 @@ class PlHelper
             <td>
                 <form class="delete-plugin-form" action="/plupdate" method="POST">
                     <input type="hidden" name="plugin_name" value="' .
-                        htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') .
-                    '">
+                    htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') .
+                '">
                     <button class="pl-submit" type="submit" name="delete_plugin">Delete</button>
                 </form>
             </td>

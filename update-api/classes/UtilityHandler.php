@@ -1,16 +1,17 @@
 <?php
+
 // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
  * Project: Update API
  * Author: Vontainment
  * URL: https://vontainment.com
- * File: SecurityHandler.php
+ * File: UtilityHandler.php
  * Description: Security utilities (moved from waf-lib.php)
  */
 
 
-class SecurityHandler
+class UtilityHandler
 {
     /**
      * Validate a domain string

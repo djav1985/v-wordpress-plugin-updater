@@ -10,10 +10,10 @@
 // Set secure session cookie parameters before starting the session
 $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 session_set_cookie_params([
-    'httponly' => true,
-    'secure' => $secureFlag,
-    'samesite' => 'Lax'
-]);
+                           'httponly' => true,
+                           'secure'   => $secureFlag,
+                           'samesite' => 'Lax',
+                          ]);
 session_start();
 require_once '../config.php';
 require_once '../lib/class-lib.php';
@@ -28,6 +28,7 @@ require_once '../lib/auth-lib.php';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>API Update Admin Login</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/login.css">
 </head>
 

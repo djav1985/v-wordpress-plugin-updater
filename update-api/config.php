@@ -3,6 +3,8 @@
 define('VALID_USERNAME', 'admin');
 define('VALID_PASSWORD', 'admin');
 
+define('SESSION_TIMEOUT_LIMIT', 1800);
+
 define('BASE_DIR', dirname($_SERVER['DOCUMENT_ROOT']));
 define('HOSTS_ACL', BASE_DIR . '/');
 define('PLUGINS_DIR', BASE_DIR . '/storage/plugins');

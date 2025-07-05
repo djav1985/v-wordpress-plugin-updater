@@ -1,4 +1,5 @@
 <?php
+
 // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
@@ -22,20 +23,14 @@ class ThHelper
             if (isset($_FILES['theme_file'])) {
                 self::uploadThemeFiles();
             } elseif (isset($_POST['delete_theme'])) {
-                $theme_name = isset($_POST['theme_name']) ? SecurityHandler::validateSlug($_POST['theme_name']) : null;
+                $theme_name = isset($_POST['theme_name']) ? UtilityHandler::validateSlug($_POST['theme_name']) : null;
                 self::deleteTheme($theme_name);
-            } else {
-                $error = 'Invalid form action.';
-                ErrorHandler::logMessage($error);
-                $_SESSION['messages'][] = $error;
-                header('Location: /thupdate');
-                exit();
             }
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $error = 'Invalid CSRF token.';
+        } else {
+            $error = 'Invalid Form Action.';
             ErrorHandler::logMessage($error);
             $_SESSION['messages'][] = $error;
-            header('Location: /thupdate');
+            header('Location: /');
             exit();
         }
     }
@@ -47,7 +42,7 @@ class ThHelper
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['theme_file']['name'][$i])
-                ? SecurityHandler::validateFilename($_FILES['theme_file']['name'][$i])
+                ? UtilityHandler::validateFilename($_FILES['theme_file']['name'][$i])
                 : '';
             $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
                 ? $_FILES['theme_file']['tmp_name'][$i]
@@ -90,7 +85,7 @@ class ThHelper
 
     private static function deleteTheme(?string $theme_name): void
     {
-        $theme_name = SecurityHandler::validateFilename($theme_name);
+        $theme_name = UtilityHandler::validateFilename($theme_name);
         $theme_name = basename((string) $theme_name);
         $theme_path = THEMES_DIR . '/' . $theme_name;
         if (

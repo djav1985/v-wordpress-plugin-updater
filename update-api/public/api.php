@@ -12,7 +12,7 @@ require_once '../lib/class-lib.php';
 
 
 $ip = $_SERVER['REMOTE_ADDR'];
-if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+if (UtilityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(403);
     ErrorHandler::logMessage('Forbidden or invalid request from ' . $ip);
     exit();
@@ -35,10 +35,10 @@ if (SecurityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET')
         $values[] = $_GET[$p];
     }
     list($type, $domain, $key, $slug, $version) = $values;
-    $domain = SecurityHandler::validateDomain($domain);
-    $key = SecurityHandler::validateKey($key);
-    $slug = SecurityHandler::validateSlug($slug);
-    $version = SecurityHandler::validateVersion($version);
+    $domain = UtilityHandler::validateDomain($domain);
+    $key = UtilityHandler::validateKey($key);
+    $slug = UtilityHandler::validateSlug($slug);
+    $version = UtilityHandler::validateVersion($version);
 
     if ($type === 'theme') {
         $dir = THEMES_DIR;

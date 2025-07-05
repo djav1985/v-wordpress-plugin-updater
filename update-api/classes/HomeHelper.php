@@ -1,4 +1,5 @@
 <?php
+
 // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
@@ -19,32 +20,26 @@ class HomeHelper
             isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
             hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
-            // Validate all POST inputs
-            $domain = isset($_POST['domain']) ? SecurityHandler::validateDomain($_POST['domain']) : null;
-            $key = isset($_POST['key']) ? SecurityHandler::validateKey($_POST['key']) : null;
+            $domain = isset($_POST['domain']) ? UtilityHandler::validateDomain($_POST['domain']) : null;
+            $key = isset($_POST['key']) ? UtilityHandler::validateKey($_POST['key']) : null;
             $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
-
             if (isset($_POST['add_entry'])) {
                 self::addEntry($domain, $key);
             } elseif (isset($_POST['update_entry'])) {
                 self::updateEntry($id, $domain, $key);
             } elseif (isset($_POST['delete_entry'])) {
                 self::deleteEntry($id, $domain);
-            } else {
-                $error = 'Invalid form action.';
-                ErrorHandler::logMessage($error);
-                $_SESSION['messages'][] = $error;
-                header('Location: /');
-                exit();
             }
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $error = 'Invalid CSRF token.';
+        } else {
+            $error = 'Invalid Form Action.';
             ErrorHandler::logMessage($error);
             $_SESSION['messages'][] = $error;
             header('Location: /');
             exit();
         }
     }
+
+    // Move the private static methods outside of handleRequest and inside the class
 
     private static function addEntry(?string $domain, ?string $key): void
     {
@@ -87,13 +82,15 @@ class HomeHelper
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
         unset($entries[$line_number]);
         if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
-            ErrorHandler::logMessage('Failed to delete entry.');
+            $error = 'Failed to delete entry.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
         }
 
         $log_files = [
-            'plugin.log',
-            'theme.log',
-        ];
+                      'plugin.log',
+                      'theme.log',
+                     ];
         $safe_domain_to_delete = htmlspecialchars($domain_to_delete, ENT_QUOTES, 'UTF-8');
         foreach ($log_files as $log_file) {
             $log_file_path = LOG_DIR . "/$log_file";
@@ -103,7 +100,9 @@ class HomeHelper
                     return strpos($entry, $safe_domain_to_delete) !== 0;
                 });
                 if (file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n") === false) {
-                    ErrorHandler::logMessage('Failed to update log file ' . $log_file_path);
+                    $error = 'Failed to update log file ' . $log_file_path;
+                    ErrorHandler::logMessage($error);
+                    $_SESSION['messages'][] = $error;
                 }
             }
         }
@@ -117,12 +116,12 @@ class HomeHelper
             <form method="post" action="/">
                 <input type="hidden" name="id" value="' . htmlspecialchars($lineNumber, ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
-                    htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
-                '"></td>
+                htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
+            '"></td>
                 <td>
                     <input class="hosts-key" type="text" name="key" value="' .
-                        htmlspecialchars($key, ENT_QUOTES, 'UTF-8') .
-                    '">
+                    htmlspecialchars($key, ENT_QUOTES, 'UTF-8') .
+                '">
                 </td>
                 <td>
                     <input class="hosts-submit" type="submit" name="update_entry" value="Update">
@@ -147,7 +146,7 @@ class HomeHelper
             $entriesColumn1 = array_slice($entries, 0, $halfCount);
             $entriesColumn2 = array_slice($entries, $halfCount);
             $hostsTableHtml .= '<div class="row">';
-        // Column 1
+            // Column 1
             $hostsTableHtml .= '<div class="column">
                 <table>
                     <thead>
@@ -168,7 +167,7 @@ class HomeHelper
             }
 
             $hostsTableHtml .= '</tbody></table></div>';
-        // Column 2
+            // Column 2
             $hostsTableHtml .= '<div class="column">
                 <table>
                     <thead>
@@ -181,7 +180,7 @@ class HomeHelper
                     <tbody>';
             foreach ($entriesColumn2 as $index => $entry) {
                 $lineNumber = $index + $halfCount;
-            // Correct line number for column 2
+        // Correct line number for column 2
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $key = isset($fields[1]) ? $fields[1] : '';

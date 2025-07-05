@@ -135,7 +135,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | [ThHelper.php](update-api/classes/ThHelper.php) | Process theme uploads and deletions securely. |
 | [LogsHelper.php](update-api/classes/LogsHelper.php) | Group log entries by domain for easy review. |
 | [ErrorHandler.php](update-api/classes/ErrorHandler.php) | Render session messages and errors in views. |
-| [SecurityHandler.php](update-api/classes/SecurityHandler.php) | Validate input data and maintain the IP blacklist. |
+| [UtilityHandler.php](update-api/classes/UtilityHandler.php) | Validate input data and maintain the IP blacklist. |
 
 </details>
 

@@ -1,4 +1,5 @@
 <?php
+
 // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
@@ -16,13 +17,13 @@ class LogsHelper
     {
         $log_file_path = LOG_DIR . "/$logFile";
         $output = '';
-
         if (file_exists($log_file_path)) {
             $log_array = file($log_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             $log_by_domain = [];
             foreach ($log_array as $entry) {
                 list($domain, $date, $status) = explode(' ', $entry);
                 $log_by_domain[$domain] = [
+
                                            'date'   => $date,
                                            'status' => $status,
                                           ];
@@ -50,9 +51,9 @@ class LogsHelper
                         '</p>';
                 } else {
                     echo '<p class="log-entry" style="color:green;">' .
-                        htmlspecialchars($entry['date'], ENT_QUOTES, 'UTF-8') . ' ' .
-                        htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8') .
-                        '</p>';
+                    htmlspecialchars($entry['date'], ENT_QUOTES, 'UTF-8') . ' ' .
+                    htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8') .
+                    '</p>';
                 }
                 echo '</div>';
             }
