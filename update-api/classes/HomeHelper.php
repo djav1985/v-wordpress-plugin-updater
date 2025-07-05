@@ -15,6 +15,9 @@ class HomeHelper
 {
     public static function handleRequest(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
         if (
             $_SERVER['REQUEST_METHOD'] === 'POST' &&
             isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
