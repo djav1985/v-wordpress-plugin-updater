@@ -40,6 +40,25 @@ if (UtilityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') 
     $slug = UtilityHandler::validateSlug($slug);
     $version = UtilityHandler::validateVersion($version);
 
+    $invalid = [];
+    if ($domain === null) {
+        $invalid[] = 'domain';
+    }
+    if ($key === null) {
+        $invalid[] = 'key';
+    }
+    if ($slug === null) {
+        $invalid[] = 'slug';
+    }
+    if ($version === null) {
+        $invalid[] = 'version';
+    }
+    if (!empty($invalid)) {
+        http_response_code(400);
+        ErrorHandler::logMessage('Bad request invalid parameter: ' . implode(', ', $invalid));
+        exit();
+    }
+
     if ($type === 'theme') {
         $dir = THEMES_DIR;
         $log = LOG_DIR . '/theme.log';
