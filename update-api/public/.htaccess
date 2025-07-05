@@ -15,8 +15,19 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Rewrite /login to /login.php so /login works as the login URL
-RewriteRule ^login$ login.php [L]
 
-# Route all requests to index.php for the PHP router
-RewriteRule ^ index.php [L]
+# Redirect '/', '/index.php', and '/login.php' for external requests only
+RewriteCond %{THE_REQUEST} \s(/|/index\.php|/login\.php) [NC]
+RewriteRule ^(index\.php|feeds\.php.*)?$ /home [L,R=301]
+
+# Internally rewrite /login to login.php
+RewriteCond %{REQUEST_URI} ^/login$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^login$ /login.php [L]
+
+# Internally rewrite /home, /users, /accounts, /info to index.php?page=home, etc.
+RewriteCond %{REQUEST_URI} ^/(home|users|accounts|info)$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(home|users|accounts|info)$ /index.php?page=$1 [L]
