@@ -40,11 +40,11 @@ function vontmnt_plugin_updater_run_updates(): void
         $installed_version = $plugin['Version'];
         $api_url = add_query_arg(
             array(
-                'type'    => 'plugin',
-                'domain'  => rawurlencode(wp_parse_url(site_url(), PHP_URL_HOST)),
-                'slug'    => rawurlencode($plugin_slug),
-                'version' => rawurlencode($installed_version),
-                'key'     => VONTMENT_KEY,
+             'type'    => 'plugin',
+             'domain'  => rawurlencode(wp_parse_url(site_url(), PHP_URL_HOST)),
+             'slug'    => rawurlencode($plugin_slug),
+             'version' => rawurlencode($installed_version),
+             'key'     => VONTMENT_KEY,
             ),
             VONTMENT_PLUGINS
         );

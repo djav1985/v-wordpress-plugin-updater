@@ -41,11 +41,11 @@ function vontmnt_theme_updater_run_updates(): void
         $installed_version = $theme->get('Version');
         $api_url = add_query_arg(
             array(
-                'type'    => 'theme',
-                'domain'  => rawurlencode(wp_parse_url(site_url(), PHP_URL_HOST)),
-                'slug'    => rawurlencode($theme_slug),
-                'version' => rawurlencode($installed_version),
-                'key'     => VONTMENT_KEY,
+             'type'    => 'theme',
+             'domain'  => rawurlencode(wp_parse_url(site_url(), PHP_URL_HOST)),
+             'slug'    => rawurlencode($theme_slug),
+             'version' => rawurlencode($installed_version),
+             'key'     => VONTMENT_KEY,
             ),
             VONTMENT_THEMES
         );
