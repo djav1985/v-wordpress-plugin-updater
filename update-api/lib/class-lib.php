@@ -8,15 +8,22 @@
  * Description: WordPress Update API
  */
 
-// Autoload function to automatically include class files
+// Autoload function to include class files without namespaces
 spl_autoload_register(function ($class_name) {
-    $parts = explode('\\', $class_name);
-    // Remove the first part of the namespace (e.g., 'Vontainment')
-    array_shift($parts);
-    $file = dirname(__DIR__) . '/classes/' . implode('/', $parts) . '.php';
-    if (file_exists($file)) {
-        require_once $file;
-    } else {
-        error_log("Class file not found: " . $file);
+    $base = dirname(__DIR__) . '/classes/';
+    $dirs = ['forms', 'helpers', 'util'];
+    foreach ($dirs as $dir) {
+        $file = $base . $dir . '/' . $class_name . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+        // Fallback to lowercase file names
+        $file = $base . $dir . '/' . strtolower($class_name) . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
     }
+    error_log('Class file not found: ' . $class_name);
 });

@@ -10,7 +10,6 @@
 require_once '../config.php';
 require_once '../lib/class-lib.php';
 
-use UpdateApi\util\Security;
 
 $ip = $_SERVER['REMOTE_ADDR'];
 if (Security::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {

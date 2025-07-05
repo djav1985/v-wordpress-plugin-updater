@@ -8,7 +8,6 @@
  * Description: WordPress Update API
 */
 
-use UpdateApi\util\Security;
 
 $ip = $_SERVER['REMOTE_ADDR'];
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);

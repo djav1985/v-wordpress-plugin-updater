@@ -8,8 +8,6 @@
  * Description: WordPress Update API
 */
 
-use UpdateApi\forms\HomeFormHandler;
-use UpdateApi\helpers\HomeHelper;
 
 $handler = new HomeFormHandler();
 $handler->handleRequest();

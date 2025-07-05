@@ -8,8 +8,6 @@
  * Description: WordPress Update API
  */
 
-use UpdateApi\helpers\ThHelper;
-use UpdateApi\forms\ThFormHandler;
 
 $handler = new ThFormHandler();
 $handler->handleRequest();
