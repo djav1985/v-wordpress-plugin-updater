@@ -62,19 +62,18 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     ├── LICENSE
     ├── README.md
     ├── mu-plugin
-    │   ├── von-sys-plugin-updater-mu.php
-    │   ├── von-sys-plugin-updater.php
-    │   ├── von-sys-theme-updater-mu.php
-    │   └── von-sys-theme-updater.php
-    ├── png_20230308_211110_0000.png
-    ├── screenshot.jpg
-    └── update-api
-        ├── HOSTS
-        ├── app
-        ├── config.php
-        ├── lib
-        ├── public
-        └── storage
+    │   ├── v-sys-plugin-updater-mu.php
+    │   ├── v-sys-plugin-updater.php
+    │   └── v-sys-theme-updater.php
+    ├── update-api
+    │   ├── HOSTS
+    │   ├── classes
+    │   ├── config.php
+    │   ├── lib
+    │   ├── public
+    │   ├── storage
+    │   └── views
+    └── v-wordpress-plugin-updater.png
 ```
 
 ---
@@ -95,28 +94,16 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | File                                       | Summary                                                                                                                                                                                                                                                                                                                                                            |
 | ---                                        | ---                                                                                                                                                                                                                                                                                                                                                                |
 | [index.php](update-api/public/index.php)   | Serves as the main entry point for the Update APIs web interface, providing a dashboard for managing WordPress hosts, plugins, themes, and viewing logs. Initializes sessions and includes necessary configurations and libraries, facilitating an admin interface with essential resources for a responsive and interactive user experience.                      |
+| [api.php](update-api/public/api.php)       | Unified API endpoint that handles both plugin and theme update requests, validating domains and keys while enforcing IP blacklist rules. Delivers update packages when newer versions are available. |
 | [.htaccess](update-api/public/.htaccess)   | Enhances URL routing by managing redirects and internal rewrites, ensuring clear and organized access to key sections like home, plupdate, thupdate, and logs. This optimization streamlines external requests and maintains seamless internal navigation within the update-api component of the repository.                                                       |
 | [login.php](update-api/public/login.php)   | Provides an admin login interface for the Update API, enhancing security and access control. Integrates with configuration, authentication, and web application firewall libraries to facilitate validation and protection mechanisms within the broader WordPress plugin update ecosystem. Presents a user-friendly login form to manage API updates effectively. |
-| [robots.txt](update-api/public/robots.txt) | Regulate web crawler access to the update-api directory with a specified delay, optimizing server load and ensuring the smooth operation of the plugin updater functionality within the repositorys architecture.                                                                                                                                                  |
+| [robots.txt](update-api/public/robots.txt) | Regulates web crawler access to the update-api directory with a specified delay, optimizing server load and ensuring the smooth operation of the plugin updater functionality within the repositorys architecture.                                                                                                                                                  |
 
 </details>
 
 <details closed><summary>update-api.public.themes</summary>
 
 | File                                                  | Summary                                                                                                                                                                                                                                                                                                           |
-| ---                                                   | ---                                                                                                                                                                                                                                                                                                               |
-| [api.php](update-api/public/themes/api.php)           | Serve as an endpoint for managing theme updates, verifying domain and key authenticity, and delivering updated theme versions to authorized users. Implements IP blacklisting and logs activity to enhance security and traceability, ensuring only authenticated requests can access and download theme updates. |
-| [download.php](update-api/public/themes/download.php) | Provides a secure endpoint for downloading theme updates by validating user credentials and domain against an authorized list, ensuring only legitimate users can access the requested files while blocking blacklisted IPs.                                                                                      |
-
-</details>
-
-<details closed><summary>update-api.public.plugins</summary>
-
-| File                                                   | Summary                                                                                                                                                                                                                                                                                                                                       |
-| ---                                                    | ---                                                                                                                                                                                                                                                                                                                                           |
-| [api.php](update-api/public/plugins/api.php)           | Provides an API for managing WordPress plugin updates, verifying access through domain and key checks, validating IP addresses, and delivering new plugin versions when available. Enhances security with IP blacklisting and logs both successful updates and unauthorized access attempts.                                                  |
-| [download.php](update-api/public/plugins/download.php) | Facilitates secure plugin downloads by validating user credentials against a predefined list. Prevents unauthorized access and ensures only authorized users can download specified files. Integrates security measures like input sanitization and IP blacklisting to safeguard the update process within the WordPress plugin architecture. |
-
 </details>
 
 <details closed><summary>update-api.storage</summary>
@@ -166,10 +153,9 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 | File                                                                     | Summary                                                                                                                                                                                                                                                                                                                                                   |
 | ---                                                                      | ---                                                                                                                                                                                                                                                                                                                                                       |
-| [von-sys-theme-updater.php](mu-plugin/von-sys-theme-updater.php)         | Automates the daily update checks for WordPress themes by scheduling events, retrieving update details from a specified API, downloading, and installing theme updates seamlessly, ensuring themes remain current. Integrates error logging to handle update failures and provides feedback on the update status for each theme.                          |
-| [von-sys-plugin-updater.php](mu-plugin/von-sys-plugin-updater.php)       | Facilitates automated plugin updates in a WordPress environment by scheduling daily checks and downloading new versions if available, ensuring plugins remain current and secure with minimal manual intervention. Integrates with the Vontainment API to verify and obtain updates, enhancing overall site maintenance efficiency.                       |
-| [von-sys-plugin-updater-mu.php](mu-plugin/von-sys-plugin-updater-mu.php) | WP Plugin Updater Multisite automates daily checks and updates for WordPress plugins within a multisite environment, ensuring all plugins remain current by interacting with the Vontainment API to fetch updates, download, and install them seamlessly.                                                                                                 |
-| [von-sys-theme-updater-mu.php](mu-plugin/von-sys-theme-updater-mu.php)   | Automates daily WordPress theme updates across multisite installations. Handles scheduled update checks, verifies theme versions against Vontainment API, and manages theme package downloads and installations. Logs outcomes and errors to ensure smooth, repeated theme maintenance. Integrates seamlessly into the existing plugin updater framework. |
+| [v-sys-theme-updater.php](mu-plugin/v-sys-theme-updater.php)         | Automates the daily update checks for WordPress themes by scheduling events, retrieving update details from a specified API, downloading, and installing theme updates seamlessly, ensuring themes remain current. Integrates error logging to handle update failures and provides feedback on the update status for each theme.                          |
+| [v-sys-plugin-updater.php](mu-plugin/v-sys-plugin-updater.php)       | Facilitates automated plugin updates in a WordPress environment by scheduling daily checks and downloading new versions if available, ensuring plugins remain current and secure with minimal manual intervention. Integrates with the Vontainment API to verify and obtain updates, enhancing overall site maintenance efficiency.                       |
+| [v-sys-plugin-updater-mu.php](mu-plugin/v-sys-plugin-updater-mu.php) | WP Plugin Updater Multisite automates daily checks and updates for WordPress plugins within a multisite environment, ensuring all plugins remain current by interacting with the Vontainment API to fetch updates, download, and install them seamlessly.                                                                                                 |
 
 </details>
 
@@ -197,8 +183,8 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
    ```php
    define('VONTMENT_KEY', 'your-api-key');
-   define('VONTMENT_PLUGINS', 'https://example.com/update-api/public/plugins/api.php');
-   define('VONTMENT_THEMES', 'https://example.com/update-api/public/themes/api.php');
+   define('VONTMENT_PLUGINS', 'https://example.com/update-api/public/api.php');
+   define('VONTMENT_THEMES', 'https://example.com/update-api/public/api.php');
    ```
 5. Ensure the web server user owns the `update-api/storage` directory so uploads and logs can be written.
 
