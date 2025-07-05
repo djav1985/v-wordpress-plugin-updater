@@ -115,7 +115,7 @@ class HomeHelper
     public static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
     {
         return '<tr>
-            <form method="post" action="/">
+            <form method="post" action="/home">
                 <input type="hidden" name="id" value="' . htmlspecialchars($lineNumber, ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
