@@ -22,9 +22,12 @@ add_action( 'wp', 'vontmnt_plugin_updater_schedule_updates' );
  * Schedule daily plugin update checks for multisite.
  */
 function vontmnt_plugin_updater_schedule_updates(): void {
-	if ( ! wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
-		wp_schedule_event( time(), 'daily', 'vontmnt_plugin_updater_check_updates' );
-	}
+    if ( ! is_main_site() ) {
+        return;
+    }
+    if ( ! wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
+        wp_schedule_event( time(), 'daily', 'vontmnt_plugin_updater_check_updates' );
+    }
 }
 
 add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_updates' );
