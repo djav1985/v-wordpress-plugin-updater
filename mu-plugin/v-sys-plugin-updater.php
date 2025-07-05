@@ -68,16 +68,14 @@ function vontmnt_plugin_updater_run_updates(): void
 
             require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
             $upgrader = new Plugin_Upgrader();
-            add_filter(
-                'upgrader_package_options',
-                function ($options) use ($plugin_zip_file) {
-                    $options['package']           = $plugin_zip_file;
-                    $options['clear_destination'] = true;
-                    return $options;
-                }
-            );
+            $callback = function ($options) use ($plugin_zip_file) {
+                $options['package']           = $plugin_zip_file;
+                $options['clear_destination'] = true;
+                return $options;
+            };
+            add_filter('upgrader_package_options', $callback);
             $upgrader->install($plugin_zip_file);
-            remove_all_filters('upgrader_package_options');
+            remove_filter('upgrader_package_options', $callback);
 
             // Delete the plugin zip file using wp_delete_file.
             wp_delete_file($plugin_zip_file);

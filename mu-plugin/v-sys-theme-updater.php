@@ -68,16 +68,14 @@ function vontmnt_theme_updater_run_updates(): void
 
             require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
             $upgrader = new Theme_Upgrader();
-            add_filter(
-                'upgrader_package_options',
-                function ($options) use ($theme_zip_file) {
-                    $options['package']           = $theme_zip_file;
-                    $options['clear_destination'] = true;
-                    return $options;
-                }
-            );
+            $callback = function ($options) use ($theme_zip_file) {
+                $options['package']           = $theme_zip_file;
+                $options['clear_destination'] = true;
+                return $options;
+            };
+            add_filter('upgrader_package_options', $callback);
             $upgrader->install($theme_zip_file);
-            remove_all_filters('upgrader_package_options');
+            remove_filter('upgrader_package_options', $callback);
 
             // Delete the theme zip file using wp_delete_file.
             wp_delete_file($theme_zip_file);
