@@ -41,11 +41,15 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
 
         if (SecurityHandler::isBlacklisted($ip)) {
             // Notify user if IP has been blacklisted
-            $_SESSION['messages'][] = 'Your IP has been blacklisted due to multiple failed login attempts.';
+            $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
         } else {
             // Update the number of failed login attempts and check if the IP should be blacklisted
             SecurityHandler::updateFailedAttempts($ip);
-            $_SESSION['messages'][] = 'Invalid username or password.';
+            $error = 'Invalid username or password.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
         }
     }
 }

@@ -18,5 +18,5 @@ spl_autoload_register(function ($class_name) {
             return;
         }
     }
-    error_log('Class file not found: ' . $class_name);
+    ErrorHandler::logMessage('Class file not found: ' . $class_name);
 });
