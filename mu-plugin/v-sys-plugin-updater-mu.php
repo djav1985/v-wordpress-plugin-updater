@@ -68,8 +68,12 @@ function vontmnt_plugin_updater_run_updates(): void {
 
 				require_once ABSPATH . 'wp-admin/includes/file.php';
 				$upload_dir      = wp_upload_dir();
-				$tmp_file        = download_url( $download_url );
-				$plugin_zip_file = $upload_dir['path'] . '/' . basename( $download_url );
+                               $tmp_file        = download_url( $download_url );
+                               if ( is_wp_error( $tmp_file ) ) {
+                                       error_log( 'Plugin download failed: ' . $tmp_file->get_error_message() );
+                                       continue;
+                               }
+                               $plugin_zip_file = $upload_dir['path'] . '/' . basename( $download_url );
 
 				// Move the downloaded file to the uploads directory using WP_Filesystem.
 				global $wp_filesystem;
@@ -77,7 +81,10 @@ function vontmnt_plugin_updater_run_updates(): void {
 					require_once ABSPATH . '/wp-admin/includes/file.php';
 					WP_Filesystem();
 				}
-				$wp_filesystem->move( $tmp_file, $plugin_zip_file, true );
+                               if ( ! $wp_filesystem->move( $tmp_file, $plugin_zip_file, true ) ) {
+                                       error_log( 'Failed to move downloaded plugin file.' );
+                                       continue;
+                               }
 
 				require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 				$upgrader = new Plugin_Upgrader();
