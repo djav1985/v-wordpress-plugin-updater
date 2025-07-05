@@ -7,7 +7,15 @@
  * Description: WordPress Update API
 */
 
+// Set secure session cookie parameters before starting the session
+$secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+session_set_cookie_params([
+    'httponly' => true,
+    'secure' => $secureFlag,
+    'samesite' => 'Lax'
+]);
 session_start();
+session_regenerate_id(true); // Regenerate session ID to prevent session fixation attacks
 
 require_once '../config.php';
 require_once '../lib/class-lib.php';
@@ -78,6 +86,7 @@ require_once '../lib/load-lib.php';
         </p>
     </footer>
     <script src="/assets/js/footer-scripts.js"></script>
+    <?php echo ErrorHandler::displayAndClearMessages(); ?>
 </body>
 
 </html>

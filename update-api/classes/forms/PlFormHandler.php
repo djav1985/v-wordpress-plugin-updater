@@ -62,31 +62,19 @@ class PlFormHandler
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                echo '<script>'
-                    . 'alert("Error uploading: '
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . '. Only .zip files are allowed.");'
-                    . 'window.location.href = "/plupdate";'
-                    . '</script>';
-                exit;
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
+                header('Location: /plupdate');
+                exit();
             }
 
             $plugin_path = PLUGINS_DIR . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $plugin_path)) {
-                echo '<script>'
-                    . 'alert("'
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . ' uploaded successfully.");'
-                    . 'window.location.href = "/plupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
-                echo '<script>'
-                    . 'alert("Error uploading: '
-                    . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
-                    . '");'
-                    . 'window.location.href = "/plupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
             }
+            header('Location: /plupdate');
+            exit();
         }
     }
 
@@ -100,16 +88,12 @@ class PlFormHandler
             && dirname(realpath($plugin_path)) === realpath(PLUGINS_DIR)
         ) {
             if (unlink($plugin_path)) {
-                echo '<script>'
-                    . 'alert("Plugin deleted successfully!");'
-                    . 'window.location.href = "/plupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Plugin deleted successfully!';
             } else {
-                echo '<script>'
-                    . 'alert("Failed to delete plugin file. Please try again.");'
-                    . 'window.location.href = "/plupdate";'
-                    . '</script>';
+                $_SESSION['messages'][] = 'Failed to delete plugin file. Please try again.';
             }
+            header('Location: /plupdate');
+            exit();
         }
     }
 }

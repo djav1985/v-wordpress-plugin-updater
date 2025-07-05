@@ -46,6 +46,7 @@ class HomeFormHandler
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
         $new_entry = $safe_domain . ' ' . $safe_key;
         file_put_contents($hosts_file, $new_entry . "\n", FILE_APPEND | LOCK_EX);
+        $_SESSION['messages'][] = 'Entry added successfully.';
         header('Location: /home');
         exit();
     }
@@ -59,6 +60,7 @@ class HomeFormHandler
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
         $entries[$line_number] = $safe_domain . ' ' . $safe_key;
         file_put_contents($hosts_file, implode("\n", $entries) . "\n");
+        $_SESSION['messages'][] = 'Entry updated successfully.';
         header('Location: /home');
         exit();
     }
@@ -87,6 +89,7 @@ class HomeFormHandler
                 file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n");
             }
         }
+        $_SESSION['messages'][] = 'Entry deleted successfully.';
         header('Location: /home');
         exit();
     }

@@ -7,6 +7,13 @@
  * Description: WordPress Update API
 */
 
+// Set secure session cookie parameters before starting the session
+$secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+session_set_cookie_params([
+    'httponly' => true,
+    'secure' => $secureFlag,
+    'samesite' => 'Lax'
+]);
 session_start();
 require_once '../config.php';
 require_once '../lib/class-lib.php';
@@ -35,10 +42,11 @@ require_once '../lib/auth-lib.php';
             <input type="password" name="password"><br><br>
             <input type="submit" value="Log In">
         </form>
-        <?php if (isset($error_msg)) : ?>
-            <div id="error-msg"><?php echo $error_msg; ?></div>
-        <?php endif; ?>
+    <?php if (isset($error_msg)) : ?>
+        <div id="error-msg"><?php echo $error_msg; ?></div>
+    <?php endif; ?>
     </div>
+    <?php echo ErrorHandler::displayAndClearMessages(); ?>
 </body>
 
 </html>
