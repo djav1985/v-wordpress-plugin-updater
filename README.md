@@ -209,6 +209,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 ## 🎗 License
 
-This project is licensed under the [GNU General Public License v3](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
 
 ---
