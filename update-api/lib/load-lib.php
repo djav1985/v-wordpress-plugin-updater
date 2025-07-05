@@ -19,9 +19,19 @@ $routes = [
            '/'         => 'home.php',
            '/plupdate' => 'plupdate.php',
            '/thupdate' => 'thupdate.php',
-           '/logs'     => 'logs.php',
+          '/logs'     => 'logs.php',
     // Add more routes here as needed
           ];
+
+// Verify that the User-Agent matches the one used during login
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    if (!isset($_SESSION['user_agent']) || $_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
+        session_unset();
+        session_destroy();
+        header('Location: /login');
+        exit();
+    }
+}
 
 // Combined blacklist, login logic, redirection, and routing
 if (SecurityHandler::isBlacklisted($ip)) {

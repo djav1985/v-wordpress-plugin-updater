@@ -37,8 +37,6 @@ require_once '../lib/load-lib.php';
     <script src="/assets/js/header-scripts.js"></script>
     <link rel="stylesheet" href="/assets/css/styles.css">
     <link rel="stylesheet" href="/assets/css/mobile.css">
-
-    <title>Dashboard</title>
 </head>
 
 <body>

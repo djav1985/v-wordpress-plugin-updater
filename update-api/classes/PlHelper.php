@@ -71,8 +71,7 @@ class PlHelper
                 $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . '. Only .zip files are allowed.';
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
-                header('Location: /plupdate');
-                exit();
+                continue;
             }
 
             $plugin_path = PLUGINS_DIR . '/' . $file_name;
@@ -83,9 +82,10 @@ class PlHelper
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
             }
-            header('Location: /plupdate');
-            exit();
         }
+
+        header('Location: /plupdate');
+        exit();
     }
 
     private static function deletePlugin(?string $plugin_name): void
