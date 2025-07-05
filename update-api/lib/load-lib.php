@@ -10,18 +10,23 @@
 
 
 $ip = $_SERVER['REMOTE_ADDR'];
-$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$requestUri = rtrim($requestUri, '/');
-if ($requestUri === '') {
-    $requestUri = '/';
+
+// List of views that can be loaded. These correspond to the rewrite rules in
+// `.htaccess`.
+$allowedPages = [
+    'home',
+    'plupdate',
+    'thupdate',
+    'logs',
+    // Add more page names here as needed
+];
+
+// Sanitize and validate the requested page against the whitelist
+$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_SPECIAL_CHARS);
+if (!$page || !in_array($page, $allowedPages, true)) {
+    ErrorHandler::logMessage('Invalid page request: ' . $page, 'warning');
+    $page = null;
 }
-$routes = [
-           '/'         => 'home.php',
-           '/plupdate' => 'plupdate.php',
-           '/thupdate' => 'thupdate.php',
-          '/logs'     => 'logs.php',
-    // Add more routes here as needed
-          ];
 
 // Verify that the User-Agent matches the one used during login
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
@@ -33,7 +38,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     }
 }
 
-// Combined blacklist, login logic, redirection, and routing
+// Combined blacklist, login logic, redirection, and page loading.
 if (SecurityHandler::isBlacklisted($ip)) {
     http_response_code(403);
     $error = 'Your IP address has been blacklisted. If you believe this is an error, please contact us.';
@@ -41,24 +46,30 @@ if (SecurityHandler::isBlacklisted($ip)) {
     $_SESSION['messages'][] = $error;
     echo $error;
     exit();
-} elseif ((!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) && $requestUri !== '/login') {
+} elseif (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    // Any unauthenticated request to index.php should be sent to the login page.
     header('Location: /login');
     exit();
-} elseif (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $requestUri === '/login') {
-    header('Location: /');
-    exit();
-} elseif (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    if (array_key_exists($requestUri, $routes)) {
-        $pageFile = dirname(__DIR__) . '/views/' . $routes[$requestUri];
+} else {
+    // Authenticated user: load the requested page if it exists.
+    if ($page !== null) {
+        $pageFile = dirname(__DIR__) . '/views/' . $page . '.php';
         if (file_exists($pageFile)) {
             $pageOutput = $pageFile;
+        } else {
+            http_response_code(404);
+            $error = 'Page not found.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            echo $error;
+            exit();
         }
+    } else {
+        http_response_code(404);
+        $error = 'Page not found or access denied.';
+        ErrorHandler::logMessage($error);
+        $_SESSION['messages'][] = $error;
+        echo $error;
+        exit();
     }
-} else {
-    http_response_code(404);
-    $error = 'Page not found or access denied.';
-    ErrorHandler::logMessage($error);
-    $_SESSION['messages'][] = $error;
-    echo $error;
-    exit();
 }
