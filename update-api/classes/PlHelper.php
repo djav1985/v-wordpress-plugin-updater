@@ -110,7 +110,7 @@ class PlHelper
         }
     }
 
-    public static function generatePluginTableRow(string $plugin, string $pluginName): string
+    public static function generatePluginTableRow(string $pluginName): string
     {
         return '<tr>
             <td>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') . '</td>
@@ -149,7 +149,7 @@ class PlHelper
                     <tbody>';
             foreach ($pluginsColumn1 as $plugin) {
                 $pluginName = basename($plugin);
-                $pluginsTableHtml .= self::generatePluginTableRow($plugin, $pluginName);
+                $pluginsTableHtml .= self::generatePluginTableRow($pluginName);
             }
 
             $pluginsTableHtml .= '</tbody></table></div><div class="column"><table>
@@ -162,7 +162,7 @@ class PlHelper
                 <tbody>';
             foreach ($pluginsColumn2 as $plugin) {
                 $pluginName = basename($plugin);
-                $pluginsTableHtml .= self::generatePluginTableRow($plugin, $pluginName);
+                $pluginsTableHtml .= self::generatePluginTableRow($pluginName);
             }
 
             $pluginsTableHtml .= '</tbody></table></div></div>';
