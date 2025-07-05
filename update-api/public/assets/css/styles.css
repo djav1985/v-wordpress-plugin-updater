@@ -237,7 +237,7 @@ APP LAYOUT & CONTENT
   width: 40%;
 }
 
-#message-container>div {
+#message-container > div {
   margin-left: 10px;
 }
 
@@ -294,7 +294,7 @@ th {
   border: 2px solid blue !important;
 }
 
-.log-sub-box>h3 {
+.log-sub-box > h3 {
   margin-top: 0;
   font-size: calc(1vw + 0.5em);
 }

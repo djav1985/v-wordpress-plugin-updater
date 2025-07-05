@@ -29,7 +29,8 @@ require_once '../lib/auth-lib.php';
     <meta name="robots" content="noindex, nofollow">
     <title>API Update Admin Login</title>
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="/assets/css/mobile.css">
+    <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 
 <body>

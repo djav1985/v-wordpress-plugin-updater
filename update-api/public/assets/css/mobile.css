@@ -96,7 +96,18 @@
     width: 100%;
   }
 
-  .log-sub-box>h3 {
+  .log-sub-box > h3 {
     font-size: calc(1vw + 1em);
+  }
+
+  /* Adjust the logo size for smaller screens */
+  .logo {
+    width: 60%;
+    height: auto;
+  }
+
+  /* Reduce the width of the login box for smaller screens */
+  .login-box {
+    width: 80%;
   }
 }
