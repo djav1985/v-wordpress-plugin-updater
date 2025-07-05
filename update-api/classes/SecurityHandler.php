@@ -5,7 +5,7 @@
  * Project: Update API
  * Author: Vontainment
  * URL: https://vontainment.com
- * File: security.php
+ * File: SecurityHandler.php
  * Description: Security utilities (moved from waf-lib.php)
  */
 
@@ -37,6 +37,15 @@ class SecurityHandler
     {
         $slug = basename(trim($slug));
         return preg_match('/^[A-Za-z0-9._-]+$/', $slug) ? $slug : null;
+    }
+
+    /**
+     * Validate uploaded file names
+     */
+    public static function validateFilename(string $filename): ?string
+    {
+        $filename = basename(trim($filename));
+        return preg_match('/^[A-Za-z0-9._-]+$/', $filename) ? $filename : null;
     }
 
     /**
