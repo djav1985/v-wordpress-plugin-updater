@@ -8,7 +8,6 @@
  * Description: WordPress Update API
 */
 
-use UpdateApi\helpers\LogsHelper;
 
 $ploutput = LogsHelper::processLogFile('plugin.log');
 $thoutput = LogsHelper::processLogFile('theme.log');

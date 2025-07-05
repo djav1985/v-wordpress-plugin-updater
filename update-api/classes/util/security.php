@@ -1,4 +1,5 @@
 <?php
+// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
  * Project: Update API
@@ -8,7 +9,6 @@
  * Description: Security utilities (moved from waf-lib.php)
  */
 
-namespace UpdateApi\util;
 
 class Security
 {

@@ -8,8 +8,6 @@
  * Description: WordPress Update API
  */
 
-use UpdateApi\helpers\PlHelper;
-use UpdateApi\forms\PlFormHandler;
 
 $handler = new PlFormHandler();
 $handler->handleRequest();

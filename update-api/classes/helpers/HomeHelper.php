@@ -1,4 +1,5 @@
 <?php
+// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
  * Project: Update API
@@ -8,7 +9,6 @@
  * Description: WordPress Update API Helper for Home page
  */
 
-namespace UpdateApi\helpers;
 
 class HomeHelper
 {

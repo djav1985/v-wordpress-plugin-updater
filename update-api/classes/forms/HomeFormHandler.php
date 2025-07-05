@@ -1,4 +1,5 @@
 <?php
+// @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 /*
  * Project: Update API
@@ -8,9 +9,7 @@
  * Description: WordPress Update API
  */
 
-namespace UpdateApi\forms;
 
-use UpdateApi\util\Security;
 
 class HomeFormHandler
 {
