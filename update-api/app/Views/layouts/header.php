@@ -20,7 +20,7 @@
         </a>
     </div>
     <div class="logout-button">
-        <form action="/login.php" method="POST">
+        <form action="/login" method="POST">
             <button class="orange-button" type="submit" name="logout">Logout</button>
         </form>
     </div>
