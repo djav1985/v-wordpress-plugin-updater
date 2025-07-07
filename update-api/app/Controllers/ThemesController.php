@@ -116,6 +116,17 @@ class ThemesController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNa
      */
     private static function deleteTheme(?string $theme_name): void
     {
+        if (
+            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+        ) {
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /thupdate');
+            exit();
+        }
+
         $theme_name = UtilityHandler::validateFilename($theme_name);
         $theme_name = basename((string) $theme_name);
         $theme_path = THEMES_DIR . '/' . $theme_name;
@@ -152,6 +163,8 @@ class ThemesController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNa
                      <input type="hidden" name="theme_name" value="' .
                          htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') .
                      '">
+                     <input type="hidden" name="csrf_token" value="' .
+                         htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">
                      <input class="th-submit" type="submit" name="delete_theme" value="Delete">
                  </form>
              </td>
