@@ -14,6 +14,7 @@
 namespace App\Controllers;
 
 use App\Core\UtilityHandler;
+use App\Core\ErrorHandler;
 
 class LogsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
