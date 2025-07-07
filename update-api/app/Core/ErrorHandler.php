@@ -1,14 +1,14 @@
 <?php
-
 /**
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
  *
  * File: ErrorHandler.php
  * Description: WordPress Update API
-*/
+ */
 
 namespace App\Core;
 
