@@ -4,16 +4,17 @@ RewriteEngine On
 RewriteCond %{THE_REQUEST} \s/login\.php\s [NC]
 RewriteRule ^login\.php$ /login [R=301,L]
 
-# External redirect / or /index.php → /home
-#    (only when the raw request was exactly "/" or "/index.php")
-RewriteCond %{THE_REQUEST} \s/(?:index\.php)?\s [NC]
-RewriteRule ^(?:index\.php)?$ /home [R=301,L]
+# Redirect /index.php to root
+RewriteCond %{THE_REQUEST} \s/index\.php\s [NC]
+RewriteRule ^index\.php$ / [R=301,L]
 
 # Internal rewrite /login → login.php
 RewriteRule ^login$ login.php [L]
 
-# Internal rewrite /home, /plupdate, /thupdate, /logs → index.php?page=$1
-RewriteRule ^(home|plupdate|thupdate|logs)$ index.php?page=$1 [L,QSA]
+# Fallback to index.php for application routes
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
 
 
 # Enable caching for certain file types
