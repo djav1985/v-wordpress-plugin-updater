@@ -47,7 +47,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | 🔩 | **Code Quality**  | The project adheres to coding standards, with clear organization of files and comprehensive inline comments. Security measures like input sanitization and IP blacklisting are integrated throughout the codebase. |
 | 📄 | **Documentation** | Includes configuration and setup guides, inline comments, and function documentation. The repository seems well-organized, but additional user-facing documentation could enhance accessibility. |
 | 🔌 | **Integrations**  | The project integrates with WordPress installations, leveraging external APIs for plugin and theme updates. Dependencies include authentication, WAF, and configuration libraries. |
-| 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, classes, and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
+| 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, MVC components (`app/Core`, `app/Controllers`, `app/Models`, `app/Views`), and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
 | ⚡️  | **Performance**   | The project is designed for efficiency, with secure download endpoints and optimized URL routing via `.htaccess`. However, explicit performance metrics and profiling data are not provided. |
 | 🛡️ | **Security**      | Implements robust security measures including IP blacklisting, authentication libraries, and input validation. Admin interface security is enhanced through session management and a web application firewall (WAF). |
 | 📦 | **Dependencies**  | The project relies on standard libraries like authentication, WAF, configuration management, IP blacklisting, and Dropzone for dynamic file handling. |
@@ -112,22 +112,21 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | [BLACKLIST.json](update-api/storage/BLACKLIST.json) | Maintains a list of blacklisted plugins or themes, preventing them from receiving updates via the update API. This ensures security and stability by blocking disallowed or potentially harmful software components within the WordPress plugin and theme ecosystem. |
 
 </details>
-<details closed><summary>update-api.classes</summary>
+<details closed><summary>update-api.app</summary>
 
-| File | Summary |
+| Directory | Purpose |
 | --- | --- |
-| [HomeHelper.php](update-api/classes/HomeHelper.php) | Manage HOSTS entries and handle form requests with sanitized input. |
-| [PlHelper.php](update-api/classes/PlHelper.php) | Process plugin uploads and deletions securely. |
-| [ThHelper.php](update-api/classes/ThHelper.php) | Process theme uploads and deletions securely. |
-| [LogsHelper.php](update-api/classes/LogsHelper.php) | Group log entries by domain for easy review. |
-| [ErrorHandler.php](update-api/classes/ErrorHandler.php) | Render session messages and errors in views. |
-| [UtilityHandler.php](update-api/classes/UtilityHandler.php) | Validate input data and maintain the IP blacklist. |
+| `Core` | Base controller, router, utility and error handlers. |
+| `Controllers` | Handle requests for authentication, hosts, plugins, themes and logs. |
+| `Models` | Data access for hosts, plugins, themes and logs. |
+| `Views` | Templates for the admin UI (home, login, updates, logs). |
+| `Lib` | Loader scripts and the class autoloader used by public entry points. |
 
 </details>
 
 
 
-<details closed><summary>update-api.app.pages</summary>
+<details closed><summary>update-api.app.views</summary>
 
 | File                                              | Summary                                                                                                                                                                                                                                                                                                                                                                       |
 | ---                                               | ---                                                                                                                                                                                                                                                                                                                                                                           |
@@ -138,13 +137,12 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 </details>
 
-<details closed><summary>update-api.lib</summary>
+<details closed><summary>update-api.app.lib</summary>
 
 | File                                        | Summary                                                                                                                                                                                                                                                                                                                                                            |
 | ---                                         | ---                                                                                                                                                                                                                                                                                                                                                                |
-| [auth-lib.php](update-api/lib/auth-lib.php) | Facilitates user authentication within the WordPress Update API by managing login and logout operations, handling session security, and implementing measures against failed login attempts to enhance system security. Essential for safeguarding access to the update APIs functionalities and integrating seamlessly with the repositorys broader architecture. |
-| [class-lib.php](update-api/lib/class-lib.php) | Automatically loads class files from the `classes` directory, logging an error when a requested class is missing. |
-| [load-lib.php](update-api/lib/load-lib.php) | Serve as a security and routing mechanism, ensuring only authenticated users can access specific pages within the WordPress update API. It checks for blacklisted IPs, redirects unauthenticated users to the login page, and dynamically loads page-specific helper and main files if they exist.                                                          |
+| [ClassLoader.php](update-api/app/Lib/ClassLoader.php) | Automatically loads application classes used throughout the API. |
+| [Loader.php](update-api/app/Lib/Loader.php) | Secures entry points by validating sessions, checking blacklisted IPs and dispatching requested pages. |
 
 </details>
 

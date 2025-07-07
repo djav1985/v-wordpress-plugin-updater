@@ -7,11 +7,13 @@
 
 ## Key Components
 - `update-api/` contains the API, admin UI, and all supporting logic:
-  - `classes/`: Core logic for handling uploads, deletions, logs, errors, and utility functions. E.g., `PlHelper.php`, `ThHelper.php`, `LogsHelper.php`.
-  - `lib/`: Authentication, class autoloading, and page routing. E.g., `auth-lib.php`, `load-lib.php`.
+  - `app/Core`: Framework classes such as the base controller, router and utilities.
+  - `app/Controllers`: Handle authentication along with plugin, theme, log and host actions.
+  - `app/Models`: Provide data access for plugins, themes, hosts and logs.
+  - `app/Views`: Admin UI pages for managing plugins, themes, logs and hosts.
+  - `app/Lib`: Loader and autoloader used by the public entry points.
   - `public/`: Web entrypoints (API, login, dashboard, etc.), assets, and `.htaccess` for routing.
   - `storage/`: Uploaded plugin/theme packages, logs, and blacklists.
-  - `views/`: Admin UI pages for managing plugins, themes, logs, and hosts.
 - `mu-plugin/`: WordPress-side updaters that call the API to automate updates.
 
 ## Developer Workflows
@@ -22,20 +24,20 @@
 - Use the `BLACKLIST.json` file to block specific plugins/themes from updates.
 
 ## Project-Specific Patterns
-- All file uploads and deletions are handled via helper classes (`PlHelper`, `ThHelper`) with strict validation and error logging.
+- All file uploads and deletions are handled by controllers (`PluginsController`, `ThemesController`) with strict validation and error logging.
 - CSRF tokens are required for all POST actions in the admin UI; see `handleRequest()` in helpers for the pattern.
 - All user-facing messages are stored in `$_SESSION['messages']` and rendered via `ErrorHandler`.
-- Routing is managed by `.htaccess` and `load-lib.php` to ensure only authenticated users can access admin pages.
+- Routing is managed by `.htaccess` and `app/Lib/Loader.php` to ensure only authenticated users can access admin pages.
 - The MU plugins expect specific API endpoints and keys, configured in `wp-config.php`.
 
 ## Integration Points
 - The API is consumed by the MU plugins in WordPress via HTTP requests.
-- Authentication and WAF logic are handled in `auth-lib.php` and `load-lib.php`.
+- Authentication and WAF logic are handled by `AuthController.php` and `app/Lib/Loader.php`.
 - All configuration (paths, credentials) is centralized in `update-api/config.php`.
 
 ## Examples
-- To add a new admin page, create a view in `update-api/views/`, a helper in `update-api/classes/`, and update routing in `load-lib.php`.
-- To add a new validation rule, extend `UtilityHandler.php`.
+- To add a new admin page, create a view in `update-api/app/Views/`, a controller in `update-api/app/Controllers/`, and update routing in `app/Lib/Loader.php`.
+- To add a new validation rule, extend `app/Core/UtilityHandler.php`.
 
 ## References
 - See `README.md` for setup, directory structure, and usage.
