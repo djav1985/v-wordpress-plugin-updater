@@ -1,10 +1,13 @@
 <?php
-
-/** 
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
+ *
+ * File: v-sys-theme-updater.php
+ * Description: WordPress Update API
  *
  * Theme Name: WP Theme Updater
  * Theme URI: https://vontainment.com
@@ -12,8 +15,8 @@
  * Version: 1.2.0
  * Author: Vontainment
  * Author URI: https://vontainment.com
- *
- * @package VontainmentThemeUpdater */
+ * @package VontainmentThemeUpdater
+*/
 
 if (! defined('ABSPATH')) {
     exit;
