@@ -202,7 +202,7 @@ class HomeController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingName
     public static function getHostsTableHtml(): string
     {
         $hostsFile = HOSTS_ACL . '/HOSTS';
-        $entries = file($hostsFile, FILE_IGNORE_NEW_LINES);
+        $entries = file_exists($hostsFile) ? file($hostsFile, FILE_IGNORE_NEW_LINES) : [];
         $hostsTableHtml = '';
         if (count($entries) > 0) {
             $halfCount = ceil(count($entries) / 2);
