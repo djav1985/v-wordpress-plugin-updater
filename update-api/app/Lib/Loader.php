@@ -55,7 +55,7 @@ if ($ip && UtilityHandler::isBlacklisted($ip)) {
         $_SESSION['timeout'] = time();
         // Authenticated user: load the requested page if it exists.
         $pageFile = dirname(__DIR__) . '/views/' . $page . '.php';
-        $pageOutput = $pageFile;
+        require $pageFile;
     }
 } else {
     http_response_code(404);

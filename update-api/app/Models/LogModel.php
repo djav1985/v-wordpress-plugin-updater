@@ -3,5 +3,5 @@ namespace App\Models;
 
 class LogModel
 {
-    public static string $dir = STORAGE_LOGS_DIR;
+    public static string $dir = LOG_DIR;
 }

@@ -3,5 +3,5 @@ namespace App\Models;
 
 class ThemeModel
 {
-    public static string $dir = STORAGE_THEMES_DIR;
+    public static string $dir = THEMES_DIR;
 }
