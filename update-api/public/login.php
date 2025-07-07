@@ -22,8 +22,8 @@ session_set_cookie_params(
 );
 session_start();
 require_once '../config.php';
-require_once '../lib/class-lib.php';
-require_once '../lib/auth-lib.php';
+require_once '../../vendor/autoload.php';
+require_once '../app/Lib/Auth.php';
 ?>
 
 <!DOCTYPE html>

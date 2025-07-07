@@ -7,11 +7,15 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: LogHelper.php
+ * File: LogsController.php
  * Description: WordPress Update API
  */
 
-class LogsHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Controllers;
+
+use App\Core\UtilityHandler;
+
+class LogsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
      * Processes a log file and generates HTML output.

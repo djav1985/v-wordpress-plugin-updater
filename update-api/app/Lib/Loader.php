@@ -7,9 +7,14 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: load-lib.php
+ * File: Loader.php
  * Description: WordPress Update API
  */
+
+namespace App\Lib;
+
+use App\Core\UtilityHandler;
+use App\Core\ErrorHandler;
 
 // Validate and sanitize the IP address
 $ip = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);

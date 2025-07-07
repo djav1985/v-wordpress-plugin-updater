@@ -11,8 +11,10 @@
  * Description: WordPress Update API
  */
 
-HomeHelper::handleRequest();
-$hostsTableHtml = HomeHelper::getHostsTableHtml();
+use App\Controllers\HomeController;
+require_once __DIR__ . '/layouts/header.php';
+HomeController::handleRequest();
+$hostsTableHtml = HomeController::getHostsTableHtml();
 ?>
 
 <div class="content-box">
@@ -39,3 +41,4 @@ $hostsTableHtml = HomeHelper::getHostsTableHtml();
         </form>
     </div>
 </div>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

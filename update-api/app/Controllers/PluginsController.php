@@ -7,11 +7,15 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: PlHelper.php
+ * File: PluginsController.php
  * Description: WordPress Update API
  */
 
-class PlHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Controllers;
+
+use App\Core\UtilityHandler;
+
+class PluginsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
      * Handles the incoming request for plugin-related actions.
