@@ -116,6 +116,17 @@ class HomeController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingName
      */
     private static function deleteEntry(?int $line_number, ?string $domain_to_delete): void
     {
+        if (
+            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+        ) {
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /home');
+            exit();
+        }
+
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
         unset($entries[$line_number]);
@@ -163,6 +174,8 @@ class HomeController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingName
         return '<tr>
             <form method="post" action="/home">
                 <input type="hidden" name="id" value="' . htmlspecialchars($lineNumber, ENT_QUOTES, 'UTF-8') . '">
+                <input type="hidden" name="csrf_token" value="' .
+                    htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '"></td>

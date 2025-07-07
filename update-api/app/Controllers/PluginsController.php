@@ -116,6 +116,17 @@ class PluginsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingN
      */
     private static function deletePlugin(?string $plugin_name): void
     {
+        if (
+            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+        ) {
+            $error = 'Invalid CSRF token.';
+            ErrorHandler::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /plupdate');
+            exit();
+        }
+
         $plugin_name = UtilityHandler::validateFilename($plugin_name);
         $plugin_name = basename((string) $plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
@@ -151,6 +162,8 @@ class PluginsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingN
                     <input type="hidden" name="plugin_name" value="' .
                     htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') .
                 '">
+                    <input type="hidden" name="csrf_token" value="' .
+                    htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">
                     <button class="pl-submit" type="submit" name="delete_plugin">Delete</button>
                 </form>
             </td>
