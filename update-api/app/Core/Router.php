@@ -7,6 +7,9 @@ class Router
     {
         $route = strtok($uri, '?');
         switch ($route) {
+            case '/login':
+                \App\Controllers\AuthController::handleRequest();
+                break;
             case '/plupdate':
                 \App\Controllers\PluginsController::handleRequest();
                 break;

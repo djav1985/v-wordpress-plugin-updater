@@ -3,5 +3,5 @@ namespace App\Models;
 
 class PluginModel
 {
-    public static string $dir = STORAGE_PLUGINS_DIR;
+    public static string $dir = PLUGINS_DIR;
 }
