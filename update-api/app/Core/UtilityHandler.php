@@ -13,7 +13,7 @@
 
 namespace App\Core;
 
-class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+class UtilityHandler
 {
     /**
      * Validate a domain string.

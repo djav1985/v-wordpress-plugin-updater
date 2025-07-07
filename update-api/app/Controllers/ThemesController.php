@@ -16,7 +16,7 @@ namespace App\Controllers;
 use App\Core\UtilityHandler;
 use App\Core\ErrorHandler;
 
-class ThemesController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+class ThemesController
 {
     /**
      * Handles the incoming request for theme-related actions.

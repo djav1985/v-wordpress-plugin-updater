@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package UpdateAPI
  * @author  Vontainment <services@vontainment.com>

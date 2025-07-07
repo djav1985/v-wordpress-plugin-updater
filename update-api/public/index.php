@@ -1,12 +1,13 @@
 <?php
+
 use App\Core\Router;
 
 $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 session_set_cookie_params([
-    'httponly' => true,
-    'secure'   => $secureFlag,
-    'samesite' => 'Lax',
-]);
+                           'httponly' => true,
+                           'secure'   => $secureFlag,
+                           'samesite' => 'Lax',
+                          ]);
 session_start();
 session_regenerate_id(true);
 

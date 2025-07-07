@@ -12,6 +12,7 @@
  */
 
 use App\Controllers\PluginsController;
+
 require_once __DIR__ . '/layouts/header.php';
 PluginsController::handleRequest();
 $pluginsTableHtml = PluginsController::getPluginsTableHtml();

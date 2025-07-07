@@ -26,9 +26,17 @@
     </div>
 </header>
 <div class="tab">
-    <a href="/"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/') { echo 'active'; } ?>">Manage Hosts</button></a>
-    <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') { echo 'active'; } ?>">Manage Plugins</button></a>
-    <a href="/thupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/thupdate') { echo 'active'; } ?>">Manage Themes</button></a>
-    <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') { echo 'active'; } ?>">View Logs</button></a>
+    <a href="/"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/') {
+        echo 'active';
+                                        } ?>">Manage Hosts</button></a>
+    <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') {
+        echo 'active';
+                                                } ?>">Manage Plugins</button></a>
+    <a href="/thupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/thupdate') {
+        echo 'active';
+                                                } ?>">Manage Themes</button></a>
+    <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') {
+        echo 'active';
+                                            } ?>">View Logs</button></a>
 </div>
 <div class="content">

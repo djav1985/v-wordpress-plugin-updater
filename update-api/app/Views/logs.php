@@ -12,6 +12,7 @@
  */
 
 use App\Controllers\LogsController;
+
 require_once __DIR__ . '/layouts/header.php';
 $ploutput = LogsController::processLogFile('plugin.log');
 $thoutput = LogsController::processLogFile('theme.log');

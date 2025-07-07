@@ -15,7 +15,7 @@ namespace App\Core;
 use ErrorException;
 use Throwable;
 
-class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+class ErrorHandler
 {
     /**
      * ErrorHandler constructor.

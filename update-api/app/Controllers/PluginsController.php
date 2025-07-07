@@ -16,7 +16,7 @@ namespace App\Controllers;
 use App\Core\UtilityHandler;
 use App\Core\ErrorHandler;
 
-class PluginsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+class PluginsController
 {
     /**
      * Handles the incoming request for plugin-related actions.

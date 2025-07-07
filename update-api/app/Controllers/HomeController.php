@@ -11,13 +11,12 @@
  * Description: WordPress Update API
  */
 
-
 namespace App\Controllers;
 
 use App\Core\UtilityHandler;
 use App\Core\ErrorHandler;
 
-class HomeController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+class HomeController
 {
     /**
      * Handles the incoming request for managing hosts.

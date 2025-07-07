@@ -12,6 +12,7 @@
  */
 
 use App\Controllers\HomeController;
+
 require_once __DIR__ . '/layouts/header.php';
 HomeController::handleRequest();
 $hostsTableHtml = HomeController::getHostsTableHtml();
