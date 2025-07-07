@@ -16,6 +16,21 @@ namespace App\Controllers;
 class LogsController
 {
     /**
+     * Handles the request for the logs page.
+     *
+     * Generates log output for plugins and themes and includes the log view.
+     *
+     * @return void
+     */
+    public static function handleRequest(): void
+    {
+        $ploutput = self::processLogFile('plugin.log');
+        $thoutput = self::processLogFile('theme.log');
+
+        require __DIR__ . '/../Views/logs.php';
+    }
+
+    /**
      * Processes a log file and generates HTML output.
      *
      * Reads the log file, groups entries by domain, and generates HTML for each entry.
