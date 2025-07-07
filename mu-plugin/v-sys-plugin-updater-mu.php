@@ -55,7 +55,10 @@ function vontmnt_plugin_updater_run_updates(): void
     if (! is_main_site()) {
         return;
     }
-       $plugins = get_plugins();
+    if (! function_exists('get_plugins')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+    $plugins = get_plugins();
     foreach ($plugins as $plugin_path => $plugin) {
             $plugin_slug       = dirname($plugin_path);
             $installed_version = $plugin['Version'];

@@ -47,6 +47,9 @@ add_action('vontmnt_theme_updater_check_updates', 'vontmnt_theme_updater_run_upd
  * Run theme updates for all installed themes. */
 function vontmnt_theme_updater_run_updates(): void
 {
+    if (! function_exists('wp_get_themes')) {
+        require_once ABSPATH . 'wp-includes/theme.php';
+    }
     $themes = wp_get_themes();
     foreach ($themes as $theme) {
         $theme_slug        = $theme->get_stylesheet();

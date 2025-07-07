@@ -84,11 +84,14 @@ if (UtilityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') 
                     fclose($host_file);
                     // Find and serve update if available
                     foreach (scandir($dir) as $filename) {
+                        if ($filename === '.' || $filename === '..') {
+                            continue;
+                        }
                         if (strpos($filename, $slug) === 0) {
                             $filename_parts = explode('_', $filename);
                             if (isset($filename_parts[1]) && version_compare($filename_parts[1], $version, '>')) {
                                 $file_path = $dir . '/' . $filename;
-                                if (file_exists($file_path)) {
+                                if (is_file($file_path)) {
                                     header('Content-Type: application/octet-stream');
                                     header('Content-Disposition: attachment; filename="' . basename($file_path) . '"');
                                     header('Content-Length: ' . filesize($file_path));
