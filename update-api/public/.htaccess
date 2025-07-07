@@ -8,10 +8,8 @@ RewriteRule ^login\.php$ /login [R=301,L]
 RewriteCond %{THE_REQUEST} \s/index\.php\s [NC]
 RewriteRule ^index\.php$ / [R=301,L]
 
-# Internal rewrite /login → login.php
-RewriteRule ^login$ login.php [L]
-
 # Fallback to index.php for application routes
+# (including the /login endpoint)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [L]

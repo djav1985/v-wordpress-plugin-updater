@@ -99,7 +99,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | [index.php](update-api/public/index.php)   | Serves as the main entry point for the Update APIs web interface, providing a dashboard for managing WordPress hosts, plugins, themes, and viewing logs. Initializes sessions and includes necessary configurations and libraries, facilitating an admin interface with essential resources for a responsive and interactive user experience.                      |
 | [api.php](update-api/public/api.php)       | Unified API endpoint that handles both plugin and theme update requests, validating domains and keys while enforcing IP blacklist rules. Delivers update packages when newer versions are available. |
 | [.htaccess](update-api/public/.htaccess)   | Enhances URL routing by managing redirects and internal rewrites, ensuring clear and organized access to key sections like home, plupdate, thupdate, and logs. This optimization streamlines external requests and maintains seamless internal navigation within the update-api component of the repository.                                                       |
-| [login.php](update-api/public/login.php)   | Provides an admin login interface for the Update API, enhancing security and access control. Integrates with configuration, authentication, and web application firewall libraries to facilitate validation and protection mechanisms within the broader WordPress plugin update ecosystem. Presents a user-friendly login form to manage API updates effectively. |
+| /login (handled by `index.php`)            | Provides an admin login interface for the Update API, enhancing security and access control. Integrates with configuration, authentication, and web application firewall libraries to facilitate validation and protection mechanisms within the broader WordPress plugin update ecosystem. Presents a user-friendly login form to manage API updates effectively. |
 | [robots.txt](update-api/public/robots.txt) | Regulates web crawler access to the update-api directory with a specified delay, optimizing server load and ensuring the smooth operation of the plugin updater functionality within the repositorys architecture.                                                                                                                                                  |
 
 </details>
@@ -188,7 +188,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 ### 🤖 Usage
 
 1. Copy the files from the repository's `mu-plugin/` folder into your WordPress installation's `wp-content/mu-plugins/` directory. Create the directory if it doesn't exist. WordPress automatically loads any PHP files placed here.
-2. Log in to the Update API via `update-api/public/login.php` using the credentials configured in `config.php` to manage hosts, plugins and themes.
+2. Log in to the Update API by visiting the `/login` route (handled by `index.php`) using the credentials configured in `config.php` to manage hosts, plugins and themes.
 
 ## 🎗 License
 
