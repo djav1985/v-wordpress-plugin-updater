@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Project: UpdateAPI
  * Author:  Vontainment <services@vontainment.com>
@@ -11,9 +12,6 @@
  */
 
 namespace App\Controllers;
-
-use App\Core\UtilityHandler;
-use App\Core\ErrorHandler;
 
 class LogsController
 {
