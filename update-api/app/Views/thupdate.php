@@ -11,8 +11,10 @@
  * Description: WordPress Update API
  */
 
-ThHelper::handleRequest();
-$themesTableHtml = ThHelper::getThemesTableHtml();
+use App\Controllers\ThemesController;
+require_once __DIR__ . '/layouts/header.php';
+ThemesController::handleRequest();
+$themesTableHtml = ThemesController::getThemesTableHtml();
 ?>
 
 <div class="content-box">
@@ -76,3 +78,4 @@ $themesTableHtml = ThHelper::getThemesTableHtml();
     });
   });
 </script>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

@@ -7,11 +7,15 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: ThHelper.php
+ * File: ThemesController.php
  * Description: WordPress Update API
  */
 
-class ThHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Controllers;
+
+use App\Core\UtilityHandler;
+
+class ThemesController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
      * Handles the incoming request for theme-related actions.

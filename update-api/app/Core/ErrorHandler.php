@@ -8,7 +8,9 @@
  *
  * File: ErrorHandler.php
  * Description: WordPress Update API
- */
+*/
+
+namespace App\Core;
 
 class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {

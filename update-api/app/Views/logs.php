@@ -11,8 +11,10 @@
  * Description: WordPress Update API
  */
 
-$ploutput = LogsHelper::processLogFile('plugin.log');
-$thoutput = LogsHelper::processLogFile('theme.log');
+use App\Controllers\LogsController;
+require_once __DIR__ . '/layouts/header.php';
+$ploutput = LogsController::processLogFile('plugin.log');
+$thoutput = LogsController::processLogFile('theme.log');
 
 ?>
 <div class="content-box">
@@ -21,3 +23,4 @@ $thoutput = LogsHelper::processLogFile('theme.log');
     <h2>Theme Log</h2>
     <?php echo $thoutput; ?>
 </div>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

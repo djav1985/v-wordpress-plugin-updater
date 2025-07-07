@@ -7,9 +7,14 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: auth-lib.php
+ * File: Auth.php
  * Description: WordPress Update API
  */
+
+namespace App\Lib;
+
+use App\Core\UtilityHandler;
+use App\Core\ErrorHandler;
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     if (isset($_POST["logout"])) {

@@ -12,7 +12,7 @@
  */
 
 require_once '../config.php';
-require_once '../lib/class-lib.php';
+require_once '../../vendor/autoload.php';
 
 
 $ip = $_SERVER['REMOTE_ADDR'];

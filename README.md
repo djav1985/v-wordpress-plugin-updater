@@ -67,12 +67,15 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   └── v-sys-theme-updater.php
     ├── update-api
     │   ├── HOSTS
-    │   ├── classes
+    │   ├── app
+    │   │   ├── Core
+    │   │   ├── Controllers
+    │   │   ├── Models
+    │   │   ├── Views
+    │   │   └── Lib
     │   ├── config.php
-    │   ├── lib
     │   ├── public
     │   ├── storage
-    │   └── views
     └── v-wordpress-plugin-updater.png
 ```
 

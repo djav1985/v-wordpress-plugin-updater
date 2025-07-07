@@ -11,8 +11,10 @@
  * Description: WordPress Update API
  */
 
-PlHelper::handleRequest();
-$pluginsTableHtml = PlHelper::getPluginsTableHtml();
+use App\Controllers\PluginsController;
+require_once __DIR__ . '/layouts/header.php';
+PluginsController::handleRequest();
+$pluginsTableHtml = PluginsController::getPluginsTableHtml();
 ?>
 
 <div class="content-box">
@@ -77,3 +79,4 @@ $pluginsTableHtml = PlHelper::getPluginsTableHtml();
     });
   });
 </script>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

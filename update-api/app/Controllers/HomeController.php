@@ -7,12 +7,16 @@
  * @link    https://vontainment.com
  * @version 3.0.0
  *
- * File: HomeHelper.php
+ * File: HomeController.php
  * Description: WordPress Update API
  */
 
 
-class HomeHelper // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Controllers;
+
+use App\Core\UtilityHandler;
+
+class HomeController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
      * Handles the incoming request for managing hosts.

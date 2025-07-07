@@ -11,6 +11,8 @@
  * Description: WordPress Update API
  */
 
+namespace App\Core;
+
 class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**

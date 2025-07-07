@@ -1,0 +1,12 @@
+{
+    "name": "vontainment/v-wordpress-plugin-updater",
+    "description": "WordPress Plugin Updater",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "update-api/app/"
+        }
+    }
+}
