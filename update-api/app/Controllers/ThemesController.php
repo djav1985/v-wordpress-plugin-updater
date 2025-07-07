@@ -67,9 +67,6 @@ class ThemesController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNa
             $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
                 ? $_FILES['theme_file']['tmp_name'][$i]
                 : '';
-            $file_size = isset($_FILES['theme_file']['size'][$i])
-                ? filter_var($_FILES['theme_file']['size'][$i], FILTER_VALIDATE_INT)
-                : 0;
             $file_error = isset($_FILES['theme_file']['error'][$i])
                 ? filter_var($_FILES['theme_file']['error'][$i], FILTER_VALIDATE_INT)
                 : UPLOAD_ERR_NO_FILE;

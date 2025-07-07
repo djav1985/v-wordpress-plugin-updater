@@ -69,9 +69,6 @@ class PluginsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingN
             $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
             ? $_FILES['plugin_file']['tmp_name'][$i]
             : '';
-            $file_size = isset($_FILES['plugin_file']['size'][$i])
-            ? filter_var($_FILES['plugin_file']['size'][$i], FILTER_VALIDATE_INT)
-            : 0;
             $file_error = isset($_FILES['plugin_file']['error'][$i])
             ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
             : UPLOAD_ERR_NO_FILE;
