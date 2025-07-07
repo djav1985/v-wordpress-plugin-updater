@@ -45,7 +45,6 @@ if ($ip && UtilityHandler::isBlacklisted($ip)) {
                      'home',
                      'plupdate',
                      'thupdate',
-                     'logs',
                     ];
 
     // Sanitize and validate the requested page

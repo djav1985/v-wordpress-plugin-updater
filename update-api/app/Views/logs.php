@@ -11,16 +11,13 @@
  * Description: WordPress Update API
  */
 
-use App\Controllers\LogsController;
 require_once __DIR__ . '/layouts/header.php';
-$ploutput = LogsController::processLogFile('plugin.log');
-$thoutput = LogsController::processLogFile('theme.log');
 
 ?>
 <div class="content-box">
     <h2>Plugin Log</h2>
-    <?php echo $ploutput; ?>
+    <?php echo $pluginLog ?? ''; ?>
     <h2>Theme Log</h2>
-    <?php echo $thoutput; ?>
+    <?php echo $themeLog ?? ''; ?>
 </div>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

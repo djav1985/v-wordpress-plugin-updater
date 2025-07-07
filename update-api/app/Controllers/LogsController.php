@@ -18,6 +18,23 @@ use App\Core\UtilityHandler;
 class LogsController // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
+     * Handles displaying the logs page.
+     *
+     * Gathers plugin and theme log output using {@see processLogFile()} and
+     * loads the corresponding view.
+     *
+     * @return void
+     */
+    public static function handleRequest(): void
+    {
+        $pluginLog = self::processLogFile('plugin.log');
+        $themeLog  = self::processLogFile('theme.log');
+
+        // Expose variables to the view scope
+        require __DIR__ . '/../Views/logs.php';
+    }
+
+    /**
      * Processes a log file and generates HTML output.
      *
      * Reads the log file, groups entries by domain, and generates HTML for each entry.
