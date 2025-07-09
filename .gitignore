@@ -1,12 +1,9 @@
-phpcs.xml
+# Ignore files and directories that should not be tracked by Git
 .vscode/
-vendor/
 *.code-workspace
-.history/
-*.log
-*.tmp
-*.cache
-~$*
-*~
-composer.lock
-composer.json
+
+# Ensure these files are ignored no matter where they are located
+*/phpcs.xml
+*/composer.lock
+*/composer.json
+*/vendor/
