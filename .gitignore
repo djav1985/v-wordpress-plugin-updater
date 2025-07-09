@@ -1,6 +1,5 @@
 vendor/
 phpcs.xml
-composer.lock
 .vscode/
 *.code-workspace
 .history/
