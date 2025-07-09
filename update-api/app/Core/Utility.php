@@ -25,7 +25,13 @@ class Utility
     public static function validateDomain(string $domain): ?string
     {
         $domain = strtolower(trim($domain));
-        return filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) ? $domain : null;
+
+        // Ensure the domain contains at least one dot and valid characters
+        if (preg_match('/^(?!-)[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/', $domain)) {
+            return $domain;
+        }
+
+        return null;
     }
 
     /**
