@@ -41,9 +41,6 @@ class PluginsController extends Controller
                         ? Utility::validateSlug($_POST['plugin_name'])
                         : null;
                     self::deletePlugin($plugin_name);
-                } else {
-                    header('Location: /plupdate');
-                    exit();
                 }
             } else {
                 $error = 'Invalid Form Action.';
@@ -54,9 +51,11 @@ class PluginsController extends Controller
             }
         }
 
+        $pluginsTableHtml = self::getPluginsTableHtml();
+
         // Render the plupdate view
         (new self())->render('plupdate', [
-            'pluginsTableHtml' => self::getPluginsTableHtml(),
+            'pluginsTableHtml' => $pluginsTableHtml,
         ]);
     }
 
