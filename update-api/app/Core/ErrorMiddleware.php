@@ -7,7 +7,7 @@
  * Link:    https://vontainment.com
  * Version: 3.0.0
  *
- * File: ErrorHandler.php
+ * File: ErrorMiddleware.php
  * Description: WordPress Update API
  */
 
@@ -16,10 +16,10 @@ namespace App\Core;
 use ErrorException;
 use Throwable;
 
-class ErrorHandler
+class ErrorMiddleware
 {
     /**
-     * ErrorHandler constructor.
+     * ErrorMiddleware constructor.
      * Registers error, exception, and shutdown handlers.
      */
     public function __construct()

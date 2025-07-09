@@ -14,7 +14,7 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorHandler;
+use App\Core\ErrorMiddleware;
 
 class HomeController
 {
@@ -46,7 +46,7 @@ class HomeController
             }
         } else {
             $error = 'Invalid Form Action.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
             header('Location: /');
             exit();
@@ -69,7 +69,7 @@ class HomeController
         $new_entry = $safe_domain . ' ' . $safe_key;
         if (file_put_contents($hosts_file, $new_entry . "\n", FILE_APPEND | LOCK_EX) === false) {
             $error = 'Failed to add entry.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
         } else {
             $_SESSION['messages'][] = 'Entry added successfully.';
@@ -96,7 +96,7 @@ class HomeController
         $entries[$line_number] = $safe_domain . ' ' . $safe_key;
         if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
             $error = 'Failed to update entry.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
         } else {
             $_SESSION['messages'][] = 'Entry updated successfully.';
@@ -120,7 +120,7 @@ class HomeController
             !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
             $error = 'Invalid CSRF token.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
             header('Location: /home');
             exit();
@@ -131,7 +131,7 @@ class HomeController
         unset($entries[$line_number]);
         if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
             $error = 'Failed to delete entry.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
         }
 
@@ -149,7 +149,7 @@ class HomeController
                 });
                 if (file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n") === false) {
                     $error = 'Failed to update log file ' . $log_file_path;
-                    ErrorHandler::logMessage($error);
+                    ErrorMiddleware::logMessage($error);
                     $_SESSION['messages'][] = $error;
                 }
             }

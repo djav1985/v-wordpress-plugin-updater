@@ -14,7 +14,7 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorHandler;
+use App\Core\ErrorMiddleware;
 
 class PluginsController
 {
@@ -44,7 +44,7 @@ class PluginsController
             }
         } else {
             $error = 'Invalid Form Action.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
             header('Location: /');
             exit();
@@ -86,7 +86,7 @@ class PluginsController
                 $error = 'Error uploading: ' .
                     htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed.';
-                ErrorHandler::logMessage($error);
+                ErrorMiddleware::logMessage($error);
                 $_SESSION['messages'][] = $error;
                 continue;
             }
@@ -96,7 +96,7 @@ class PluginsController
                 $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
                 $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
-                ErrorHandler::logMessage($error);
+                ErrorMiddleware::logMessage($error);
                 $_SESSION['messages'][] = $error;
             }
         }
@@ -121,7 +121,7 @@ class PluginsController
             !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
             $error = 'Invalid CSRF token.';
-            ErrorHandler::logMessage($error);
+            ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
             header('Location: /plupdate');
             exit();
@@ -138,7 +138,7 @@ class PluginsController
                 $_SESSION['messages'][] = 'Plugin deleted successfully!';
             } else {
                 $error = 'Failed to delete plugin file. Please try again.';
-                ErrorHandler::logMessage($error);
+                ErrorMiddleware::logMessage($error);
                 $_SESSION['messages'][] = $error;
             }
             header('Location: /plupdate');

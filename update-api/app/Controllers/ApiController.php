@@ -13,7 +13,7 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorHandler;
+use App\Core\ErrorMiddleware;
 
 class ApiController
 {
@@ -22,7 +22,7 @@ class ApiController
         $ip = $_SERVER['REMOTE_ADDR'];
         if (Utility::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(403);
-            ErrorHandler::logMessage('Forbidden or invalid request from ' . $ip);
+            ErrorMiddleware::logMessage('Forbidden or invalid request from ' . $ip);
             exit();
         }
 
@@ -31,7 +31,7 @@ class ApiController
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
                 http_response_code(400);
-                ErrorHandler::logMessage('Bad request missing parameter: ' . $p);
+                ErrorMiddleware::logMessage('Bad request missing parameter: ' . $p);
                 exit();
             }
             $values[] = $_GET[$p];
@@ -58,7 +58,7 @@ class ApiController
         }
         if (!empty($invalid)) {
             http_response_code(400);
-            ErrorHandler::logMessage('Bad request invalid parameter: ' . implode(', ', $invalid));
+            ErrorMiddleware::logMessage('Bad request invalid parameter: ' . implode(', ', $invalid));
             exit();
         }
 
@@ -94,7 +94,7 @@ class ApiController
                                         readfile($file_path);
                                         $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
                                         file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-                                        ErrorHandler::logMessage($log_message, 'info');
+                                        ErrorMiddleware::logMessage($log_message, 'info');
                                         exit();
                                     }
                                 }
@@ -103,7 +103,7 @@ class ApiController
                         http_response_code(204);
                         $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
                         file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-                        ErrorHandler::logMessage($log_message, 'info');
+                        ErrorMiddleware::logMessage($log_message, 'info');
                         exit();
                     }
                 }
@@ -114,7 +114,7 @@ class ApiController
         http_response_code(403);
         $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Failed';
         file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-        ErrorHandler::logMessage($log_message);
+        ErrorMiddleware::logMessage($log_message);
         exit();
     }
 }
