@@ -70,17 +70,19 @@ class PluginsController extends Controller
     {
         $allowed_extensions = ['zip'];
         $total_files = count($_FILES['plugin_file']['name']);
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['plugin_file']['name'][$i])
-            ? Utility::validateFilename($_FILES['plugin_file']['name'][$i])
-            : '';
+                ? Utility::validateFilename($_FILES['plugin_file']['name'][$i])
+                : '';
             $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
-            ? $_FILES['plugin_file']['tmp_name'][$i]
-            : '';
+                ? $_FILES['plugin_file']['tmp_name'][$i]
+                : '';
             $file_error = isset($_FILES['plugin_file']['error'][$i])
-            ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
-            : UPLOAD_ERR_NO_FILE;
+                ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
+                : UPLOAD_ERR_NO_FILE;
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
             $plugin_slug = explode('_', $file_name)[0];
             $existing_plugins = glob(PLUGINS_DIR . '/' . $plugin_slug . '_*');
@@ -95,22 +97,41 @@ class PluginsController extends Controller
                     htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed.';
                 ErrorMiddleware::logMessage($error);
+
+                if ($isAjax) {
+                    http_response_code(400);
+                    echo $error;
+                    return;
+                }
+
                 $_SESSION['messages'][] = $error;
                 continue;
             }
 
             $plugin_path = PLUGINS_DIR . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $plugin_path)) {
-                $_SESSION['messages'][] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
+                $msg = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
+                if ($isAjax) {
+                    echo $msg;
+                    return;
+                }
+                $_SESSION['messages'][] = $msg;
             } else {
                 $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
                 ErrorMiddleware::logMessage($error);
+                if ($isAjax) {
+                    http_response_code(500);
+                    echo $error;
+                    return;
+                }
                 $_SESSION['messages'][] = $error;
             }
         }
 
-        header('Location: /plupdate');
-        exit();
+        if (!$isAjax) {
+            header('Location: /plupdate');
+            exit();
+        }
     }
 
     /**

@@ -29,7 +29,7 @@ require_once __DIR__ . '/layouts/header.php';
           <input name="theme_file[]" type="file" multiple />
         </div>
       </form>
-      <button class="reload-btn" onclick="window.location = '/thupdate'; window.location.reload();">Reload Page</button>
+      <button class="reload-btn" onclick="window.location.reload();">Reload Page</button>
     </div>
     <div id="message-container">
       <h2>Upload Status</h2>
@@ -52,24 +52,18 @@ require_once __DIR__ . '/layouts/header.php';
         var dz = this;
 
         this.on("success", function(file, response) {
-          // File uploaded successfully
-          console.log(response); // You can handle the response from the server here
+          console.log(response);
+          var successMsg = $('<div class="success-message"></div>');
+          successMsg.text(response);
 
-          // Create a success message element
-          var successMsg = $('<div class="success-message">Successfully uploaded file: ' + file.name + '</div>');
-
-          // Insert the success message below the form
           $('#message-container').append(successMsg);
         });
 
         this.on("error", function(file, errorMessage) {
-          // File upload error
           console.log(errorMessage);
+          var errorMsg = $('<div class="error-message"></div>');
+          errorMsg.text(errorMessage);
 
-          // Create an error message element
-          var errorMsg = $('<div class="error-message">Error uploading file: ' + file.name + '</div>');
-
-          // Insert the error message below the form
           $('#message-container').append(errorMsg);
         });
       }
