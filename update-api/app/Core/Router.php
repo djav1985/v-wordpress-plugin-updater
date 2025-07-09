@@ -26,6 +26,10 @@ class Router
             AuthMiddleware::check();
         }
         switch ($route) {
+            case '/':
+                // Redirect the root URL to the home page for convenience
+                header('Location: /home');
+                exit();
             case '/login':
                 \App\Controllers\AuthController::handleRequest();
                 break;
