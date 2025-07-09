@@ -77,9 +77,9 @@ class HostsModel
 
         // also remove from log files
         $log_files = [
-            'plugin.log',
-            'theme.log',
-        ];
+                      'plugin.log',
+                      'theme.log',
+                     ];
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         foreach ($log_files as $log_file) {
             $log_file_path = LOG_DIR . "/$log_file";

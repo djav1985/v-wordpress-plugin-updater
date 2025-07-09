@@ -34,9 +34,9 @@ class LogModel
             foreach ($log_array as $entry) {
                 list($domain, $date, $status) = explode(' ', $entry, 3);
                 $log_by_domain[$domain] = [
-                    'date'   => $date,
-                    'status' => $status,
-                ];
+                                           'date'   => $date,
+                                           'status' => $status,
+                                          ];
             }
 
             ob_start();
