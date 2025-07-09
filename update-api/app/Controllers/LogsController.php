@@ -38,13 +38,4 @@ class LogsController extends Controller
         ]);
     }
 
-    /**
-     * Processes a log file and generates HTML output.
-     *
-     * Reads the log file, groups entries by domain, and generates HTML for each entry.
-     *
-     * @param string $logFile The name of the log file to process.
-     *
-     * @return string The generated HTML output or an error message if the file is not found.
-     */
 }
