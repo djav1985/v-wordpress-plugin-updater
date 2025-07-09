@@ -31,7 +31,8 @@ class AuthMiddleware
 
         $timeoutLimit = defined('SESSION_TIMEOUT_LIMIT') ? SESSION_TIMEOUT_LIMIT : 1800;
         $timeoutExceeded = isset($_SESSION['timeout']) && (time() - $_SESSION['timeout'] > $timeoutLimit);
-        $userAgentChanged = isset($_SESSION['user_agent']) && $_SESSION['user_agent'] !== ($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $userAgentChanged = isset($_SESSION['user_agent']) && $_SESSION['user_agent'] !== $userAgent;
         if ($timeoutExceeded || $userAgentChanged) {
             session_unset();
             session_destroy();
