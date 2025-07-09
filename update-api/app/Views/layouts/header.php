@@ -41,7 +41,7 @@
     </div>
 </header>
 <div class="tab">
-    <a href="/"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/') {
+    <a href="/home"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/home') {
         echo 'active';
                                         } ?>">Manage Hosts</button></a>
     <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') {
