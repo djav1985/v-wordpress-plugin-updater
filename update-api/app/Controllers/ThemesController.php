@@ -98,10 +98,30 @@ class ThemesController extends Controller
                 }
             }
 
+            $max_upload_size = min(
+                (int)(ini_get('upload_max_filesize') * 1024 * 1024),
+                (int)(ini_get('post_max_size') * 1024 * 1024)
+            );
+
+            if ($_FILES['theme_file']['size'][$i] > $max_upload_size) {
+                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                    '. File size exceeds the maximum allowed size of ' . ($max_upload_size / (1024 * 1024)) . ' MB.';
+                ErrorMiddleware::logMessage($error);
+
+                if ($isAjax) {
+                    http_response_code(400);
+                    echo $error;
+                    return;
+                }
+
+                $_SESSION['messages'][] = $error;
+                continue;
+            }
+
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
                 $error = 'Error uploading: ' .
                     htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
-                    '. Only .zip files are allowed.';
+                    '. Only .zip files are allowed, and filenames must follow the format: theme-name_1.0.zip';
                 ErrorMiddleware::logMessage($error);
 
                 if ($isAjax) {
