@@ -13,7 +13,7 @@
 
 namespace App\Controllers;
 
-use App\Core\UtilityHandler;
+use App\Core\Utility;
 use App\Core\ErrorHandler;
 
 class PluginsController
@@ -38,7 +38,7 @@ class PluginsController
                 self::uploadPluginFiles();
             } elseif (isset($_POST['delete_plugin'])) {
                 $plugin_name = isset($_POST['plugin_name'])
-                    ? UtilityHandler::validateSlug($_POST['plugin_name'])
+                    ? Utility::validateSlug($_POST['plugin_name'])
                     : null;
                 self::deletePlugin($plugin_name);
             }
@@ -65,7 +65,7 @@ class PluginsController
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['plugin_file']['name'][$i])
-            ? UtilityHandler::validateFilename($_FILES['plugin_file']['name'][$i])
+            ? Utility::validateFilename($_FILES['plugin_file']['name'][$i])
             : '';
             $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
             ? $_FILES['plugin_file']['tmp_name'][$i]
@@ -127,7 +127,7 @@ class PluginsController
             exit();
         }
 
-        $plugin_name = UtilityHandler::validateFilename($plugin_name);
+        $plugin_name = Utility::validateFilename($plugin_name);
         $plugin_name = basename((string) $plugin_name);
         $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
         if (

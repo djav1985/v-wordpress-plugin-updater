@@ -12,7 +12,7 @@
 
 namespace App\Controllers;
 
-use App\Core\UtilityHandler;
+use App\Core\Utility;
 use App\Core\ErrorHandler;
 
 class ApiController
@@ -20,7 +20,7 @@ class ApiController
     public static function handleRequest(): void
     {
         $ip = $_SERVER['REMOTE_ADDR'];
-        if (UtilityHandler::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if (Utility::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(403);
             ErrorHandler::logMessage('Forbidden or invalid request from ' . $ip);
             exit();
@@ -38,10 +38,10 @@ class ApiController
         }
         list($type, $domain, $key, $slug, $version) = $values;
 
-        $domain  = UtilityHandler::validateDomain($domain);
-        $key     = UtilityHandler::validateKey($key);
-        $slug    = UtilityHandler::validateSlug($slug);
-        $version = UtilityHandler::validateVersion($version);
+        $domain  = Utility::validateDomain($domain);
+        $key     = Utility::validateKey($key);
+        $slug    = Utility::validateSlug($slug);
+        $version = Utility::validateVersion($version);
 
         $invalid = [];
         if ($domain === null) {

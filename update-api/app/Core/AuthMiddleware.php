@@ -18,7 +18,7 @@ class AuthMiddleware
     public static function check(): void
     {
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
-        if ($ip && UtilityHandler::isBlacklisted($ip)) {
+        if ($ip && Utility::isBlacklisted($ip)) {
             http_response_code(403);
             ErrorHandler::logMessage("Blacklisted IP attempted access: $ip", 'error');
             exit();

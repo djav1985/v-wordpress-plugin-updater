@@ -13,7 +13,7 @@
 
 namespace App\Controllers;
 
-use App\Core\UtilityHandler;
+use App\Core\Utility;
 use App\Core\ErrorHandler;
 
 class AuthController
@@ -31,8 +31,8 @@ class AuthController
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = isset($_POST['username']) ? UtilityHandler::validateUsername($_POST['username']) : null;
-            $password = isset($_POST['password']) ? UtilityHandler::validatePassword($_POST['password']) : null;
+            $username = isset($_POST['username']) ? Utility::validateUsername($_POST['username']) : null;
+            $password = isset($_POST['password']) ? Utility::validatePassword($_POST['password']) : null;
 
             if ($username === VALID_USERNAME && $password === VALID_PASSWORD) {
                 $_SESSION['logged_in'] = true;
@@ -45,12 +45,12 @@ class AuthController
             }
 
             $ip = $_SERVER['REMOTE_ADDR'];
-            if (UtilityHandler::isBlacklisted($ip)) {
+            if (Utility::isBlacklisted($ip)) {
                 $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;
             } else {
-                UtilityHandler::updateFailedAttempts($ip);
+                Utility::updateFailedAttempts($ip);
                 $error = 'Invalid username or password.';
                 ErrorHandler::logMessage($error);
                 $_SESSION['messages'][] = $error;

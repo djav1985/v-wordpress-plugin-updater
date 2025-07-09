@@ -7,13 +7,13 @@
  * Link:    https://vontainment.com
  * Version: 3.0.0
  *
- * File: UtilityHandler.php
+ * File: Utility.php
  * Description: WordPress Update API
  */
 
 namespace App\Core;
 
-class UtilityHandler
+class Utility
 {
     /**
      * Validate a domain string.

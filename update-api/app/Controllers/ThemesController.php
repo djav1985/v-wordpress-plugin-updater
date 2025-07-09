@@ -13,7 +13,7 @@
 
 namespace App\Controllers;
 
-use App\Core\UtilityHandler;
+use App\Core\Utility;
 use App\Core\ErrorHandler;
 
 class ThemesController
@@ -37,7 +37,7 @@ class ThemesController
             if (isset($_FILES['theme_file'])) {
                 self::uploadThemeFiles();
             } elseif (isset($_POST['delete_theme'])) {
-                $theme_name = isset($_POST['theme_name']) ? UtilityHandler::validateSlug($_POST['theme_name']) : null;
+                $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
                 self::deleteTheme($theme_name);
             }
         } else {
@@ -63,7 +63,7 @@ class ThemesController
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($_FILES['theme_file']['name'][$i])
-                ? UtilityHandler::validateFilename($_FILES['theme_file']['name'][$i])
+                ? Utility::validateFilename($_FILES['theme_file']['name'][$i])
                 : '';
             $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
                 ? $_FILES['theme_file']['tmp_name'][$i]
@@ -125,7 +125,7 @@ class ThemesController
             exit();
         }
 
-        $theme_name = UtilityHandler::validateFilename($theme_name);
+        $theme_name = Utility::validateFilename($theme_name);
         $theme_name = basename((string) $theme_name);
         $theme_path = THEMES_DIR . '/' . $theme_name;
         if (

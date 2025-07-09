@@ -13,7 +13,7 @@
 
 namespace App\Controllers;
 
-use App\Core\UtilityHandler;
+use App\Core\Utility;
 use App\Core\ErrorHandler;
 
 class HomeController
@@ -34,8 +34,8 @@ class HomeController
             isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
             hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
-            $domain = isset($_POST['domain']) ? UtilityHandler::validateDomain($_POST['domain']) : null;
-            $key = isset($_POST['key']) ? UtilityHandler::validateKey($_POST['key']) : null;
+            $domain = isset($_POST['domain']) ? Utility::validateDomain($_POST['domain']) : null;
+            $key = isset($_POST['key']) ? Utility::validateKey($_POST['key']) : null;
             $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
             if (isset($_POST['add_entry'])) {
                 self::addEntry($domain, $key);
