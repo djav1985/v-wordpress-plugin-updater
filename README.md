@@ -31,16 +31,9 @@
 2. [Overview](#overview)
 3. [Features](#features)
 4. [Project Structure](#project-structure)
-    4.1. [Project Index](#project-index)
 5. [Getting Started](#getting-started)
-    5.1. [Prerequisites](#prerequisites)
-    5.2. [Installation](#installation)
-    5.3. [Usage](#usage)
-    5.4. [Testing](#testing)
 6. [Roadmap](#roadmap)
-7. [Contributing](#contributing)
-8. [License](#license)
-9. [Acknowledgments](#acknowledgments)
+7. [License](#license)
 
 ---
 
@@ -499,9 +492,5 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 ## License
 
 V-wordpress-plugin-updater is protected under the [LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
-
----
-
-[back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
 
 ---
