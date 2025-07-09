@@ -1,6 +1,6 @@
-vendor/
 phpcs.xml
 .vscode/
+vendor/
 *.code-workspace
 .history/
 *.log
