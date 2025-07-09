@@ -29,31 +29,34 @@ class PluginsController extends Controller
      */
     public static function handleRequest(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return;
-        } elseif (
-            $_SERVER['REQUEST_METHOD'] === 'POST' &&
-            isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
-            hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            if (isset($_FILES['plugin_file'])) {
-                self::uploadPluginFiles();
-            } elseif (isset($_POST['delete_plugin'])) {
-                $plugin_name = isset($_POST['plugin_name'])
-                    ? Utility::validateSlug($_POST['plugin_name'])
-                    : null;
-                self::deletePlugin($plugin_name);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (
+                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+            ) {
+                if (isset($_FILES['plugin_file'])) {
+                    self::uploadPluginFiles();
+                } elseif (isset($_POST['delete_plugin'])) {
+                    $plugin_name = isset($_POST['plugin_name'])
+                        ? Utility::validateSlug($_POST['plugin_name'])
+                        : null;
+                    self::deletePlugin($plugin_name);
+                }
+            } else {
+                $error = 'Invalid Form Action.';
+                ErrorMiddleware::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /');
+                exit();
             }
-        } else {
-            $error = 'Invalid Form Action.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /');
-            exit();
         }
 
+        $pluginsTableHtml = self::getPluginsTableHtml();
+
         // Render the plupdate view
-        (new self())->render('plupdate', []);
+        (new self())->render('plupdate', [
+            'pluginsTableHtml' => $pluginsTableHtml,
+        ]);
     }
 
     /**
