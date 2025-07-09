@@ -4,6 +4,10 @@ RewriteEngine On
 RewriteCond %{THE_REQUEST} \s/login\.php\s [NC]
 RewriteRule ^login\.php$ /login [R=301,L]
 
+# External redirect /api.php → /api
+RewriteCond %{THE_REQUEST} \s/api\.php\s [NC]
+RewriteRule ^api\.php$ /api [R=301,L]
+
 # Redirect /index.php to root
 RewriteCond %{THE_REQUEST} \s/index\.php\s [NC]
 RewriteRule ^index\.php$ / [R=301,L]
