@@ -17,6 +17,7 @@ namespace App\Controllers;
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
 use App\Core\Controller;
+use App\Models\HostsModel;
 
 class HomeController extends Controller
 {
@@ -38,11 +39,25 @@ class HomeController extends Controller
                 $key = isset($_POST['key']) ? Utility::validateKey($_POST['key']) : null;
                 $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
                 if (isset($_POST['add_entry'])) {
-                    self::addEntry($domain, $key);
+                    if ($domain !== null && $key !== null && HostsModel::addEntry($domain, $key)) {
+                        $_SESSION['messages'][] = 'Entry added successfully.';
+                    } else {
+                        $error = 'Failed to add entry.';
+                        ErrorMiddleware::logMessage($error);
+                        $_SESSION['messages'][] = $error;
+                    }
                 } elseif (isset($_POST['update_entry'])) {
-                    self::updateEntry($id, $domain, $key);
+                    if ($id !== null && $domain !== null && $key !== null && HostsModel::updateEntry($id, $domain, $key)) {
+                        $_SESSION['messages'][] = 'Entry updated successfully.';
+                    } else {
+                        $error = 'Failed to update entry.';
+                        ErrorMiddleware::logMessage($error);
+                        $_SESSION['messages'][] = $error;
+                    }
                 } elseif (isset($_POST['delete_entry'])) {
-                    self::deleteEntry($id, $domain);
+                    if ($id !== null && $domain !== null && HostsModel::deleteEntry($id, $domain)) {
+                        $_SESSION['messages'][] = 'Entry deleted successfully.';
+                    }
                 }
                 // If no action triggered, redirect back to home
                 header('Location: /home');
@@ -60,123 +75,6 @@ class HomeController extends Controller
         (new self())->render('home', [
             'hostsTableHtml' => self::getHostsTableHtml(),
         ]);
-    }
-    private static function addEntry(?string $domain, ?string $key): void
-    {
-        $domain = $domain !== null ? Utility::validateDomain($domain) : null;
-        $key = $key !== null ? Utility::validateKey($key) : null;
-        if ($domain === null || $key === null) {
-            $error = 'Invalid domain or key.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /home');
-            exit();
-        }
-
-        $hosts_file = HOSTS_ACL . '/HOSTS';
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
-        $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $new_entry = $safe_domain . ' ' . $safe_key;
-        if (file_put_contents($hosts_file, $new_entry . "\n", FILE_APPEND | LOCK_EX) === false) {
-            $error = 'Failed to add entry.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-        } else {
-            $_SESSION['messages'][] = 'Entry added successfully.';
-        }
-        header('Location: /home');
-        exit();
-    }
-
-    /**
-     * Updates an existing entry in the hosts file.
-     *
-     * @param int|null    $line_number The line number of the entry to update.
-     * @param string|null $domain      The updated domain.
-     * @param string|null $key         The updated key.
-     *
-     * @return void
-     */
-    private static function updateEntry(?int $line_number, ?string $domain, ?string $key): void
-    {
-        $domain = $domain !== null ? Utility::validateDomain($domain) : null;
-        $key = $key !== null ? Utility::validateKey($key) : null;
-        if ($domain === null || $key === null) {
-            $error = 'Invalid domain or key.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /home');
-            exit();
-        }
-
-        $hosts_file = HOSTS_ACL . '/HOSTS';
-        $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
-        $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $entries[$line_number] = $safe_domain . ' ' . $safe_key;
-        if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
-            $error = 'Failed to update entry.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-        } else {
-            $_SESSION['messages'][] = 'Entry updated successfully.';
-        }
-        header('Location: /home');
-        exit();
-    }
-
-    /**
-     * Deletes an entry from the hosts file and updates related log files.
-     *
-     * @param int|null    $line_number       The line number of the entry to delete.
-     * @param string|null $domain_to_delete  The domain to delete from the logs.
-     *
-     * @return void
-     */
-    private static function deleteEntry(?int $line_number, ?string $domain_to_delete): void
-    {
-        if (
-            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
-            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            $error = 'Invalid CSRF token.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /home');
-            exit();
-        }
-
-        $hosts_file = HOSTS_ACL . '/HOSTS';
-        $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
-        unset($entries[$line_number]);
-        if (file_put_contents($hosts_file, implode("\n", $entries) . "\n") === false) {
-            $error = 'Failed to delete entry.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-        }
-
-        $log_files = [
-                      'plugin.log',
-                      'theme.log',
-                     ];
-        $safe_domain_to_delete = htmlspecialchars($domain_to_delete, ENT_QUOTES, 'UTF-8');
-        foreach ($log_files as $log_file) {
-            $log_file_path = LOG_DIR . "/$log_file";
-            if (file_exists($log_file_path)) {
-                $log_entries = file($log_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                $filtered_entries = array_filter($log_entries, function ($entry) use ($safe_domain_to_delete) {
-                    return strpos($entry, $safe_domain_to_delete) !== 0;
-                });
-                if (file_put_contents($log_file_path, implode("\n", $filtered_entries) . "\n") === false) {
-                    $error = 'Failed to update log file ' . $log_file_path;
-                    ErrorMiddleware::logMessage($error);
-                    $_SESSION['messages'][] = $error;
-                }
-            }
-        }
-        $_SESSION['messages'][] = 'Entry deleted successfully.';
-        header('Location: /home');
-        exit();
     }
 
     /**
@@ -220,8 +118,7 @@ class HomeController extends Controller
      */
     public static function getHostsTableHtml(): string
     {
-        $hostsFile = HOSTS_ACL . '/HOSTS';
-        $entries = file_exists($hostsFile) ? file($hostsFile, FILE_IGNORE_NEW_LINES) : [];
+        $entries = HostsModel::getEntries();
         $hostsTableHtml = '';
         if (count($entries) > 0) {
             $halfCount = ceil(count($entries) / 2);

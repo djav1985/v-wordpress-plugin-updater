@@ -17,6 +17,7 @@ namespace App\Controllers;
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
 use App\Core\Controller;
+use App\Models\PluginModel;
 
 class PluginsController extends Controller
 {
@@ -34,14 +35,30 @@ class PluginsController extends Controller
                 isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
                 hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
             ) {
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if (isset($_FILES['plugin_file'])) {
-                    self::uploadPluginFiles();
+                    $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
+                    if ($isAjax) {
+                        echo implode("\n", $messages);
+                        exit();
+                    }
+                    $_SESSION['messages'] = array_merge($_SESSION['messages'] ?? [], $messages);
+                    header('Location: /plupdate');
                     exit();
                 } elseif (isset($_POST['delete_plugin'])) {
                     $plugin_name = isset($_POST['plugin_name'])
                         ? Utility::validateSlug($_POST['plugin_name'])
                         : null;
-                    self::deletePlugin($plugin_name);
+                    if ($plugin_name !== null && PluginModel::deletePlugin($plugin_name)) {
+                        $_SESSION['messages'][] = 'Plugin deleted successfully!';
+                    } else {
+                        $error = 'Failed to delete plugin file. Please try again.';
+                        ErrorMiddleware::logMessage($error);
+                        $_SESSION['messages'][] = $error;
+                    }
+                    header('Location: /plupdate');
+                    exit();
                 }
             } else {
                 $error = 'Invalid Form Action.';
@@ -67,141 +84,6 @@ class PluginsController extends Controller
         ]);
     }
 
-    /**
-     * Uploads plugin files to the server.
-     *
-     * Validates file extensions, removes existing plugins with the same slug, and moves the uploaded files.
-     *
-     * @return void
-     */
-    private static function uploadPluginFiles(): void
-    {
-        $allowed_extensions = ['zip'];
-        $total_files = count($_FILES['plugin_file']['name']);
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-
-        for ($i = 0; $i < $total_files; $i++) {
-            $file_name = isset($_FILES['plugin_file']['name'][$i])
-                ? Utility::validateFilename($_FILES['plugin_file']['name'][$i])
-                : '';
-            $file_tmp = isset($_FILES['plugin_file']['tmp_name'][$i])
-                ? $_FILES['plugin_file']['tmp_name'][$i]
-                : '';
-            $file_error = isset($_FILES['plugin_file']['error'][$i])
-                ? filter_var($_FILES['plugin_file']['error'][$i], FILTER_VALIDATE_INT)
-                : UPLOAD_ERR_NO_FILE;
-            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            $plugin_slug = explode('_', $file_name)[0];
-            $existing_plugins = glob(PLUGINS_DIR . '/' . $plugin_slug . '_*');
-            foreach ($existing_plugins as $plugin) {
-                if (is_file($plugin)) {
-                    unlink($plugin);
-                }
-            }
-
-            $max_upload_size = min(
-                (int)(ini_get('upload_max_filesize') * 1024 * 1024),
-                (int)(ini_get('post_max_size') * 1024 * 1024)
-            );
-
-            if ($_FILES['plugin_file']['size'][$i] > $max_upload_size) {
-                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
-                    '. File size exceeds the maximum allowed size of ' . ($max_upload_size / (1024 * 1024)) . ' MB.';
-                ErrorMiddleware::logMessage($error);
-
-                if ($isAjax) {
-                    http_response_code(400);
-                    echo $error;
-                    return;
-                }
-
-                $_SESSION['messages'][] = $error;
-                continue;
-            }
-
-            if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $error = 'Error uploading: ' .
-                    htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
-                    '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
-                ErrorMiddleware::logMessage($error);
-
-                if ($isAjax) {
-                    http_response_code(400);
-                    echo $error;
-                    return;
-                }
-
-                $_SESSION['messages'][] = $error;
-                continue;
-            }
-
-            $plugin_path = PLUGINS_DIR . '/' . $file_name;
-            if (move_uploaded_file($file_tmp, $plugin_path)) {
-                $msg = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
-                if ($isAjax) {
-                    echo $msg;
-                    return;
-                }
-                $_SESSION['messages'][] = $msg;
-            } else {
-                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
-                ErrorMiddleware::logMessage($error);
-                if ($isAjax) {
-                    http_response_code(500);
-                    echo $error;
-                    return;
-                }
-                $_SESSION['messages'][] = $error;
-            }
-        }
-
-        if (!$isAjax) {
-            header('Location: /plupdate');
-            exit();
-        }
-    }
-
-    /**
-     * Deletes a plugin file from the server.
-     *
-     * Validates the plugin name and ensures the file exists before deletion.
-     *
-     * @param string|null $plugin_name The name of the plugin to delete.
-     *
-     * @return void
-     */
-    private static function deletePlugin(?string $plugin_name): void
-    {
-        if (
-            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
-            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            $error = 'Invalid CSRF token.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /plupdate');
-            exit();
-        }
-
-        $plugin_name = Utility::validateFilename($plugin_name);
-        $plugin_name = basename((string) $plugin_name);
-        $plugin_path = PLUGINS_DIR . '/' . $plugin_name;
-        if (
-            file_exists($plugin_path) &&
-            dirname(realpath($plugin_path)) === realpath(PLUGINS_DIR)
-        ) {
-            if (unlink($plugin_path)) {
-                $_SESSION['messages'][] = 'Plugin deleted successfully!';
-            } else {
-                $error = 'Failed to delete plugin file. Please try again.';
-                ErrorMiddleware::logMessage($error);
-                $_SESSION['messages'][] = $error;
-            }
-            header('Location: /plupdate');
-            exit();
-        }
-    }
 
     /**
      * Generates an HTML table row for a plugin.
@@ -236,8 +118,7 @@ class PluginsController extends Controller
      */
     public static function getPluginsTableHtml(): string
     {
-        $plugins = glob(PLUGINS_DIR . "/*.zip");
-        $plugins = array_reverse($plugins);
+        $plugins = PluginModel::getPlugins();
         if (count($plugins) > 0) {
             $halfCount = ceil(count($plugins) / 2);
             $pluginsColumn1 = array_slice($plugins, 0, $halfCount);
