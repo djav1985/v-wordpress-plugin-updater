@@ -17,6 +17,7 @@ namespace App\Controllers;
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
 use App\Core\Controller;
+use App\Models\ThemeModel;
 
 class ThemesController extends Controller
 {
@@ -34,12 +35,28 @@ class ThemesController extends Controller
                 isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
                 hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
             ) {
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if (isset($_FILES['theme_file'])) {
-                    self::uploadThemeFiles();
+                    $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
+                    if ($isAjax) {
+                        echo implode("\n", $messages);
+                        exit();
+                    }
+                    $_SESSION['messages'] = array_merge($_SESSION['messages'] ?? [], $messages);
+                    header('Location: /thupdate');
                     exit();
                 } elseif (isset($_POST['delete_theme'])) {
                     $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
-                    self::deleteTheme($theme_name);
+                    if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
+                        $_SESSION['messages'][] = 'Theme deleted successfully!';
+                    } else {
+                        $error = 'Failed to delete theme file. Please try again.';
+                        ErrorMiddleware::logMessage($error);
+                        $_SESSION['messages'][] = $error;
+                    }
+                    header('Location: /thupdate');
+                    exit();
                 }
             } else {
                 $error = 'Invalid Form Action.';
@@ -65,141 +82,6 @@ class ThemesController extends Controller
         ]);
     }
 
-    /**
-     * Uploads theme files to the server.
-     *
-     * Validates file extensions, removes existing themes with the same slug, and moves the uploaded files.
-     *
-     * @return void
-     */
-    private static function uploadThemeFiles(): void
-    {
-        $allowed_extensions = ['zip'];
-        $total_files = count($_FILES['theme_file']['name']);
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-
-        for ($i = 0; $i < $total_files; $i++) {
-            $file_name = isset($_FILES['theme_file']['name'][$i])
-                ? Utility::validateFilename($_FILES['theme_file']['name'][$i])
-                : '';
-            $file_tmp = isset($_FILES['theme_file']['tmp_name'][$i])
-                ? $_FILES['theme_file']['tmp_name'][$i]
-                : '';
-            $file_error = isset($_FILES['theme_file']['error'][$i])
-                ? filter_var($_FILES['theme_file']['error'][$i], FILTER_VALIDATE_INT)
-                : UPLOAD_ERR_NO_FILE;
-            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            $theme_slug = explode('_', $file_name)[0];
-            $existing_themes = glob(THEMES_DIR . '/' . $theme_slug . '_*');
-            foreach ($existing_themes as $theme) {
-                if (is_file($theme)) {
-                    unlink($theme);
-                }
-            }
-
-            $max_upload_size = min(
-                (int)(ini_get('upload_max_filesize') * 1024 * 1024),
-                (int)(ini_get('post_max_size') * 1024 * 1024)
-            );
-
-            if ($_FILES['theme_file']['size'][$i] > $max_upload_size) {
-                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
-                    '. File size exceeds the maximum allowed size of ' . ($max_upload_size / (1024 * 1024)) . ' MB.';
-                ErrorMiddleware::logMessage($error);
-
-                if ($isAjax) {
-                    http_response_code(400);
-                    echo $error;
-                    return;
-                }
-
-                $_SESSION['messages'][] = $error;
-                continue;
-            }
-
-            if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $error = 'Error uploading: ' .
-                    htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
-                    '. Only .zip files are allowed, and filenames must follow the format: theme-name_1.0.zip';
-                ErrorMiddleware::logMessage($error);
-
-                if ($isAjax) {
-                    http_response_code(400);
-                    echo $error;
-                    return;
-                }
-
-                $_SESSION['messages'][] = $error;
-                continue;
-            }
-
-            $theme_path = THEMES_DIR . '/' . $file_name;
-            if (move_uploaded_file($file_tmp, $theme_path)) {
-                $msg = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
-                if ($isAjax) {
-                    echo $msg;
-                    return;
-                }
-                $_SESSION['messages'][] = $msg;
-            } else {
-                $error = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
-                ErrorMiddleware::logMessage($error);
-                if ($isAjax) {
-                    http_response_code(500);
-                    echo $error;
-                    return;
-                }
-                $_SESSION['messages'][] = $error;
-            }
-        }
-
-        if (!$isAjax) {
-            header('Location: /thupdate');
-            exit();
-        }
-    }
-
-    /**
-     * Deletes a theme file from the server.
-     *
-     * Validates the theme name and ensures the file exists before deletion.
-     *
-     * @param string|null $theme_name The name of the theme to delete.
-     *
-     * @return void
-     */
-    private static function deleteTheme(?string $theme_name): void
-    {
-        if (
-            !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
-            !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            $error = 'Invalid CSRF token.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /thupdate');
-            exit();
-        }
-
-        $theme_name = Utility::validateFilename($theme_name);
-        $theme_name = basename((string) $theme_name);
-        $theme_path = THEMES_DIR . '/' . $theme_name;
-        if (
-            file_exists($theme_path) &&
-            dirname(realpath($theme_path)) === realpath(THEMES_DIR)
-        ) {
-            if (unlink($theme_path)) {
-                $_SESSION['messages'][] = 'Theme deleted successfully!';
-            } else {
-                $error = 'Failed to delete theme file. Please try again.';
-                ErrorMiddleware::logMessage($error);
-                $_SESSION['messages'][] = $error;
-            }
-            header('Location: /thupdate');
-            exit();
-        }
-    }
 
     /**
      * Generates an HTML table row for a theme.
@@ -235,8 +117,7 @@ class ThemesController extends Controller
      */
     public static function getThemesTableHtml(): string
     {
-        $themes = glob(THEMES_DIR . "/*.zip");
-        $themes = array_reverse($themes);
+        $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {
             $half_count = ceil(count($themes) / 2);
             $themes_column1 = array_slice($themes, 0, $half_count);
