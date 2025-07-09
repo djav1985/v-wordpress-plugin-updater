@@ -77,4 +77,28 @@ class LogModel
 
         return 'Log file not found.';
     }
+
+    /**
+     * Clear the contents of a log file without deleting it.
+     *
+     * @param string $logFile The log file name.
+     *
+     * @return bool True on success, false otherwise.
+     */
+    public static function clearLogFile(string $logFile): bool
+    {
+        $log_file_path = self::$dir . "/$logFile";
+        return file_exists($log_file_path) ? file_put_contents($log_file_path, '') !== false : false;
+    }
+
+    /**
+     * Clear all known logs.
+     *
+     * @return void
+     */
+    public static function clearAllLogs(): void
+    {
+        self::clearLogFile('plugin.log');
+        self::clearLogFile('theme.log');
+    }
 }
