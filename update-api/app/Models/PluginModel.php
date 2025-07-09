@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -79,8 +80,8 @@ class PluginModel
             }
 
             $max_upload_size = min(
-                (int)(ini_get('upload_max_filesize') * 1024 * 1024),
-                (int)(ini_get('post_max_size') * 1024 * 1024)
+                self::_parseIniSize(ini_get('upload_max_filesize')),
+                self::_parseIniSize(ini_get('post_max_size'))
             );
 
             if ($fileArray['size'][$i] > $max_upload_size) {
@@ -104,5 +105,29 @@ class PluginModel
         }
 
         return $messages;
+    }
+
+    /**
+     * Parse a size string from php.ini into bytes.
+     *
+     * @param string $size The size string (e.g., '64M', '128K').
+     *
+     * @return int The size in bytes.
+     */
+    private static function _parseIniSize(string $size): int
+    {
+        $unit = strtoupper(substr($size, -1));
+        $value = (int)$size;
+
+        switch ($unit) {
+        case 'K':
+            return $value * 1024;
+        case 'M':
+            return $value * 1024 * 1024;
+        case 'G':
+            return $value * 1024 * 1024 * 1024;
+        default:
+            return $value;
+        }
     }
 }
