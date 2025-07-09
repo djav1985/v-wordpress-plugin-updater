@@ -29,29 +29,33 @@ class ThemesController extends Controller
      */
     public static function handleRequest(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return;
-        } elseif (
-            $_SERVER['REQUEST_METHOD'] === 'POST' &&
-            isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
-            hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            if (isset($_FILES['theme_file'])) {
-                self::uploadThemeFiles();
-            } elseif (isset($_POST['delete_theme'])) {
-                $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
-                self::deleteTheme($theme_name);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (
+                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+            ) {
+                if (isset($_FILES['theme_file'])) {
+                    self::uploadThemeFiles();
+                } elseif (isset($_POST['delete_theme'])) {
+                    $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
+                    self::deleteTheme($theme_name);
+                } else {
+                    header('Location: /thupdate');
+                    exit();
+                }
+            } else {
+                $error = 'Invalid Form Action.';
+                ErrorMiddleware::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /');
+                exit();
             }
-        } else {
-            $error = 'Invalid Form Action.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /');
-            exit();
         }
 
         // Render the thupdate view
-        (new self())->render('thupdate', []);
+        (new self())->render('thupdate', [
+            'themesTableHtml' => self::getThemesTableHtml(),
+        ]);
     }
 
     /**

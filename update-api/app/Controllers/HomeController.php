@@ -29,43 +29,38 @@ class HomeController extends Controller
      */
     public static function handleRequest(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return;
-        } elseif (
-            $_SERVER['REQUEST_METHOD'] === 'POST' &&
-            isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
-            hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-        ) {
-            $domain = isset($_POST['domain']) ? Utility::validateDomain($_POST['domain']) : null;
-            $key = isset($_POST['key']) ? Utility::validateKey($_POST['key']) : null;
-            $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
-            if (isset($_POST['add_entry'])) {
-                self::addEntry($domain, $key);
-            } elseif (isset($_POST['update_entry'])) {
-                self::updateEntry($id, $domain, $key);
-            } elseif (isset($_POST['delete_entry'])) {
-                self::deleteEntry($id, $domain);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (
+                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+            ) {
+                $domain = isset($_POST['domain']) ? Utility::validateDomain($_POST['domain']) : null;
+                $key = isset($_POST['key']) ? Utility::validateKey($_POST['key']) : null;
+                $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
+                if (isset($_POST['add_entry'])) {
+                    self::addEntry($domain, $key);
+                } elseif (isset($_POST['update_entry'])) {
+                    self::updateEntry($id, $domain, $key);
+                } elseif (isset($_POST['delete_entry'])) {
+                    self::deleteEntry($id, $domain);
+                }
+                // If no action triggered, redirect back to home
+                header('Location: /home');
+                exit();
+            } else {
+                $error = 'Invalid Form Action.';
+                ErrorMiddleware::logMessage($error);
+                $_SESSION['messages'][] = $error;
+                header('Location: /home');
+                exit();
             }
-        } else {
-            $error = 'Invalid Form Action.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /home');
-            exit();
         }
 
         // Render the home view
-        (new self())->render('home', []);
+        (new self())->render('home', [
+            'hostsTableHtml' => self::getHostsTableHtml(),
+        ]);
     }
-
-    /**
-     * Adds a new entry to the hosts file.
-     *
-     * @param string|null $domain The domain to add.
-     * @param string|null $key    The key associated with the domain.
-     *
-     * @return void
-     */
     private static function addEntry(?string $domain, ?string $key): void
     {
         $hosts_file = HOSTS_ACL . '/HOSTS';
