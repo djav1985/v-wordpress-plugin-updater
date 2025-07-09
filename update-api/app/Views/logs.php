@@ -20,5 +20,9 @@ require_once __DIR__ . '/layouts/header.php';
     <?php echo $ploutput; ?>
     <h2>Theme Log</h2>
     <?php echo $thoutput; ?>
+    <form method="post" action="/logs" style="margin-top:20px;">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+        <button class="red-button" type="submit" name="clear_logs">Clear Logs</button>
+    </form>
 </div>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

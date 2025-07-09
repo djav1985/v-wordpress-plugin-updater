@@ -15,6 +15,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\ErrorMiddleware;
 use App\Models\LogModel;
 
 class LogsController extends Controller
@@ -28,6 +29,25 @@ class LogsController extends Controller
      */
     public static function handleRequest(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (
+                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
+                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+            ) {
+                if (isset($_POST['clear_logs'])) {
+                    LogModel::clearAllLogs();
+                    $_SESSION['messages'][] = 'Logs cleared successfully.';
+                }
+                header('Location: /logs');
+                exit();
+            }
+            $error = 'Invalid Form Action.';
+            ErrorMiddleware::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /logs');
+            exit();
+        }
+
         $ploutput = LogModel::processLogFile('plugin.log');
         $thoutput = LogModel::processLogFile('theme.log');
 
