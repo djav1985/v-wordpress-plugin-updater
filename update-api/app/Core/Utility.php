@@ -1,17 +1,20 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
- * @version 3.0.0
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
  *
- * File: UtilityHandler.php
+ * File: Utility.php
  * Description: WordPress Update API
  */
 
-class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Core;
+
+class Utility
 {
     /**
      * Validate a domain string.
@@ -22,7 +25,13 @@ class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingName
     public static function validateDomain(string $domain): ?string
     {
         $domain = strtolower(trim($domain));
-        return filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) ? $domain : null;
+
+        // Ensure the domain contains at least one dot and valid characters
+        if (preg_match('/^(?!-)[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/', $domain)) {
+            return $domain;
+        }
+
+        return null;
     }
 
     /**
@@ -58,7 +67,7 @@ class UtilityHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingName
     public static function validateFilename(string $filename): ?string
     {
         $filename = basename(trim($filename));
-        return preg_match('/^[A-Za-z0-9._-]+$/', $filename) ? $filename : null;
+        return preg_match('/^[A-Za-z-]+_[0-9.]+\.zip$/', $filename) ? $filename : null;
     }
 
     /**

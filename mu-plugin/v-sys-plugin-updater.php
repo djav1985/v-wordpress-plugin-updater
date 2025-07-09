@@ -1,10 +1,13 @@
 <?php
-
-/** 
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
+ *
+ * File: v-sys-plugin-updater.php
+ * Description: WordPress Update API
  *
  * Plugin Name: WP Plugin Updater
  * Plugin URI: https://vontainment.com
@@ -12,8 +15,8 @@
  * Version: 1.2.0
  * Author: Vontainment
  * Author URI: https://vontainment.com
- *
- * @package VontainmentPluginUpdater */
+ * @package VontainmentPluginUpdater
+*/
 
 if (! defined('ABSPATH')) {
     exit;
@@ -46,6 +49,9 @@ add_action('vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_u
  * Run plugin updates for all installed plugins. */
 function vontmnt_plugin_updater_run_updates(): void
 {
+    if (! function_exists('get_plugins')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
     $plugins = get_plugins();
     foreach ($plugins as $plugin_path => $plugin) {
         $plugin_slug       = dirname($plugin_path);

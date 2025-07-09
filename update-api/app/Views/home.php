@@ -1,18 +1,19 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
- * @version 3.0.0
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
  *
  * File: home.php
  * Description: WordPress Update API
  */
 
-HomeHelper::handleRequest();
-$hostsTableHtml = HomeHelper::getHostsTableHtml();
+require_once __DIR__ . '/layouts/header.php';
+
 ?>
 
 <div class="content-box">
@@ -39,3 +40,4 @@ $hostsTableHtml = HomeHelper::getHostsTableHtml();
         </form>
     </div>
 </div>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

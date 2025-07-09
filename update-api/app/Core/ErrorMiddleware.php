@@ -1,30 +1,43 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
- * @package UpdateAPI
- * @author  Vontainment <services@vontainment.com>
- * @license https://opensource.org/licenses/MIT MIT License
- * @link    https://vontainment.com
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 3.0.0
  *
- * File: ErrorHandler.php
+ * File: ErrorMiddleware.php
  * Description: WordPress Update API
  */
 
-class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace App\Core;
+
+use ErrorException;
+use Throwable;
+
+class ErrorMiddleware
 {
     /**
-     * ErrorHandler constructor.
-     * Registers error, exception, and shutdown handlers.
+     * Register the error handlers and execute the callback.
+     *
+     * @param callable $callback Code to execute within the middleware.
+     * @return void
      */
-    public function __construct()
+    public static function handle(callable $callback): void
     {
         self::register();
+
+        try {
+            $callback();
+        } catch (Throwable $exception) {
+            self::handleException($exception);
+        }
     }
 
     /**
      * Registers error, exception, and shutdown handlers.
-     *
-     * @return void
      */
     public static function register(): void
     {
@@ -96,7 +109,7 @@ class ErrorHandler // @phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public static function logMessage(string $message, string $type = 'error'): void
     {
-        $logFile = __DIR__ . '/../storage/logs/php_app.log';
+        $logFile = __DIR__ . '/../../storage/logs/php_app.log';
         $timestamp = date("Y-m-d H:i:s");
         $logMessage = "[$timestamp] [$type]: $message\n";
         error_log($logMessage, 3, $logFile);
