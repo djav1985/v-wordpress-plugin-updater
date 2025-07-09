@@ -15,7 +15,7 @@ use App\Core\UtilityHandler;
 use App\Core\ErrorHandler;
 
 require_once '../config.php';
-require_once '../../vendor/autoload.php';
+require_once '../../autoload.php';
 
 
 $ip = $_SERVER['REMOTE_ADDR'];
