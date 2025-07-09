@@ -460,17 +460,17 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 2. Create the following directories so the Update API can store packages and logs:
 
    ```sh
-   mkdir -p update-api/storage/plugins
-   mkdir -p update-api/storage/themes
-   mkdir -p update-api/storage/logs
+   mkdir -p /storage/plugins
+   mkdir -p /storage/themes
+   mkdir -p /storage/logs
    ```
-3. Edit `update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, and paths under `BASE_DIR` if the defaults do not match your setup.
+3. Edit `/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, and paths under `BASE_DIR` if the defaults do not match your setup.
 4. Define the API constants used by the mu-plugins in your WordPress `wp-config.php`:
 
    ```php
    define('VONTMENT_KEY', 'your-api-key');
-   define('VONTMENT_PLUGINS', 'https://example.com/update-api/public/api');
-   define('VONTMENT_THEMES', 'https://example.com/update-api/public/api');
+   define('VONTMENT_PLUGINS', 'https://example.com/public/api');
+   define('VONTMENT_THEMES', 'https://example.com/public/api');
    ```
 5. Ensure the web server user owns the `update-api/storage` directory so uploads and logs can be written.
 
