@@ -63,6 +63,16 @@ class HomeController extends Controller
     }
     private static function addEntry(?string $domain, ?string $key): void
     {
+        $domain = $domain !== null ? Utility::validateDomain($domain) : null;
+        $key = $key !== null ? Utility::validateKey($key) : null;
+        if ($domain === null || $key === null) {
+            $error = 'Invalid domain or key.';
+            ErrorMiddleware::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /home');
+            exit();
+        }
+
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
@@ -89,6 +99,16 @@ class HomeController extends Controller
      */
     private static function updateEntry(?int $line_number, ?string $domain, ?string $key): void
     {
+        $domain = $domain !== null ? Utility::validateDomain($domain) : null;
+        $key = $key !== null ? Utility::validateKey($key) : null;
+        if ($domain === null || $key === null) {
+            $error = 'Invalid domain or key.';
+            ErrorMiddleware::logMessage($error);
+            $_SESSION['messages'][] = $error;
+            header('Location: /home');
+            exit();
+        }
+
         $hosts_file = HOSTS_ACL . '/HOSTS';
         $entries = file($hosts_file, FILE_IGNORE_NEW_LINES);
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
