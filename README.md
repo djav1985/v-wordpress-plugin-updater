@@ -485,7 +485,7 @@ NOTE: Make sure to set /public/ as doc root.
 
 ## Roadmap
 
-- [X] **`Task 1`**: <strike>Implement feature one.</strike>
+- [X] **`Task 1`**: <strike>Convert to MVC framework</strike>
 - [ ] **`Task 2`**: Implement feature two.
 - [ ] **`Task 3`**: Implement feature three.
 
