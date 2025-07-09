@@ -13,6 +13,9 @@
 
 namespace App\Core;
 
+use App\Core\Utility;
+use App\Core\ErrorMiddleware;
+
 class AuthMiddleware
 {
     public static function check(): void

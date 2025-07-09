@@ -19,18 +19,24 @@ use Throwable;
 class ErrorMiddleware
 {
     /**
-     * ErrorMiddleware constructor.
-     * Registers error, exception, and shutdown handlers.
+     * Register the error handlers and execute the callback.
+     *
+     * @param callable $callback Code to execute within the middleware.
+     * @return void
      */
-    public function __construct()
+    public static function handle(callable $callback): void
     {
         self::register();
+
+        try {
+            $callback();
+        } catch (Throwable $exception) {
+            self::handleException($exception);
+        }
     }
 
     /**
      * Registers error, exception, and shutdown handlers.
-     *
-     * @return void
      */
     public static function register(): void
     {

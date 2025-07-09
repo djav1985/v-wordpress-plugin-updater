@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Project: UpdateAPI
  * Author:  Vontainment <services@vontainment.com>
@@ -26,7 +27,13 @@ class ApiController
             exit();
         }
 
-        $params = ['type', 'domain', 'key', 'slug', 'version'];
+        $params = [
+                   'type',
+                   'domain',
+                   'key',
+                   'slug',
+                   'version',
+                  ];
         $values = [];
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
