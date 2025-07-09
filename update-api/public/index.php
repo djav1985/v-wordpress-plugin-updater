@@ -23,7 +23,7 @@ session_start();
 session_regenerate_id(true);
 
 require_once '../config.php';
-require_once '../../autoload.php';
+require_once '../autoload.php';
 
 $router = new Router();
 $router->dispatch($_SERVER['REQUEST_URI']);

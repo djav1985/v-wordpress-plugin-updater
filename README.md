@@ -97,7 +97,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | File                                       | Summary                                                                                                                                                                                                                                                                                                                                                            |
 | ---                                        | ---                                                                                                                                                                                                                                                                                                                                                                |
 | [index.php](update-api/public/index.php)   | Serves as the main entry point for the Update APIs web interface, providing a dashboard for managing WordPress hosts, plugins, themes, and viewing logs. Initializes sessions and includes necessary configurations and libraries, facilitating an admin interface with essential resources for a responsive and interactive user experience.                      |
-| [api.php](update-api/public/api.php)       | Unified API endpoint that handles both plugin and theme update requests, validating domains and keys while enforcing IP blacklist rules. Delivers update packages when newer versions are available. |
+| /api (routed via `index.php`)              | Unified API endpoint handled by `ApiController`, validating domains and keys while enforcing IP blacklist rules. Delivers update packages when newer versions are available. |
 | [.htaccess](update-api/public/.htaccess)   | Enhances URL routing by managing redirects and internal rewrites, ensuring clear and organized access to key sections like home, plupdate, thupdate, and logs. This optimization streamlines external requests and maintains seamless internal navigation within the update-api component of the repository.                                                       |
 | /login (handled by `index.php`)            | Provides an admin login interface for the Update API, enhancing security and access control. Integrates with configuration, authentication, and web application firewall libraries to facilitate validation and protection mechanisms within the broader WordPress plugin update ecosystem. Presents a user-friendly login form to manage API updates effectively. |
 | [robots.txt](update-api/public/robots.txt) | Regulates web crawler access to the update-api directory with a specified delay, optimizing server load and ensuring the smooth operation of the plugin updater functionality within the repositorys architecture.                                                                                                                                                  |
@@ -180,8 +180,8 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
    ```php
    define('VONTMENT_KEY', 'your-api-key');
-   define('VONTMENT_PLUGINS', 'https://example.com/update-api/public/api.php');
-   define('VONTMENT_THEMES', 'https://example.com/update-api/public/api.php');
+   define('VONTMENT_PLUGINS', 'https://example.com/update-api/public/api');
+   define('VONTMENT_THEMES', 'https://example.com/update-api/public/api');
    ```
 5. Ensure the web server user owns the `update-api/storage` directory so uploads and logs can be written.
 

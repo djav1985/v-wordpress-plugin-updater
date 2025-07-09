@@ -4,11 +4,7 @@
  */
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
-    $baseDir = __DIR__ . '/update-api/app/';
-    if (!is_dir($baseDir)) {
-        // On deployments without the update-api directory
-        $baseDir = __DIR__ . '/app/';
-    }
+    $baseDir = __DIR__ . '/app/';
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {
         return;

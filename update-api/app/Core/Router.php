@@ -21,12 +21,15 @@ class Router
     {
         $route = strtok($uri, '?');
 
-        if ($route !== '/login') {
+        if ($route !== '/login' && $route !== '/api') {
             AuthMiddleware::check();
         }
         switch ($route) {
             case '/login':
                 \App\Controllers\AuthController::handleRequest();
+                break;
+            case '/api':
+                \App\Controllers\ApiController::handleRequest();
                 break;
             case '/plupdate':
                 \App\Controllers\PluginsController::handleRequest();
