@@ -44,6 +44,13 @@ class ThemesController extends Controller
             } else {
                 $error = 'Invalid Form Action.';
                 ErrorMiddleware::logMessage($error);
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+                if ($isAjax) {
+                    http_response_code(400);
+                    echo $error;
+                    exit();
+                }
                 $_SESSION['messages'][] = $error;
                 header('Location: /');
                 exit();
