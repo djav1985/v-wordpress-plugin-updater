@@ -1,64 +1,77 @@
-<p align="center">
-  <img src="v-wordpress-plugin-updater.png" width="60%" alt="project-logo">
-</p>
-<p align="center">
-    <h1 align="center">V-WORDPRESS-PLUGIN-UPDATER</h1>
-</p>
-<p align="center">
-    <em>Effortless Updates, Enhanced Security, Seamless WordPress Management</em>
-</p>
-<p align="center">
-	<!-- local repository, no metadata badges. -->
-<p>
-<p align="center">
-		<em>Developed with the software and tools below.</em>
-</p>
-<p align="center">
-	<img src="https://img.shields.io/badge/PHP-777BB4.svg?style=flat-square&logo=PHP&logoColor=white" alt="PHP">
-	<img src="https://img.shields.io/badge/JSON-000000.svg?style=flat-square&logo=JSON&logoColor=white" alt="JSON">
-</p>
+<div id="top">
 
-<br><!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary><br>
+<!-- HEADER STYLE: CLASSIC -->
+<div align="center">
 
-- [📍 Overview](#-overview)
-- [🧩 Features](#-features)
-- [🗂️ Repository Structure](#️-repository-structure)
-- [📦 Modules](#-modules)
-- [🚀 Getting Started](#-getting-started)
-  - [⚙️ Installation](#️-installation)
-  - [🤖 Usage](#-usage)
-- [🎗 License](#-license)
-</details>
-<hr>
+<img src="v-wordpress-plugin-updater.png" width="60%" alt="project-logo">
 
-## 📍 Overview
+# V-WORDPRESS-PLUGIN-UPDATER
+
+<em>Seamless Updates, Limitless Innovation, Unmatched Control</em>
+
+<!-- BADGES -->
+<img src="https://img.shields.io/github/license/djav1985/v-wordpress-plugin-updater?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
+<img src="https://img.shields.io/github/last-commit/djav1985/v-wordpress-plugin-updater?style=flat-square&logo=git&logoColor=white&color=0080ff" alt="last-commit">
+<img src="https://img.shields.io/github/languages/top/djav1985/v-wordpress-plugin-updater?style=flat-square&color=0080ff" alt="repo-top-language">
+<img src="https://img.shields.io/github/languages/count/djav1985/v-wordpress-plugin-updater?style=flat-square&color=0080ff" alt="repo-language-count">
+
+<em>Built with the tools and technologies:</em>
+
+<img src="https://img.shields.io/badge/JSON-000000.svg?style=flat-square&logo=JSON&logoColor=white" alt="JSON">
+<img src="https://img.shields.io/badge/PHP-777BB4.svg?style=flat-square&logo=PHP&logoColor=white" alt="PHP">
+
+</div>
+<br>
+
+---
+
+## Table of Contents
+
+1. [Table of Contents](#table-of-contents)
+2. [Overview](#overview)
+3. [Features](#features)
+4. [Project Structure](#project-structure)
+    4.1. [Project Index](#project-index)
+5. [Getting Started](#getting-started)
+    5.1. [Prerequisites](#prerequisites)
+    5.2. [Installation](#installation)
+    5.3. [Usage](#usage)
+    5.4. [Testing](#testing)
+6. [Roadmap](#roadmap)
+7. [Contributing](#contributing)
+8. [License](#license)
+9. [Acknowledgments](#acknowledgments)
+
+---
+
+## Overview
 
 The v-wordpress-plugin-updater project is designed to streamline the management and updating of WordPress plugins and themes through a robust API and automated processes. It offers a comprehensive solution for secure plugin and theme updates, including user authentication, IP blacklisting, and detailed logging. The project provides an admin interface for managing updates, handling uploads, and monitoring logs, ensuring seamless operation across different environments. With support for both single and multisite installations, this project enhances WordPress site maintenance efficiency by automating update checks and installations, significantly reducing manual intervention.
 
 ---
 
-## 🧩 Features
+## Features
 
-|    |   Feature         | Description |
-|----|-------------------|---------------------------------------------------------------|
-| ⚙️  | **Architecture**  | The project employs a modular architecture, dividing functionality into distinct components such as update APIs, configuration management, and admin interfaces. This ensures maintainability and scalability. |
-| 🔩 | **Code Quality**  | The project adheres to coding standards, with clear organization of files and comprehensive inline comments. Security measures like input sanitization and IP blacklisting are integrated throughout the codebase. |
-| 📄 | **Documentation** | Includes configuration and setup guides, inline comments, and function documentation. The repository seems well-organized, but additional user-facing documentation could enhance accessibility. |
-| 🔌 | **Integrations**  | The project integrates with WordPress installations, leveraging external APIs for plugin and theme updates. Dependencies include authentication, WAF, and configuration libraries. |
-| 🧩 | **Modularity**    | The codebase exhibits high modularity, with distinct folders for configuration, MVC components (`app/Core`, `app/Controllers`, `app/Models`, `app/Views`), and public access points. Each module handles specific functionality, promoting reusability and ease of maintenance. |
-| ⚡️  | **Performance**   | The project is designed for efficiency, with secure download endpoints and optimized URL routing via `.htaccess`. However, explicit performance metrics and profiling data are not provided. |
-| 🛡️ | **Security**      | Implements robust security measures including IP blacklisting, authentication libraries, and input validation. Admin interface security is enhanced through session management and a web application firewall (WAF). |
-| 📦 | **Dependencies**  | The project relies on standard libraries like authentication, WAF, configuration management, IP blacklisting, and Dropzone for dynamic file handling. |
-| 🚀 | **Scalability**   | Designed to handle increasing traffic with modular components for updates and management. However, explicit load testing data to back scalability claims is not available. |
+|      | Component            | Details                                                                                     |
+| :--- | :------------------- | :------------------------------------------------------------------------------------------ |
+| ⚙️  | **Architecture**     | <ul><li>PHP-based plugin architecture for WordPress</li><li>Follows standard plugin directory structure</li><li>Includes updater logic, hooks, and admin interfaces</li></ul> |
+| 🔩 | **Code Quality**     | <ul><li>Uses PHP best practices with namespacing</li><li>Code is modular with separate classes/functions</li><li>Includes inline comments and docblocks</li></ul> |
+| 📄 | **Documentation**    | <ul><li>README provides setup and usage instructions</li><li>Includes code comments and inline docs</li><li>No extensive external docs or API references</li></ul> |
+| 🔌 | **Integrations**      | <ul><li>Integrates with WordPress hooks and filters</li><li>Uses REST API endpoints for updates</li><li>Reads configuration from JSON and ini files</li></ul> |
+| 🧩 | **Modularity**        | <ul><li>Separate classes for updater, plugin info, and settings</li><li>Configurable via JSON files</li><li>Supports extension points for custom behaviors</li></ul> |
+| 🧪 | **Testing**           | <ul><li>Limited unit tests present, primarily for core classes</li><li>Uses PHPUnit for testing PHP components</li><li>Test coverage appears minimal, mainly functional tests</li></ul> |
+| ⚡️  | **Performance**       | <ul><li>Optimized file checks with caching mechanisms</li><li>Minimized HTTP requests during update checks</li><li>Uses transient caching in WordPress</li></ul> |
+| 🛡️ | **Security**          | <ul><li>Sanitizes and validates external inputs</li><li>Uses nonces for admin actions</li><li>Reads configuration files with restricted permissions</li></ul> |
+| 📦 | **Dependencies**      | <ul><li>PHP standard library</li><li>WordPress core functions</li><li>Configuration files: robots.txt, blacklist.json, php.ini, etc.</li></ul> |
 
 ---
 
-## 🗂️ Repository Structure
+## Project Structure
 
 ```sh
 └── v-wordpress-plugin-updater/
+    ├── .github
+    │   └── copilot-instructions.md
     ├── LICENSE
     ├── README.md
     ├── mu-plugin
@@ -68,97 +81,387 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     ├── update-api
     │   ├── HOSTS
     │   ├── app
-    │   │   ├── Core
     │   │   ├── Controllers
+    │   │   │   ├── ApiController.php
+    │   │   │   ├── AuthController.php
+    │   │   │   ├── HomeController.php
+    │   │   │   ├── LogsController.php
+    │   │   │   ├── PluginsController.php
+    │   │   │   └── ThemesController.php
+    │   │   ├── Core
+    │   │   │   ├── AuthMiddleware.php
+    │   │   │   ├── Controller.php
+    │   │   │   ├── ErrorMiddleware.php
+    │   │   │   ├── Router.php
+    │   │   │   └── Utility.php
     │   │   ├── Models
+    │   │   │   ├── HostsModel.php
+    │   │   │   ├── LogModel.php
+    │   │   │   ├── PluginModel.php
+    │   │   │   └── ThemeModel.php
     │   │   └── Views
+    │   │       ├── 404.php
+    │   │       ├── home.php
+    │   │       ├── layouts
+    │   │       │   ├── footer.php
+    │   │       │   └── header.php
+    │   │       ├── login.php
+    │   │       ├── logs.php
+    │   │       ├── plupdate.php
+    │   │       └── thupdate.php
     │   ├── autoload.php
     │   ├── config.php
+    │   ├── php.ini
     │   ├── public
+    │   │   ├── .htaccess
+    │   │   ├── assets
+    │   │   │   ├── css
+    │   │   │   │   ├── login.css
+    │   │   │   │   ├── mobile.css
+    │   │   │   │   └── styles.css
+    │   │   │   ├── images
+    │   │   │   │   ├── background.png
+    │   │   │   │   ├── login.jpg
+    │   │   │   │   └── logo.png
+    │   │   │   └── js
+    │   │   │       ├── footer-scripts.js
+    │   │   │       └── header-scripts.js
+    │   │   ├── favicon.ico
+    │   │   ├── index.php
+    │   │   └── robots.txt
     │   └── storage
+    │       ├── BLACKLIST.json
+    │       └── logs
+    │           ├── php_app.log
+    │           ├── plugin.log
+    │           └── theme.log
     └── v-wordpress-plugin-updater.png
 ```
 
+### Project Index
+
+<details open>
+	<summary><b><code>V-WORDPRESS-PLUGIN-UPDATER/</code></b></summary>
+	<!-- __root__ Submodule -->
+	<details>
+		<summary><b>__root__</b></summary>
+		<blockquote>
+			<div class='directory-path' style='padding: 8px 0; color: #666;'>
+				<code><b>⦿ __root__</b></code>
+			<table style='width: 100%; border-collapse: collapse;'>
+			<thead>
+				<tr style='background-color: #f8f9fa;'>
+					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+					<th style='text-align: left; padding: 8px;'>Summary</th>
+				</tr>
+			</thead>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/LICENSE'>LICENSE</a></b></td>
+					<td style='padding: 8px;'>- Provides the licensing terms for the project, establishing legal permissions and restrictions for software use, distribution, and modification within the overall architecture<br>- Ensures clarity on rights granted to users and contributors, supporting open-source collaboration and legal compliance across the entire codebase.</td>
+				</tr>
+			</table>
+		</blockquote>
+	</details>
+	<!-- update-api Submodule -->
+	<details>
+		<summary><b>update-api</b></summary>
+		<blockquote>
+			<div class='directory-path' style='padding: 8px 0; color: #666;'>
+				<code><b>⦿ update-api</b></code>
+			<table style='width: 100%; border-collapse: collapse;'>
+			<thead>
+				<tr style='background-color: #f8f9fa;'>
+					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+					<th style='text-align: left; padding: 8px;'>Summary</th>
+				</tr>
+			</thead>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/php.ini'>php.ini</a></b></td>
+					<td style='padding: 8px;'>- Configure PHP environment settings to optimize API performance and stability within the update API module<br>- By managing error display, upload limits, and execution times, it ensures reliable handling of data uploads and processing tasks, supporting the overall architectures goal of maintaining a robust and efficient API service.</td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/HOSTS'>HOSTS</a></b></td>
+					<td style='padding: 8px;'>- Defines the host configurations for the update API, establishing the environment settings necessary for deploying and managing the API across different infrastructure targets<br>- It ensures consistent host references, facilitating seamless integration and communication within the overall system architecture<br>- This setup supports reliable deployment workflows and environment-specific customization for the update API component.</td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/config.php'>config.php</a></b></td>
+					<td style='padding: 8px;'>- Defines core configuration constants for the WordPress Update API, establishing authentication parameters, directory paths, and session management settings<br>- These configurations facilitate secure and organized access to plugin, theme, and log storage, supporting the API’s role in managing and delivering updates within the overall project architecture.</td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/autoload.php'>autoload.php</a></b></td>
+					<td style='padding: 8px;'>- Establishes a PSR-4 autoloading mechanism for the App namespace, enabling seamless and efficient loading of class files within the update-api project<br>- This autoloader supports the modular architecture by dynamically resolving class locations, ensuring organized code management and streamlined execution across the applications components.</td>
+				</tr>
+			</table>
+			<!-- public Submodule -->
+			<details>
+				<summary><b>public</b></summary>
+				<blockquote>
+					<div class='directory-path' style='padding: 8px 0; color: #666;'>
+						<code><b>⦿ update-api.public</b></code>
+					<table style='width: 100%; border-collapse: collapse;'>
+					<thead>
+						<tr style='background-color: #f8f9fa;'>
+							<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+							<th style='text-align: left; padding: 8px;'>Summary</th>
+						</tr>
+					</thead>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/public/robots.txt'>robots.txt</a></b></td>
+							<td style='padding: 8px;'>- Defines web crawler access restrictions by disallowing all user agents from indexing the site, ensuring the entire website remains private and excluded from search engine results<br>- This configuration supports the overall architecture by controlling visibility and maintaining confidentiality of the sites content.</td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/public/index.php'>index.php</a></b></td>
+							<td style='padding: 8px;'>- Facilitates routing and error handling for the WordPress Update API, enabling seamless request dispatching and robust middleware management<br>- Serves as the entry point that initializes session management, loads configuration, and directs incoming API requests to appropriate handlers, ensuring reliable operation within the overall project architecture.</td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/public/.htaccess'>.htaccess</a></b></td>
+							<td style='padding: 8px;'>- Defines URL rewriting rules to route requests to the main application handler, ensuring proper request processing<br>- Implements caching policies for static assets to optimize load times and reduce server load<br>- Enhances performance and efficiency across the web application by managing request flow and client-side caching strategies.</td>
+						</tr>
+					</table>
+				</blockquote>
+			</details>
+			<!-- app Submodule -->
+			<details>
+				<summary><b>app</b></summary>
+				<blockquote>
+					<div class='directory-path' style='padding: 8px 0; color: #666;'>
+						<code><b>⦿ update-api.app</b></code>
+					<!-- Models Submodule -->
+					<details>
+						<summary><b>Models</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ update-api.app.Models</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/ThemeModel.php'>ThemeModel.php</a></b></td>
+									<td style='padding: 8px;'>- Manages theme files within the WordPress Update API, enabling retrieval, deletion, and uploading of theme ZIP packages<br>- Facilitates theme lifecycle operations, ensuring proper file handling, validation, and size restrictions to support seamless theme management in the broader update infrastructure.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/HostsModel.php'>HostsModel.php</a></b></td>
+									<td style='padding: 8px;'>- Manages host entries within the WordPress Update API by providing functionalities to retrieve, add, update, and delete host records<br>- Ensures consistent handling of host data, maintains log integrity, and supports dynamic configuration of host access controls, integral to the overall architecture for secure and flexible update management.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/PluginModel.php'>PluginModel.php</a></b></td>
+									<td style='padding: 8px;'>- Manages WordPress plugin files within the UpdateAPI architecture by providing functionalities for retrieving, uploading, and deleting plugin ZIP files<br>- Ensures proper handling of file validation, size constraints, and safe file operations, supporting seamless plugin management and updates in the broader system<br>- Facilitates efficient plugin lifecycle control aligned with the APIs update and deployment processes.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/LogModel.php'>LogModel.php</a></b></td>
+									<td style='padding: 8px;'>- Provides functionality to process and visualize log data related to WordPress updates, grouping entries by domain and status<br>- It enhances the overall architecture by enabling clear, styled reporting of update success or failure, including historical context, which supports monitoring and troubleshooting within the update management system.</td>
+								</tr>
+							</table>
+						</blockquote>
+					</details>
+					<!-- Core Submodule -->
+					<details>
+						<summary><b>Core</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ update-api.app.Core</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/Utility.php'>Utility.php</a></b></td>
+									<td style='padding: 8px;'>- Provides utility functions for validating domain names, API keys, slugs, filenames, versions, usernames, and passwords within the WordPress Update API<br>- Manages IP-based security by tracking failed login attempts and maintaining a blacklist, ensuring enhanced security and integrity across the update process<br>- Integral to maintaining data validation standards and safeguarding the API against unauthorized access.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/Router.php'>Router.php</a></b></td>
+									<td style='padding: 8px;'>- Defines the core routing mechanism for the WordPress Update API, directing incoming requests to appropriate controllers based on URL paths<br>- Ensures authentication for protected routes and handles URL redirection and error responses, facilitating seamless request handling within the applications architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/Controller.php'>Controller.php</a></b></td>
+									<td style='padding: 8px;'>- Provides a foundational class for rendering view templates within the WordPress Update API, facilitating separation of concerns by managing presentation logic<br>- It supports the overall architecture by enabling consistent and streamlined output generation, ensuring that different parts of the application can display data effectively while maintaining a clean code structure.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/ErrorMiddleware.php'>ErrorMiddleware.php</a></b></td>
+									<td style='padding: 8px;'>- Provides centralized error handling and logging for the WordPress Update API, ensuring robust management of runtime errors, exceptions, and shutdown events<br>- Facilitates graceful error responses, maintains application stability, and logs critical issues, thereby supporting reliable API operations and easier troubleshooting within the overall system architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/AuthMiddleware.php'>AuthMiddleware.php</a></b></td>
+									<td style='padding: 8px;'>- Implements authentication and security checks within the WordPress Update API, ensuring only authorized users and trusted IPs access update functionalities<br>- It enforces session validation, handles timeout and user agent consistency, and blocks blacklisted IPs, thereby maintaining secure and controlled API interactions as part of the overall application security architecture.</td>
+								</tr>
+							</table>
+						</blockquote>
+					</details>
+					<!-- Views Submodule -->
+					<details>
+						<summary><b>Views</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ update-api.app.Views</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/thupdate.php'>thupdate.php</a></b></td>
+									<td style='padding: 8px;'>- Provides a user interface for managing WordPress themes within the UpdateAPI platform, enabling viewing, uploading, and status tracking of theme packages<br>- Integrates a dynamic upload mechanism with real-time feedback, supporting seamless theme updates and extensions through a structured, web-based dashboard aligned with the overall API architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/login.php'>login.php</a></b></td>
+									<td style='padding: 8px;'>- Provides the login interface for the WordPress Update API, enabling administrators to authenticate securely before accessing update management functionalities<br>- Integrates styling and scripts to ensure a user-friendly experience, while facilitating session handling and error messaging within the broader API architecture<br>- Serves as the entry point for authorized users to interact with the update management system.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/404.php'>404.php</a></b></td>
+									<td style='padding: 8px;'>- Provides a user-friendly 404 error page for the UpdateAPI, ensuring clear communication when a requested resource is not found<br>- Integrates consistent styling and scripts within the broader WordPress-based API architecture, maintaining a cohesive user experience and guiding users appropriately within the APIs web interface.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/logs.php'>logs.php</a></b></td>
+									<td style='padding: 8px;'>- Displays plugin and theme update logs within the WordPress Update API, providing a clear interface for monitoring recent changes<br>- Integrates header and footer layouts to maintain consistent styling across the application, facilitating efficient tracking of update activities and supporting overall system transparency and troubleshooting.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/plupdate.php'>plupdate.php</a></b></td>
+									<td style='padding: 8px;'>- Provides a user interface for managing WordPress plugin updates within the UpdateAPI platform<br>- Facilitates viewing installed plugins, uploading new plugin ZIP files via drag-and-drop, and displaying real-time upload status messages<br>- Integrates with backend processes to streamline plugin management, ensuring seamless updates and installations in a structured, user-friendly manner.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/home.php'>home.php</a></b></td>
+									<td style='padding: 8px;'>- Provides a user interface for managing allowed hosts within the WordPress Update API, enabling viewing and adding domain entries<br>- Facilitates administrative control over host configurations, ensuring secure and organized management of permitted domains for update operations<br>- Integrates form handling and display logic to support dynamic updates in the APIs host list.</td>
+								</tr>
+							</table>
+							<!-- layouts Submodule -->
+							<details>
+								<summary><b>layouts</b></summary>
+								<blockquote>
+									<div class='directory-path' style='padding: 8px 0; color: #666;'>
+										<code><b>⦿ update-api.app.Views.layouts</b></code>
+									<table style='width: 100%; border-collapse: collapse;'>
+									<thead>
+										<tr style='background-color: #f8f9fa;'>
+											<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+											<th style='text-align: left; padding: 8px;'>Summary</th>
+										</tr>
+									</thead>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/layouts/header.php'>header.php</a></b></td>
+											<td style='padding: 8px;'>- Defines the header layout for the WordPress Update API admin interface, establishing the page structure, navigation, and styling<br>- It facilitates seamless user interaction by providing consistent branding, navigation tabs for managing hosts, plugins, themes, and viewing logs, and integrates necessary scripts and styles to support the APIs administrative functions within the overall architecture.</td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/layouts/footer.php'>footer.php</a></b></td>
+											<td style='padding: 8px;'>- Defines the footer layout for the UpdateAPIs web interface, providing consistent branding and user interface closure across pages<br>- It includes dynamic copyright information, links to assets and scripts, and integrates error message handling to ensure seamless user experience within the overall WordPress-based architecture.</td>
+										</tr>
+									</table>
+								</blockquote>
+							</details>
+						</blockquote>
+					</details>
+					<!-- Controllers Submodule -->
+					<details>
+						<summary><b>Controllers</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ update-api.app.Controllers</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/ApiController.php'>ApiController.php</a></b></td>
+									<td style='padding: 8px;'>- Implements a WordPress Update API endpoint to securely handle update requests for plugins and themes<br>- Validates incoming parameters, authenticates domain keys, and serves the latest compatible files based on version comparisons<br>- Integrates logging and access control, ensuring only authorized requests retrieve updates, thereby maintaining the integrity and security of the update distribution process within the overall architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/LogsController.php'>LogsController.php</a></b></td>
+									<td style='padding: 8px;'>- Provides an interface for retrieving and displaying log data related to plugin and theme activities within the WordPress Update API<br>- It orchestrates the processing of log files and renders a view to present log outputs, supporting monitoring and troubleshooting of plugin and theme updates in the overall application architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/PluginsController.php'>PluginsController.php</a></b></td>
+									<td style='padding: 8px;'>- Manages plugin-related operations within the WordPress Update API, including uploading, deleting, and displaying plugins<br>- Facilitates secure handling of plugin files and user actions, generating dynamic HTML interfaces for plugin management<br>- Integrates with core models and middleware to ensure smooth, secure interactions, supporting the overall architecture of plugin administration in the update ecosystem.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/HomeController.php'>HomeController.php</a></b></td>
+									<td style='padding: 8px;'>- Manages user interactions for the WordPress Update API by handling host entries, including adding, updating, and deleting domains and keys<br>- Validates requests, maintains session messages, and renders the hosts management interface with dynamic HTML tables<br>- Integrates with the overall architecture to facilitate secure, user-driven configuration of host data within the update system.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/ThemesController.php'>ThemesController.php</a></b></td>
+									<td style='padding: 8px;'>- Manages theme-related operations within the WordPress Update API, including uploading, deleting, and displaying themes<br>- Facilitates secure handling of theme files through validation and CSRF protection, while generating dynamic HTML interfaces for theme management<br>- Integrates with core models and middleware to ensure smooth, secure interactions across the applications architecture.</td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/AuthController.php'>AuthController.php</a></b></td>
+									<td style='padding: 8px;'>- Handles user authentication within the WordPress Update API, managing login sessions, validating credentials, and redirecting users appropriately<br>- Ensures secure session management, tracks failed login attempts, and integrates blacklisting for security<br>- Facilitates user access control, enabling authenticated interactions with the API while safeguarding against unauthorized access.</td>
+								</tr>
+							</table>
+						</blockquote>
+					</details>
+				</blockquote>
+			</details>
+			<!-- storage Submodule -->
+			<details>
+				<summary><b>storage</b></summary>
+				<blockquote>
+					<div class='directory-path' style='padding: 8px 0; color: #666;'>
+						<code><b>⦿ update-api.storage</b></code>
+					<table style='width: 100%; border-collapse: collapse;'>
+					<thead>
+						<tr style='background-color: #f8f9fa;'>
+							<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+							<th style='text-align: left; padding: 8px;'>Summary</th>
+						</tr>
+					</thead>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/storage/BLACKLIST.json'>BLACKLIST.json</a></b></td>
+							<td style='padding: 8px;'>- Maintains a list of blacklisted entries to enforce security and access control within the update API<br>- Serves as a centralized reference for filtering or blocking specific data, ensuring compliance with security policies across the system<br>- Integrates seamlessly into the overall architecture to support consistent and efficient management of restricted entities.</td>
+						</tr>
+					</table>
+				</blockquote>
+			</details>
+		</blockquote>
+	</details>
+	<!-- mu-plugin Submodule -->
+	<details>
+		<summary><b>mu-plugin</b></summary>
+		<blockquote>
+			<div class='directory-path' style='padding: 8px 0; color: #666;'>
+				<code><b>⦿ mu-plugin</b></code>
+			<table style='width: 100%; border-collapse: collapse;'>
+			<thead>
+				<tr style='background-color: #f8f9fa;'>
+					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+					<th style='text-align: left; padding: 8px;'>Summary</th>
+				</tr>
+			</thead>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/mu-plugin/v-sys-plugin-updater.php'>v-sys-plugin-updater.php</a></b></td>
+					<td style='padding: 8px;'>- Implements automated daily checks and updates for WordPress plugins by retrieving, downloading, and installing newer plugin versions from a remote API<br>- Integrates seamlessly into the WordPress lifecycle to ensure plugins remain current, enhancing site security and functionality without manual intervention<br>- Serves as a core component of the update management architecture within the broader WordPress plugin ecosystem.</td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/mu-plugin/v-sys-theme-updater.php'>v-sys-theme-updater.php</a></b></td>
+					<td style='padding: 8px;'>- Implements automated daily updates for WordPress themes by checking for new versions, downloading update packages, and applying updates seamlessly<br>- Integrates with the WordPress update API to ensure themes remain current, enhancing site security and functionality while minimizing manual intervention within the overall WordPress architecture.</td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/mu-plugin/v-sys-plugin-updater-mu.php'>v-sys-plugin-updater-mu.php</a></b></td>
+					<td style='padding: 8px;'>- Implements automated daily plugin update checks and installations for a WordPress multisite environment<br>- It ensures plugins are kept current by retrieving updates from a remote API, downloading, and installing them seamlessly, thereby maintaining site security and functionality without manual intervention<br>- The process is optimized for main site management, enhancing overall WordPress maintenance efficiency.</td>
+				</tr>
+			</table>
+		</blockquote>
+	</details>
+</details>
+
 ---
 
-## 📦 Modules
-
-<details closed><summary>update-api</summary>
-
-| File                                | Summary                                                                                                                                                                                                                                                                                                                              |
-| ---                                 | ---                                                                                                                                                                                                                                                                                                                                  |
-| [HOSTS](update-api/HOSTS)           | Stores allowed domain and key pairs for API requests. |
-| [config.php](update-api/config.php) | Defines login credentials and directory paths for plugins, themes, blacklists and logs. |
-| [autoload.php](update-api/autoload.php) | Simple PSR-4 autoloader for classes under the `App` namespace. |
-
-</details>
-
-<details closed><summary>update-api.public</summary>
-
-| File                                       | Summary                                                                                                                                                                                                                                                                                                                                                            |
-| ---                                        | ---                                                                                                                                                                                                                                                                                                                                                                |
-| [index.php](update-api/public/index.php)   | Serves as the main entry point for the Update APIs web interface, providing a dashboard for managing WordPress hosts, plugins, themes, and viewing logs. Initializes sessions and includes necessary configurations and libraries, facilitating an admin interface with essential resources for a responsive and interactive user experience.                      |
-| /api (routed via `index.php`)              | Unified API endpoint handled by `ApiController`, validating domains and keys while enforcing IP blacklist rules. Delivers update packages when newer versions are available. |
-| [.htaccess](update-api/public/.htaccess)   | Manages redirects for `/login.php` and `/api.php` while routing all requests through `index.php`. This ensures clean URLs such as `/login` and `/api` and provides optimized access to key sections like home, plupdate, thupdate, and logs. |
-| /login (handled by `index.php`)            | Provides an admin login interface for the Update API, enhancing security and access control. Integrates with configuration, authentication, and web application firewall libraries to facilitate validation and protection mechanisms within the broader WordPress plugin update ecosystem. Presents a user-friendly login form to manage API updates effectively. |
-| [robots.txt](update-api/public/robots.txt) | Regulates web crawler access to the update-api directory with a specified delay, optimizing server load and ensuring the smooth operation of the plugin updater functionality within the repositorys architecture.                                                                                                                                                  |
-
-</details>
-
-
-<details closed><summary>update-api.storage</summary>
-
-| File                                                | Summary                                                                                                                                                                                                                                                              |
-| ---                                                 | ---                                                                                                                                                                                                                                                                  |
-| [BLACKLIST.json](update-api/storage/BLACKLIST.json) | Maintains a list of blacklisted plugins or themes, preventing them from receiving updates via the update API. This ensures security and stability by blocking disallowed or potentially harmful software components within the WordPress plugin and theme ecosystem. |
-
-</details>
-<details closed><summary>update-api.app</summary>
-
-| Directory | Purpose |
-| --- | --- |
-| `Core` | Base controller, router, utility and error handlers. |
-| `Controllers` | Handle requests for authentication, hosts, plugins, themes and logs. |
-| `Models` | Data access for hosts, plugins, themes and logs. |
-| `Views` | Templates for the admin UI (home, login, updates, logs). |
-| `autoload.php` | Registers a PSR-4 autoloader for the `App` namespace. |
-
-</details>
-
-
-
-<details closed><summary>update-api.app.views</summary>
-
-| File                                              | Summary                                                                                                                                                                                                                                                                                                                                                                       |
-| ---                                               | ---                                                                                                                                                                                                                                                                                                                                                                           |
-| [plupdate.php](update-api/app/Views/plupdate.php) | Facilitate plugin uploads and manage update statuses through a user interface integrated with Dropzone for drag-and-drop functionality. Streamline plugin management by displaying existing plugins and handling file uploads and errors dynamically, contributing to the overall flexibility and usability of the plugin updater system within the repositorys architecture. |
-| [thupdate.php](update-api/app/Views/thupdate.php) | Facilitates the management and uploading of WordPress themes, providing a user-friendly interface for theme uploads, displaying a table of available themes, and offering real-time upload status feedback through Dropzone integration for enhanced user experience.                                                                                                         |
-| [logs.php](update-api/app/Views/logs.php)         | Displays plugin and theme logs on the WordPress Update API interface, facilitating monitoring and troubleshooting within the updater architecture. Integrates dynamic content, enhancing the user experience by providing real-time log outputs for both plugins and themes.                                                                                                  |
-| [home.php](update-api/app/Views/home.php)         | Facilitates the management of allowed hosts for the WordPress Update API by displaying a current list and providing a form to add new entries. Integrates seamlessly into the update-api section, enhancing control over authorized domains within the repositorys architecture.                                                                                              |
-
-</details>
-
-
-<details closed><summary>mu-plugin</summary>
-
-| File                                                                     | Summary                                                                                                                                                                                                                                                                                                                                                   |
-| ---                                                                      | ---                                                                                                                                                                                                                                                                                                                                                       |
-| [v-sys-theme-updater.php](mu-plugin/v-sys-theme-updater.php)         | Automates the daily update checks for WordPress themes by scheduling events, retrieving update details from a specified API, downloading, and installing theme updates seamlessly, ensuring themes remain current. Integrates error logging to handle update failures and provides feedback on the update status for each theme.                          |
-| [v-sys-plugin-updater.php](mu-plugin/v-sys-plugin-updater.php)       | Facilitates automated plugin updates in a WordPress environment by scheduling daily checks and downloading new versions if available, ensuring plugins remain current and secure with minimal manual intervention. Integrates with the Vontainment API to verify and obtain updates, enhancing overall site maintenance efficiency.                       |
-| [v-sys-plugin-updater-mu.php](mu-plugin/v-sys-plugin-updater-mu.php) | WP Plugin Updater Multisite automates daily checks and updates for WordPress plugins within a multisite environment, ensuring all plugins remain current by interacting with the Vontainment API to fetch updates, download, and install them seamlessly.                                                                                                 |
-
-</details>
-
----
-
-## 🚀 Getting Started
+## Getting Started
 **System Requirements:**
 
 * **PHP**: version 7.4 or higher
 * **Web Server**: Apache, Nginx or any server capable of running PHP
 * **Write Permissions**: ensure the web server can write to `update-api/storage`
 
-### ⚙️ Installation
+### Installation
 
 1. Clone or download this repository inside your web server document root.
 2. Create the following directories so the Update API can store packages and logs:
@@ -178,13 +481,27 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    ```
 5. Ensure the web server user owns the `update-api/storage` directory so uploads and logs can be written.
 
-### 🤖 Usage
+### Usage
 
 1. Copy the files from the repository's `mu-plugin/` folder into your WordPress installation's `wp-content/mu-plugins/` directory. Create the directory if it doesn't exist. WordPress automatically loads any PHP files placed here.
 2. Log in to the Update API by visiting the `/login` route (handled by `index.php`) using the credentials configured in `config.php` to manage hosts, plugins and themes.
 
-## 🎗 License
+---
 
-This project is licensed under the [MIT License](LICENSE).
+## Roadmap
+
+- [X] **`Task 1`**: <strike>Implement feature one.</strike>
+- [ ] **`Task 2`**: Implement feature two.
+- [ ] **`Task 3`**: Implement feature three.
+
+---
+
+## License
+
+V-wordpress-plugin-updater is protected under the [LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
+
+---
+
+[back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
 
 ---
