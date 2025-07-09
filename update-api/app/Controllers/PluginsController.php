@@ -36,6 +36,7 @@ class PluginsController extends Controller
             ) {
                 if (isset($_FILES['plugin_file'])) {
                     self::uploadPluginFiles();
+                    exit();
                 } elseif (isset($_POST['delete_plugin'])) {
                     $plugin_name = isset($_POST['plugin_name'])
                         ? Utility::validateSlug($_POST['plugin_name'])
