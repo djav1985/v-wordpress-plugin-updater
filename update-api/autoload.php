@@ -1,7 +1,9 @@
 <?php
+
 /**
  * Simple PSR-4 autoloader for the App namespace.
  */
+
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
     $baseDir = __DIR__ . '/app/';
@@ -15,4 +17,3 @@ spl_autoload_register(function ($class) {
         require_once $file;
     }
 });
-
