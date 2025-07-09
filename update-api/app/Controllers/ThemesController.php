@@ -36,6 +36,7 @@ class ThemesController extends Controller
             ) {
                 if (isset($_FILES['theme_file'])) {
                     self::uploadThemeFiles();
+                    exit();
                 } elseif (isset($_POST['delete_theme'])) {
                     $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
                     self::deleteTheme($theme_name);
