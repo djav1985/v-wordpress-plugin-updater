@@ -452,7 +452,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 * **PHP**: version 7.4 or higher
 * **Web Server**: Apache, Nginx or any server capable of running PHP
-* **Write Permissions**: ensure the web server can write to `update-api/storage`
+* **Write Permissions**: ensure the web server can write to `/storage`
 
 ### Installation
 
@@ -469,10 +469,12 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
    ```php
    define('VONTMENT_KEY', 'your-api-key');
-   define('VONTMENT_PLUGINS', 'https://example.com/public/api');
-   define('VONTMENT_THEMES', 'https://example.com/public/api');
+   define('VONTMENT_PLUGINS', 'https://example.com/api');
+   define('VONTMENT_THEMES', 'https://example.com/api');
    ```
-5. Ensure the web server user owns the `update-api/storage` directory so uploads and logs can be written.
+5. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
+
+NOTE: Make sure to set /public/ as doc root. 
 
 ### Usage
 
