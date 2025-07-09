@@ -1,19 +1,5 @@
 RewriteEngine On
 
-# External redirect /login.php → /login
-RewriteCond %{THE_REQUEST} \s/login\.php\s [NC]
-RewriteRule ^login\.php$ /login [R=301,L]
-
-# External redirect /api.php → /api
-RewriteCond %{THE_REQUEST} \s/api\.php\s [NC]
-RewriteRule ^api\.php$ /api [R=301,L]
-
-# Redirect /index.php to root
-RewriteCond %{THE_REQUEST} \s/index\.php\s [NC]
-RewriteRule ^index\.php$ / [R=301,L]
-
-# Fallback to index.php for application routes
-# (including the /login endpoint)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [L]

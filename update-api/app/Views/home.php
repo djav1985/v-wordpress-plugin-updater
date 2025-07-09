@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -11,11 +12,8 @@
  * Description: WordPress Update API
  */
 
-use App\Controllers\HomeController;
-
 require_once __DIR__ . '/layouts/header.php';
-HomeController::handleRequest();
-$hostsTableHtml = HomeController::getHostsTableHtml();
+
 ?>
 
 <div class="content-box">

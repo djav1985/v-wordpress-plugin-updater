@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -15,8 +16,9 @@ namespace App\Controllers;
 
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
+use App\Core\Controller;
 
-class PluginsController
+class PluginsController extends Controller
 {
     /**
      * Handles the incoming request for plugin-related actions.
@@ -49,6 +51,9 @@ class PluginsController
             header('Location: /');
             exit();
         }
+
+        // Render the plupdate view
+        (new self())->render('plupdate', []);
     }
 
     /**

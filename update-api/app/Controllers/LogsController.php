@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -13,7 +14,9 @@
 
 namespace App\Controllers;
 
-class LogsController
+use App\Core\Controller;
+
+class LogsController extends Controller
 {
     /**
      * Handles the request for the logs page.
@@ -27,7 +30,11 @@ class LogsController
         $ploutput = self::processLogFile('plugin.log');
         $thoutput = self::processLogFile('theme.log');
 
-        require __DIR__ . '/../Views/logs.php';
+        // Use the render method to include the logs view
+        (new self())->render('logs', [
+            'ploutput' => $ploutput,
+            'thoutput' => $thoutput,
+        ]);
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -13,10 +14,11 @@
 
 namespace App\Controllers;
 
+use App\Core\Controller;
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
 
-class AuthController
+class AuthController extends Controller
 {
     public static function handleRequest(): void
     {
@@ -26,7 +28,7 @@ class AuthController
                 header('Location: /login');
                 exit();
             }
-            header('Location: /');
+            header('Location: /home');
             exit();
         }
 
@@ -40,7 +42,7 @@ class AuthController
                 $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 session_regenerate_id(true);
-                header('Location: /');
+                header('Location: /home');
                 exit();
             }
 
@@ -57,6 +59,7 @@ class AuthController
             }
         }
 
-        require __DIR__ . '/../Views/login.php';
+        // Use the render method to include the login view
+        (new self())->render('login', []);
     }
 }

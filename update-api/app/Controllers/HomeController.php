@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -15,8 +16,9 @@ namespace App\Controllers;
 
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
+use App\Core\Controller;
 
-class HomeController
+class HomeController extends Controller
 {
     /**
      * Handles the incoming request for managing hosts.
@@ -48,9 +50,12 @@ class HomeController
             $error = 'Invalid Form Action.';
             ErrorMiddleware::logMessage($error);
             $_SESSION['messages'][] = $error;
-            header('Location: /');
+            header('Location: /home');
             exit();
         }
+
+        // Render the home view
+        (new self())->render('home', []);
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -15,8 +16,9 @@ namespace App\Controllers;
 
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
+use App\Core\Controller;
 
-class ApiController
+class ApiController extends Controller
 {
     public static function handleRequest(): void
     {

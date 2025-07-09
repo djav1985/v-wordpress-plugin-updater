@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -40,10 +41,13 @@ class Router
             case '/logs':
                 \App\Controllers\LogsController::handleRequest();
                 break;
-            case '/':
             case '/home':
-            default:
                 \App\Controllers\HomeController::handleRequest();
+                break;
+            default:
+                header('HTTP/1.0 404 Not Found');
+                echo '404 - Page Not Found';
+                exit();
         }
     }
 }

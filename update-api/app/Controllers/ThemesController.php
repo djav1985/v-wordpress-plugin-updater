@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -15,8 +16,9 @@ namespace App\Controllers;
 
 use App\Core\Utility;
 use App\Core\ErrorMiddleware;
+use App\Core\Controller;
 
-class ThemesController
+class ThemesController extends Controller
 {
     /**
      * Handles the incoming request for theme-related actions.
@@ -47,6 +49,9 @@ class ThemesController
             header('Location: /');
             exit();
         }
+
+        // Render the thupdate view
+        (new self())->render('thupdate', []);
     }
 
     /**
