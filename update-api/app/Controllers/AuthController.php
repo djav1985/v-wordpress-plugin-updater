@@ -14,7 +14,7 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorHandler;
+use App\Core\ErrorMiddleware;
 
 class AuthController
 {
@@ -47,12 +47,12 @@ class AuthController
             $ip = $_SERVER['REMOTE_ADDR'];
             if (Utility::isBlacklisted($ip)) {
                 $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
-                ErrorHandler::logMessage($error);
+                ErrorMiddleware::logMessage($error);
                 $_SESSION['messages'][] = $error;
             } else {
                 Utility::updateFailedAttempts($ip);
                 $error = 'Invalid username or password.';
-                ErrorHandler::logMessage($error);
+                ErrorMiddleware::logMessage($error);
                 $_SESSION['messages'][] = $error;
             }
         }

@@ -36,6 +36,6 @@
             <input type="submit" value="Log In">
         </form>
     </div>
-    <?php echo App\Core\ErrorHandler::displayAndClearMessages(); ?>
+    <?php echo App\Core\ErrorMiddleware::displayAndClearMessages(); ?>
 </body>
 </html>
