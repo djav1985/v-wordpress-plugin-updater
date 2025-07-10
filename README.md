@@ -486,9 +486,11 @@ NOTE: Make sure to set /public/ as doc root.
 ## Roadmap
 
 - [X] **`Task 1`**: <strike>Convert to MVC framework</strike>
-- [ ] **`Task 2`**: Implement feature two.
-- [ ] **`Task 3`**: Implement feature three.
-
+- [ ] **`Task 2`**: Implement more advanced authorization for site connections
+- [ ] **`Task 3`**: Implement ability to remove ips from blacklist
+- [ ] **`Task 4`**: Implement plug-in verification on upload
+- [ ] **`Task 4`**: Implement docker version
+      
 ---
 
 ## License
