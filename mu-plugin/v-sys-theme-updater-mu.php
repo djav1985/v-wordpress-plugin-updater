@@ -77,14 +77,26 @@ function vontmnt_theme_updater_run_updates(): void
         );
 
         $response      = wp_remote_get($api_url);
+        if (is_wp_error($response)) {
+            error_log('Theme update check failed for ' . $theme_slug . ': ' . $response->get_error_message());
+            continue;
+        }
         $http_code     = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 
         if ($http_code === 200 && ! empty($response_body)) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
             $upload_dir     = wp_upload_dir();
+            if ($upload_dir['error']) {
+                error_log('Theme update failed: Upload directory error for ' . $theme_slug . ': ' . $upload_dir['error']);
+                continue;
+            }
             $theme_zip_file = $upload_dir['path'] . '/' . basename($theme_slug) . '.zip';
-            file_put_contents($theme_zip_file, $response_body);
+            $bytes_written = file_put_contents($theme_zip_file, $response_body);
+            if ($bytes_written === false) {
+                error_log('Theme update failed: Unable to write theme file for ' . $theme_slug);
+                continue;
+            }
 
             global $wp_filesystem;
             if (empty($wp_filesystem)) {
@@ -100,8 +112,12 @@ function vontmnt_theme_updater_run_updates(): void
                 return $options;
             };
             add_filter('upgrader_package_options', $callback);
-            $upgrader->install($theme_zip_file);
+            $result = $upgrader->install($theme_zip_file);
             remove_filter('upgrader_package_options', $callback);
+
+            if (is_wp_error($result)) {
+                error_log('Theme update failed during installation for ' . $theme_slug . ': ' . $result->get_error_message());
+            }
 
             // Delete the theme zip file using wp_delete_file.
             wp_delete_file($theme_zip_file);

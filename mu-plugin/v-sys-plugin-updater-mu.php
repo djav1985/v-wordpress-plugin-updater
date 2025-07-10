@@ -78,14 +78,26 @@ function vontmnt_plugin_updater_run_updates(): void
 
             // Use wp_remote_get instead of cURL.
             $response      = wp_remote_get($api_url);
+            if (is_wp_error($response)) {
+                error_log('Plugin update check failed for ' . $plugin_slug . ': ' . $response->get_error_message());
+                continue;
+            }
             $http_code     = wp_remote_retrieve_response_code($response);
             $response_body = wp_remote_retrieve_body($response);
 
         if (200 === $http_code && ! empty($response_body)) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
             $upload_dir      = wp_upload_dir();
+            if ($upload_dir['error']) {
+                error_log('Plugin update failed: Upload directory error for ' . $plugin_slug . ': ' . $upload_dir['error']);
+                continue;
+            }
             $plugin_zip_file = $upload_dir['path'] . '/' . basename($plugin_path) . '.zip';
-            file_put_contents($plugin_zip_file, $response_body);
+            $bytes_written = file_put_contents($plugin_zip_file, $response_body);
+            if ($bytes_written === false) {
+                error_log('Plugin update failed: Unable to write plugin file for ' . $plugin_slug);
+                continue;
+            }
 
             global $wp_filesystem;
             if (empty($wp_filesystem)) {
@@ -101,8 +113,12 @@ function vontmnt_plugin_updater_run_updates(): void
                             return $options;
             };
                 add_filter('upgrader_package_options', $callback);
-                $upgrader->install($plugin_zip_file);
+                $result = $upgrader->install($plugin_zip_file);
                 remove_filter('upgrader_package_options', $callback);
+
+                if (is_wp_error($result)) {
+                    error_log('Plugin update failed during installation for ' . $plugin_slug . ': ' . $result->get_error_message());
+                }
 
                 // Delete the plugin zip file using wp_delete_file.
                 wp_delete_file($plugin_zip_file);
