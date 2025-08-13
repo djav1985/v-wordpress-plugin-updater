@@ -25,8 +25,8 @@ session_set_cookie_params([
 session_start();
 session_regenerate_id(true);
 
-require_once '../config.php';
-require_once '../autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 ErrorMiddleware::handle(function (): void {
     $router = new Router();
