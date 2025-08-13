@@ -14,7 +14,7 @@
 
 namespace App\Controllers;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\PluginModel;
@@ -51,7 +51,7 @@ class PluginsController extends Controller
                     exit();
                 } elseif (isset($_POST['delete_plugin'])) {
                     $plugin_name = isset($_POST['plugin_name'])
-                        ? Utility::validateSlug($_POST['plugin_name'])
+                        ? Validation::validateSlug($_POST['plugin_name'])
                         : null;
                     if ($plugin_name !== null && PluginModel::deletePlugin($plugin_name)) {
                         MessageHelper::addMessage('Plugin deleted successfully!');

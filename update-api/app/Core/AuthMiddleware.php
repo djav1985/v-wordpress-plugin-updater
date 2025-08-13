@@ -14,7 +14,7 @@
 
 namespace App\Core;
 
-use App\Core\Utility;
+use App\Models\Blacklist;
 use App\Core\ErrorManager;
 
 class AuthMiddleware
@@ -22,7 +22,7 @@ class AuthMiddleware
     public static function check(): void
     {
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
-        if ($ip && Utility::isBlacklisted($ip)) {
+        if ($ip && Blacklist::isBlacklisted($ip)) {
             http_response_code(403);
             ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
             exit();

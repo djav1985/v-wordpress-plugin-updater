@@ -14,7 +14,8 @@
 
 namespace App\Controllers;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
+use App\Models\Blacklist;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 
@@ -23,7 +24,7 @@ class ApiController extends Controller
     public static function handleRequest(): void
     {
         $ip = $_SERVER['REMOTE_ADDR'];
-        if (Utility::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if (Blacklist::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(403);
             ErrorManager::getInstance()->log('Forbidden or invalid request from ' . $ip);
             exit();
@@ -47,10 +48,10 @@ class ApiController extends Controller
         }
         list($type, $domain, $key, $slug, $version) = $values;
 
-        $domain  = Utility::validateDomain($domain);
-        $key     = Utility::validateKey($key);
-        $slug    = Utility::validateSlug($slug);
-        $version = Utility::validateVersion($version);
+        $domain  = Validation::validateDomain($domain);
+        $key     = Validation::validateKey($key);
+        $slug    = Validation::validateSlug($slug);
+        $version = Validation::validateVersion($version);
 
         $invalid = [];
         if ($domain === null) {
@@ -86,7 +87,7 @@ class ApiController extends Controller
                 $line = trim($line);
                 if ($line) {
                     list($host, $host_key) = explode(' ', $line, 2);
-                    $host_key = Utility::decrypt($host_key);
+                    $host_key = Validation::decrypt($host_key);
                     if ($host === $domain && $host_key !== null && $host_key === $key) {
                         fclose($host_file);
                         foreach (scandir($dir) as $filename) {

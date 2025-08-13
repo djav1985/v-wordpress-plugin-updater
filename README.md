@@ -85,11 +85,12 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   │   ├── AuthMiddleware.php
     │   │   │   ├── Controller.php
     │   │   │   ├── ErrorManager.php
-    │   │   │   ├── Router.php
-    │   │   │   └── Utility.php
+    │   │   │   └── Router.php
     │   │   ├── Helpers
-    │   │   │   └── MessageHelper.php
+    │   │   │   ├── MessageHelper.php
+    │   │   │   └── Validation.php
     │   │   ├── Models
+    │   │   │   ├── Blacklist.php
     │   │   │   ├── HostsModel.php
     │   │   │   ├── LogModel.php
     │   │   │   ├── PluginModel.php
@@ -144,7 +145,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 			<div class='directory-path' style='padding: 8px 0; color: #666;'>
 				<code><b>⦿ __root__</b></code>
 			<table style='width: 100%; border-collapse: collapse;'>
-			<thead>
+                                                          <thead>
 				<tr style='background-color: #f8f9fa;'>
 					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
 					<th style='text-align: left; padding: 8px;'>Summary</th>
@@ -233,11 +234,15 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
 									<th style='text-align: left; padding: 8px;'>Summary</th>
 								</tr>
-							</thead>
-								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/ThemeModel.php'>ThemeModel.php</a></b></td>
-									<td style='padding: 8px;'>- Manages theme files within the WordPress Update API, enabling retrieval, deletion, and uploading of theme ZIP packages<br>- Facilitates theme lifecycle operations, ensuring proper file handling, validation, and size restrictions to support seamless theme management in the broader update infrastructure.</td>
-								</tr>
+                                                          </thead>
+                                                                  <tr style='border-bottom: 1px solid #eee;'>
+                                                                          <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/Blacklist.php'>Blacklist.php</a></b></td>
+                                                                          <td style='padding: 8px;'>- Tracks failed login attempts and manages IP blacklisting for the Update API, automatically expiring bans after a defined period to maintain security.</td>
+                                                                  </tr>
+                                                                  <tr style='border-bottom: 1px solid #eee;'>
+                                                                          <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/ThemeModel.php'>ThemeModel.php</a></b></td>
+                                                                          <td style='padding: 8px;'>- Manages theme files within the WordPress Update API, enabling retrieval, deletion, and uploading of theme ZIP packages<br>- Facilitates theme lifecycle operations, ensuring proper file handling, validation, and size restrictions to support seamless theme management in the broader update infrastructure.</td>
+                                                                  </tr>
 								<tr style='border-bottom: 1px solid #eee;'>
 									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Models/HostsModel.php'>HostsModel.php</a></b></td>
 									<td style='padding: 8px;'>- Manages host entries within the WordPress Update API by providing functionalities to retrieve, add, update, and delete host records<br>- Ensures consistent handling of host data, maintains log integrity, and supports dynamic configuration of host access controls, integral to the overall architecture for secure and flexible update management.</td>
@@ -266,10 +271,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 									<th style='text-align: left; padding: 8px;'>Summary</th>
 								</tr>
 							</thead>
-								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/Utility.php'>Utility.php</a></b></td>
-									<td style='padding: 8px;'>- Provides utility functions for validating domain names, API keys, slugs, filenames, versions, usernames, and passwords within the WordPress Update API<br>- Manages IP-based security by tracking failed login attempts and maintaining a blacklist, ensuring enhanced security and integrity across the update process<br>- Integral to maintaining data validation standards and safeguarding the API against unauthorized access.</td>
-								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
 									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/Router.php'>Router.php</a></b></td>
 									<td style='padding: 8px;'>- Defines the core routing mechanism for the WordPress Update API, directing incoming requests to appropriate controllers based on URL paths<br>- Ensures authentication for protected routes and handles URL redirection and error responses, facilitating seamless request handling within the applications architecture.</td>

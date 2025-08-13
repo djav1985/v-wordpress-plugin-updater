@@ -14,7 +14,7 @@
 
 namespace App\Controllers;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\ThemeModel;
@@ -50,7 +50,7 @@ class ThemesController extends Controller
                     header('Location: /thupdate');
                     exit();
                 } elseif (isset($_POST['delete_theme'])) {
-                    $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
+                    $theme_name = isset($_POST['theme_name']) ? Validation::validateSlug($_POST['theme_name']) : null;
                     if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
                         MessageHelper::addMessage('Theme deleted successfully!');
                     } else {
