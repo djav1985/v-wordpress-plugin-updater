@@ -15,8 +15,9 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 use App\Models\LogModel;
+use App\Helpers\MessageHelper;
 
 class LogsController extends Controller
 {
@@ -36,14 +37,14 @@ class LogsController extends Controller
             ) {
                 if (isset($_POST['clear_logs'])) {
                     LogModel::clearAllLogs();
-                    $_SESSION['messages'][] = 'Logs cleared successfully.';
+                    MessageHelper::addMessage('Logs cleared successfully.');
                 }
                 header('Location: /logs');
                 exit();
             }
             $error = 'Invalid Form Action.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
+            ErrorManager::getInstance()->log($error);
+            MessageHelper::addMessage($error);
             header('Location: /logs');
             exit();
         }

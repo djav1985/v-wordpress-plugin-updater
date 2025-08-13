@@ -15,9 +15,10 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\ThemeModel;
+use App\Helpers\MessageHelper;
 
 class ThemesController extends Controller
 {
@@ -43,24 +44,26 @@ class ThemesController extends Controller
                         echo implode("\n", $messages);
                         exit();
                     }
-                    $_SESSION['messages'] = array_merge($_SESSION['messages'] ?? [], $messages);
+                    foreach ($messages as $message) {
+                        MessageHelper::addMessage($message);
+                    }
                     header('Location: /thupdate');
                     exit();
                 } elseif (isset($_POST['delete_theme'])) {
                     $theme_name = isset($_POST['theme_name']) ? Utility::validateSlug($_POST['theme_name']) : null;
                     if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
-                        $_SESSION['messages'][] = 'Theme deleted successfully!';
+                        MessageHelper::addMessage('Theme deleted successfully!');
                     } else {
                         $error = 'Failed to delete theme file. Please try again.';
-                        ErrorMiddleware::logMessage($error);
-                        $_SESSION['messages'][] = $error;
+                        ErrorManager::getInstance()->log($error);
+                        MessageHelper::addMessage($error);
                     }
                     header('Location: /thupdate');
                     exit();
                 }
             } else {
                 $error = 'Invalid Form Action.';
-                ErrorMiddleware::logMessage($error);
+                ErrorManager::getInstance()->log($error);
                 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if ($isAjax) {
@@ -68,7 +71,7 @@ class ThemesController extends Controller
                     echo $error;
                     exit();
                 }
-                $_SESSION['messages'][] = $error;
+                MessageHelper::addMessage($error);
                 header('Location: /');
                 exit();
             }

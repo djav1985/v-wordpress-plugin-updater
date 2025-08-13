@@ -15,9 +15,10 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\PluginModel;
+use App\Helpers\MessageHelper;
 
 class PluginsController extends Controller
 {
@@ -43,7 +44,9 @@ class PluginsController extends Controller
                         echo implode("\n", $messages);
                         exit();
                     }
-                    $_SESSION['messages'] = array_merge($_SESSION['messages'] ?? [], $messages);
+                    foreach ($messages as $message) {
+                        MessageHelper::addMessage($message);
+                    }
                     header('Location: /plupdate');
                     exit();
                 } elseif (isset($_POST['delete_plugin'])) {
@@ -51,18 +54,18 @@ class PluginsController extends Controller
                         ? Utility::validateSlug($_POST['plugin_name'])
                         : null;
                     if ($plugin_name !== null && PluginModel::deletePlugin($plugin_name)) {
-                        $_SESSION['messages'][] = 'Plugin deleted successfully!';
+                        MessageHelper::addMessage('Plugin deleted successfully!');
                     } else {
                         $error = 'Failed to delete plugin file. Please try again.';
-                        ErrorMiddleware::logMessage($error);
-                        $_SESSION['messages'][] = $error;
+                        ErrorManager::getInstance()->log($error);
+                        MessageHelper::addMessage($error);
                     }
                     header('Location: /plupdate');
                     exit();
                 }
             } else {
                 $error = 'Invalid Form Action.';
-                ErrorMiddleware::logMessage($error);
+                ErrorManager::getInstance()->log($error);
                 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if ($isAjax) {
@@ -70,7 +73,7 @@ class PluginsController extends Controller
                     echo $error;
                     exit();
                 }
-                $_SESSION['messages'][] = $error;
+                MessageHelper::addMessage($error);
                 header('Location: /');
                 exit();
             }

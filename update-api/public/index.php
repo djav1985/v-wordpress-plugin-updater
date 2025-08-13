@@ -13,7 +13,7 @@
  */
 
 use App\Core\Router;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 
 $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 session_set_cookie_params([
@@ -28,7 +28,7 @@ session_regenerate_id(true);
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
-ErrorMiddleware::handle(function (): void {
+ErrorManager::handle(function (): void {
     $router = new Router();
     $router->dispatch($_SERVER['REQUEST_URI']);
 });
