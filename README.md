@@ -87,6 +87,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   │   ├── ErrorManager.php
     │   │   │   └── Router.php
     │   │   ├── Helpers
+    │   │   │   ├── Encryption.php
     │   │   │   ├── MessageHelper.php
     │   │   │   └── Validation.php
     │   │   ├── Models

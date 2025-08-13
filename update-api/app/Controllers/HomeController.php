@@ -15,6 +15,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Validation;
+use App\Helpers\Encryption;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\HostsModel;
@@ -144,7 +145,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Validation::decrypt($encryptedKey) ?? '';
+                $key = Encryption::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -166,7 +167,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Validation::decrypt($encryptedKey) ?? '';
+                $key = Encryption::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 

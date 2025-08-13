@@ -15,6 +15,7 @@
 namespace App\Models;
 
 use App\Helpers\Validation;
+use App\Helpers\Encryption;
 
 class HostsModel
 {
@@ -42,7 +43,7 @@ class HostsModel
     {
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $new_entry = $safe_domain . ' ' . Validation::encrypt($safe_key);
+        $new_entry = $safe_domain . ' ' . Encryption::encrypt($safe_key);
         return file_put_contents(self::$file, $new_entry . "\n", FILE_APPEND | LOCK_EX) !== false;
     }
 
@@ -60,7 +61,7 @@ class HostsModel
         $entries = self::getEntries();
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $entries[$line] = $safe_domain . ' ' . Validation::encrypt($safe_key);
+        $entries[$line] = $safe_domain . ' ' . Encryption::encrypt($safe_key);
         return file_put_contents(self::$file, implode("\n", $entries) . "\n") !== false;
     }
 

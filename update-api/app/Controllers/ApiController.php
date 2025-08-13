@@ -15,6 +15,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Validation;
+use App\Helpers\Encryption;
 use App\Models\Blacklist;
 use App\Core\ErrorManager;
 use App\Core\Controller;
@@ -87,7 +88,7 @@ class ApiController extends Controller
                 $line = trim($line);
                 if ($line) {
                     list($host, $host_key) = explode(' ', $line, 2);
-                    $host_key = Validation::decrypt($host_key);
+                    $host_key = Encryption::decrypt($host_key);
                     if ($host === $domain && $host_key !== null && $host_key === $key) {
                         fclose($host_file);
                         foreach (scandir($dir) as $filename) {
