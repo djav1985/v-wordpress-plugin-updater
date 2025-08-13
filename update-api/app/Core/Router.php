@@ -44,34 +44,41 @@ class Router
         });
     }
 
-    public function dispatch(string $uri): void
+    public function dispatch(string $method, string $uri): void
     {
         $route = strtok($uri, '?');
-        $routeInfo = $this->dispatcher->dispatch($_SERVER['REQUEST_METHOD'], $route);
+        $routeInfo = $this->dispatcher->dispatch($method, $route);
 
         switch ($routeInfo[0]) {
-            case Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2] ?? [];
-                if ($route !== '/login' && $route !== '/api') {
-                    SessionManager::getInstance()->requireAuth();
-                }
-                if (is_array($handler)) {
-                    $controller = new $handler[0]();
-                    $method = $handler[1];
-                    if (!empty($vars)) {
-                        $controller->$method($vars);
-                    } else {
-                        $controller->$method();
-                    }
-                } else {
-                    call_user_func($handler);
-                }
-                break;
-            default:
+            case Dispatcher::NOT_FOUND:
                 header('HTTP/1.0 404 Not Found');
                 require __DIR__ . '/../Views/404.php';
-                exit();
+                break;
+            case Dispatcher::METHOD_NOT_ALLOWED:
+                header('HTTP/1.0 405 Method Not Allowed');
+                break;
+            case Dispatcher::FOUND:
+                [$class, $action] = $routeInfo[1];
+                $vars = $routeInfo[2];
+                $isApi = function_exists('str_starts_with')
+                    ? str_starts_with($route, '/api')
+                    : strpos($route, '/api') === 0;
+                if ($isApi) {
+                    $query = parse_url($uri, PHP_URL_QUERY);
+                    parse_str($query ?? '', $params);
+                    $required = ['type', 'domain', 'key', 'slug', 'version'];
+                    foreach ($required as $key) {
+                        if (!isset($params[$key])) {
+                            $isApi = false;
+                            break;
+                        }
+                    }
+                }
+                if ($route !== '/login' && !$isApi) {
+                    SessionManager::getInstance()->requireAuth();
+                }
+                call_user_func_array([new $class(), $action], $vars);
+                break;
         }
     }
 }
