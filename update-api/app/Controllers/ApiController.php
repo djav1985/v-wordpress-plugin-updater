@@ -85,8 +85,9 @@ class ApiController extends Controller
             while (($line = fgets($host_file)) !== false) {
                 $line = trim($line);
                 if ($line) {
-                    list($host, $host_key) = explode(' ', $line);
-                    if ($host === $domain && $host_key === $key) {
+                    list($host, $host_key) = explode(' ', $line, 2);
+                    $host_key = Utility::decrypt($host_key);
+                    if ($host === $domain && $host_key !== null && $host_key === $key) {
                         fclose($host_file);
                         foreach (scandir($dir) as $filename) {
                             if ($filename === '.' || $filename === '..') {

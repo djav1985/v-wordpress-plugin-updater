@@ -465,14 +465,19 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    mkdir -p /storage/logs
    ```
 3. Edit `/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, and paths under `BASE_DIR` if the defaults do not match your setup.
-4. Define the API constants used by the mu-plugins in your WordPress `wp-config.php`:
+4. Set an `ENCRYPTION_KEY` environment variable used to secure host keys:
+
+   ```sh
+   export ENCRYPTION_KEY="your-32-byte-secret"
+   ```
+5. Define the API constants used by the mu-plugins in your WordPress `wp-config.php`:
 
    ```php
    define('VONTMENT_KEY', 'your-api-key');
    define('VONTMENT_PLUGINS', 'https://example.com/api');
    define('VONTMENT_THEMES', 'https://example.com/api');
    ```
-5. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
+6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
 
 NOTE: Make sure to set /public/ as doc root. 
 

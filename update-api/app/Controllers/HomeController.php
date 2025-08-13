@@ -141,7 +141,8 @@ class HomeController extends Controller
             // Correct line number for column 1
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
-                $key = isset($fields[1]) ? $fields[1] : '';
+                $encryptedKey = $fields[1] ?? '';
+                $key = Utility::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -162,7 +163,8 @@ class HomeController extends Controller
         // Correct line number for column 2
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
-                $key = isset($fields[1]) ? $fields[1] : '';
+                $encryptedKey = $fields[1] ?? '';
+                $key = Utility::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 

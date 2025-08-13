@@ -14,6 +14,8 @@
 
 namespace App\Models;
 
+use App\Core\Utility;
+
 class HostsModel
 {
     public static string $file = HOSTS_ACL . '/HOSTS';
@@ -40,7 +42,7 @@ class HostsModel
     {
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $new_entry = $safe_domain . ' ' . $safe_key;
+        $new_entry = $safe_domain . ' ' . Utility::encrypt($safe_key);
         return file_put_contents(self::$file, $new_entry . "\n", FILE_APPEND | LOCK_EX) !== false;
     }
 
@@ -58,7 +60,7 @@ class HostsModel
         $entries = self::getEntries();
         $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $entries[$line] = $safe_domain . ' ' . $safe_key;
+        $entries[$line] = $safe_domain . ' ' . Utility::encrypt($safe_key);
         return file_put_contents(self::$file, implode("\n", $entries) . "\n") !== false;
     }
 
