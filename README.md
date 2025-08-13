@@ -77,7 +77,6 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   ├── Controllers
     │   │   │   ├── AccountsController.php
     │   │   │   ├── ApiController.php
-    │   │   │   ├── FeedsController.php
     │   │   │   ├── HomeController.php
     │   │   │   ├── InfoController.php
     │   │   │   ├── LoginController.php
@@ -110,7 +109,10 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │       ├── login.php
     │   │       ├── logs.php
     │   │       ├── plupdate.php
-    │   │       └── thupdate.php
+    │   │       ├── thupdate.php
+    │   │       ├── accounts.php
+    │   │       ├── info.php
+    │   │       └── users.php
     │   ├── autoload.php
     │   ├── config.php
     │   ├── php.ini
@@ -329,11 +331,23 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/plupdate.php'>plupdate.php</a></b></td>
 									<td style='padding: 8px;'>- Provides a user interface for managing WordPress plugin updates within the UpdateAPI platform<br>- Facilitates viewing installed plugins, uploading new plugin ZIP files via drag-and-drop, and displaying real-time upload status messages<br>- Integrates with backend processes to streamline plugin management, ensuring seamless updates and installations in a structured, user-friendly manner.</td>
 								</tr>
-								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/home.php'>home.php</a></b></td>
-									<td style='padding: 8px;'>- Provides a user interface for managing allowed hosts within the WordPress Update API, enabling viewing and adding domain entries<br>- Facilitates administrative control over host configurations, ensuring secure and organized management of permitted domains for update operations<br>- Integrates form handling and display logic to support dynamic updates in the APIs host list.</td>
-								</tr>
-							</table>
+                                                                <tr style='border-bottom: 1px solid #eee;'>
+                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/home.php'>home.php</a></b></td>
+                                                                        <td style='padding: 8px;'>- Provides a user interface for managing allowed hosts within the WordPress Update API, enabling viewing and adding domain entries<br>- Facilitates administrative control over host configurations, ensuring secure and organized management of permitted domains for update operations<br>- Integrates form handling and display logic to support dynamic updates in the APIs host list.</td>
+                                                                </tr>
+                                                                <tr style='border-bottom: 1px solid #eee;'>
+                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/accounts.php'>accounts.php</a></b></td>
+                                                                        <td style='padding: 8px;'>- Placeholder view for managing accounts.</td>
+                                                                </tr>
+                                                                <tr style='border-bottom: 1px solid #eee;'>
+                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/info.php'>info.php</a></b></td>
+                                                                        <td style='padding: 8px;'>- Placeholder view for displaying info.</td>
+                                                                </tr>
+                                                                <tr style='border-bottom: 1px solid #eee;'>
+                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/users.php'>users.php</a></b></td>
+                                                                        <td style='padding: 8px;'>- Placeholder view for managing users.</td>
+                                                                </tr>
+                                                        </table>
 							<!-- layouts Submodule -->
 							<details>
 								<summary><b>layouts</b></summary>

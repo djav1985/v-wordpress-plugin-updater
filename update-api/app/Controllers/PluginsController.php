@@ -27,10 +27,10 @@ class PluginsController extends Controller
     /**
      * Handles GET requests for plugin-related actions.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
         $pluginsTableHtml = self::getPluginsTableHtml();
-        (new self())->render('plupdate', [
+        $this->render('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
         ]);
     }
@@ -38,7 +38,7 @@ class PluginsController extends Controller
     /**
      * Handles POST submissions for plugin-related actions.
      */
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {

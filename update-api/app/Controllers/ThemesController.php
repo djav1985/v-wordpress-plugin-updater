@@ -27,10 +27,10 @@ class ThemesController extends Controller
     /**
      * Handles GET requests for theme-related actions.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
         $themesTableHtml = self::getThemesTableHtml();
-        (new self())->render('thupdate', [
+        $this->render('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
     }
@@ -38,7 +38,7 @@ class ThemesController extends Controller
     /**
      * Handles POST submissions for theme-related actions.
      */
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {

@@ -36,7 +36,6 @@ class Router
             $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
-            $r->addRoute('GET', '/feeds/{user}/{account}', ['\\App\\Controllers\\FeedsController', 'handleRequest']);
             $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
             $r->addRoute('GET', '/', function (): void {
                 header('Location: /home');
@@ -54,7 +53,7 @@ class Router
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2] ?? [];
-                if ($route !== '/login' && $route !== '/api' && !str_starts_with($route, '/feeds')) {
+                if ($route !== '/login' && $route !== '/api') {
                     SessionManager::getInstance()->requireAuth();
                 }
                 if (is_array($handler)) {

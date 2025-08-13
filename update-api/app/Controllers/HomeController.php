@@ -28,9 +28,9 @@ class HomeController extends Controller
     /**
      * Handles GET requests for managing hosts.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        (new self())->render('home', [
+        $this->render('home', [
             'hostsTableHtml' => self::getHostsTableHtml(),
         ]);
     }
@@ -38,7 +38,7 @@ class HomeController extends Controller
     /**
      * Handles POST submissions for host actions.
      */
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {

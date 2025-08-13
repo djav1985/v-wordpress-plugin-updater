@@ -7,12 +7,12 @@ use App\Core\Controller;
 
 class AccountsController extends Controller
 {
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        // TODO: implement accounts page
+        $this->render('accounts', []);
     }
 
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         // TODO: handle accounts submission
     }

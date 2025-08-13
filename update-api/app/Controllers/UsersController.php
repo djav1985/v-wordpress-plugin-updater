@@ -7,12 +7,12 @@ use App\Core\Controller;
 
 class UsersController extends Controller
 {
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        // TODO: implement users page
+        $this->render('users', []);
     }
 
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         // TODO: handle users submission
     }

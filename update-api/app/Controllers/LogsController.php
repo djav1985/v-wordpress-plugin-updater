@@ -25,12 +25,12 @@ class LogsController extends Controller
     /**
      * Handles GET requests for the logs page.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
         $ploutput = LogModel::processLogFile('plugin.log');
         $thoutput = LogModel::processLogFile('theme.log');
 
-        (new self())->render('logs', [
+        $this->render('logs', [
             'ploutput' => $ploutput,
             'thoutput' => $thoutput,
         ]);
@@ -39,7 +39,7 @@ class LogsController extends Controller
     /**
      * Handles POST submissions on the logs page.
      */
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {

@@ -7,12 +7,12 @@ use App\Core\Controller;
 
 class InfoController extends Controller
 {
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        // TODO: implement info page
+        $this->render('info', []);
     }
 
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         // TODO: handle info submission
     }
