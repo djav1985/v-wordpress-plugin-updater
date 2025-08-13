@@ -14,6 +14,8 @@
 define('VALID_USERNAME', 'admin');
 define('VALID_PASSWORD', 'password');
 
+define('ENCRYPTION_KEY', getenv('ENCRYPTION_KEY') ?: '');
+
 define('SESSION_TIMEOUT_LIMIT', 1800);
 
 define('BASE_DIR', dirname($_SERVER['DOCUMENT_ROOT']));
