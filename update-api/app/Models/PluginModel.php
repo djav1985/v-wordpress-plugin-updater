@@ -14,7 +14,7 @@
 
 namespace App\Models;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
 
 class PluginModel
 {
@@ -66,7 +66,7 @@ class PluginModel
         $total_files = count($fileArray['name']);
 
         for ($i = 0; $i < $total_files; $i++) {
-            $file_name = isset($fileArray['name'][$i]) ? Utility::validateFilename($fileArray['name'][$i]) : '';
+            $file_name = isset($fileArray['name'][$i]) ? Validation::validateFilename($fileArray['name'][$i]) : '';
             $file_tmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
             $file_error = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));

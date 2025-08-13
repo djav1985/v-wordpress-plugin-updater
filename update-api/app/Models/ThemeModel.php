@@ -14,7 +14,7 @@
 
 namespace App\Models;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
 
 class ThemeModel
 {
@@ -67,7 +67,7 @@ class ThemeModel
 
         for ($i = 0; $i < $total_files; $i++) {
             $file_name = isset($fileArray['name'][$i])
-                ? Utility::validateFilename($fileArray['name'][$i])
+                ? Validation::validateFilename($fileArray['name'][$i])
                 : '';
             $file_tmp = isset($fileArray['tmp_name'][$i])
                 ? $fileArray['tmp_name'][$i]

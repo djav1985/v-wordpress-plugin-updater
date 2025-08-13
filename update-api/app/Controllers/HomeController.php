@@ -14,7 +14,8 @@
 
 namespace App\Controllers;
 
-use App\Core\Utility;
+use App\Helpers\Validation;
+use App\Helpers\Encryption;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\HostsModel;
@@ -36,10 +37,10 @@ class HomeController extends Controller
                 isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
                 hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
             ) {
-                $domain = isset($_POST['domain']) ? Utility::validateDomain($_POST['domain']) : null;
+                $domain = isset($_POST['domain']) ? Validation::validateDomain($_POST['domain']) : null;
                 $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
                 if (isset($_POST['add_entry'])) {
-                    $newKey = Utility::generateKey();
+                    $newKey = Validation::generateKey();
                     if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
                         MessageHelper::addMessage('Entry added successfully.');
                     } else {
@@ -48,7 +49,7 @@ class HomeController extends Controller
                         MessageHelper::addMessage($error);
                     }
                 } elseif (isset($_POST['regen_entry'])) {
-                    $newKey = Utility::generateKey();
+                    $newKey = Validation::generateKey();
                     if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
                         MessageHelper::addMessage('Key regenerated successfully.');
                     } else {
@@ -144,7 +145,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Utility::decrypt($encryptedKey) ?? '';
+                $key = Encryption::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -166,7 +167,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Utility::decrypt($encryptedKey) ?? '';
+                $key = Encryption::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
