@@ -479,7 +479,11 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    ```
 6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
 
-NOTE: Make sure to set /public/ as doc root. 
+NOTE: Make sure to set /public/ as doc root.
+
+### Composer Installation
+
+Run `composer install` in the `update-api/` directory to install project dependencies. This will fetch the FastRoute library and generate the `vendor/` directory with an autoloader configured for the `App\\` namespace. The previous `autoload.php` file has been removed; load classes by requiring `vendor/autoload.php` instead.
 
 ### Usage
 
