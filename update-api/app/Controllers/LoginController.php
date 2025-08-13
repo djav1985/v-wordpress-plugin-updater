@@ -24,17 +24,17 @@ use App\Core\Csrf;
 
 class LoginController extends Controller
 {
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
         $session = SessionManager::getInstance();
         if ($session->get('logged_in') === true) {
             header('Location: /home');
             exit();
         }
-        (new self())->render('login', []);
+        $this->render('login', []);
     }
 
-    public static function handleSubmission(): void
+    public function handleSubmission(): void
     {
         $session = SessionManager::getInstance();
         $token = $_POST['csrf_token'] ?? '';

@@ -28,12 +28,6 @@ class Router
         $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
-            $r->addRoute('GET', '/accounts', ['\\App\\Controllers\\AccountsController', 'handleRequest']);
-            $r->addRoute('POST', '/accounts', ['\\App\\Controllers\\AccountsController', 'handleSubmission']);
-            $r->addRoute('GET', '/users', ['\\App\\Controllers\\UsersController', 'handleRequest']);
-            $r->addRoute('POST', '/users', ['\\App\\Controllers\\UsersController', 'handleSubmission']);
-            $r->addRoute('GET', '/info', ['\\App\\Controllers\\InfoController', 'handleRequest']);
-            $r->addRoute('POST', '/info', ['\\App\\Controllers\\InfoController', 'handleSubmission']);
             $r->addRoute('GET', '/home', ['\\App\\Controllers\\HomeController', 'handleRequest']);
             $r->addRoute('POST', '/home', ['\\App\\Controllers\\HomeController', 'handleSubmission']);
             $r->addRoute('GET', '/plupdate', ['\\App\\Controllers\\PluginsController', 'handleRequest']);
@@ -43,6 +37,7 @@ class Router
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
             $r->addRoute('GET', '/feeds/{user}/{account}', ['\\App\\Controllers\\FeedsController', 'handleRequest']);
+            $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
             $r->addRoute('GET', '/', function (): void {
                 header('Location: /home');
                 exit();
@@ -59,11 +54,17 @@ class Router
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2] ?? [];
-                if ($route !== '/login' && !str_starts_with($route, '/feeds')) {
+                if ($route !== '/login' && $route !== '/api' && !str_starts_with($route, '/feeds')) {
                     SessionManager::getInstance()->requireAuth();
                 }
-                if (!empty($vars)) {
-                    call_user_func($handler, $vars);
+                if (is_array($handler)) {
+                    $controller = new $handler[0]();
+                    $method = $handler[1];
+                    if (!empty($vars)) {
+                        $controller->$method($vars);
+                    } else {
+                        $controller->$method();
+                    }
                 } else {
                     call_user_func($handler);
                 }
