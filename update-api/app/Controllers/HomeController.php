@@ -15,9 +15,10 @@
 namespace App\Controllers;
 
 use App\Core\Utility;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\HostsModel;
+use App\Helpers\MessageHelper;
 
 class HomeController extends Controller
 {
@@ -40,24 +41,24 @@ class HomeController extends Controller
                 if (isset($_POST['add_entry'])) {
                     $newKey = Utility::generateKey();
                     if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
-                        $_SESSION['messages'][] = 'Entry added successfully.';
+                        MessageHelper::addMessage('Entry added successfully.');
                     } else {
                         $error = 'Failed to add entry.';
-                        ErrorMiddleware::logMessage($error);
-                        $_SESSION['messages'][] = $error;
+                        ErrorManager::getInstance()->log($error);
+                        MessageHelper::addMessage($error);
                     }
                 } elseif (isset($_POST['regen_entry'])) {
                     $newKey = Utility::generateKey();
                     if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
-                        $_SESSION['messages'][] = 'Key regenerated successfully.';
+                        MessageHelper::addMessage('Key regenerated successfully.');
                     } else {
                         $error = 'Failed to regenerate key.';
-                        ErrorMiddleware::logMessage($error);
-                        $_SESSION['messages'][] = $error;
+                        ErrorManager::getInstance()->log($error);
+                        MessageHelper::addMessage($error);
                     }
                 } elseif (isset($_POST['delete_entry'])) {
                     if ($id !== null && $domain !== null && HostsModel::deleteEntry($id, $domain)) {
-                        $_SESSION['messages'][] = 'Entry deleted successfully.';
+                        MessageHelper::addMessage('Entry deleted successfully.');
                     }
                 }
                 // If no action triggered, redirect back to home
@@ -65,8 +66,8 @@ class HomeController extends Controller
                 exit();
             } else {
                 $error = 'Invalid Form Action.';
-                ErrorMiddleware::logMessage($error);
-                $_SESSION['messages'][] = $error;
+                ErrorManager::getInstance()->log($error);
+                MessageHelper::addMessage($error);
                 header('Location: /home');
                 exit();
             }

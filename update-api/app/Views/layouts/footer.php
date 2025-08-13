@@ -18,6 +18,6 @@
     <p>&copy; <?php echo date("Y"); ?> Vontainment. All Rights Reserved.</p>
 </footer>
 <script src="/assets/js/footer-scripts.js"></script>
-<?php App\Core\ErrorMiddleware::displayAndClearMessages(); ?>
+<?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>
 </html>

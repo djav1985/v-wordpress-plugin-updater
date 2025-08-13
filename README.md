@@ -84,9 +84,11 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   ├── Core
     │   │   │   ├── AuthMiddleware.php
     │   │   │   ├── Controller.php
-    │   │   │   ├── ErrorMiddleware.php
+    │   │   │   ├── ErrorManager.php
     │   │   │   ├── Router.php
     │   │   │   └── Utility.php
+    │   │   ├── Helpers
+    │   │   │   └── MessageHelper.php
     │   │   ├── Models
     │   │   │   ├── HostsModel.php
     │   │   │   ├── LogModel.php
@@ -277,8 +279,8 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 									<td style='padding: 8px;'>- Provides a foundational class for rendering view templates within the WordPress Update API, facilitating separation of concerns by managing presentation logic<br>- It supports the overall architecture by enabling consistent and streamlined output generation, ensuring that different parts of the application can display data effectively while maintaining a clean code structure.</td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/ErrorMiddleware.php'>ErrorMiddleware.php</a></b></td>
-									<td style='padding: 8px;'>- Provides centralized error handling and logging for the WordPress Update API, ensuring robust management of runtime errors, exceptions, and shutdown events<br>- Facilitates graceful error responses, maintains application stability, and logs critical issues, thereby supporting reliable API operations and easier troubleshooting within the overall system architecture.</td>
+                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/ErrorManager.php'>ErrorManager.php</a></b></td>
+                                                                        <td style='padding: 8px;'>- Provides centralized error handling and logging for the WordPress Update API through a singleton manager that registers handlers for runtime errors, exceptions, and shutdown events<br>- Facilitates graceful error responses, maintains application stability, and logs critical issues, thereby supporting reliable API operations and easier troubleshooting within the overall system architecture.</td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
 									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/AuthMiddleware.php'>AuthMiddleware.php</a></b></td>
