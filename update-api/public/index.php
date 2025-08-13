@@ -14,19 +14,14 @@
 
 use App\Core\Router;
 use App\Core\ErrorManager;
-
-$secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-session_set_cookie_params([
-                           'path'     => '/',
-                           'httponly' => true,
-                           'secure'   => $secureFlag,
-                           'samesite' => 'Lax',
-                          ]);
-session_start();
-session_regenerate_id(true);
+use App\Core\SessionManager;
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+
+$session = SessionManager::getInstance();
+$session->start();
+$session->regenerate();
 
 ErrorManager::handle(function (): void {
     $router = new Router();

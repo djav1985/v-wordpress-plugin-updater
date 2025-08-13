@@ -24,7 +24,7 @@ require_once __DIR__ . '/layouts/header.php';
     <div id="upload-container">
       <h2>Upload Theme</h2>
       <form action="/thupdate" method="post" enctype="multipart/form-data" class="dropzone" id="upload_theme_form">
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
         <div class="fallback">
           <input name="theme_file[]" type="file" multiple />
         </div>

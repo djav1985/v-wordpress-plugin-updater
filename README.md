@@ -75,17 +75,22 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   ├── HOSTS
     │   ├── app
     │   │   ├── Controllers
+    │   │   │   ├── AccountsController.php
     │   │   │   ├── ApiController.php
-    │   │   │   ├── AuthController.php
+    │   │   │   ├── FeedsController.php
     │   │   │   ├── HomeController.php
+    │   │   │   ├── InfoController.php
+    │   │   │   ├── LoginController.php
     │   │   │   ├── LogsController.php
     │   │   │   ├── PluginsController.php
-    │   │   │   └── ThemesController.php
+    │   │   │   ├── ThemesController.php
+    │   │   │   └── UsersController.php
     │   │   ├── Core
-    │   │   │   ├── AuthMiddleware.php
     │   │   │   ├── Controller.php
+    │   │   │   ├── Csrf.php
     │   │   │   ├── ErrorManager.php
-    │   │   │   └── Router.php
+    │   │   │   ├── Router.php
+    │   │   │   └── SessionManager.php
     │   │   ├── Helpers
     │   │   │   ├── Encryption.php
     │   │   │   ├── MessageHelper.php
@@ -285,7 +290,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
                                                                         <td style='padding: 8px;'>- Provides centralized error handling and logging for the WordPress Update API through a singleton manager that registers handlers for runtime errors, exceptions, and shutdown events<br>- Facilitates graceful error responses, maintains application stability, and logs critical issues, thereby supporting reliable API operations and easier troubleshooting within the overall system architecture.</td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/AuthMiddleware.php'>AuthMiddleware.php</a></b></td>
+                                                                   <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/SessionManager.php'>SessionManager.php</a></b></td>
 									<td style='padding: 8px;'>- Implements authentication and security checks within the WordPress Update API, ensuring only authorized users and trusted IPs access update functionalities<br>- It enforces session validation, handles timeout and user agent consistency, and blocks blacklisted IPs, thereby maintaining secure and controlled API interactions as part of the overall application security architecture.</td>
 								</tr>
 							</table>
@@ -389,7 +394,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 									<td style='padding: 8px;'>- Manages theme-related operations within the WordPress Update API, including uploading, deleting, and displaying themes<br>- Facilitates secure handling of theme files through validation and CSRF protection, while generating dynamic HTML interfaces for theme management<br>- Integrates with core models and middleware to ensure smooth, secure interactions across the applications architecture.</td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/AuthController.php'>AuthController.php</a></b></td>
+                                                                   <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/LoginController.php'>LoginController.php</a></b></td>
 									<td style='padding: 8px;'>- Handles user authentication within the WordPress Update API, managing login sessions, validating credentials, and redirecting users appropriately<br>- Ensures secure session management, tracks failed login attempts, and integrates blacklisting for security<br>- Facilitates user access control, enabling authenticated interactions with the API while safeguarding against unauthorized access.</td>
 								</tr>
 							</table>

@@ -6,3 +6,4 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 ## Unreleased
 - Moved validation helpers to `App\Helpers\Validation` and encryption helpers to `App\Helpers\Encryption`.
 - Added `App\Models\Blacklist` for IP blacklist management and removed `App\Core\Utility`.
+- Introduced centralized `SessionManager` and `Csrf` utilities, refactored controllers and routing to use them, and replaced `AuthController` with `LoginController`.
