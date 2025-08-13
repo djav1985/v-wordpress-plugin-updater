@@ -19,80 +19,72 @@ use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
+use App\Core\Csrf;
+use App\Core\SessionManager;
 
 class ThemesController extends Controller
 {
     /**
-     * Handles the incoming request for theme-related actions.
-     *
-     * Validates CSRF tokens and determines whether to upload or delete themes.
-     *
-     * @return void
+     * Handles GET requests for theme-related actions.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (
-                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
-                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-            ) {
-                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-                if (isset($_FILES['theme_file'])) {
-                    $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
-                    if ($isAjax) {
-                        echo implode("\n", $messages);
-                        exit();
-                    }
-                    foreach ($messages as $message) {
-                        MessageHelper::addMessage($message);
-                    }
-                    header('Location: /thupdate');
-                    exit();
-                } elseif (isset($_POST['delete_theme'])) {
-                    $theme_name = isset($_POST['theme_name']) ? Validation::validateSlug($_POST['theme_name']) : null;
-                    if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
-                        MessageHelper::addMessage('Theme deleted successfully!');
-                    } else {
-                        $error = 'Failed to delete theme file. Please try again.';
-                        ErrorManager::getInstance()->log($error);
-                        MessageHelper::addMessage($error);
-                    }
-                    header('Location: /thupdate');
-                    exit();
-                }
-            } else {
-                $error = 'Invalid Form Action.';
-                ErrorManager::getInstance()->log($error);
-                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-                if ($isAjax) {
-                    http_response_code(400);
-                    echo $error;
-                    exit();
-                }
-                MessageHelper::addMessage($error);
-                header('Location: /');
-                exit();
-            }
-        }
-
         $themesTableHtml = self::getThemesTableHtml();
-
-        // Render the thupdate view
-        (new self())->render('thupdate', [
+        $this->render('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
     }
 
+    /**
+     * Handles POST submissions for theme-related actions.
+     */
+    public function handleSubmission(): void
+    {
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Csrf::validate($token)) {
+            $error = 'Invalid Form Action.';
+            ErrorManager::getInstance()->log($error);
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                http_response_code(400);
+                echo $error;
+                exit();
+            }
+            MessageHelper::addMessage($error);
+            header('Location: /');
+            exit();
+        }
+
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        if (isset($_FILES['theme_file'])) {
+            $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
+            if ($isAjax) {
+                echo implode("\n", $messages);
+                exit();
+            }
+            foreach ($messages as $message) {
+                MessageHelper::addMessage($message);
+            }
+            header('Location: /thupdate');
+            exit();
+        } elseif (isset($_POST['delete_theme'])) {
+            $theme_name = isset($_POST['theme_name']) ? Validation::validateSlug($_POST['theme_name']) : null;
+            if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
+                MessageHelper::addMessage('Theme deleted successfully!');
+            } else {
+                $error = 'Failed to delete theme file. Please try again.';
+                ErrorManager::getInstance()->log($error);
+                MessageHelper::addMessage($error);
+            }
+            header('Location: /thupdate');
+            exit();
+        }
+    }
 
     /**
      * Generates an HTML table row for a theme.
-     *
-     * @param string $theme      The theme file path.
-     * @param string $theme_name The name of the theme.
-     *
-     * @return string The HTML table row for the theme.
      */
     public static function generateThemeTableRow(string $theme, string $theme_name): string
     {
@@ -104,7 +96,7 @@ class ThemesController extends Controller
                          htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') .
                      '">
                      <input type="hidden" name="csrf_token" value="' .
-                         htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">
+                         htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                      <input class="th-submit" type="submit" name="delete_theme" value="Delete">
                  </form>
              </td>
@@ -113,10 +105,6 @@ class ThemesController extends Controller
 
     /**
      * Generates the HTML for the themes table.
-     *
-     * Retrieves all theme files and organizes them into two columns for display.
-     *
-     * @return string The HTML for the themes table.
      */
     public static function getThemesTableHtml(): string
     {

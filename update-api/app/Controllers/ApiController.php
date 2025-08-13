@@ -22,7 +22,7 @@ use App\Core\Controller;
 
 class ApiController extends Controller
 {
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
         $ip = $_SERVER['REMOTE_ADDR'];
         if (Blacklist::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {

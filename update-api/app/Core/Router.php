@@ -17,6 +17,7 @@ namespace App\Core;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
+use App\Core\SessionManager;
 
 class Router
 {
@@ -25,12 +26,17 @@ class Router
     public function __construct()
     {
         $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
-            $r->addRoute(['GET', 'POST'], '/login', ['\\App\\Controllers\\AuthController', 'handleRequest']);
-            $r->addRoute(['GET', 'POST'], '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
-            $r->addRoute(['GET', 'POST'], '/plupdate', ['\\App\\Controllers\\PluginsController', 'handleRequest']);
-            $r->addRoute(['GET', 'POST'], '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleRequest']);
-            $r->addRoute(['GET', 'POST'], '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
-            $r->addRoute(['GET', 'POST'], '/home', ['\\App\\Controllers\\HomeController', 'handleRequest']);
+            $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
+            $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
+            $r->addRoute('GET', '/home', ['\\App\\Controllers\\HomeController', 'handleRequest']);
+            $r->addRoute('POST', '/home', ['\\App\\Controllers\\HomeController', 'handleSubmission']);
+            $r->addRoute('GET', '/plupdate', ['\\App\\Controllers\\PluginsController', 'handleRequest']);
+            $r->addRoute('POST', '/plupdate', ['\\App\\Controllers\\PluginsController', 'handleSubmission']);
+            $r->addRoute('GET', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleRequest']);
+            $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
+            $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
+            $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
+            $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
             $r->addRoute('GET', '/', function (): void {
                 header('Location: /home');
                 exit();
@@ -46,13 +52,20 @@ class Router
         switch ($routeInfo[0]) {
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
-                if (!in_array($route, ['/login', '/api'], true)) {
-                    AuthMiddleware::check();
+                $vars = $routeInfo[2] ?? [];
+                if ($route !== '/login' && $route !== '/api') {
+                    SessionManager::getInstance()->requireAuth();
                 }
                 if (is_array($handler)) {
+                    $controller = new $handler[0]();
+                    $method = $handler[1];
+                    if (!empty($vars)) {
+                        $controller->$method($vars);
+                    } else {
+                        $controller->$method();
+                    }
+                } else {
                     call_user_func($handler);
-                } elseif (is_callable($handler)) {
-                    $handler();
                 }
                 break;
             default:
