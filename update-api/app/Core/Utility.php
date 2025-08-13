@@ -47,6 +47,18 @@ class Utility
     }
 
     /**
+     * Generate a random API key.
+     *
+     * @param int $length Desired length of the key.
+     * @return string Generated key consisting of hex characters.
+     */
+    public static function generateKey(int $length = 32): string
+    {
+        $bytes = random_bytes((int) ceil($length / 2));
+        return substr(bin2hex($bytes), 0, $length);
+    }
+
+    /**
      * Validate plugin or theme names and slugs.
      *
      * @param string $slug The slug to validate.

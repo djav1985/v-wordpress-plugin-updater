@@ -38,14 +38,17 @@
     width: 90%;
   }
 
+  .hosts-key {
+    cursor: pointer;
+  }
+
   .hosts-submit {
     margin-top: 5px;
     margin-bottom: 5px;
     width: 100%;
   }
 
-  #domain,
-  #key {
+  #domain {
     width: 100%;
   }
 
