@@ -490,6 +490,9 @@ NOTE: Make sure to set /public/ as doc root.
 - [ ] **`Task 3`**: Implement ability to remove ips from blacklist
 - [ ] **`Task 4`**: Implement plug-in verification on upload
 - [ ] **`Task 4`**: Implement docker version
+- [ ] **`Task 5`**: Databasebackend instead of file system
+- [ ] **`Task 6`**: Admin api, sotre files outside of server, etc
+- [ ] **`Task 7`**: More efficent update flow
       
 ---
 
