@@ -21,3 +21,12 @@ function showToast(message) {
         }, 500);
     }, 3000);
 }
+
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("hosts-key")) {
+        const key = e.target.value;
+        navigator.clipboard.writeText(key).then(() => {
+            showToast("Key copied to clipboard");
+        });
+    }
+});

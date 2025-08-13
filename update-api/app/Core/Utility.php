@@ -47,6 +47,18 @@ class Utility
     }
 
     /**
+     * Generate a random API key.
+     *
+     * @param int $length Desired length of the key.
+     * @return string Generated key consisting of hex characters.
+     */
+    public static function generateKey(int $length = 32): string
+    {
+        $bytes = random_bytes((int) ceil($length / 2));
+        return substr(bin2hex($bytes), 0, $length);
+    }
+
+    /**
      * Validate plugin or theme names and slugs.
      *
      * @param string $slug The slug to validate.
@@ -104,6 +116,49 @@ class Utility
     {
         $password = trim($password);
         return strlen($password) >= 6 ? $password : null;
+    }
+
+    /**
+     * Encrypt a string using AES-256-CBC.
+     *
+     * @param string $plain Plain text to encrypt.
+     * @return string Base64-encoded cipher text.
+     */
+    public static function encrypt(string $plain): string
+    {
+        $key = hash('sha256', ENCRYPTION_KEY, true);
+        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = random_bytes($iv_length);
+        $cipher = openssl_encrypt($plain, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        return base64_encode($iv . $cipher);
+    }
+
+    /**
+     * Decrypt a string encrypted with encrypt().
+     *
+     * @param string $cipher Base64-encoded cipher text.
+     * @return string|null Decrypted plain text or null on failure.
+     */
+    public static function decrypt(string $cipher): ?string
+    {
+        $data = base64_decode($cipher, true);
+        if ($data === false) {
+            return null;
+        }
+        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+        if (strlen($data) <= $iv_length) {
+            return null;
+        }
+        $iv = substr($data, 0, $iv_length);
+        $cipher_text = substr($data, $iv_length);
+        $plain = openssl_decrypt(
+            $cipher_text,
+            'aes-256-cbc',
+            hash('sha256', ENCRYPTION_KEY, true),
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+        return $plain === false ? null : $plain;
     }
 
     /**

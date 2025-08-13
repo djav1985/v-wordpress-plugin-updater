@@ -191,12 +191,15 @@ APP LAYOUT & CONTENT
   width: 90%;
 }
 
+.hosts-key {
+  cursor: pointer;
+}
+
 .hosts-submit {
   width: 48%;
 }
 
-#domain,
-#key {
+#domain {
   width: 90%;
 }
 

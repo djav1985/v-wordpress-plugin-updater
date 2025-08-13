@@ -36,21 +36,22 @@ class HomeController extends Controller
                 hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
             ) {
                 $domain = isset($_POST['domain']) ? Utility::validateDomain($_POST['domain']) : null;
-                $key = isset($_POST['key']) ? Utility::validateKey($_POST['key']) : null;
                 $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
                 if (isset($_POST['add_entry'])) {
-                    if ($domain !== null && $key !== null && HostsModel::addEntry($domain, $key)) {
+                    $newKey = Utility::generateKey();
+                    if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
                         $_SESSION['messages'][] = 'Entry added successfully.';
                     } else {
                         $error = 'Failed to add entry.';
                         ErrorMiddleware::logMessage($error);
                         $_SESSION['messages'][] = $error;
                     }
-                } elseif (isset($_POST['update_entry'])) {
-                    if ($id !== null && $domain !== null && $key !== null && HostsModel::updateEntry($id, $domain, $key)) {
-                        $_SESSION['messages'][] = 'Entry updated successfully.';
+                } elseif (isset($_POST['regen_entry'])) {
+                    $newKey = Utility::generateKey();
+                    if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
+                        $_SESSION['messages'][] = 'Key regenerated successfully.';
                     } else {
-                        $error = 'Failed to update entry.';
+                        $error = 'Failed to regenerate key.';
                         ErrorMiddleware::logMessage($error);
                         $_SESSION['messages'][] = $error;
                     }
@@ -97,12 +98,12 @@ class HomeController extends Controller
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '"></td>
                 <td>
-                    <input class="hosts-key" type="text" name="key" value="' .
+                    <input class="hosts-key" type="text" value="' .
                     htmlspecialchars($key, ENT_QUOTES, 'UTF-8') .
-                '">
+                '" readonly>
                 </td>
                 <td>
-                    <input class="hosts-submit" type="submit" name="update_entry" value="Update">
+                    <input class="hosts-submit" type="submit" name="regen_entry" value="Regen">
                     <input class="hosts-submit" type="submit" name="delete_entry" value="Delete">
                 </td>
             </form>
@@ -141,7 +142,8 @@ class HomeController extends Controller
             // Correct line number for column 1
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
-                $key = isset($fields[1]) ? $fields[1] : '';
+                $encryptedKey = $fields[1] ?? '';
+                $key = Utility::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -162,7 +164,8 @@ class HomeController extends Controller
         // Correct line number for column 2
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
-                $key = isset($fields[1]) ? $fields[1] : '';
+                $encryptedKey = $fields[1] ?? '';
+                $key = Utility::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
