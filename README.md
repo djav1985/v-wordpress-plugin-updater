@@ -489,6 +489,10 @@ NOTE: Make sure to set /public/ as doc root.
 
 Run `composer install` in the `update-api/` directory to install project dependencies. This will fetch the FastRoute library and generate the `vendor/` directory with an autoloader configured for the `App\\` namespace. The previous `autoload.php` file has been removed; load classes by requiring `vendor/autoload.php` instead.
 
+### Coding Standards
+
+Run `vendor/bin/phpcs update-api` and `vendor/bin/phpcs mu-plugin` to check coding standards for each component.
+
 ### Usage
 
 1. Copy the files from the repository's `mu-plugin/` folder into your WordPress installation's `wp-content/mu-plugins/` directory. Create the directory if it doesn't exist. WordPress automatically loads any PHP files placed here.

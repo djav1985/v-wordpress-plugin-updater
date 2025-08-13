@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<ruleset name="MU Plugins">
+    <file>.</file>
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <rule ref="WordPress"/>
+</ruleset>
