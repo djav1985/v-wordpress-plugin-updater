@@ -19,6 +19,7 @@ use App\Helpers\Encryption;
 use App\Models\Blacklist;
 use App\Core\ErrorManager;
 use App\Core\Controller;
+use App\Core\DatabaseManager;
 
 class ApiController extends Controller
 {
@@ -73,60 +74,49 @@ class ApiController extends Controller
             exit();
         }
 
-        if ($type === 'theme') {
-            $dir = THEMES_DIR;
-            $log = LOG_DIR . '/theme.log';
-        } else {
-            // Fallback to plugins directory; $type is validated earlier.
-            $dir = PLUGINS_DIR;
-            $log = LOG_DIR . '/plugin.log';
-        }
+        $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
 
-        $host_file = @fopen(HOSTS_ACL . '/HOSTS', 'r');
-        if ($host_file) {
-            while (($line = fgets($host_file)) !== false) {
-                $line = trim($line);
-                if ($line) {
-                    list($host, $host_key) = explode(' ', $line, 2);
-                    $host_key = Encryption::decrypt($host_key);
-                    if ($host === $domain && $host_key !== null && $host_key === $key) {
-                        fclose($host_file);
-                        foreach (scandir($dir) as $filename) {
-                            if ($filename === '.' || $filename === '..') {
-                                continue;
-                            }
-                            if (strpos($filename, $slug) === 0) {
-                                $filename_parts = explode('_', $filename);
-                                if (isset($filename_parts[1]) && version_compare($filename_parts[1], $version, '>')) {
-                                    $file_path = $dir . '/' . $filename;
-                                    if (is_file($file_path)) {
-                                        header('Content-Type: application/octet-stream');
-                                        header('Content-Disposition: attachment; filename="' . basename($file_path) . '"');
-                                        header('Content-Length: ' . filesize($file_path));
-                                        readfile($file_path);
-                                        $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
-                                        file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-                                        ErrorManager::getInstance()->log($log_message, 'info');
-                                        exit();
-                                    }
-                                }
-                            }
+        $conn = DatabaseManager::getConnection();
+        $hostRow = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        if ($hostRow) {
+            $host_key = Encryption::decrypt($hostRow['key']);
+            if ($host_key !== null && $host_key === $key) {
+                $table = $type === 'theme' ? 'themes' : 'plugins';
+                $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
+                if ($row) {
+                    $dbVersion = $row['version'];
+                    if (version_compare($dbVersion, $version, '>')) {
+                        $file_path = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
+                        if (is_file($file_path)) {
+                            header('Content-Type: application/octet-stream');
+                            header('Content-Disposition: attachment; filename="' . basename($file_path) . '"');
+                            header('Content-Length: ' . filesize($file_path));
+                            readfile($file_path);
+                            $conn->executeStatement(
+                                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+                                [$domain, $type, date('Y-m-d'), 'Success']
+                            );
+                            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+                            exit();
                         }
-                        http_response_code(204);
-                        $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Successful';
-                        file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-                        ErrorManager::getInstance()->log($log_message, 'info');
-                        exit();
                     }
+                    http_response_code(204);
+                    $conn->executeStatement(
+                        'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+                        [$domain, $type, date('Y-m-d'), 'Success']
+                    );
+                    ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+                    exit();
                 }
             }
-            fclose($host_file);
         }
 
         http_response_code(403);
-        $log_message = $domain . ' ' . date('Y-m-d,h:i:sa') . ' Failed';
-        file_put_contents($log, $log_message . PHP_EOL, LOCK_EX | FILE_APPEND);
-        ErrorManager::getInstance()->log($log_message);
+        $conn->executeStatement(
+            'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+            [$domain, $type, date('Y-m-d'), 'Failed']
+        );
+        ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
         exit();
     }
 }

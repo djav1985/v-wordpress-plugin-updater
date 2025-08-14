@@ -14,6 +14,7 @@
 
 namespace App\Models;
 
+use App\Core\DatabaseManager;
 use App\Helpers\Validation;
 
 class ThemeModel
@@ -27,8 +28,13 @@ class ThemeModel
      */
     public static function getThemes(): array
     {
-        $themes = glob(self::$dir . '/*.zip');
-        return array_reverse($themes ?: []);
+        $conn = DatabaseManager::getConnection();
+        $rows = $conn->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
+        $themes = [];
+        foreach ($rows as $row) {
+            $themes[] = self::$dir . '/' . $row['slug'] . '_' . $row['version'] . '.zip';
+        }
+        return $themes;
     }
 
     /**
@@ -45,7 +51,11 @@ class ThemeModel
             file_exists($theme_path) &&
             dirname(realpath($theme_path)) === realpath(self::$dir)
         ) {
-            return unlink($theme_path);
+            unlink($theme_path);
+            $slug = explode('_', basename($theme_name))[0];
+            $conn = DatabaseManager::getConnection();
+            $conn->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
+            return true;
         }
 
         return false;
@@ -110,6 +120,16 @@ class ThemeModel
 
             $theme_path = self::$dir . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $theme_path)) {
+                if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+                    $slug = $matches[1];
+                    $version = $matches[2];
+                    $conn = DatabaseManager::getConnection();
+                    $conn->executeStatement(
+                        'INSERT INTO themes (slug, version) VALUES (?, ?) '
+                        . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                        [$slug, $version]
+                    );
+                }
                 $messages[] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
                     . ' uploaded successfully.';
             } else {

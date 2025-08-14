@@ -502,6 +502,10 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    ```
 6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
 
+7. From the `update-api/` directory run `php install.php` to create the SQLite database. Ensure `storage/updater.sqlite` is writable by the web server.
+
+8. Configure a system cron to run `php cron.php` regularly so the database stays in sync with the plugin and theme directories.
+
 NOTE: Make sure to set /public/ as doc root.
 
 ### Composer Installation

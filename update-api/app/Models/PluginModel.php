@@ -14,6 +14,7 @@
 
 namespace App\Models;
 
+use App\Core\DatabaseManager;
 use App\Helpers\Validation;
 
 class PluginModel
@@ -27,8 +28,13 @@ class PluginModel
      */
     public static function getPlugins(): array
     {
-        $plugins = glob(self::$dir . '/*.zip');
-        return array_reverse($plugins ?: []);
+        $conn = DatabaseManager::getConnection();
+        $rows = $conn->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
+        $plugins = [];
+        foreach ($rows as $row) {
+            $plugins[] = self::$dir . '/' . $row['slug'] . '_' . $row['version'] . '.zip';
+        }
+        return $plugins;
     }
 
     /**
@@ -45,7 +51,11 @@ class PluginModel
             file_exists($plugin_path) &&
             dirname(realpath($plugin_path)) === realpath(self::$dir)
         ) {
-            return unlink($plugin_path);
+            unlink($plugin_path);
+            $slug = explode('_', basename($plugin_name))[0];
+            $conn = DatabaseManager::getConnection();
+            $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
+            return true;
         }
 
         return false;
@@ -98,6 +108,16 @@ class PluginModel
 
             $plugin_path = self::$dir . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $plugin_path)) {
+                if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+                    $slug = $matches[1];
+                    $version = $matches[2];
+                    $conn = DatabaseManager::getConnection();
+                    $conn->executeStatement(
+                        'INSERT INTO plugins (slug, version) VALUES (?, ?) '
+                        . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                        [$slug, $version]
+                    );
+                }
                 $messages[] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
