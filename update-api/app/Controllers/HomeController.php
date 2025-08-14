@@ -81,7 +81,7 @@ class HomeController extends Controller
     /**
      * Generates an HTML table row for a host entry.
      */
-    public static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
+    private static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
     {
         return '<tr>
             <form method="post" action="/home">
@@ -107,7 +107,7 @@ class HomeController extends Controller
     /**
      * Generates the hosts table HTML for display.
      */
-    public static function getHostsTableHtml(): string
+    private static function getHostsTableHtml(): string
     {
         $entries = HostsModel::getEntries();
         $hostsTableHtml = '';

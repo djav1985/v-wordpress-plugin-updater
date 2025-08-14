@@ -86,7 +86,7 @@ class ThemesController extends Controller
     /**
      * Generates an HTML table row for a theme.
      */
-    public static function generateThemeTableRow(string $theme, string $theme_name): string
+    private static function generateThemeTableRow(string $theme, string $theme_name): string
     {
         return '<tr>
              <td>' . htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') . '</td>
@@ -106,7 +106,7 @@ class ThemesController extends Controller
     /**
      * Generates the HTML for the themes table.
      */
-    public static function getThemesTableHtml(): string
+    private static function getThemesTableHtml(): string
     {
         $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {

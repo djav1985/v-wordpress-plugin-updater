@@ -63,7 +63,7 @@ class SessionManager
         $_SESSION[$key] = $value;
     }
 
-    public function isValid(): bool
+    private function isValid(): bool
     {
         $timeoutLimit = defined('SESSION_TIMEOUT_LIMIT') ? SESSION_TIMEOUT_LIMIT : 1800;
         $timeout = $this->get('timeout');
