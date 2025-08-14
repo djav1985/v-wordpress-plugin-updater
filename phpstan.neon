@@ -3,4 +3,3 @@ parameters:
   paths:
     - mu-plugin
     - update-api
-  memoryLimit: 1G

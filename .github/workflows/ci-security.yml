@@ -91,17 +91,6 @@ jobs:
             phpstan analyse --memory-limit=1G
           fi
 
-      # PHPStan – update-api override if present
-      - name: PHPStan (update-api)
-        if: hashFiles('update-api/phpstan.neon') != ''
-        working-directory: update-api
-        run: |
-          if [ -f vendor/bin/phpstan ]; then
-            vendor/bin/phpstan analyse --memory-limit=1G
-          else
-            phpstan analyse --memory-limit=1G
-          fi
-
       # PHPUnit – prefer update-api tests; fall back to root if present
       - name: PHPUnit (update-api)
         if: hashFiles('update-api/phpunit.xml') != ''
