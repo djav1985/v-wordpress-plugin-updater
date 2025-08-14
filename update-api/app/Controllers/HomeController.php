@@ -85,7 +85,7 @@ class HomeController extends Controller
     {
         return '<tr>
             <form method="post" action="/home">
-                <input type="hidden" name="id" value="' . htmlspecialchars($lineNumber, ENT_QUOTES, 'UTF-8') . '">
+                <input type="hidden" name="id" value="' . htmlspecialchars((string)$lineNumber, ENT_QUOTES, 'UTF-8') . '">
                 <input type="hidden" name="csrf_token" value="' .
                     htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
@@ -112,7 +112,7 @@ class HomeController extends Controller
         $entries = HostsModel::getEntries();
         $hostsTableHtml = '';
         if (count($entries) > 0) {
-            $halfCount = ceil(count($entries) / 2);
+            $halfCount = (int) ceil(count($entries) / 2);
             $entriesColumn1 = array_slice($entries, 0, $halfCount);
             $entriesColumn2 = array_slice($entries, $halfCount);
             $hostsTableHtml .= '<div class="row">';

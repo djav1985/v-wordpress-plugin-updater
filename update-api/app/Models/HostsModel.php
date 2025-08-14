@@ -24,7 +24,7 @@ class HostsModel
     /**
      * Return all host file entries as array of lines.
      *
-     * @return array
+     * @return array<int, string>
      */
     public static function getEntries(): array
     {

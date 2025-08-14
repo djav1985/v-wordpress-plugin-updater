@@ -110,7 +110,7 @@ class ThemesController extends Controller
     {
         $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {
-            $half_count = ceil(count($themes) / 2);
+            $half_count = (int) ceil(count($themes) / 2);
             $themes_column1 = array_slice($themes, 0, $half_count);
             $themes_column2 = array_slice($themes, $half_count);
             $themesTableHtml = '<div class="row"><div class="column">

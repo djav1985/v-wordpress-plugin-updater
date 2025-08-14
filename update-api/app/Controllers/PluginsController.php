@@ -112,7 +112,7 @@ class PluginsController extends Controller
     {
         $plugins = PluginModel::getPlugins();
         if (count($plugins) > 0) {
-            $halfCount = ceil(count($plugins) / 2);
+            $halfCount = (int) ceil(count($plugins) / 2);
             $pluginsColumn1 = array_slice($plugins, 0, $halfCount);
             $pluginsColumn2 = array_slice($plugins, $halfCount);
             $pluginsTableHtml = '<div class="row"><div class="column">

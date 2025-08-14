@@ -23,7 +23,7 @@ class ThemeModel
     /**
      * Return array of theme file paths.
      *
-     * @return array
+     * @return array<int, string>
      */
     public static function getThemes(): array
     {
@@ -54,10 +54,10 @@ class ThemeModel
     /**
      * Upload theme files.
      *
-     * @param array $fileArray $_FILES['theme_file'] array structure
-     * @param bool  $isAjax    Whether the request was via AJAX
+     * @param array<string, array<int, mixed>> $fileArray $_FILES['theme_file'] structure
+     * @param bool                              $isAjax    Whether the request was via AJAX
      *
-     * @return array Array of status messages
+     * @return string[] Array of status messages
      */
     public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {

@@ -23,7 +23,7 @@ class PluginModel
     /**
      * Return array of plugin file paths.
      *
-     * @return array
+     * @return array<int, string>
      */
     public static function getPlugins(): array
     {
@@ -54,10 +54,10 @@ class PluginModel
     /**
      * Upload plugin files.
      *
-     * @param array $fileArray $_FILES['plugin_file'] array structure
-     * @param bool  $isAjax    Whether the request was via AJAX
+     * @param array<string, array<int, mixed>> $fileArray $_FILES['plugin_file'] structure
+     * @param bool                              $isAjax    Whether the request was via AJAX
      *
-     * @return array Array of status messages
+     * @return string[] Array of status messages
      */
     public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
