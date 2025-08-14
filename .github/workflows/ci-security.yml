@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ---------- App CI (static analysis, tests) ----------
   build-test-scan:
     name: CI Scan
     runs-on: ubuntu-latest
@@ -25,27 +26,48 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: composer, phpstan, phpunit, phpcs
+          tools: composer, phpstan, phpunit
 
+      # Cache Composer (root)
+      - name: Cache Composer (root)
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-root-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-root-
+
+      # Cache Composer (update-api)
+      - name: Cache Composer (update-api)
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-updateapi-${{ hashFiles('update-api/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-updateapi-
+
+      # PHPStan
       - name: PHPStan (root)
         if: hashFiles('phpstan.neon') != ''
         continue-on-error: true
         run: |
           if [ -f vendor/bin/phpstan ]; then
+            chmod +x vendor/bin/phpstan
             vendor/bin/phpstan analyse --memory-limit=1G --autoload-file .github/phpstan-bootstrap.php
           else
             echo "PHPStan not found in vendor/, skipping."
           fi
 
+      # PHPUnit – prefer update-api tests; fall back to root if present
       - name: PHPUnit (root)
         if: hashFiles('phpunit.xml') != ''
         run: |
           if [ -f vendor/bin/phpunit ]; then
+            chmod +x vendor/bin/phpunit
             vendor/bin/phpunit --coverage-clover coverage.xml
           else
-            echo "PHPUnit not found in vendor/, skipping."
+            phpunit --coverage-clover coverage.xml
           fi
 
+  # ---------- Security: CodeQL (JS) ----------
   codeql-js:
     name: CodeQL (JavaScript)
     runs-on: ubuntu-latest
@@ -59,12 +81,14 @@ jobs:
         with:
           category: "/language:javascript"
 
+  # ---------- Security: Semgrep (PHP) with pip cache ----------
   semgrep-php:
     name: Semgrep (PHP)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      # Create dependency file first so caching has a key
       - name: Seed pip cache key
         run: echo "semgrep" > requirements-semgrep.txt
 
