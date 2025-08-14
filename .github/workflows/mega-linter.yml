@@ -1,0 +1,85 @@
+name: MegaLinter
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+
+permissions:
+  contents: write        # needed to commit to a fixes branch
+  pull-requests: write   # needed to open PRs with fixes
+  security-events: write # for SARIF upload (optional)
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Cache Composer (PHP)
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      # Cache npm (JS/CSS linters)
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+
+      # Install dev deps if present (WPCS, ESLint plugins, etc.)
+      - name: Composer install (no scripts)
+        run: |
+          if [ -f composer.json ]; then
+            composer install --no-interaction --no-progress --no-scripts || true
+          fi
+
+      - name: npm install if present
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm i
+          fi
+
+      - name: Run MegaLinter
+        uses: oxsecurity/megalinter@v8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only lint changed files
+          VALIDATE_ALL_CODEBASE: false
+          # Enable just these linters
+          ENABLE_LINTERS: >-
+            PHP_PHPCS,
+            PHP_PHPLINT,
+            JAVASCRIPT_ES,
+            CSS_STYLELINT,
+            HTML_HTMLHINT
+          # Limit JS/CSS/HTML to update-api/ only
+          JAVASCRIPT_ES_FILTER_REGEX_INCLUDE: "^update-api/"
+          CSS_STYLELINT_FILTER_REGEX_INCLUDE: "^update-api/"
+          HTML_HTMLHINT_FILTER_REGEX_INCLUDE: "^update-api/"
+          # PHPCS ruleset file assigns WordPress vs PSR-12 per directory
+          PHP_PHPCS_CONFIG_FILE: "phpcs.xml"
+          # Auto-fix only changed files and open a PR with fixes
+          APPLY_FIXES: all
+          APPLY_FIXES_EVENT: pull_request
+          APPLY_FIXES_MODE: pull_request
+          # Reports (optional)
+          REPORT_OUTPUT_FOLDER: megalinter-reports
+
+      - name: Upload SARIF (optional)
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: megalinter-reports/megalinter-report.sarif
