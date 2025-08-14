@@ -24,6 +24,6 @@ $session->start();
 $session->regenerate();
 
 ErrorManager::handle(function (): void {
-    $router = new Router();
+    $router = Router::getInstance();
     $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 });

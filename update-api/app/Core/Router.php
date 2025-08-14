@@ -21,11 +21,17 @@ use App\Core\SessionManager;
 
 class Router
 {
+    private static ?Router $instance = null;
     private Dispatcher $dispatcher;
 
-    public function __construct()
+    private function __construct()
     {
         $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
+            // Redirect the root URL to the home page for convenience
+            $r->addRoute('GET', '/', function (): void {
+                header('Location: /home');
+                exit();
+            });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
             $r->addRoute('GET', '/home', ['\\App\\Controllers\\HomeController', 'handleRequest']);
@@ -37,11 +43,19 @@ class Router
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
             $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
-            $r->addRoute('GET', '/', function (): void {
-                header('Location: /home');
-                exit();
-            });
         });
+    }
+
+    /**
+     * Returns the shared Router instance.
+     */
+    public static function getInstance(): Router
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
     }
 
     public function dispatch(string $method, string $uri): void
