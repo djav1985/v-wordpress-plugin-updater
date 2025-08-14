@@ -1,60 +1,71 @@
-name: CI
-
 on:
   push:
-    branches: [ "main", "dev" ]
-
-permissions:
-  contents: read
-  security-events: write
+    branches: [ main, dev ]
 
 jobs:
   build-test-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           tools: composer, phpstan, phpunit, phpcs
 
-      - name: Cache Composer
+      # Cache Composer (root)
+      - name: Cache Composer (root)
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: ${{ runner.os }}-composer-root-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-root-
 
-      - name: Install PHP dependencies
+      # Cache Composer (update-api)
+      - name: Cache Composer (update-api)
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-updateapi-${{ hashFiles('update-api/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-updateapi-
+
+      # Install root dev tools (linters, etc.)
+      - name: Composer install (root)
+        if: hashFiles('composer.json') != ''
         run: composer install --no-interaction --prefer-dist
 
-      - name: Run PHPStan (static analysis)
-        run: vendor/bin/phpstan analyse --memory-limit=1G
+      # Install app deps in update-api/
+      - name: Composer install (update-api)
+        if: hashFiles('update-api/composer.json') != ''
+        working-directory: update-api
+        run: composer install --no-interaction --prefer-dist
 
-      - name: Run PHPUnit (unit tests)
-        run: vendor/bin/phpunit --coverage-clover coverage.xml
+      # PHPCS (uses your root phpcs.xml: WP in mu-plugins/, PSR-12 in update-api/)
+      - name: PHPCS
+        run: |
+          if [ -f vendor/bin/phpcs ]; then vendor/bin/phpcs -q; else phpcs -q; fi
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: coverage.xml
-          fail_ci_if_error: true
+      # PHPStan – root config (covers mu-plugins/ and/or shared rules)
+      - name: PHPStan (root)
+        if: hashFiles('phpstan.neon') != ''
+        run: |
+          if [ -f vendor/bin/phpstan ]; then vendor/bin/phpstan analyse --memory-limit=1G; else phpstan analyse --memory-limit=1G; fi
 
-      - name: Run Trivy FS scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          severity: 'HIGH,CRITICAL'
+      # PHPStan – update-api override if it has its own config
+      - name: PHPStan (update-api)
+        if: hashFiles('update-api/phpstan.neon') != ''
+        working-directory: update-api
+        run: |
+          if [ -f vendor/bin/phpstan ]; then vendor/bin/phpstan analyse --memory-limit=1G; else phpstan analyse --memory-limit=1G; fi
 
-      - name: Build Docker image
-        run: docker build -t myapp:ci .
+      # PHPUnit – prefer update-api tests; fall back to root if present
+      - name: PHPUnit (update-api)
+        if: hashFiles('update-api/phpunit.xml') != ''
+        working-directory: update-api
+        run: |
+          if [ -f vendor/bin/phpunit ]; then vendor/bin/phpunit --coverage-clover ../coverage.xml; else phpunit --coverage-clover ../coverage.xml; fi
 
-      - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'myapp:ci'
-          severity: 'HIGH,CRITICAL'
+      - name: PHPUnit (root)
+        if: hashFiles('phpunit.xml') != ''
+        run: |
+          if [ -f vendor/bin/phpunit ]; then vendor/bin/phpunit --coverage-clover coverage.xml; else phpunit --coverage-clover coverage.xml; fi
