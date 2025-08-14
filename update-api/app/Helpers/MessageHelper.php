@@ -21,7 +21,10 @@ class MessageHelper
     public static function addMessage(string $message): void
     {
         $session = SessionManager::getInstance();
-        $messages = $session->get('messages', []);
+        $messages = $session->get('messages');
+        if (!is_array($messages)) {
+            $messages = [];
+        }
         $messages[] = $message;
         $session->set('messages', $messages);
     }
@@ -29,8 +32,8 @@ class MessageHelper
     public static function displayAndClearMessages(): void
     {
         $session = SessionManager::getInstance();
-        $messages = $session->get('messages', []);
-        if (!empty($messages)) {
+        $messages = $session->get('messages');
+        if (is_array($messages) && !empty($messages)) {
             foreach ($messages as $message) {
                 echo '<script>showToast(' . json_encode($message) . ');</script>';
             }

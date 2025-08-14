@@ -14,6 +14,9 @@
 
 require_once __DIR__ . '/layouts/header.php';
 
+/** @var string $hostsTableHtml */
+$hostsTableHtml = $hostsTableHtml ?? '';
+
 ?>
 
 <div class="content-box">

@@ -18,7 +18,11 @@ require_once __DIR__ . '/layouts/header.php';
 <div class="content-box">
   <h2>Plugins</h2>
   <div id="plugins_table">
-    <?php echo $pluginsTableHtml; ?>
+    <?php
+    /** @var string $pluginsTableHtml */
+    $pluginsTableHtml = $pluginsTableHtml ?? '';
+    echo $pluginsTableHtml;
+    ?>
   </div>
   <div class="plupload section">
     <div id="upload-container">

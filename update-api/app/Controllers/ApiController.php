@@ -76,8 +76,8 @@ class ApiController extends Controller
         if ($type === 'theme') {
             $dir = THEMES_DIR;
             $log = LOG_DIR . '/theme.log';
-        }
-        if ($type === 'plugin') {
+        } else {
+            // Fallback to plugins directory; $type is validated earlier.
             $dir = PLUGINS_DIR;
             $log = LOG_DIR . '/plugin.log';
         }

@@ -3,6 +3,9 @@ parameters:
   paths:
     - mu-plugin
     - update-api
+  excludePaths:
+    - update-api/vendor
+    - update-api/vendor/*
   bootstrapFiles:
     - .github\phpstan-bootstrap.php
 

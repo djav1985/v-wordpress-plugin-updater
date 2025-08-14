@@ -16,6 +16,11 @@ namespace App\Core;
 
 class Controller
 {
+    /**
+     * Render a view and pass data to it.
+     *
+     * @param array<string, mixed> $data
+     */
     protected function render(string $view, array $data = []): void
     {
         extract($data);

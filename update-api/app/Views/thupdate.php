@@ -18,7 +18,11 @@ require_once __DIR__ . '/layouts/header.php';
 <div class="content-box">
   <h2>Themes</h2>
   <div id="themes_table">
-    <?php echo $themesTableHtml; ?>
+    <?php
+    /** @var string $themesTableHtml */
+    $themesTableHtml = $themesTableHtml ?? '';
+    echo $themesTableHtml;
+    ?>
   </div>
   <div class="plupload section">
     <div id="upload-container">
