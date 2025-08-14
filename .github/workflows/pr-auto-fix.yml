@@ -1,0 +1,70 @@
+name: PR Lint and Auto-Fix
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lint-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer, php-cs-fixer, phpcs
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist || true
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+
+      - name: Install npm dependencies
+        run: if [ -f package.json ]; then npm ci || npm i; fi
+
+      # PHPCS WordPress for mu-plugins/
+      - name: Fix PHP (WordPress standard in mu-plugins/)
+        run: vendor/bin/phpcbf --standard=WordPress mu-plugins || true
+
+      # PHPCS PSR-12 for update-api/
+      - name: Fix PHP (PSR-12 standard in update-api/)
+        run: vendor/bin/phpcbf --standard=PSR12 update-api || true
+
+      - name: PHP-CS-Fixer
+        run: vendor/bin/php-cs-fixer fix --allow-risky=yes || true
+
+      - name: ESLint Fix
+        run: npx eslint update-api/**/*.js --fix || true
+
+      - name: Stylelint Fix
+        run: npx stylelint "update-api/**/*.css" --fix || true
+
+      - name: Commit fixes to PR branch
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: auto-fix lint issues"
+          branch: lint-fixes
+          title: "Lint Auto-Fixes"
+          body: "Automated lint fixes from PR workflow"

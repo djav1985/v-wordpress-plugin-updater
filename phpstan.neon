@@ -1,0 +1,6 @@
+parameters:
+  level: 6
+  paths:
+    - mu-plugins
+    - update-api
+  memoryLimit: 1G
