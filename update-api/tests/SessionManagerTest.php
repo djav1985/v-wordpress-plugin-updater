@@ -23,28 +23,48 @@ class SessionManagerTest extends TestCase
 
     public function testTimeoutExpiryInvalidatesSession(): void
     {
-        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
-        $session = SessionManager::getInstance();
-        $session->start();
-        $session->set('logged_in', true);
-        $session->set('user_agent', 'Agent');
-        $session->set('timeout', time() - (SESSION_TIMEOUT_LIMIT + 1));
-
-        $this->assertFalse($session->isValid());
-        $this->assertSame(PHP_SESSION_NONE, session_status());
+        $basePath = dirname(__DIR__);
+        $code = <<<'PHP'
+require 'vendor/autoload.php';
+if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
+if (!defined('BLACKLIST_DIR')) define('BLACKLIST_DIR', getcwd().'/storage');
+$_SERVER['HTTP_USER_AGENT'] = 'Agent';
+$session = \App\Core\SessionManager::getInstance();
+$session->start();
+$session->set('logged_in', true);
+$session->set('user_agent', 'Agent');
+$session->set('timeout', time() - (SESSION_TIMEOUT_LIMIT + 1));
+register_shutdown_function(function(){ echo session_status(); });
+$session->requireAuth();
+PHP;
+        $cmd = 'cd ' . escapeshellarg($basePath) . ' && php -r ' . escapeshellarg($code);
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        $this->assertSame('1', $output[0] ?? null);
     }
 
     public function testUserAgentChangeInvalidatesSession(): void
     {
-        $_SERVER['HTTP_USER_AGENT'] = 'Agent2';
-        $session = SessionManager::getInstance();
-        $session->start();
-        $session->set('logged_in', true);
-        $session->set('user_agent', 'Agent1');
-        $session->set('timeout', time());
-
-        $this->assertFalse($session->isValid());
-        $this->assertSame(PHP_SESSION_NONE, session_status());
+        $basePath = dirname(__DIR__);
+        $code = <<<'PHP'
+require 'vendor/autoload.php';
+if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
+if (!defined('BLACKLIST_DIR')) define('BLACKLIST_DIR', getcwd().'/storage');
+$_SERVER['HTTP_USER_AGENT'] = 'Agent2';
+$session = \App\Core\SessionManager::getInstance();
+$session->start();
+$session->set('logged_in', true);
+$session->set('user_agent', 'Agent1');
+$session->set('timeout', time());
+register_shutdown_function(function(){ echo session_status(); });
+$session->requireAuth();
+PHP;
+        $cmd = 'cd ' . escapeshellarg($basePath) . ' && php -r ' . escapeshellarg($code);
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        $this->assertSame('1', $output[0] ?? null);
     }
 
     public function testRequireAuthBlocksBlacklistedIp(): void

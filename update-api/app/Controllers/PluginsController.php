@@ -88,7 +88,7 @@ class PluginsController extends Controller
     /**
      * Generates an HTML table row for a plugin.
      */
-    public static function generatePluginTableRow(string $pluginName): string
+    private static function generatePluginTableRow(string $pluginName): string
     {
         return '<tr>
             <td>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') . '</td>
@@ -108,7 +108,7 @@ class PluginsController extends Controller
     /**
      * Generates the plugins table HTML for display.
      */
-    public static function getPluginsTableHtml(): string
+    private static function getPluginsTableHtml(): string
     {
         $plugins = PluginModel::getPlugins();
         if (count($plugins) > 0) {
