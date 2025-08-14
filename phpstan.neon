@@ -1,7 +1,7 @@
 parameters:
   level: 6
   paths:
-    - mu-plugins
+    - mu-plugin
     - update-api
   bootstrapFiles:
     - phpstan/bootstrap-wordpress.php
