@@ -21,53 +21,34 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: phpcs, php-cs-fixer
+          tools: phpcs
 
-      # PHPCBF — only if present; EXCLUDE vendor dirs
+      # PHPCBF — prefer repo's vendor if present, otherwise use global phpcbf.
+      # Pass explicit targets to avoid "You must supply at least one file".
+      # phpcs.xml should exclude vendor/ paths.
       - name: PHPCBF
-        run: |
-          if [ -f vendor/bin/phpcbf ]; then
-            TARGETS=""
-            [ -d mu-plugins ] && TARGETS="$TARGETS mu-plugins"
-            [ -d update-api ] && TARGETS="$TARGETS update-api"
-            if [ -z "$TARGETS" ]; then
-              echo "No target dirs for PHPCBF. Skipping."
-            else
-              php vendor/bin/phpcbf \
-                --ignore=vendor,update-api/vendor \
-                $TARGETS || true
-            fi
-          else
-            echo "PHPCBF not found in vendor/, skipping."
-          fi
-
-      # PHP-CS-Fixer — only if present; feed explicit file list that excludes vendor
-      - name: PHP-CS-Fixer
         shell: bash
         run: |
-          if [ -f vendor/bin/php-cs-fixer ]; then
-            CFG=""
-            [ -f .php-cs-fixer.php ] && CFG="--config=.php-cs-fixer.php"
+          TARGETS=""
+          [ -d mu-plugin ] && TARGETS="$TARGETS mu-plugin"
+          [ -d update-api ] && TARGETS="$TARGETS update-api"
 
-            # Build list of PHP files under mu-plugins/ and update-api/, excluding vendor/
-            mapfile -t PHP_FILES < <(git ls-files \
-              'mu-plugins/**/*.php' \
-              'update-api/**/*.php' \
-              ':!:vendor/**' \
-              ':!:update-api/vendor/**' || true)
-
-            if [ ${#PHP_FILES[@]} -eq 0 ]; then
-              echo "No PHP files to fix (excluding vendor). Skipping."
-            else
-              # Use xargs to avoid argv length issues
-              printf '%s\0' "${PHP_FILES[@]}" | xargs -0 php vendor/bin/php-cs-fixer fix --allow-risky=yes $CFG || true
-            fi
-          else
-            echo "PHP-CS-Fixer not found in vendor/, skipping."
+          if [ -z "$TARGETS" ]; then
+            echo "No target dirs (mu-plugin/update-api). Skipping PHPCBF."
+            exit 0
           fi
 
-      # ESLint Fix — only if local binary exists; exclude vendor dirs
+          if [ -f vendor/bin/phpcbf ]; then
+            php vendor/bin/phpcbf --standard=phpcs.xml $TARGETS || true
+          elif command -v phpcbf >/dev/null 2>&1; then
+            phpcbf --standard=phpcs.xml $TARGETS || true
+          else
+            echo "PHPCBF not available (neither vendor/ nor global). Skipping."
+          fi
+
+      # ESLint Fix — only if local binary exists; avoid exec-bit by calling with node
       - name: ESLint Fix
+        shell: bash
         run: |
           if [ -f node_modules/eslint/bin/eslint.js ]; then
             if ls update-api/**/*.js >/dev/null 2>&1; then
@@ -83,8 +64,9 @@ jobs:
             echo "Local ESLint not installed (node_modules/eslint/bin/eslint.js missing). Skipping."
           fi
 
-      # Stylelint Fix — only if local binary exists; exclude vendor dirs
+      # Stylelint Fix — only if local binary exists; avoid exec-bit by calling with node
       - name: Stylelint Fix
+        shell: bash
         run: |
           if [ -f node_modules/stylelint/bin/stylelint.mjs ]; then
             if ls update-api/**/*.css >/dev/null 2>&1; then
@@ -105,7 +87,7 @@ jobs:
         id: commit_push
         continue-on-error: true
         run: |
-          # Ignore chmod-only diffs just in case
+          # Ignore chmod-only diffs (defensive)
           git config core.filemode false
 
           git add -A
