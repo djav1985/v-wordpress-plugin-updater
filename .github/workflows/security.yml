@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Create dependency file first so caching has a key
+      - name: Seed pip cache key
+        run: echo "semgrep" > requirements-semgrep.txt
+
       - name: Set up Python (with pip cache)
         uses: actions/setup-python@v5
         with:
@@ -37,16 +41,14 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements-semgrep.txt'
 
-      - name: Seed pip cache key
-        run: echo "semgrep" > requirements-semgrep.txt
-
       - name: Install Semgrep
         run: pip install -r requirements-semgrep.txt
 
       - name: Run Semgrep (PHP) and output SARIF
         run: |
           semgrep --config=p/php \
-                  --include root \
+                  --include mu-plugins \
+                  --include update-api \
                   --exclude vendor \
                   --exclude node_modules \
                   --exclude dist \
