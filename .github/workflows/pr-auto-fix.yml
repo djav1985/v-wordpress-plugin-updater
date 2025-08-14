@@ -23,9 +23,7 @@ jobs:
           php-version: '8.2'
           tools: phpcs
 
-      # PHPCBF — prefer repo's vendor if present, otherwise use global phpcbf.
-      # Pass explicit targets to avoid "You must supply at least one file".
-      # phpcs.xml should exclude vendor/ paths.
+      # PHPCBF — uses phpcs.xml for standards and ignores vendor paths
       - name: PHPCBF
         shell: bash
         run: |
@@ -34,7 +32,7 @@ jobs:
           [ -d update-api ] && TARGETS="$TARGETS update-api"
 
           if [ -z "$TARGETS" ]; then
-            echo "No target dirs (mu-plugin/update-api). Skipping PHPCBF."
+            echo "No target dirs found. Skipping PHPCBF."
             exit 0
           fi
 
@@ -43,15 +41,15 @@ jobs:
           elif command -v phpcbf >/dev/null 2>&1; then
             phpcbf --standard=phpcs.xml $TARGETS || true
           else
-            echo "PHPCBF not available (neither vendor/ nor global). Skipping."
+            echo "PHPCBF not available. Skipping."
           fi
 
-      # ESLint Fix — only if local binary exists; avoid exec-bit by calling with node
+      # ESLint Fix — recursive search, ignoring vendor directories
       - name: ESLint Fix
         shell: bash
         run: |
           if [ -f node_modules/eslint/bin/eslint.js ]; then
-            if ls update-api/**/*.js >/dev/null 2>&1; then
+            if find update-api -type f -name "*.js" ! -path "*/vendor/*" | grep -q .; then
               node node_modules/eslint/bin/eslint.js \
                 "update-api/**/*.js" \
                 --ignore-pattern "vendor/**" \
@@ -61,15 +59,15 @@ jobs:
               echo "No JS files under update-api/. Skipping ESLint."
             fi
           else
-            echo "Local ESLint not installed (node_modules/eslint/bin/eslint.js missing). Skipping."
+            echo "ESLint not installed locally. Skipping."
           fi
 
-      # Stylelint Fix — only if local binary exists; avoid exec-bit by calling with node
+      # Stylelint Fix — recursive search, ignoring vendor directories
       - name: Stylelint Fix
         shell: bash
         run: |
           if [ -f node_modules/stylelint/bin/stylelint.mjs ]; then
-            if ls update-api/**/*.css >/dev/null 2>&1; then
+            if find update-api -type f -name "*.css" ! -path "*/vendor/*" | grep -q .; then
               node node_modules/stylelint/bin/stylelint.mjs \
                 "update-api/**/*.css" \
                 --ignore-pattern "vendor/**" \
@@ -79,7 +77,7 @@ jobs:
               echo "No CSS files under update-api/. Skipping Stylelint."
             fi
           else
-            echo "Local Stylelint not installed (node_modules/stylelint/bin/stylelint.mjs missing). Skipping."
+            echo "Stylelint not installed locally. Skipping."
           fi
 
       # Commit changes directly to the PR branch
@@ -87,9 +85,7 @@ jobs:
         id: commit_push
         continue-on-error: true
         run: |
-          # Ignore chmod-only diffs (defensive)
           git config core.filemode false
-
           git add -A
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name  "github-actions[bot]"
