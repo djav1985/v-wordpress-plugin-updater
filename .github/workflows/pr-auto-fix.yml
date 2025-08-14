@@ -1,3 +1,4 @@
+
 name: PR Lint and Auto-Fix
 
 on:
@@ -93,41 +94,4 @@ jobs:
           title: "Lint auto-fixes for ${github.head_ref}"
           commit-message: "chore: lint auto-fixes"
           body: "Auto-fixes for PR #${{ github.event.pull_request.number }}. Original branch is protected; merging this will apply the fixes."
-          base: ${{ github.head_ref }}        run: |
-          if [ -f vendor/bin/php-cs-fixer ]; then
-            chmod +x vendor/bin/php-cs-fixer
-            vendor/bin/php-cs-fixer fix --allow-risky=yes || true
-          else
-            echo "PHP-CS-Fixer not found in vendor/, skipping."
-          fi
-
-      # ESLint Fix
-      - name: ESLint Fix
-        run: |
-          if [ -d node_modules ] && command -v npx > /dev/null; then
-            npx eslint "update-api/**/*.js" --fix || true
-          else
-            echo "node_modules or npx not found, skipping ESLint."
-          fi
-
-      # Stylelint Fix
-      - name: Stylelint Fix
-        run: |
-          if [ -d node_modules ] && command -v npx > /dev/null; then
-            npx stylelint "update-api/**/*.css" --fix || true
-          else
-            echo "node_modules or npx not found, skipping Stylelint."
-          fi
-
-      # Commit changes directly to the PR branch
-      - name: Commit fixes to PR branch
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add .
-            git commit -m "chore: auto-lint fixes"
-            git push origin HEAD:${{ github.head_ref }}
-          else
-            echo "No changes to commit."
-          fi
+          base: ${{ github.head_ref }}
