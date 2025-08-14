@@ -19,3 +19,6 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Introduced SQLite persistence using Doctrine DBAL with install and cron scripts, and migrated models and controllers to use the database.
 - Replaced JSON-based blacklist with SQLite table that automatically resets entries after three days.
 - Moved blacklist table creation to installer script.
+- Removed `rawurlencode` from updater request parameters to prevent double encoding.
+- Added `WP_Error` checks after `wp_remote_get` calls to log network failures and skip processing.
+- Corrected the header in `v-sys-theme-updater.php` so it loads as a plugin.
