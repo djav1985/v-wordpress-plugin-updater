@@ -18,3 +18,4 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Fixed PHPStan reported issues by initializing variables, adding explicit type annotations, and excluding vendor code from analysis.
 - Introduced SQLite persistence using Doctrine DBAL with install and cron scripts, and migrated models and controllers to use the database.
 - Replaced JSON-based blacklist with SQLite table that automatically resets entries after three days.
+- Moved blacklist table creation to installer script.

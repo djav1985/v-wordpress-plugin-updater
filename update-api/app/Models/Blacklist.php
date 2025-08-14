@@ -19,15 +19,11 @@ use App\Core\DatabaseManager;
 class Blacklist
 {
     /**
-     * Get database connection and ensure blacklist table exists.
+     * Get database connection.
      */
     private static function getConnection(): \Doctrine\DBAL\Connection
     {
-        $conn = DatabaseManager::getConnection();
-        $conn->executeStatement(
-            'CREATE TABLE IF NOT EXISTS blacklist (ip TEXT PRIMARY KEY, login_attempts INTEGER, blacklisted INTEGER, timestamp INTEGER)'
-        );
-        return $conn;
+        return DatabaseManager::getConnection();
     }
 
     /**
