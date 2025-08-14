@@ -15,19 +15,13 @@ jobs:
     name: CodeQL (JavaScript)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v3
         with:
           languages: javascript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Analyze
-        uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript"
 
@@ -35,21 +29,22 @@ jobs:
     name: Semgrep (PHP)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Run Semgrep for PHP
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >
-            p/ci
-          generateSarif: true
-          sarif: semgrep.sarif
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN || '' }}
+      - name: Install Semgrep
+        run: pip install semgrep
 
-      - name: Upload SARIF (Semgrep)
-        if: always()
+      - name: Run Semgrep for PHP and output SARIF
+        run: |
+          semgrep --config=p/ci \
+                  --lang=php \
+                  --include root \
+                  --exclude vendor \
+                  --exclude node_modules \
+                  --exclude dist \
+                  --sarif --output=semgrep.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
