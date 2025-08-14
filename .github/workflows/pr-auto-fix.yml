@@ -42,6 +42,65 @@ jobs:
             echo "PHP-CS-Fixer not found in vendor/, skipping."
           fi
 
+      # ESLint Fix (only if root node_modules exists)
+      - name: ESLint Fix
+        run: |
+          if [ -d node_modules ] && command -v npx > /dev/null; then
+            npx eslint "update-api/**/*.js" --fix || true
+          else
+            echo "node_modules or npx not found, skipping ESLint."
+          fi
+
+      # Stylelint Fix (only if root node_modules exists)
+      - name: Stylelint Fix
+        run: |
+          if [ -d node_modules ] && command -v npx > /dev/null; then
+            npx stylelint "update-api/**/*.css" --fix || true
+          else
+            echo "node_modules or npx not found, skipping Stylelint."
+          fi
+
+      # Commit changes directly to the PR branch (skip vendor, ignore mode changes)
+      - name: Commit fixes to PR branch
+        id: commit_push
+        continue-on-error: true
+        run: |
+          # Don't treat chmod as a diff
+          git config --global core.filemode false
+
+          # Stage everything, then unstage vendor
+          git add -A
+          git restore --staged vendor || true
+          git restore --staged vendor/** || true
+          # Also revert any vendor changes in working tree
+          git checkout -- vendor 2>/dev/null || true
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: auto-lint fixes"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No changes to commit."
+          fi
+
+      # Fallback if push blocked by branch protection: open a PR into the PR branch
+      - name: Create PR with fixes (fallback)
+        if: steps.commit_push.outcome == 'failure'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: lint-fixes/${{ github.head_ref }}
+          title: "Lint auto-fixes for ${github.head_ref}"
+          commit-message: "chore: lint auto-fixes"
+          body: "Auto-fixes for PR #${{ github.event.pull_request.number }}. Original branch is protected; merging this will apply the fixes."
+          base: ${{ github.head_ref }}        run: |
+          if [ -f vendor/bin/php-cs-fixer ]; then
+            chmod +x vendor/bin/php-cs-fixer
+            vendor/bin/php-cs-fixer fix --allow-risky=yes || true
+          else
+            echo "PHP-CS-Fixer not found in vendor/, skipping."
+          fi
+
       # ESLint Fix
       - name: ESLint Fix
         run: |
