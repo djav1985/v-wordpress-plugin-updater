@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
-<ruleset name="Per-Directory Standards">
-  <description>WordPress standard for mu-plugin/, PSR-12 for update-api/</description>
-  <arg name="basepath" value="."/>
-  <arg name="extensions" value="php"/>
+<ruleset name="Project Coding Standards">
+  <description>PHPCS config for WordPress in mu-plugin/ and PHP in update-api/</description>
 
-  <rule ref="WordPress">
-    <include-pattern>^mu-plugin/.*</include-pattern>
+  <!-- Ignore vendor directories -->
+  <exclude-pattern>vendor/*</exclude-pattern>
+  <exclude-pattern>update-api/vendor/*</exclude-pattern>
+
+  <!-- WordPress rules for mu-plugin -->
+  <rule ref="WordPress-Core">
+    <include-pattern>mu-plugin/</include-pattern>
   </rule>
 
+  <!-- Generic PHP rules for update-api -->
   <rule ref="PSR12">
-    <include-pattern>^update-api/.*</include-pattern>
+    <include-pattern>update-api/</include-pattern>
   </rule>
 </ruleset>
