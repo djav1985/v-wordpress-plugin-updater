@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "eslint": "^9.33.0",
+    "stylelint": "^16.23.1"
+  }
+}
