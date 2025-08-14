@@ -1,0 +1,11 @@
+{
+  "name": "v-wordpress-plugin-updater-root",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "scripts": {
+    "lint": "eslint ."
+  }
+}

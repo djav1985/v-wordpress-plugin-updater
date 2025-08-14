@@ -1,19 +1,16 @@
 <?xml version="1.0"?>
-<ruleset name="Per-Dir Standards">
-  <description>WP rules for mu-plugins, PSR-12 for update-api</description>
+<ruleset name="Per-Directory Standards">
+  <description>WordPress standard for mu-plugins/, PSR-12 for update-api/</description>
   <arg name="basepath" value="."/>
   <arg name="extensions" value="php"/>
 
-  <!-- Default: nothing (we'll attach rules to paths explicitly) -->
   <file>mu-plugins</file>
   <file>update-api</file>
 
-  <!-- WordPress standard for mu-plugins/ -->
   <rule ref="WordPress">
     <include-pattern>^mu-plugins/.*</include-pattern>
   </rule>
 
-  <!-- PSR-12 for update-api/ -->
   <rule ref="PSR12">
     <include-pattern>^update-api/.*</include-pattern>
   </rule>
