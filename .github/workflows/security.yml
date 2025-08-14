@@ -36,13 +36,15 @@ jobs:
 
       - name: Run Semgrep for PHP and output SARIF
         run: |
-          semgrep --config=p/ci \
+          semgrep --config=p/php \
                   --lang=php \
                   --include root \
                   --exclude vendor \
                   --exclude node_modules \
                   --exclude dist \
                   --sarif --output=semgrep.sarif
+
+
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
