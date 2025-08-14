@@ -107,6 +107,25 @@ class Utility
     }
 
     /**
+     * Get a PDO connection to the local SQLite database.
+     *
+     * @return \PDO The initialized PDO instance.
+     */
+    private static function getDatabase(): \PDO
+    {
+        $pdo = new \PDO('sqlite:' . DATABASE_FILE);
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS blacklist (
+            ip TEXT PRIMARY KEY,
+            login_attempts INTEGER NOT NULL,
+            blacklisted INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL
+        )');
+
+        return $pdo;
+    }
+
+    /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
      * @param string $ip The IP address to update.
@@ -114,42 +133,28 @@ class Utility
      */
     public static function updateFailedAttempts(string $ip): void
     {
-        $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
-        $content = [];
-        if (file_exists($blacklist_file)) {
-            $raw = @file_get_contents($blacklist_file);
-            if ($raw !== false) {
-                $json = json_decode($raw, true);
-                if (is_array($json)) {
-                    $content = $json;
-                }
-            }
-        }
+        $pdo = self::getDatabase();
 
-        if (isset($content[$ip])) {
-            $content[$ip]['login_attempts'] += 1;
-            if ($content[$ip]['login_attempts'] >= 3) {
-                $content[$ip]['blacklisted'] = true;
-                $content[$ip]['timestamp'] = time();
-            }
+        $stmt = $pdo->prepare('SELECT login_attempts FROM blacklist WHERE ip = :ip');
+        $stmt->execute([':ip' => $ip]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($row) {
+            $attempts = (int) $row['login_attempts'] + 1;
+            $blacklisted = $attempts >= 3 ? 1 : 0;
+            $pdo->prepare('UPDATE blacklist SET login_attempts = :attempts, blacklisted = :blacklisted, timestamp = :ts WHERE ip = :ip')
+                ->execute([
+                    ':attempts'   => $attempts,
+                    ':blacklisted' => $blacklisted,
+                    ':ts'        => time(),
+                    ':ip'        => $ip,
+                ]);
         } else {
-            $content[$ip] = [
-                             'login_attempts' => 1,
-                             'blacklisted'    => false,
-                             'timestamp'      => time(),
-                            ];
-        }
-
-        $fp = fopen($blacklist_file, 'c+');
-        if ($fp) {
-            if (flock($fp, LOCK_EX)) {
-                ftruncate($fp, 0);
-                rewind($fp);
-                fwrite($fp, json_encode($content));
-                fflush($fp);
-                flock($fp, LOCK_UN);
-            }
-            fclose($fp);
+            $pdo->prepare('INSERT INTO blacklist (ip, login_attempts, blacklisted, timestamp) VALUES (:ip, 1, 0, :ts)')
+                ->execute([
+                    ':ip' => $ip,
+                    ':ts' => time(),
+                ]);
         }
     }
 
@@ -161,39 +166,21 @@ class Utility
      */
     public static function isBlacklisted(string $ip): bool
     {
-        $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
-        $blacklist = [];
-        if (file_exists($blacklist_file)) {
-            $raw = @file_get_contents($blacklist_file);
-            if ($raw !== false) {
-                $json = json_decode($raw, true);
-                if (is_array($json)) {
-                    $blacklist = $json;
-                }
+        $pdo = self::getDatabase();
+
+        $stmt = $pdo->prepare('SELECT login_attempts, blacklisted, timestamp FROM blacklist WHERE ip = :ip');
+        $stmt->execute([':ip' => $ip]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($row && (int) $row['blacklisted'] === 1) {
+            if (time() - (int) $row['timestamp'] > (3 * 24 * 60 * 60)) {
+                $pdo->prepare('UPDATE blacklist SET blacklisted = 0, login_attempts = 0 WHERE ip = :ip')
+                    ->execute([':ip' => $ip]);
+                return false;
             }
+            return true;
         }
 
-        if (isset($blacklist[$ip]) && $blacklist[$ip]['blacklisted']) {
-            // Check if the timestamp is older than three days
-            if (time() - $blacklist[$ip]['timestamp'] > (3 * 24 * 60 * 60)) {
-                // Remove the IP address from the blacklist and reset login_attempts
-                $blacklist[$ip]['blacklisted'] = false;
-                $blacklist[$ip]['login_attempts'] = 0;
-                $fp = fopen($blacklist_file, 'c+');
-                if ($fp) {
-                    if (flock($fp, LOCK_EX)) {
-                        ftruncate($fp, 0);
-                        rewind($fp);
-                        fwrite($fp, json_encode($blacklist));
-                        fflush($fp);
-                        flock($fp, LOCK_UN);
-                    }
-                    fclose($fp);
-                }
-            } else {
-                return true;
-            }
-        }
         return false;
     }
 }

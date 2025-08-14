@@ -55,7 +55,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 | 🧪 | **Testing**           | <ul><li>Limited unit tests present, primarily for core classes</li><li>Uses PHPUnit for testing PHP components</li><li>Test coverage appears minimal, mainly functional tests</li></ul> |
 | ⚡️  | **Performance**       | <ul><li>Optimized file checks with caching mechanisms</li><li>Minimized HTTP requests during update checks</li><li>Uses transient caching in WordPress</li></ul> |
 | 🛡️ | **Security**          | <ul><li>Sanitizes and validates external inputs</li><li>Uses nonces for admin actions</li><li>Reads configuration files with restricted permissions</li></ul> |
-| 📦 | **Dependencies**      | <ul><li>PHP standard library</li><li>WordPress core functions</li><li>Configuration files: robots.txt, blacklist.json, php.ini, etc.</li></ul> |
+| 📦 | **Dependencies**      | <ul><li>PHP standard library</li><li>WordPress core functions</li><li>Configuration files: robots.txt, database.sqlite, php.ini, etc.</li></ul> |
 
 ---
 
@@ -123,7 +123,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   ├── index.php
     │   │   └── robots.txt
     │   └── storage
-    │       ├── BLACKLIST.json
+    │       ├── database.sqlite
     │       └── logs
     │           ├── php_app.log
     │           ├── plugin.log
@@ -406,10 +406,10 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 							<th style='text-align: left; padding: 8px;'>Summary</th>
 						</tr>
 					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/storage/BLACKLIST.json'>BLACKLIST.json</a></b></td>
-							<td style='padding: 8px;'>- Maintains a list of blacklisted entries to enforce security and access control within the update API<br>- Serves as a centralized reference for filtering or blocking specific data, ensuring compliance with security policies across the system<br>- Integrates seamlessly into the overall architecture to support consistent and efficient management of restricted entities.</td>
-						</tr>
+                                                <tr style='border-bottom: 1px solid #eee;'>
+                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/storage/database.sqlite'>database.sqlite</a></b></td>
+                                                        <td style='padding: 8px;'>- Stores blacklist records in a SQLite table for tracking failed login attempts<br>- Ensures consistent enforcement of access controls without relying on flat files<br>- Automatically created and maintained by the application.</td>
+                                                </tr>
 					</table>
 				</blockquote>
 			</details>
