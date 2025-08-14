@@ -1,2 +1,3 @@
 # Ignore files and directories that should not be tracked by Git
 .vscode/
+update-api/storage/BLACKLIST.json

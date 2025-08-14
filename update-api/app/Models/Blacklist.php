@@ -14,8 +14,22 @@
 
 namespace App\Models;
 
+use App\Core\DatabaseManager;
+
 class Blacklist
 {
+    /**
+     * Get database connection and ensure blacklist table exists.
+     */
+    private static function getConnection(): \Doctrine\DBAL\Connection
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement(
+            'CREATE TABLE IF NOT EXISTS blacklist (ip TEXT PRIMARY KEY, login_attempts INTEGER, blacklisted INTEGER, timestamp INTEGER)'
+        );
+        return $conn;
+    }
+
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
@@ -24,42 +38,31 @@ class Blacklist
      */
     public static function updateFailedAttempts(string $ip): void
     {
-        $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
-        $content = [];
-        if (file_exists($blacklist_file)) {
-            $raw = @file_get_contents($blacklist_file);
-            if ($raw !== false) {
-                $json = json_decode($raw, true);
-                if (is_array($json)) {
-                    $content = $json;
-                }
-            }
-        }
+        $conn = self::getConnection();
+        $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
-        if (isset($content[$ip])) {
-            $content[$ip]['login_attempts'] += 1;
-            if ($content[$ip]['login_attempts'] >= 3) {
-                $content[$ip]['blacklisted'] = true;
-                $content[$ip]['timestamp'] = time();
+        if ($record) {
+            $loginAttempts = (int) $record['login_attempts'] + 1;
+            $blacklisted = (int) $record['blacklisted'];
+            $timestamp = (int) $record['timestamp'];
+
+            if ($loginAttempts >= 3) {
+                $blacklisted = 1;
+                $timestamp = time();
             }
+
+            $conn->update('blacklist', [
+                'login_attempts' => $loginAttempts,
+                'blacklisted'   => $blacklisted,
+                'timestamp'     => $timestamp,
+            ], ['ip' => $ip]);
         } else {
-            $content[$ip] = [
-                             'login_attempts' => 1,
-                             'blacklisted'    => false,
-                             'timestamp'      => time(),
-                            ];
-        }
-
-        $fp = fopen($blacklist_file, 'c+');
-        if ($fp) {
-            if (flock($fp, LOCK_EX)) {
-                ftruncate($fp, 0);
-                rewind($fp);
-                fwrite($fp, json_encode($content));
-                fflush($fp);
-                flock($fp, LOCK_UN);
-            }
-            fclose($fp);
+            $conn->insert('blacklist', [
+                'ip'             => $ip,
+                'login_attempts' => 1,
+                'blacklisted'    => 0,
+                'timestamp'      => time(),
+            ]);
         }
     }
 
@@ -71,39 +74,21 @@ class Blacklist
      */
     public static function isBlacklisted(string $ip): bool
     {
-        $blacklist_file = BLACKLIST_DIR . "/BLACKLIST.json";
-        $blacklist = [];
-        if (file_exists($blacklist_file)) {
-            $raw = @file_get_contents($blacklist_file);
-            if ($raw !== false) {
-                $json = json_decode($raw, true);
-                if (is_array($json)) {
-                    $blacklist = $json;
-                }
-            }
-        }
+        $conn = self::getConnection();
+        $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
-        if (isset($blacklist[$ip]) && $blacklist[$ip]['blacklisted']) {
-            // Check if the timestamp is older than three days
-            if (time() - $blacklist[$ip]['timestamp'] > (3 * 24 * 60 * 60)) {
-                // Remove the IP address from the blacklist and reset login_attempts
-                $blacklist[$ip]['blacklisted'] = false;
-                $blacklist[$ip]['login_attempts'] = 0;
-                $fp = fopen($blacklist_file, 'c+');
-                if ($fp) {
-                    if (flock($fp, LOCK_EX)) {
-                        ftruncate($fp, 0);
-                        rewind($fp);
-                        fwrite($fp, json_encode($blacklist));
-                        fflush($fp);
-                        flock($fp, LOCK_UN);
-                    }
-                    fclose($fp);
-                }
-            } else {
-                return true;
+        if ($record && (int) $record['blacklisted'] === 1) {
+            if (time() - (int) $record['timestamp'] > 3 * 24 * 60 * 60) {
+                $conn->update('blacklist', [
+                    'blacklisted'   => 0,
+                    'login_attempts' => 0,
+                    'timestamp'     => time(),
+                ], ['ip' => $ip]);
+                return false;
             }
+            return true;
         }
         return false;
     }
 }
+
