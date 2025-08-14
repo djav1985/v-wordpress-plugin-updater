@@ -64,14 +64,14 @@ jobs:
             fi
           fi
 
-      # PHPCS (WP in mu-plugins/, PSR-12 in update-api/) with guards + exec-bit fix
+      # PHPCS (WP in mu-plugin/, PSR-12 in update-api/) with guards + exec-bit fix
       - name: PHPCS
         run: |
           PATHS=""
-          [ -d mu-plugins ] && PATHS="$PATHS mu-plugins"
+          [ -d mu-plugin ] && PATHS="$PATHS mu-plugin"
           [ -d update-api ] && PATHS="$PATHS update-api"
           if [ -z "$PATHS" ]; then
-            echo "No PHP dirs found (mu-plugins/update-api). Skipping PHPCS."
+            echo "No PHP dirs found (mu-plugin/update-api). Skipping PHPCS."
             exit 0
           fi
           [ -f vendor/bin/phpcs ] && chmod +x vendor/bin/phpcs || true
@@ -164,7 +164,7 @@ jobs:
       - name: Run Semgrep (PHP) and output SARIF
         run: |
           semgrep --config=p/php \
-                  --include mu-plugins \
+                  --include mu-plugin \
                   --include update-api \
                   --exclude vendor \
                   --exclude node_modules \
