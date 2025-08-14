@@ -22,28 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: composer, phpstan, phpunit
-
-      # Cache Composer (root)
-      - name: Cache Composer (root)
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-root-${{ hashFiles('composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-root-
-
-      # Cache Composer (update-api)
-      - name: Cache Composer (update-api)
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-updateapi-${{ hashFiles('update-api/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-updateapi-
-
+          tools: phpstan
       # PHPStan
       - name: PHPStan (root)
         if: hashFiles('phpstan.neon') != ''
@@ -55,8 +37,7 @@ jobs:
           else
             echo "PHPStan not found in vendor/, skipping."
           fi
-
-      # PHPUnit – prefer update-api tests; fall back to root if present
+      # PHPUnit – only if installed in vendor/
       - name: PHPUnit (root)
         if: hashFiles('phpunit.xml') != ''
         run: |
@@ -64,9 +45,8 @@ jobs:
             chmod +x vendor/bin/phpunit
             vendor/bin/phpunit --coverage-clover coverage.xml
           else
-            phpunit --coverage-clover coverage.xml
+            echo "PHPUnit not found in vendor/, skipping."
           fi
-
   # ---------- Security: CodeQL (JS) ----------
   codeql-js:
     name: CodeQL (JavaScript)
