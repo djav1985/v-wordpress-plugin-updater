@@ -1,6 +1,8 @@
+name: CI Scan
+
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build-test-scan:

@@ -1,8 +1,11 @@
 name: PR Lint and Auto-Fix
 
 on:
+  push:
+    branches: [ "main", "dev" ]
   pull_request:
-
+    branches: [ "main", "dev" ]
+    
 permissions:
   contents: write
   pull-requests: write
