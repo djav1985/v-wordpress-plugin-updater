@@ -1,6 +1,11 @@
 parameters:
   level: 6
   paths:
-    - mu-plugins
+    - mu-plugin
     - update-api
-  memoryLimit: 1G
+  bootstrapFiles:
+    - .github\phpstan-bootstrap.php
+
+  # Optional: silence WP globals noise you don’t care about
+  ignoreErrors:
+    - '#Call to (function|method) (add_action|add_filter)#'
