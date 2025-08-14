@@ -42,12 +42,12 @@ jobs:
         working-directory: update-api
         run: composer install --no-interaction --prefer-dist
 
-      # PHPCS (uses your root phpcs.xml: WP in mu-plugins/, PSR-12 in update-api/)
+      # PHPCS (uses your root phpcs.xml: WP in mu-plugin/, PSR-12 in update-api/)
       - name: PHPCS
         run: |
           if [ -f vendor/bin/phpcs ]; then vendor/bin/phpcs -q; else phpcs -q; fi
 
-      # PHPStan – root config (covers mu-plugins/ and/or shared rules)
+      # PHPStan – root config (covers mu-plugin/ and/or shared rules)
       - name: PHPStan (root)
         if: hashFiles('phpstan.neon') != ''
         run: |
