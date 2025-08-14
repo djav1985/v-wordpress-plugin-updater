@@ -4,7 +4,7 @@ parameters:
     - mu-plugin
     - update-api
   bootstrapFiles:
-    - phpstan/bootstrap-wordpress.php
+    - .github\phpstan-bootstrap.php
 
   # Optional: silence WP globals noise you don’t care about
   ignoreErrors:
