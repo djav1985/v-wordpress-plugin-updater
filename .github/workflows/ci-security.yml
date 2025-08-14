@@ -1,0 +1,173 @@
+name: CI & Security
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------- App CI (lint, static analysis, tests) ----------
+  build-test-scan:
+    name: CI Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer, phpstan, phpunit, phpcs
+
+      # Cache Composer (root)
+      - name: Cache Composer (root)
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-root-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-root-
+
+      # Cache Composer (update-api)
+      - name: Cache Composer (update-api)
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-updateapi-${{ hashFiles('update-api/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-updateapi-
+
+      # Install root dev tools (linters, etc.)
+      - name: Composer install (root)
+        if: hashFiles('composer.json') != ''
+        run: composer install --no-interaction --prefer-dist
+
+      # Install app deps in update-api/
+      - name: Composer install (update-api)
+        if: hashFiles('update-api/composer.json') != ''
+        working-directory: update-api
+        run: composer install --no-interaction --prefer-dist
+
+      # Ensure WPCS if your phpcs.xml references WordPress
+      - name: Ensure WPCS (if needed)
+        run: |
+          if grep -qi "WordPress" phpcs.xml 2>/dev/null; then
+            if ! ( [ -f vendor/bin/phpcs ] && vendor/bin/phpcs -i | grep -q WordPress ); then
+              composer require --no-interaction --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer || true
+            fi
+          fi
+
+      # PHPCS (WP in mu-plugins/, PSR-12 in update-api/) with guards + exec-bit fix
+      - name: PHPCS
+        run: |
+          PATHS=""
+          [ -d mu-plugins ] && PATHS="$PATHS mu-plugins"
+          [ -d update-api ] && PATHS="$PATHS update-api"
+          if [ -z "$PATHS" ]; then
+            echo "No PHP dirs found (mu-plugins/update-api). Skipping PHPCS."
+            exit 0
+          fi
+          [ -f vendor/bin/phpcs ] && chmod +x vendor/bin/phpcs || true
+          if [ -f vendor/bin/phpcs ]; then
+            vendor/bin/phpcs -q --standard=phpcs.xml $PATHS
+          else
+            phpcs -q --standard=phpcs.xml $PATHS
+          fi
+
+      # PHPStan – root config
+      - name: PHPStan (root)
+        if: hashFiles('phpstan.neon') != ''
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse --memory-limit=1G
+          else
+            phpstan analyse --memory-limit=1G
+          fi
+
+      # PHPStan – update-api override if present
+      - name: PHPStan (update-api)
+        if: hashFiles('update-api/phpstan.neon') != ''
+        working-directory: update-api
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse --memory-limit=1G
+          else
+            phpstan analyse --memory-limit=1G
+          fi
+
+      # PHPUnit – prefer update-api tests; fall back to root if present
+      - name: PHPUnit (update-api)
+        if: hashFiles('update-api/phpunit.xml') != ''
+        working-directory: update-api
+        run: |
+          if [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit --coverage-clover ../coverage.xml
+          else
+            phpunit --coverage-clover ../coverage.xml
+          fi
+
+      - name: PHPUnit (root)
+        if: hashFiles('phpunit.xml') != ''
+        run: |
+          if [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit --coverage-clover coverage.xml
+          else
+            phpunit --coverage-clover coverage.xml
+          fi
+
+  # ---------- Security: CodeQL (JS) ----------
+  codeql-js:
+    name: CodeQL (JavaScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+  # ---------- Security: Semgrep (PHP) with pip cache ----------
+  semgrep-php:
+    name: Semgrep (PHP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Create dependency file first so caching has a key
+      - name: Seed pip cache key
+        run: echo "semgrep" > requirements-semgrep.txt
+
+      - name: Set up Python (with pip cache)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          cache: 'pip'
+          cache-dependency-path: 'requirements-semgrep.txt'
+
+      - name: Install Semgrep
+        run: pip install -r requirements-semgrep.txt
+
+      - name: Run Semgrep (PHP) and output SARIF
+        run: |
+          semgrep --config=p/php \
+                  --include mu-plugins \
+                  --include update-api \
+                  --exclude vendor \
+                  --exclude node_modules \
+                  --exclude dist \
+                  --sarif --output=semgrep.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
