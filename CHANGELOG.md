@@ -11,4 +11,5 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Switched router to instantiate controllers, dropped unused account/user/info routes, and added `/api` endpoint.
 - Updated `LoginController` to render views through `$this` instead of creating a new instance.
 - Converted controllers to instance methods using `$this->render` and removed the feeds controller and route.
- - Refined router dispatch to include HTTP method and validate API requests before enforcing authentication.
+- Refined router dispatch to include HTTP method and validate API requests before enforcing authentication.
+- Streamlined session validation to check only timeout and user agent, moved IP blacklist enforcement to authentication, and added unit tests for session expiry, user-agent changes, and blacklist handling.
