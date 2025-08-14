@@ -81,15 +81,30 @@ jobs:
             phpcs -q --standard=phpcs.xml $PATHS
           fi
 
-      # PHPStan – root config
+      # Ensure PHPStan has WordPress stubs (root dev-only)
+      - name: Ensure PHPStan WP stubs
+        if: hashFiles('composer.json') != ''
+        run: |
+          if ! composer show php-stubs/wordpress-stubs >/dev/null 2>&1; then
+            composer require --no-interaction --dev phpstan/phpstan php-stubs/wordpress-stubs php-stubs/wp-cli-stubs
+          fi
+
+      # PHPStan with temporary bootstrap that loads both autoloaders + defines constants
       - name: PHPStan (root)
         if: hashFiles('phpstan.neon') != ''
         run: |
-          if [ -f vendor/bin/phpstan ]; then
-            vendor/bin/phpstan analyse --memory-limit=1G
-          else
-            phpstan analyse --memory-limit=1G
-          fi
+          cat > .github/phpstan-bootstrap.php <<'PHP'
+          <?php
+          foreach ([
+            __DIR__ . '/../vendor/autoload.php',          // root autoload
+            __DIR__ . '/../update-api/vendor/autoload.php'// app autoload
+          ] as $file) { if (is_file($file)) { require $file; } }
+          // define project constants to silence undefined-constant errors
+          foreach (['VONTMENT_KEY','VONTMENT_PLUGINS','VONTMENT_THEMES'] as $c) {
+            if (!defined($c)) { define($c, ''); }
+          }
+          PHP
+          phpstan analyse --memory-limit=1G --autoload-file .github/phpstan-bootstrap.php
 
       # PHPUnit – prefer update-api tests; fall back to root if present
       - name: PHPUnit (update-api)
