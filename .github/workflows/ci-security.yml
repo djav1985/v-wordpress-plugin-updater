@@ -56,10 +56,14 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: javascript
+          config: |
+            paths-ignore:
+              - vendor/**
       - uses: github/codeql-action/autobuild@v3
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript"
+
 
   # ---------- Security: Semgrep (PHP) with pip cache ----------
   semgrep-php:
