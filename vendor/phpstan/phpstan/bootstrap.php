@@ -28,7 +28,9 @@ final class PharAutoloader
 				self::$composerAutoloader = require 'phar://' . __DIR__ . '/phpstan.phar/vendor/autoload.php';
 				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/jetbrains/phpstorm-stubs/PhpStormStubsMap.php';
 				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/react/async/src/functions_include.php';
+				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/react/promise-timer/src/functions_include.php';
 				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/react/promise/src/functions_include.php';
+				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/ringcentral/psr7/src/functions_include.php';
 			}
 			self::$composerAutoloader->loadClass($class);
 
@@ -71,6 +73,27 @@ final class PharAutoloader
 				$GLOBALS['__composer_autoload_files']['e69f7f6ee287b969198c3c9d6777bd38'] = true;
 				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-normalizer/Normalizer.php';
 				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-normalizer/bootstrap.php';
+			}
+
+			if (
+				PHP_VERSION_ID < 70300
+				&& empty($GLOBALS['__composer_autoload_files']['0d59ee240a4cd96ddbb4ff164fccea4d'])
+				&& !class_exists(\Symfony\Polyfill\Php73\Php73::class, false)
+			) {
+				$GLOBALS['__composer_autoload_files']['0d59ee240a4cd96ddbb4ff164fccea4d'] = true;
+				// already loaded by bootstrap inside the hrtime condition
+				// require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php73/Php73.php';
+				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php73/bootstrap.php';
+			}
+
+			if (
+				PHP_VERSION_ID < 70400
+				&& empty($GLOBALS['__composer_autoload_files']['b686b8e46447868025a15ce5d0cb2634'])
+				&& !class_exists(\Symfony\Polyfill\Php74\Php74::class, false)
+			) {
+				$GLOBALS['__composer_autoload_files']['b686b8e46447868025a15ce5d0cb2634'] = true;
+				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php74/Php74.php';
+				require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php74/bootstrap.php';
 			}
 
 			if (
