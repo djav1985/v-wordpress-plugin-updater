@@ -63,20 +63,24 @@ function vontmnt_theme_updater_run_updates(): void {
 	foreach ( $themes as $theme ) {
 		$theme_slug        = $theme->get_stylesheet();
 		$installed_version = $theme->get( 'Version' );
-		$api_url           = add_query_arg(
-			array(
-				'type'    => 'theme',
-				'domain'  => rawurlencode( wp_parse_url( site_url(), PHP_URL_HOST ) ),
-				'slug'    => rawurlencode( $theme_slug ),
-				'version' => rawurlencode( $installed_version ),
-				'key'     => VONTMENT_KEY,
-			),
-			VONTMENT_THEMES
-		);
+				$api_url   = add_query_arg(
+					array(
+						'type'    => 'theme',
+						'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
+						'slug'    => $theme_slug,
+						'version' => $installed_version,
+						'key'     => VONTMENT_KEY,
+					),
+					VONTMENT_THEMES
+				);
 
-		$response      = wp_remote_get( $api_url );
-		$http_code     = wp_remote_retrieve_response_code( $response );
-		$response_body = wp_remote_retrieve_body( $response );
+				$response = wp_remote_get( $api_url );
+		if ( is_wp_error( $response ) ) {
+				error_log( 'Theme updater error: ' . $response->get_error_message() );
+				continue;
+		}
+				$http_code     = wp_remote_retrieve_response_code( $response );
+				$response_body = wp_remote_retrieve_body( $response );
 
 		if ( $http_code === 200 && ! empty( $response_body ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
