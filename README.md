@@ -293,11 +293,11 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
                                                                    <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Core/SessionManager.php'>SessionManager.php</a></b></td>
-									<td style='padding: 8px;'>- Implements authentication and security checks within the WordPress Update API, ensuring only authorized users and trusted IPs access update functionalities<br>- It enforces session validation, handles timeout and user agent consistency, and blocks blacklisted IPs, thereby maintaining secure and controlled API interactions as part of the overall application security architecture.</td>
-								</tr>
-							</table>
-						</blockquote>
-					</details>
+                                                                       <td style='padding: 8px;'>- Implements authentication and security checks within the WordPress Update API, ensuring only authorized users access update functionalities<br>- It enforces session validation by checking timeout and user agent consistency, while IP blacklist enforcement occurs during authentication to block banned addresses, maintaining secure and controlled API interactions as part of the overall application security architecture.</td>
+                                                               </tr>
+                                                        </table>
+                                                </blockquote>
+                                        </details>
 					<!-- Views Submodule -->
 					<details>
 						<summary><b>Views</b></summary>
