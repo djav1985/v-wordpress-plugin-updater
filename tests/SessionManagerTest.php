@@ -7,6 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use App\Core\SessionManager;
+use App\Core\DatabaseManager;
 
 class SessionManagerTest extends TestCase
 {
@@ -15,9 +16,16 @@ class SessionManagerTest extends TestCase
         if (!defined('SESSION_TIMEOUT_LIMIT')) {
             define('SESSION_TIMEOUT_LIMIT', 1800);
         }
-        if (!defined('BLACKLIST_DIR')) {
-            define('BLACKLIST_DIR', __DIR__ . '/../storage');
+        if (!defined('DB_FILE')) {
+            define('DB_FILE', __DIR__ . '/../update-api/storage/test.sqlite');
         }
+        $ref = new \ReflectionClass(DatabaseManager::class);
+        $prop = $ref->getProperty('connection');
+        $prop->setAccessible(true);
+        $prop->setValue(null, null);
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement('CREATE TABLE IF NOT EXISTS blacklist (ip TEXT PRIMARY KEY, login_attempts INTEGER, blacklisted INTEGER, timestamp INTEGER)');
+        $conn->executeStatement('DELETE FROM blacklist');
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_unset();
             session_destroy();
@@ -28,9 +36,9 @@ class SessionManagerTest extends TestCase
     {
         $basePath = dirname(__DIR__);
         $code = <<<'PHP'
-require 'vendor/autoload.php';
+require 'update-api/vendor/autoload.php';
 if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
-if (!defined('BLACKLIST_DIR')) define('BLACKLIST_DIR', getcwd().'/storage');
+if (!defined('DB_FILE')) define('DB_FILE', getcwd().'/update-api/storage/test.sqlite');
 $_SERVER['HTTP_USER_AGENT'] = 'Agent';
 $session = \App\Core\SessionManager::getInstance();
 $session->start();
@@ -51,9 +59,9 @@ PHP;
     {
         $basePath = dirname(__DIR__);
         $code = <<<'PHP'
-require 'vendor/autoload.php';
+require 'update-api/vendor/autoload.php';
 if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
-if (!defined('BLACKLIST_DIR')) define('BLACKLIST_DIR', getcwd().'/storage');
+if (!defined('DB_FILE')) define('DB_FILE', getcwd().'/update-api/storage/test.sqlite');
 $_SERVER['HTTP_USER_AGENT'] = 'Agent2';
 $session = \App\Core\SessionManager::getInstance();
 $session->start();
@@ -76,17 +84,15 @@ PHP;
         $_SERVER['REMOTE_ADDR'] = $ip;
         $_SERVER['HTTP_USER_AGENT'] = 'Agent';
 
-        $blacklistFile = BLACKLIST_DIR . '/BLACKLIST.json';
-        $original = file_exists($blacklistFile) ? file_get_contents($blacklistFile) : '';
-        $data = $original ? json_decode($original, true) : [];
-        $data[$ip] = [
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('blacklist', [
+            'ip' => $ip,
             'login_attempts' => 3,
-            'blacklisted' => true,
+            'blacklisted' => 1,
             'timestamp' => time(),
-        ];
-        file_put_contents($blacklistFile, json_encode($data));
+        ]);
 
-        $logFile = __DIR__ . '/../storage/logs/php_app.log';
+        $logFile = __DIR__ . '/../update-api/storage/logs/php_app.log';
 
         $session = SessionManager::getInstance();
         $session->requireAuth();
@@ -94,7 +100,8 @@ PHP;
         $this->assertSame(403, http_response_code());
         $logAfter = file_get_contents($logFile);
         $this->assertStringContainsString($ip, $logAfter);
-
-        file_put_contents($blacklistFile, $original);
+        $conn->executeStatement('DELETE FROM blacklist');
+        restore_error_handler();
+        restore_exception_handler();
     }
 }
