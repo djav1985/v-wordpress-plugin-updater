@@ -35,6 +35,13 @@ $logs->addColumn('type', 'text');
 $logs->addColumn('date', 'text');
 $logs->addColumn('status', 'text');
 
+$blacklist = $schema->createTable('blacklist');
+$blacklist->addColumn('ip', 'text');
+$blacklist->addColumn('login_attempts', 'integer');
+$blacklist->addColumn('blacklisted', 'integer');
+$blacklist->addColumn('timestamp', 'integer');
+$blacklist->setPrimaryKey(['ip']);
+
 foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
     $conn->executeStatement($sql);
 }
