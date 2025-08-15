@@ -56,6 +56,78 @@ function vontmnt_get_api_key(): string {
 }
 }
 
+/**
+ * Validate ZIP package by checking header and optionally testing extraction.
+ *
+ * @param string $file_path Path to ZIP file.
+ * @return bool True if valid ZIP package.
+ */
+if ( ! function_exists( 'vontmnt_validate_zip_package' ) ) {
+function vontmnt_validate_zip_package( string $file_path ): bool {
+	if ( ! file_exists( $file_path ) ) {
+		return false;
+	}
+	
+	// Check ZIP file header (magic bytes: PK\x03\x04)
+	$handle = fopen( $file_path, 'rb' );
+	if ( false === $handle ) {
+		return false;
+	}
+	
+	$header = fread( $handle, 4 );
+	fclose( $handle );
+	
+	if ( 4 !== strlen( $header ) || "\x50\x4b\x03\x04" !== $header ) {
+		return false;
+	}
+	
+	// Test ZIP extraction using ZipArchive if available
+	if ( class_exists( 'ZipArchive' ) ) {
+		$zip = new ZipArchive();
+		$result = $zip->open( $file_path, ZipArchive::CHECKCONS );
+		if ( true !== $result ) {
+			return false;
+		}
+		$zip->close();
+	}
+	
+	return true;
+}
+}
+
+/**
+ * Log update context with detailed information.
+ *
+ * @param string $type Update type (plugin/theme).
+ * @param string $slug Item slug.
+ * @param string $version Item version.
+ * @param string $url API URL called.
+ * @param int    $response_code HTTP response code.
+ * @param int    $response_size Response body size in bytes.
+ * @param string $status Update status (success/failed/skipped).
+ * @param string $message Optional message.
+ */
+if ( ! function_exists( 'vontmnt_log_update_context' ) ) {
+function vontmnt_log_update_context( string $type, string $slug, string $version, string $url, int $response_code, int $response_size, string $status, string $message = '' ): void {
+	$context = sprintf(
+		'[%s] %s:%s | URL: %s | HTTP: %d | Size: %d bytes | Status: %s',
+		strtoupper( $type ),
+		$slug,
+		$version,
+		$url,
+		$response_code,
+		$response_size,
+		$status
+	);
+	
+	if ( ! empty( $message ) ) {
+		$context .= ' | ' . $message;
+	}
+	
+	error_log( $context );
+}
+}
+
 // Schedule the update check to run every day on the main site.
 add_action( 'wp', 'vontmnt_theme_updater_schedule_updates' );
 
@@ -129,26 +201,38 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 
 	$response = wp_remote_get( $api_url );
 	if ( is_wp_error( $response ) ) {
-		error_log( 'Theme updater error: ' . $response->get_error_message() );
+		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
 		return;
 	}
+	
 	$http_code     = wp_remote_retrieve_response_code( $response );
 	$response_body = wp_remote_retrieve_body( $response );
+	$response_size = strlen( $response_body );
 
 	if ( $http_code === 200 && ! empty( $response_body ) ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
+		
+		// Initialize WP_Filesystem before any file operations
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			WP_Filesystem();
+		}
+		
 		$upload_dir     = wp_upload_dir();
 		$theme_zip_file = $upload_dir['path'] . '/' . basename( $theme_slug ) . '.zip';
-		$bytes_written  = file_put_contents( $theme_zip_file, $response_body );
+		
+		// Use WP_Filesystem instead of file_put_contents
+		$bytes_written = $wp_filesystem->put_contents( $theme_zip_file, $response_body );
 		if ( false === $bytes_written ) {
-			error_log( 'Theme updater error: Failed to write update package for ' . $theme_slug );
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Failed to write update package' );
 			return;
 		}
 
-		global $wp_filesystem;
-		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
+		// Validate ZIP package before installation
+		if ( ! vontmnt_validate_zip_package( $theme_zip_file ) ) {
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Invalid ZIP package' );
+			wp_delete_file( $theme_zip_file );
+			return;
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
@@ -159,10 +243,22 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 			return $options;
 		};
 		add_filter( 'upgrader_package_options', $callback );
-		$upgrader->install( $theme_zip_file );
+		$result = $upgrader->install( $theme_zip_file );
 		remove_filter( 'upgrader_package_options', $callback );
 
 		// Delete the theme zip file using wp_delete_file.
 		wp_delete_file( $theme_zip_file );
+		
+		// Log success or failure
+		if ( ! is_wp_error( $result ) && $result ) {
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'success', 'Theme updated successfully' );
+		} else {
+			$error_msg = is_wp_error( $result ) ? $result->get_error_message() : 'Installation failed';
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', $error_msg );
+		}
+	} elseif ( 204 === $http_code ) {
+		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'skipped', 'No update available' );
+	} else {
+		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Unexpected HTTP response' );
 	}
 }
