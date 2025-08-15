@@ -1,4 +1,5 @@
 <?php
+
 /**
  * V-WordPress-Plugin-Updater Installer
  * Runs in browser and provides HTML status updates.
