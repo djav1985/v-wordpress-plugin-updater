@@ -77,6 +77,7 @@ function vontmnt_plugin_updater_schedule_updates(): void {
 }
 
 add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_updates' );
+add_action( 'vontmnt_plugin_update_single', 'vontmnt_plugin_update_single', 10, 2 );
 
 /**
  * @package UpdateAPI
@@ -84,7 +85,7 @@ add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_
  * @license https://opensource.org/licenses/MIT MIT License
  * @link    https://vontainment.com
  *
- * Run plugin updates for all installed plugins on the main site. */
+ * Schedule plugin update checks for all installed plugins on the main site. */
 function vontmnt_plugin_updater_run_updates(): void {
 	// Check if it's the main site.
 	if ( ! is_main_site() ) {
@@ -95,61 +96,74 @@ function vontmnt_plugin_updater_run_updates(): void {
 	}
 	$plugins = get_plugins();
 	foreach ( $plugins as $plugin_path => $plugin ) {
-			$plugin_slug         = dirname( $plugin_path );
-			$installed_version   = $plugin['Version'];
-						$api_url = add_query_arg(
-							array(
-								'type'    => 'plugin',
-								'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
-								'slug'    => $plugin_slug,
-								'version' => $installed_version,
-                                                               'key'     => vontmnt_get_api_key(),
-							),
-                                        VONTMNT_API_URL
-                                );
+		$installed_version = $plugin['Version'];
+		// Schedule individual plugin update check
+		wp_schedule_single_event( time(), 'vontmnt_plugin_update_single', array( $plugin_path, $installed_version ) );
+	}
+}
 
-						// Use wp_remote_get instead of cURL.
-						$response = wp_remote_get( $api_url );
-		if ( is_wp_error( $response ) ) {
-				error_log( 'Plugin updater error: ' . $response->get_error_message() );
-				continue;
+/**
+ * @package UpdateAPI
+ * @author  Vontainment <services@vontainment.com>
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link    https://vontainment.com
+ *
+ * Update a single plugin. */
+function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void {
+	// Check if it's the main site.
+	if ( ! is_main_site() ) {
+		return;
+	}
+	
+	$plugin_slug = dirname( $plugin_path );
+	$api_url = add_query_arg(
+		array(
+			'type'    => 'plugin',
+			'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
+			'slug'    => $plugin_slug,
+			'version' => $installed_version,
+			'key'     => vontmnt_get_api_key(),
+		),
+		VONTMNT_API_URL
+	);
+
+	// Use wp_remote_get instead of cURL.
+	$response = wp_remote_get( $api_url );
+	if ( is_wp_error( $response ) ) {
+		error_log( 'Plugin updater error: ' . $response->get_error_message() );
+		return;
+	}
+	$http_code     = wp_remote_retrieve_response_code( $response );
+	$response_body = wp_remote_retrieve_body( $response );
+
+	if ( 200 === $http_code && ! empty( $response_body ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		$upload_dir      = wp_upload_dir();
+		$plugin_zip_file = $upload_dir['path'] . '/' . basename( $plugin_path ) . '.zip';
+		$bytes_written   = file_put_contents( $plugin_zip_file, $response_body );
+		if ( false === $bytes_written ) {
+			error_log( 'Plugin updater error: Failed to write update package for ' . $plugin_slug );
+			return;
 		}
-						$http_code     = wp_remote_retrieve_response_code( $response );
-						$response_body = wp_remote_retrieve_body( $response );
 
-		if ( 200 === $http_code && ! empty( $response_body ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			$upload_dir      = wp_upload_dir();
-                        $plugin_zip_file = $upload_dir['path'] . '/' . basename( $plugin_path ) . '.zip';
-                        $bytes_written   = file_put_contents( $plugin_zip_file, $response_body );
-                        if ( false === $bytes_written ) {
-                                error_log( 'Plugin updater error: Failed to write update package for ' . $plugin_slug );
-                                continue;
-                        }
-
-			global $wp_filesystem;
-			if ( empty( $wp_filesystem ) ) {
-					require_once ABSPATH . '/wp-admin/includes/file.php';
-					WP_Filesystem();
-			}
-
-			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-			$upgrader = new Plugin_Upgrader();
-			$callback = function ( $options ) use ( $plugin_zip_file ) {
-							$options['package']           = $plugin_zip_file;
-							$options['clear_destination'] = true;
-							return $options;
-			};
-				add_filter( 'upgrader_package_options', $callback );
-				$upgrader->install( $plugin_zip_file );
-				remove_filter( 'upgrader_package_options', $callback );
-
-				// Delete the plugin zip file using wp_delete_file.
-				wp_delete_file( $plugin_zip_file );
-		} elseif ( 204 === $http_code ) {
-			continue;
-		} else {
-			break;
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			WP_Filesystem();
 		}
+
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		$upgrader = new Plugin_Upgrader();
+		$callback = function ( $options ) use ( $plugin_zip_file ) {
+			$options['package']           = $plugin_zip_file;
+			$options['clear_destination'] = true;
+			return $options;
+		};
+		add_filter( 'upgrader_package_options', $callback );
+		$upgrader->install( $plugin_zip_file );
+		remove_filter( 'upgrader_package_options', $callback );
+
+		// Delete the plugin zip file using wp_delete_file.
+		wp_delete_file( $plugin_zip_file );
 	}
 }
