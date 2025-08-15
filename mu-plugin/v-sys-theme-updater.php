@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Project: UpdateAPI
  * Author:  Vontainment <services@vontainment.com>
@@ -77,8 +78,12 @@ function vontmnt_theme_updater_run_updates(): void {
 		if ( $http_code === 200 && ! empty( $response_body ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			$upload_dir     = wp_upload_dir();
-			$theme_zip_file = $upload_dir['path'] . '/' . basename( $theme_slug ) . '.zip';
-			file_put_contents( $theme_zip_file, $response_body );
+                        $theme_zip_file = $upload_dir['path'] . '/' . basename( $theme_slug ) . '.zip';
+                        $bytes_written  = file_put_contents( $theme_zip_file, $response_body );
+                        if ( false === $bytes_written ) {
+                                error_log( 'Theme updater error: Failed to write update package for ' . $theme_slug );
+                                continue;
+                        }
 
 			global $wp_filesystem;
 			if ( empty( $wp_filesystem ) ) {

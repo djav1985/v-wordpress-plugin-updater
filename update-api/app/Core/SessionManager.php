@@ -79,18 +79,20 @@ class SessionManager
         return $this->get('logged_in') === true;
     }
 
-    public function requireAuth(): void
+    public function requireAuth(): bool
     {
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
         if ($ip && Blacklist::isBlacklisted($ip)) {
             ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
             http_response_code(403);
-            return;
+            return false;
         }
 
         if (!$this->isValid()) {
             header('Location: /login');
             exit();
         }
+
+        return true;
     }
 }

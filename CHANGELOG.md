@@ -22,3 +22,5 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Removed `rawurlencode` from updater request parameters to prevent double encoding.
 - Added `WP_Error` checks after `wp_remote_get` calls to log network failures and skip processing.
 - Corrected the header in `v-sys-theme-updater.php` so it loads as a plugin.
+- Updated `SessionManager::requireAuth` to return a boolean and halt routing for blacklisted IPs.
+- Logged failed package writes in plugin and theme updaters and skipped installation when writes fail.

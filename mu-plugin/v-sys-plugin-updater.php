@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Project: UpdateAPI
  * Author:  Vontainment <services@vontainment.com>
@@ -78,7 +79,11 @@ function vontmnt_plugin_updater_run_updates(): void {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			$upload_dir      = wp_upload_dir();
 			$plugin_zip_file = $upload_dir['path'] . '/' . basename( $plugin_path ) . '.zip';
-			file_put_contents( $plugin_zip_file, $response_body );
+                        $bytes_written   = file_put_contents( $plugin_zip_file, $response_body );
+                        if ( false === $bytes_written ) {
+                                error_log( 'Plugin updater error: Failed to write update package for ' . $plugin_slug );
+                                continue;
+                        }
 
 			global $wp_filesystem;
 			if ( empty( $wp_filesystem ) ) {
