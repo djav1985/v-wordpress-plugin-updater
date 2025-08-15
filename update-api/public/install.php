@@ -7,6 +7,7 @@
 
 use App\Core\DatabaseManager;
 use Doctrine\DBAL\Schema\Schema;
+
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
