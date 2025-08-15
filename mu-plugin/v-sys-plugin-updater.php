@@ -147,19 +147,6 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
  * @param string $hook      The action hook name.
  * @param array  $args      Arguments to pass to the hook.
  */
-function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args ): void {
-	if ( ! wp_next_scheduled( $hook, $args ) ) {
-		wp_schedule_single_event( $timestamp, $hook, $args );
-	}
-}
-
-/**
- * Schedule a single event only if an identical one (hook+args) isn't already queued.
- *
- * @param int    $timestamp The timestamp when the event should run.
- * @param string $hook      The action hook name.
- * @param array  $args      Arguments to pass to the hook.
- */
 if ( ! function_exists( 'vontmnt_schedule_unique_single_event' ) ) {
 function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args ): void {
 	if ( ! wp_next_scheduled( $hook, $args ) ) {
