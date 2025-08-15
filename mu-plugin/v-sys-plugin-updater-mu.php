@@ -20,7 +20,40 @@
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+        exit;
+}
+
+/**
+ * Retrieve the API key, requesting from the server when needed.
+ */
+if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
+function vontmnt_get_api_key(): string {
+        $key = get_option( 'vontmnt_api_key' );
+        if ( ! $key || ( defined( 'VONTMNT_UPDATE_KEYREGEN' ) && VONTMNT_UPDATE_KEYREGEN ) ) {
+                $base    = defined( 'VONTMENT_PLUGINS' ) ? VONTMENT_PLUGINS : ( defined( 'VONTMENT_THEMES' ) ? VONTMENT_THEMES : '' );
+                $api_url = add_query_arg(
+                        array(
+                                'type'   => 'auth',
+                                'domain' => wp_parse_url( site_url(), PHP_URL_HOST ),
+                        ),
+                        rtrim( $base, '/' ) . '/key'
+                );
+                $response = wp_remote_get( $api_url );
+                if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+                        $key = wp_remote_retrieve_body( $response );
+                        update_option( 'vontmnt_api_key', $key );
+                        $wp_config = ABSPATH . 'wp-config.php';
+                        if ( file_exists( $wp_config ) && is_writable( $wp_config ) ) {
+                                $config = file_get_contents( $wp_config );
+                                if ( false !== $config ) {
+                                        $config = preg_replace( "/define\(\s*'VONTMNT_UPDATE_KEYREGEN'\s*,\s*true\s*\);/i", "define('VONTMNT_UPDATE_KEYREGEN', false);", $config );
+                                        file_put_contents( $wp_config, $config );
+                                }
+                        }
+                }
+        }
+        return is_string( $key ) ? $key : '';
+}
 }
 
 // Schedule the update check to run every day.
@@ -70,7 +103,7 @@ function vontmnt_plugin_updater_run_updates(): void {
 								'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
 								'slug'    => $plugin_slug,
 								'version' => $installed_version,
-								'key'     => VONTMENT_KEY,
+                                                               'key'     => vontmnt_get_api_key(),
 							),
 							VONTMENT_PLUGINS
 						);

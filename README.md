@@ -496,10 +496,11 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 5. Define the API constants used by the mu-plugins in your WordPress `wp-config.php`:
 
    ```php
-   define('VONTMENT_KEY', 'your-api-key');
    define('VONTMENT_PLUGINS', 'https://example.com/api');
    define('VONTMENT_THEMES', 'https://example.com/api');
+   define('VONTMNT_UPDATE_KEYREGEN', true); // set to true to fetch/regenerate the key
    ```
+   The updater will fetch the API key from `/api/key` when this constant is true or when no key is stored. The key is saved as the `vontmnt_api_key` option and `wp-config.php` is rewritten to disable regeneration after the first retrieval.
 6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
 
 7. From the `update-api/` directory run `php install.php` to create the SQLite database and required tables, including the blacklist. Ensure `storage/updater.sqlite` is writable by the web server.
@@ -507,6 +508,8 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 8. Configure a system cron to run `php cron.php` regularly so the database stays in sync with the plugin and theme directories.
 
 NOTE: Make sure to set /public/ as doc root.
+
+When a host entry is created or its key regenerated, the server marks it to send the key once. The `/api/key` endpoint returns the key only while this flag is set, then disables it after the first retrieval.
 
 ### Usage
 

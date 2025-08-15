@@ -43,6 +43,7 @@ class Router
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
             $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
+            $r->addRoute('GET', '/api/key', ['\\App\\Controllers\\KeyController', 'handleRequest']);
         });
     }
 
@@ -79,15 +80,17 @@ class Router
                         ? str_starts_with($route, '/api')
                         : strpos($route, '/api') === 0;
                     if ($isApi) {
-                        $query = parse_url($uri, PHP_URL_QUERY);
-                        parse_str($query ?? '', $params);
-                        $required = ['type', 'domain', 'key', 'slug', 'version'];
-                        foreach ($required as $key) {
-                            if (!isset($params[$key])) {
-                                $isApi = false;
-                                break;
-                            }
+                    $query = parse_url($uri, PHP_URL_QUERY);
+                    parse_str($query ?? '', $params);
+                    $required = (function_exists('str_starts_with') ? str_starts_with($route, '/api/key') : strpos($route, '/api/key') === 0)
+                        ? ['type', 'domain']
+                        : ['type', 'domain', 'key', 'slug', 'version'];
+                    foreach ($required as $key) {
+                        if (!isset($params[$key])) {
+                            $isApi = false;
+                            break;
                         }
+                    }
                     }
                     if ($route !== '/login' && !$isApi) {
                         SessionManager::getInstance()->requireAuth();
