@@ -85,7 +85,7 @@ function vontmnt_validate_zip_package( string $file_path ): bool {
 	// Test ZIP extraction using ZipArchive if available
 	if ( class_exists( 'ZipArchive' ) ) {
 		$zip = new ZipArchive();
-		$result = $zip->open( $file_path, ZipArchive::CHECKCONS );
+		$result = $zip->open( $file_path );
 		if ( true !== $result ) {
 			return false;
 		}
@@ -93,6 +93,18 @@ function vontmnt_validate_zip_package( string $file_path ): bool {
 	}
 	
 	return true;
+}
+}
+
+/**
+ * Redact the API key from a URL for logging purposes.
+ *
+ * @param string $url The URL that may contain an API key.
+ * @return string The URL with the key parameter redacted.
+ */
+if ( ! function_exists( 'vontmnt_redact_key' ) ) {
+function vontmnt_redact_key( string $url ): string {
+	return preg_replace( '/([?&]key=)[^&]*/', '$1[REDACTED]', $url );
 }
 }
 
@@ -115,7 +127,7 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
 		strtoupper( $type ),
 		$slug,
 		$version,
-		$url,
+		vontmnt_redact_key( $url ),
 		$response_code,
 		$response_size,
 		$status
@@ -156,16 +168,30 @@ add_action( 'vontmnt_theme_update_single', 'vontmnt_theme_update_single', 10, 2 
  *
  * Schedule theme update checks for all installed themes. */
 function vontmnt_theme_updater_run_updates(): void {
+	// Atomic locking using add_option pattern
+	$lock_key = 'vontmnt_theme_updates_scheduling';
+	if ( ! add_option( $lock_key, time(), '', false ) ) {
+		// Lock exists, another scheduling run is in progress
+		return;
+	}
+	
 	if ( ! function_exists( 'wp_get_themes' ) ) {
 		require_once ABSPATH . 'wp-includes/theme.php';
 	}
 	$themes = wp_get_themes();
+	
+	$when = time() + 5; // tiny jitter to reduce "same-second" collisions
+	
 	foreach ( $themes as $theme ) {
 		$theme_slug        = $theme->get_stylesheet();
 		$installed_version = $theme->get( 'Version' );
 		// Schedule individual theme update check
-		wp_schedule_single_event( time(), 'vontmnt_theme_update_single', array( $theme_slug, $installed_version ) );
+		wp_schedule_single_event( $when, 'vontmnt_theme_update_single', array( $theme_slug, $installed_version ) );
+		$when += rand( 0, 2 ); // Add small jitter per theme to further reduce collisions
 	}
+	
+	// Release the lock
+	delete_option( $lock_key );
 }
 
 /**
@@ -176,6 +202,13 @@ function vontmnt_theme_updater_run_updates(): void {
  *
  * Update a single theme. */
 function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
+	// Atomic locking using add_option pattern
+	$lock_key = 'vontmnt_updating_theme_' . md5( $theme_slug );
+	if ( ! add_option( $lock_key, time(), '', false ) ) {
+		// Lock exists, another update is in progress
+		return;
+	}
+	
 	$api_url = add_query_arg(
 		array(
 			'type'    => 'theme',
@@ -190,12 +223,12 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 	$response = wp_remote_get( $api_url );
 	if ( is_wp_error( $response ) ) {
 		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
+		delete_option( $lock_key );
 		return;
 	}
 	
 	$http_code     = wp_remote_retrieve_response_code( $response );
 	$response_body = wp_remote_retrieve_body( $response );
-	$response_size = strlen( $response_body );
 
 	if ( $http_code === 200 && ! empty( $response_body ) ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -207,19 +240,33 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 		}
 		
 		$upload_dir     = wp_upload_dir();
-		$theme_zip_file = $upload_dir['path'] . '/' . basename( $theme_slug ) . '.zip';
+		$theme_zip_file = $upload_dir['path'] . '/' . $theme_slug . '.zip';
 		
-		// Use WP_Filesystem instead of file_put_contents
-		$bytes_written = $wp_filesystem->put_contents( $theme_zip_file, $response_body );
-		if ( false === $bytes_written ) {
-			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Failed to write update package' );
+		// Stream large files to disk instead of loading into memory
+		$temp_file = wp_tempnam( $theme_zip_file );
+		$stream_response = wp_remote_get( $api_url, array( 'stream' => true, 'filename' => $temp_file ) );
+		
+		if ( is_wp_error( $stream_response ) ) {
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to stream update package' );
+			delete_option( $lock_key );
 			return;
 		}
+		
+		// Move temp file to final location
+		if ( ! $wp_filesystem->move( $temp_file, $theme_zip_file ) ) {
+			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to move update package' );
+			wp_delete_file( $temp_file );
+			delete_option( $lock_key );
+			return;
+		}
+		
+		$response_size = filesize( $theme_zip_file );
 
 		// Validate ZIP package before installation
 		if ( ! vontmnt_validate_zip_package( $theme_zip_file ) ) {
 			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Invalid ZIP package' );
 			wp_delete_file( $theme_zip_file );
+			delete_option( $lock_key );
 			return;
 		}
 
@@ -237,6 +284,11 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 		// Delete the theme zip file using wp_delete_file.
 		wp_delete_file( $theme_zip_file );
 		
+		// Post-install housekeeping: refresh theme update data
+		if ( function_exists( 'wp_clean_themes_cache' ) ) {
+			wp_clean_themes_cache();
+		}
+		
 		// Log success or failure
 		if ( ! is_wp_error( $result ) && $result ) {
 			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'success', 'Theme updated successfully' );
@@ -245,8 +297,11 @@ function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
 			vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', $error_msg );
 		}
 	} elseif ( 204 === $http_code ) {
-		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'skipped', 'No update available' );
+		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, 0, 'skipped', 'No update available' );
 	} else {
-		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Unexpected HTTP response' );
+		vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Unexpected HTTP response' );
 	}
+	
+	// Release the lock
+	delete_option( $lock_key );
 }

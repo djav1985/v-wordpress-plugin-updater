@@ -84,7 +84,7 @@ function vontmnt_validate_zip_package( string $file_path ): bool {
 	// Test ZIP extraction using ZipArchive if available
 	if ( class_exists( 'ZipArchive' ) ) {
 		$zip = new ZipArchive();
-		$result = $zip->open( $file_path, ZipArchive::CHECKCONS );
+		$result = $zip->open( $file_path );
 		if ( true !== $result ) {
 			return false;
 		}
@@ -92,6 +92,18 @@ function vontmnt_validate_zip_package( string $file_path ): bool {
 	}
 	
 	return true;
+}
+}
+
+/**
+ * Redact the API key from a URL for logging purposes.
+ *
+ * @param string $url The URL that may contain an API key.
+ * @return string The URL with the key parameter redacted.
+ */
+if ( ! function_exists( 'vontmnt_redact_key' ) ) {
+function vontmnt_redact_key( string $url ): string {
+	return preg_replace( '/([?&]key=)[^&]*/', '$1[REDACTED]', $url );
 }
 }
 
@@ -114,7 +126,7 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
 		strtoupper( $type ),
 		$slug,
 		$version,
-		$url,
+		vontmnt_redact_key( $url ),
 		$response_code,
 		$response_size,
 		$status
@@ -178,11 +190,12 @@ function vontmnt_plugin_updater_run_updates(): void {
 		return;
 	}
 
-	// Optional hardening: prevent two overlapping daily runs from piling up work
-	if ( get_transient( 'vontmnt_updates_scheduling' ) ) {
+	// Atomic locking using add_option pattern
+	$lock_key = 'vontmnt_updates_scheduling';
+	if ( ! add_option( $lock_key, time(), '', false ) ) {
+		// Lock exists, another scheduling run is in progress
 		return;
 	}
-	set_transient( 'vontmnt_updates_scheduling', 1, 60 );
 
 	if ( ! function_exists( 'get_plugins' ) ) {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -194,7 +207,11 @@ function vontmnt_plugin_updater_run_updates(): void {
 	foreach ( $plugins as $plugin_path => $plugin ) {
 		$args = array( $plugin_path, $plugin['Version'] );
 		vontmnt_schedule_unique_single_event( $when, 'vontmnt_plugin_update_single', $args );
+		$when += rand( 0, 2 ); // Add small jitter per plugin to further reduce collisions
 	}
+	
+	// Release the lock
+	delete_option( $lock_key );
 }
 
 /**
@@ -210,7 +227,19 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 		return;
 	}
 	
+	// Atomic locking using add_option pattern
+	$lock_key = 'vontmnt_updating_' . md5( $plugin_path );
+	if ( ! add_option( $lock_key, time(), '', false ) ) {
+		// Lock exists, another update is in progress
+		return;
+	}
+	
+	// Handle single-file plugins where dirname returns "."
 	$plugin_slug = dirname( $plugin_path );
+	if ( '.' === $plugin_slug ) {
+		$plugin_slug = pathinfo( $plugin_path, PATHINFO_FILENAME );
+	}
+	
 	$api_url = add_query_arg(
 		array(
 			'type'    => 'plugin',
@@ -226,12 +255,12 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 	$response = wp_remote_get( $api_url );
 	if ( is_wp_error( $response ) ) {
 		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
+		delete_option( $lock_key );
 		return;
 	}
 	
 	$http_code     = wp_remote_retrieve_response_code( $response );
 	$response_body = wp_remote_retrieve_body( $response );
-	$response_size = strlen( $response_body );
 
 	if ( 200 === $http_code && ! empty( $response_body ) ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -243,19 +272,33 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 		}
 		
 		$upload_dir      = wp_upload_dir();
-		$plugin_zip_file = $upload_dir['path'] . '/' . basename( $plugin_path ) . '.zip';
+		$plugin_zip_file = $upload_dir['path'] . '/' . $plugin_slug . '.zip';
 		
-		// Use WP_Filesystem instead of file_put_contents
-		$bytes_written = $wp_filesystem->put_contents( $plugin_zip_file, $response_body );
-		if ( false === $bytes_written ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Failed to write update package' );
+		// Stream large files to disk instead of loading into memory
+		$temp_file = wp_tempnam( $plugin_zip_file );
+		$stream_response = wp_remote_get( $api_url, array( 'stream' => true, 'filename' => $temp_file ) );
+		
+		if ( is_wp_error( $stream_response ) ) {
+			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to stream update package' );
+			delete_option( $lock_key );
 			return;
 		}
+		
+		// Move temp file to final location
+		if ( ! $wp_filesystem->move( $temp_file, $plugin_zip_file ) ) {
+			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to move update package' );
+			wp_delete_file( $temp_file );
+			delete_option( $lock_key );
+			return;
+		}
+		
+		$response_size = filesize( $plugin_zip_file );
 
 		// Validate ZIP package before installation
 		if ( ! vontmnt_validate_zip_package( $plugin_zip_file ) ) {
 			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Invalid ZIP package' );
 			wp_delete_file( $plugin_zip_file );
+			delete_option( $lock_key );
 			return;
 		}
 
@@ -273,6 +316,11 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 		// Delete the plugin zip file using wp_delete_file.
 		wp_delete_file( $plugin_zip_file );
 		
+		// Post-install housekeeping: refresh plugin update data
+		if ( function_exists( 'wp_clean_plugins_cache' ) ) {
+			wp_clean_plugins_cache();
+		}
+		
 		// Log success or failure
 		if ( ! is_wp_error( $result ) && $result ) {
 			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'success', 'Plugin updated successfully' );
@@ -281,8 +329,11 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', $error_msg );
 		}
 	} elseif ( 204 === $http_code ) {
-		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'skipped', 'No update available' );
+		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'skipped', 'No update available' );
 	} else {
-		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Unexpected HTTP response' );
+		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Unexpected HTTP response' );
 	}
+	
+	// Release the lock
+	delete_option( $lock_key );
 }
