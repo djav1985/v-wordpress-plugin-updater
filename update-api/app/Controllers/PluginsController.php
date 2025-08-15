@@ -88,14 +88,17 @@ class PluginsController extends Controller
     /**
      * Generates an HTML table row for a plugin.
      */
-    private static function generatePluginTableRow(string $pluginName): string
+    private static function generatePluginTableRow(array $pluginName): string
     {
+        $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
+        $version = $pluginName['version'];
         return '<tr>
-            <td>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') . '</td>
+            <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
+            <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
             <td>
                 <form class="delete-plugin-form" action="/plupdate" method="POST">
                     <input type="hidden" name="plugin_name" value="' .
-                    htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8') .
+                    htmlspecialchars($pluginName['slug'], ENT_QUOTES, 'UTF-8') .
                 '">
                     <input type="hidden" name="csrf_token" value="' .
                     htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
@@ -119,27 +122,48 @@ class PluginsController extends Controller
                 <table>
                     <thead>
                         <tr>
-                            <th>Plugin Name</th>
+                            <th>Name</th>
+                            <th>Version</th>
                             <th>Delete</th>
                         </tr>
                     </thead>
                     <tbody>';
             foreach ($pluginsColumn1 as $plugin) {
-                $pluginName = basename($plugin);
-                $pluginsTableHtml .= self::generatePluginTableRow($pluginName);
+                if (is_string($plugin)) {
+                    // Legacy: parse filename like slug_version.zip
+                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($plugin), $matches)) {
+                        $plugin = [
+                            'slug' => $matches[1],
+                            'version' => $matches[2],
+                        ];
+                    } else {
+                        continue;
+                    }
+                }
+                $pluginsTableHtml .= self::generatePluginTableRow($plugin);
             }
 
             $pluginsTableHtml .= '</tbody></table></div><div class="column"><table>
                 <thead>
                     <tr>
-                        <th>Plugin Name</th>
+                        <th>Name</th>
+                        <th>Version</th>
                         <th>Delete</th>
                     </tr>
                 </thead>
                 <tbody>';
             foreach ($pluginsColumn2 as $plugin) {
-                $pluginName = basename($plugin);
-                $pluginsTableHtml .= self::generatePluginTableRow($pluginName);
+                if (is_string($plugin)) {
+                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($plugin), $matches)) {
+                        $plugin = [
+                            'slug' => $matches[1],
+                            'version' => $matches[2],
+                        ];
+                    } else {
+                        continue;
+                    }
+                }
+                $pluginsTableHtml .= self::generatePluginTableRow($plugin);
             }
 
             $pluginsTableHtml .= '</tbody></table></div></div>';

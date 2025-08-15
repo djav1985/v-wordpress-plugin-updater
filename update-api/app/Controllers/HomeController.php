@@ -90,7 +90,7 @@ class HomeController extends Controller
                     htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
-            '"></td>
+            '" readonly></td>
                 <td>
                     <input class="hosts-key" type="text" value="' .
                     htmlspecialchars($key, ENT_QUOTES, 'UTF-8') .
