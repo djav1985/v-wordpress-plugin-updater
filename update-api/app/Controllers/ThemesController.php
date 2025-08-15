@@ -86,14 +86,17 @@ class ThemesController extends Controller
     /**
      * Generates an HTML table row for a theme.
      */
-    private static function generateThemeTableRow(string $theme, string $theme_name): string
+    private static function generateThemeTableRow(array $theme): string
     {
+        $name = str_replace(['-', '_'], ' ', $theme['slug']);
+        $version = $theme['version'];
         return '<tr>
-             <td>' . htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') . '</td>
+             <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
+             <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
              <td>
                  <form name="delete_theme_form" action="/thupdate" method="POST">
                      <input type="hidden" name="theme_name" value="' .
-                         htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') .
+                         htmlspecialchars($theme['slug'], ENT_QUOTES, 'UTF-8') .
                      '">
                      <input type="hidden" name="csrf_token" value="' .
                          htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
@@ -117,26 +120,47 @@ class ThemesController extends Controller
                  <table>
                      <thead>
                          <tr>
-                             <th>Theme Name</th>
+                             <th>Name</th>
+                             <th>Version</th>
                              <th>Delete</th>
                          </tr>
                      </thead>
                      <tbody>';
             foreach ($themes_column1 as $theme) {
-                $theme_name = basename($theme);
-                $themesTableHtml .= self::generateThemeTableRow($theme, $theme_name);
+                if (is_string($theme)) {
+                    // Legacy: parse filename like slug_version.zip
+                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($theme), $matches)) {
+                        $theme = [
+                            'slug' => $matches[1],
+                            'version' => $matches[2],
+                        ];
+                    } else {
+                        continue;
+                    }
+                }
+                $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div><div class="column"><table>
                  <thead>
                      <tr>
-                         <th>Theme Name</th>
+                         <th>Name</th>
+                         <th>Version</th>
                          <th>Delete</th>
                      </tr>
                  </thead>
                  <tbody>';
             foreach ($themes_column2 as $theme) {
-                $theme_name = basename($theme);
-                $themesTableHtml .= self::generateThemeTableRow($theme, $theme_name);
+                if (is_string($theme)) {
+                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($theme), $matches)) {
+                        $theme = [
+                            'slug' => $matches[1],
+                            'version' => $matches[2],
+                        ];
+                    } else {
+                        continue;
+                    }
+                }
+                $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div></div>';
         } else {

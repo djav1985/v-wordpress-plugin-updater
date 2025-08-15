@@ -72,26 +72,30 @@ class Router
                 header('HTTP/1.0 405 Method Not Allowed');
                 break;
             case Dispatcher::FOUND:
-                [$class, $action] = $routeInfo[1];
-                $vars = $routeInfo[2];
-                $isApi = function_exists('str_starts_with')
-                    ? str_starts_with($route, '/api')
-                    : strpos($route, '/api') === 0;
-                if ($isApi) {
-                    $query = parse_url($uri, PHP_URL_QUERY);
-                    parse_str($query ?? '', $params);
-                    $required = ['type', 'domain', 'key', 'slug', 'version'];
-                    foreach ($required as $key) {
-                        if (!isset($params[$key])) {
-                            $isApi = false;
-                            break;
+                if (is_array($routeInfo[1])) {
+                    [$class, $action] = $routeInfo[1];
+                    $vars = $routeInfo[2];
+                    $isApi = function_exists('str_starts_with')
+                        ? str_starts_with($route, '/api')
+                        : strpos($route, '/api') === 0;
+                    if ($isApi) {
+                        $query = parse_url($uri, PHP_URL_QUERY);
+                        parse_str($query ?? '', $params);
+                        $required = ['type', 'domain', 'key', 'slug', 'version'];
+                        foreach ($required as $key) {
+                            if (!isset($params[$key])) {
+                                $isApi = false;
+                                break;
+                            }
                         }
                     }
+                    if ($route !== '/login' && !$isApi) {
+                        SessionManager::getInstance()->requireAuth();
+                    }
+                    call_user_func_array([new $class(), $action], $vars);
+                } elseif (is_callable($routeInfo[1])) {
+                    call_user_func($routeInfo[1]);
                 }
-                if ($route !== '/login' && !$isApi) {
-                    SessionManager::getInstance()->requireAuth();
-                }
-                call_user_func_array([new $class(), $action], $vars);
                 break;
         }
     }

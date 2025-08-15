@@ -32,7 +32,10 @@ class ThemeModel
         $rows = $conn->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
         $themes = [];
         foreach ($rows as $row) {
-            $themes[] = self::$dir . '/' . $row['slug'] . '_' . $row['version'] . '.zip';
+            $themes[] = [
+                'slug' => $row['slug'],
+                'version' => $row['version'],
+            ];
         }
         return $themes;
     }
@@ -88,13 +91,8 @@ class ThemeModel
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
             $theme_slug = explode('_', $file_name)[0];
-            $existing_themes = glob(self::$dir . '/' . $theme_slug . '_*');
-            foreach ($existing_themes as $theme) {
-                if (is_file($theme)) {
-                    unlink($theme);
-                }
-            }
-
+            $conn = DatabaseManager::getConnection();
+            $current = $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', [$theme_slug]);
             $max_upload_size = min(
                 self::_parseIniSize(ini_get('upload_max_filesize')),
                 self::_parseIniSize(ini_get('post_max_size'))
@@ -118,12 +116,27 @@ class ThemeModel
                 continue;
             }
 
+            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+                $slug = $matches[1];
+                $version = $matches[2];
+                if ($current && version_compare($version, $current, '<=')) {
+                    $messages[] = 'Error uploading: '
+                        . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8')
+                        . '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
+                    continue;
+                }
+                // Remove old theme files
+                $existing_themes = glob(self::$dir . '/' . $theme_slug . '_*');
+                foreach ($existing_themes as $theme) {
+                    if (is_file($theme)) {
+                        unlink($theme);
+                    }
+                }
+            }
+
             $theme_path = self::$dir . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $theme_path)) {
-                if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
-                    $slug = $matches[1];
-                    $version = $matches[2];
-                    $conn = DatabaseManager::getConnection();
+                if (isset($slug) && isset($version)) {
                     $conn->executeStatement(
                         'INSERT INTO themes (slug, version) VALUES (?, ?) '
                         . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
