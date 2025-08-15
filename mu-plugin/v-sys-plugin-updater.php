@@ -154,7 +154,7 @@ function vontmnt_plugin_updater_schedule_updates(): void {
 	}
 }
 
-add_action( 'wp', 'vontmnt_plugin_updater_schedule_updates' );
+add_action( 'admin_init', 'vontmnt_plugin_updater_schedule_updates' );
 
 add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_updates' );
 add_action( 'vontmnt_plugin_update_single', 'vontmnt_plugin_update_single', 10, 2 );

@@ -143,7 +143,7 @@ function vontmnt_theme_updater_schedule_updates(): void {
 	}
 }
 
-add_action( 'wp', 'vontmnt_theme_updater_schedule_updates' );
+add_action( 'admin_init', 'vontmnt_theme_updater_schedule_updates' );
 
 add_action( 'vontmnt_theme_updater_check_updates', 'vontmnt_theme_updater_run_updates' );
 add_action( 'vontmnt_theme_update_single', 'vontmnt_theme_update_single', 10, 2 );

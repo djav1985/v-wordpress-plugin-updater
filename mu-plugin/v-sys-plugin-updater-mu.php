@@ -142,7 +142,8 @@ function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, arr
 }
 
 // Schedule the update check to run every day.
-add_action( 'wp', 'vontmnt_plugin_updater_schedule_updates' );
+add_action( 'admin_init', 'vontmnt_plugin_updater_schedule_updates' );
+
 
 
 /**

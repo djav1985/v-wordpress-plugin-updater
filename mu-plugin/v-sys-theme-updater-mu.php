@@ -129,7 +129,7 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
 }
 
 // Schedule the update check to run every day on the main site.
-add_action( 'wp', 'vontmnt_theme_updater_schedule_updates' );
+add_action( 'admin_init', 'vontmnt_theme_updater_schedule_updates' );
 
 /**
  * Schedule daily theme update checks for multisite.
