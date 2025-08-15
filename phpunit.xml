@@ -1,14 +1,11 @@
-<?xml version="1.0"?>
-<ruleset name="Per-Directory Standards">
-  <description>WordPress standard for mu-plugin/, PSR-12 for update-api/</description>
-  <arg name="basepath" value="."/>
-  <arg name="extensions" value="php"/>
-
-  <rule ref="WordPress">
-    <include-pattern>^mu-plugin/.*</include-pattern>
-  </rule>
-
-  <rule ref="PSR12">
-    <include-pattern>^update-api/.*</include-pattern>
-  </rule>
-</ruleset>
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php"
+         colors="true"
+         verbose="true"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Application Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
