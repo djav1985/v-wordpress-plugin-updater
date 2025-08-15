@@ -41,7 +41,7 @@ function vontmnt_get_api_key(): string {
                 $response = wp_remote_get( $api_url );
                 if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
                         $key = wp_remote_retrieve_body( $response );
-                        update_option( 'vontmnt_api_key', $key );
+                        update_option( 'vontmnt_api_key', $key, false );
                         $wp_config = ABSPATH . 'wp-config.php';
                         if ( file_exists( $wp_config ) && is_writable( $wp_config ) ) {
                                 $config = file_get_contents( $wp_config );
@@ -147,10 +147,12 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
  * @param string $hook      The action hook name.
  * @param array  $args      Arguments to pass to the hook.
  */
+if ( ! function_exists( 'vontmnt_schedule_unique_single_event' ) ) {
 function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args ): void {
 	if ( ! wp_next_scheduled( $hook, $args ) ) {
 		wp_schedule_single_event( $timestamp, $hook, $args );
 	}
+}
 }
 
 // Schedule the update check to run every day.
@@ -165,6 +167,7 @@ add_action( 'admin_init', 'vontmnt_plugin_updater_schedule_updates' );
  * @link    https://vontainment.com
  *
  * Schedule daily plugin update checks for multisite. */
+if ( ! function_exists( 'vontmnt_plugin_updater_schedule_updates' ) ) {
 function vontmnt_plugin_updater_schedule_updates(): void {
 	if ( ! is_main_site() ) {
 		return;
@@ -172,6 +175,7 @@ function vontmnt_plugin_updater_schedule_updates(): void {
 	if ( ! wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
 		wp_schedule_event( time(), 'daily', 'vontmnt_plugin_updater_check_updates' );
 	}
+}
 }
 
 add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_plugin_updater_run_updates' );
@@ -184,17 +188,31 @@ add_action( 'vontmnt_plugin_update_single', 'vontmnt_plugin_update_single', 10, 
  * @link    https://vontainment.com
  *
  * Schedule plugin update checks for all installed plugins on the main site. */
+if ( ! function_exists( 'vontmnt_plugin_updater_run_updates' ) ) {
 function vontmnt_plugin_updater_run_updates(): void {
 	// Check if it's the main site.
 	if ( ! is_main_site() ) {
 		return;
 	}
 
-	// Atomic locking using add_option pattern
+	// Atomic locking using add_option pattern with TTL support
 	$lock_key = 'vontmnt_updates_scheduling';
+	$lock_ttl = 60; // 1 minute TTL for scheduling lock
+	
 	if ( ! add_option( $lock_key, time(), '', false ) ) {
-		// Lock exists, another scheduling run is in progress
-		return;
+		// Lock exists, check if it's expired
+		$lock_time = get_option( $lock_key );
+		if ( $lock_time && ( time() - $lock_time ) > $lock_ttl ) {
+			// Lock expired, remove it and try again
+			delete_option( $lock_key );
+			if ( ! add_option( $lock_key, time(), '', false ) ) {
+				// Still can't acquire lock, another process may have just acquired it
+				return;
+			}
+		} else {
+			// Lock is still valid, another scheduling run is in progress
+			return;
+		}
 	}
 
 	if ( ! function_exists( 'get_plugins' ) ) {
@@ -213,6 +231,7 @@ function vontmnt_plugin_updater_run_updates(): void {
 	// Release the lock
 	delete_option( $lock_key );
 }
+}
 
 /**
  * @package UpdateAPI
@@ -221,17 +240,31 @@ function vontmnt_plugin_updater_run_updates(): void {
  * @link    https://vontainment.com
  *
  * Update a single plugin. */
+if ( ! function_exists( 'vontmnt_plugin_update_single' ) ) {
 function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void {
 	// Check if it's the main site.
 	if ( ! is_main_site() ) {
 		return;
 	}
 	
-	// Atomic locking using add_option pattern
+	// Atomic locking using add_option pattern with TTL support
 	$lock_key = 'vontmnt_updating_' . md5( $plugin_path );
+	$lock_ttl = 300; // 5 minutes TTL to handle crashes
+	
 	if ( ! add_option( $lock_key, time(), '', false ) ) {
-		// Lock exists, another update is in progress
-		return;
+		// Lock exists, check if it's expired
+		$lock_time = get_option( $lock_key );
+		if ( $lock_time && ( time() - $lock_time ) > $lock_ttl ) {
+			// Lock expired, remove it and try again
+			delete_option( $lock_key );
+			if ( ! add_option( $lock_key, time(), '', false ) ) {
+				// Still can't acquire lock, another process may have just acquired it
+				return;
+			}
+		} else {
+			// Lock is still valid, another update is in progress
+			return;
+		}
 	}
 	
 	// Handle single-file plugins where dirname returns "."
@@ -272,6 +305,14 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 		}
 		
 		$upload_dir      = wp_upload_dir();
+		
+		// Ensure the upload directory exists
+		if ( ! wp_mkdir_p( $upload_dir['path'] ) ) {
+			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to create upload directory' );
+			delete_option( $lock_key );
+			return;
+		}
+		
 		$plugin_zip_file = $upload_dir['path'] . '/' . $plugin_slug . '.zip';
 		
 		// Stream large files to disk instead of loading into memory
@@ -284,7 +325,10 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 			return;
 		}
 		
-		// Move temp file to final location
+		// Move temp file to final location (allow overwrite)
+		if ( file_exists( $plugin_zip_file ) ) {
+			wp_delete_file( $plugin_zip_file );
+		}
 		if ( ! $wp_filesystem->move( $temp_file, $plugin_zip_file ) ) {
 			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to move update package' );
 			wp_delete_file( $temp_file );
@@ -318,7 +362,7 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 		
 		// Post-install housekeeping: refresh plugin update data
 		if ( function_exists( 'wp_clean_plugins_cache' ) ) {
-			wp_clean_plugins_cache();
+			wp_clean_plugins_cache( true );
 		}
 		
 		// Log success or failure
@@ -336,4 +380,5 @@ function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void 
 	
 	// Release the lock
 	delete_option( $lock_key );
+}
 }
