@@ -526,10 +526,11 @@ Run `vendor/bin/phpcs update-api` and `vendor/bin/phpcs mu-plugin` to check codi
 ## Roadmap
 
 - [X] **`Task 1`**: <strike>Convert to MVC framework</strike>
-- [ ] **`Task 2`**: Implement more advanced authorization for site connections
-- [ ] **`Task 3`**: Implement ability to remove ips from blacklist
-- [ ] **`Task 4`**: Implement plug-in verification on upload
-- [ ] **`Task 4`**: Implement docker version
+- [X] **`Task 2`**: <strike>Implement more advanced authorization for site connections</strike>
+- [X] **`Task 3`**: <strike>Implement Database instead of useing filesystem</strike>
+- [ ] **`Task 4`**: Implement ability to remove ips from blacklist
+- [ ] **`Task 5`**: Implement plug-in verification on upload
+- [ ] **`Task 6`**: Implement docker version
       
 ---
 
