@@ -57,6 +57,19 @@ function vontmnt_get_api_key(): string {
 }
 
 /**
+ * Schedule a single event only if an identical one (hook+args) isn't already queued.
+ *
+ * @param int    $timestamp The timestamp when the event should run.
+ * @param string $hook      The action hook name.
+ * @param array  $args      Arguments to pass to the hook.
+ */
+function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args ): void {
+	if ( ! wp_next_scheduled( $hook, $args ) ) {
+		wp_schedule_single_event( $timestamp, $hook, $args );
+	}
+}
+
+/**
  * @package UpdateAPI
  * @author  Vontainment <services@vontainment.com>
  * @license https://opensource.org/licenses/MIT MIT License
@@ -82,14 +95,22 @@ add_action( 'vontmnt_plugin_update_single', 'vontmnt_plugin_update_single', 10, 
  *
  * Schedule plugin update checks for all installed plugins. */
 function vontmnt_plugin_updater_run_updates(): void {
+	// Optional hardening: prevent two overlapping daily runs from piling up work
+	if ( get_transient( 'vontmnt_updates_scheduling' ) ) {
+		return;
+	}
+	set_transient( 'vontmnt_updates_scheduling', 1, 60 );
+
 	if ( ! function_exists( 'get_plugins' ) ) {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 	}
 	$plugins = get_plugins();
+
+	$when = time() + 5; // tiny jitter to reduce "same-second" collisions
+
 	foreach ( $plugins as $plugin_path => $plugin ) {
-		$installed_version = $plugin['Version'];
-		// Schedule individual plugin update check
-		wp_schedule_single_event( time(), 'vontmnt_plugin_update_single', array( $plugin_path, $installed_version ) );
+		$args = array( $plugin_path, $plugin['Version'] );
+		vontmnt_schedule_unique_single_event( $when, 'vontmnt_plugin_update_single', $args );
 	}
 }
 
