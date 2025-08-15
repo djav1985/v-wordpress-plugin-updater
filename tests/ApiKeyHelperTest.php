@@ -41,8 +41,8 @@ class ApiKeyHelperTest extends TestCase
             define('ABSPATH', sys_get_temp_dir() . '/');
         }
         file_put_contents(ABSPATH . 'wp-config.php', "<?php\ndefine('VONTMNT_UPDATE_KEYREGEN', true);\n");
-        if (!defined('VONTMENT_PLUGINS')) {
-            define('VONTMENT_PLUGINS', 'https://example.com/api');
+        if (!defined('VONTMNT_API_URL')) {
+            define('VONTMNT_API_URL', 'https://example.com/api');
         }
     }
 

@@ -30,7 +30,7 @@ if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
 function vontmnt_get_api_key(): string {
         $key = get_option( 'vontmnt_api_key' );
         if ( ! $key || ( defined( 'VONTMNT_UPDATE_KEYREGEN' ) && VONTMNT_UPDATE_KEYREGEN ) ) {
-                $base    = defined( 'VONTMENT_PLUGINS' ) ? VONTMENT_PLUGINS : ( defined( 'VONTMENT_THEMES' ) ? VONTMENT_THEMES : '' );
+                $base    = defined( 'VONTMNT_API_URL' ) ? VONTMNT_API_URL : '';
                 $api_url = add_query_arg(
                         array(
                                 'type'   => 'auth',
@@ -105,8 +105,8 @@ function vontmnt_theme_updater_run_updates(): void {
 						'version' => $installed_version,
                                                'key'     => vontmnt_get_api_key(),
 					),
-					VONTMENT_THEMES
-				);
+                                        VONTMNT_API_URL
+                                );
 
 				$response = wp_remote_get( $api_url );
 		if ( is_wp_error( $response ) ) {

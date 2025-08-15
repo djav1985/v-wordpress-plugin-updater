@@ -46,11 +46,8 @@ class UpdaterErrorHandlingTest extends TestCase
         if (!defined('ABSPATH')) {
             define('ABSPATH', __DIR__ . '/../');
         }
-        if (!defined('VONTMENT_PLUGINS')) {
-            define('VONTMENT_PLUGINS', 'https://example.com/plugins');
-        }
-        if (!defined('VONTMENT_THEMES')) {
-            define('VONTMENT_THEMES', 'https://example.com/themes');
+        if (!defined('VONTMNT_API_URL')) {
+            define('VONTMNT_API_URL', 'https://example.com/api');
         }
     }
 

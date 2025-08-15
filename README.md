@@ -496,8 +496,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 5. Define the API constants used by the mu-plugins in your WordPress `wp-config.php`:
 
    ```php
-   define('VONTMENT_PLUGINS', 'https://example.com/api');
-   define('VONTMENT_THEMES', 'https://example.com/api');
+   define('VONTMNT_API_URL', 'https://example.com/api');
    define('VONTMNT_UPDATE_KEYREGEN', true); // set to true to fetch/regenerate the key
    ```
    The updater will fetch the API key from `/api/key` when this constant is true or when no key is stored. The key is saved as the `vontmnt_api_key` option and `wp-config.php` is rewritten to disable regeneration after the first retrieval.
