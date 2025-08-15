@@ -17,7 +17,7 @@ class SessionManagerTest extends TestCase
             define('SESSION_TIMEOUT_LIMIT', 1800);
         }
         if (!defined('DB_FILE')) {
-            define('DB_FILE', __DIR__ . '/../update-api/storage/test.sqlite');
+            define('DB_FILE', sys_get_temp_dir() . '/session.sqlite');
         }
         $ref = new \ReflectionClass(DatabaseManager::class);
         $prop = $ref->getProperty('connection');
@@ -92,7 +92,10 @@ PHP;
             'timestamp' => time(),
         ]);
 
-        $logFile = __DIR__ . '/../update-api/storage/logs/php_app.log';
+        $logFile = __DIR__ . '/../update-api/php_app.log';
+        if (file_exists($logFile)) {
+            unlink($logFile);
+        }
 
         $session = SessionManager::getInstance();
         $result = $session->requireAuth();
@@ -104,5 +107,8 @@ PHP;
         $conn->executeStatement('DELETE FROM blacklist');
         restore_error_handler();
         restore_exception_handler();
+        if (file_exists($logFile)) {
+            unlink($logFile);
+        }
     }
 }

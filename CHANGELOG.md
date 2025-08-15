@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+- Added `vontmnt_get_api_key` helper in mu-plugins to cache API keys and auto-regenerate via the `/api/key` endpoint.
+- Introduced `send_auth` flag and `KeyController` so keys are retrievable once per regeneration.
+- Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.
+- Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
+
 ## 4.0.0
 - Added PHP_CodeSniffer with WordPress Coding Standards for linting.
 - Moved validation helpers to `App\Helpers\Validation` and encryption helpers to `App\Helpers\Encryption`.
