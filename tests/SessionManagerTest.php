@@ -95,8 +95,9 @@ PHP;
         $logFile = __DIR__ . '/../update-api/storage/logs/php_app.log';
 
         $session = SessionManager::getInstance();
-        $session->requireAuth();
+        $result = $session->requireAuth();
 
+        $this->assertFalse($result);
         $this->assertSame(403, http_response_code());
         $logAfter = file_get_contents($logFile);
         $this->assertStringContainsString($ip, $logAfter);

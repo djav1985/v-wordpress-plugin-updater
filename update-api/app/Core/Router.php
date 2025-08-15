@@ -89,7 +89,9 @@ class Router
                     }
                 }
                 if ($route !== '/login' && !$isApi) {
-                    SessionManager::getInstance()->requireAuth();
+                    if (!SessionManager::getInstance()->requireAuth()) {
+                        return;
+                    }
                 }
                 call_user_func_array([new $class(), $action], $vars);
                 break;
