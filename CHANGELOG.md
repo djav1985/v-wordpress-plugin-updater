@@ -9,6 +9,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.
 - Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
 - **Split update loops into single-item tasks**: Refactored plugin and theme updaters to use asynchronous per-item processing. Daily update checks now schedule individual `wp_schedule_single_event()` tasks for each plugin/theme instead of processing all items synchronously. Added `vontmnt_plugin_update_single()` and `vontmnt_theme_update_single()` callback functions.
+- Added comprehensive test coverage for database manager, router dispatching, plugin model uploads, session manager, updater error handling, and URL encoding.
 
 ## 4.0.0
 - Added PHP_CodeSniffer with WordPress Coding Standards for linting.

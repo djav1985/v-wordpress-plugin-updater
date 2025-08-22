@@ -34,4 +34,18 @@ class UpdaterEncodingTest extends TestCase
         $this->assertStringContainsString('Plugin Name:', $content);
         $this->assertStringNotContainsString('Theme Name:', $content);
     }
+
+    public function testPluginUpdaterHasPluginHeader(): void
+    {
+        $content = file_get_contents(__DIR__ . '/../mu-plugin/v-sys-plugin-updater.php');
+        $this->assertStringContainsString('Plugin Name:', $content);
+    }
+
+    public function testAddQueryArgReservedCharactersEncodeOnce(): void
+    {
+        $args = ['slug' => 'a+b/c'];
+        $url = add_query_arg($args, 'https://api.example.com');
+        $this->assertStringContainsString('slug=a%2Bb%2Fc', $url);
+        $this->assertStringNotContainsString('a%252Bb%252Fc', $url);
+    }
 }

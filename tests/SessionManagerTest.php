@@ -111,4 +111,45 @@ PHP;
             unlink($logFile);
         }
     }
+
+    public function testStartCreatesCsrfAndCookieParams(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $this->assertNotEmpty($session->get('csrf_token'));
+        $params = session_get_cookie_params();
+        $this->assertTrue($params['httponly']);
+        $this->assertSame('Lax', $params['samesite']);
+    }
+
+    public function testRegenerateChangesSessionId(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $old = session_id();
+        $session->regenerate();
+        $this->assertNotSame($old, session_id());
+    }
+
+    public function testDestroyEndsSession(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $session->destroy();
+        $this->assertSame(PHP_SESSION_NONE, session_status());
+    }
+
+    public function testRequireAuthWithValidSessionSucceeds(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $session->set('logged_in', true);
+        $session->set('user_agent', 'Agent');
+        $this->assertTrue($session->requireAuth());
+    }
 }
