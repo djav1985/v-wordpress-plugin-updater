@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects
 
 if (php_sapi_name() !== 'cli') {
     exit("CLI only\n");
@@ -12,7 +13,7 @@ use App\Core\DatabaseManager;
 
 $conn = DatabaseManager::getConnection();
 
-function syncDir(string $dir, string $table, $conn): void
+function syncDir(string $dir, string $table, \Doctrine\DBAL\Connection $conn): void
 {
     $files = glob($dir . '/*.zip');
     $found = [];
@@ -23,7 +24,8 @@ function syncDir(string $dir, string $table, $conn): void
             $version = $matches[2];
             $found[$slug] = true;
             $conn->executeStatement(
-                "INSERT INTO $table (slug, version) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET version = excluded.version",
+                "INSERT INTO $table (slug, version) VALUES (?, ?) " .
+                "ON CONFLICT(slug) DO UPDATE SET version = excluded.version",
                 [$slug, $version]
             );
         }

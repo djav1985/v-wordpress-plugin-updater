@@ -17,3 +17,4 @@ foreach ($autoloadFiles as $file) {
 if (!defined('VONTMENT_KEY'))     define('VONTMENT_KEY', '');
 if (!defined('VONTMENT_PLUGINS')) define('VONTMENT_PLUGINS', '');
 if (!defined('VONTMENT_THEMES'))  define('VONTMENT_THEMES', '');
+if (!defined('VONTMNT_API_URL'))  define('VONTMNT_API_URL', '');

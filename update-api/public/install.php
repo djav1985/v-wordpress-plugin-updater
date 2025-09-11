@@ -77,7 +77,8 @@ try {
         foreach ($lines as $line) {
             list($domain, $key) = explode(' ', $line, 2);
             $conn->executeStatement(
-                'INSERT INTO hosts (domain, key, send_auth) VALUES (?, ?, 0) ON CONFLICT(domain) DO UPDATE SET key = excluded.key, send_auth = 0',
+                'INSERT INTO hosts (domain, key, send_auth) VALUES (?, ?, 0) ' .
+                'ON CONFLICT(domain) DO UPDATE SET key = excluded.key, send_auth = 0',
                 [$domain, $key]
             );
         }
@@ -116,7 +117,8 @@ try {
                 $slug = $matches[1];
                 $version = $matches[2];
                 $conn->executeStatement(
-                    'INSERT INTO plugins (slug, version) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                    'INSERT INTO plugins (slug, version) VALUES (?, ?) ' .
+                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                     [$slug, $version]
                 );
             }
@@ -133,7 +135,8 @@ try {
                 $slug = $matches[1];
                 $version = $matches[2];
                 $conn->executeStatement(
-                    'INSERT INTO themes (slug, version) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                    'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
+                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                     [$slug, $version]
                 );
             }

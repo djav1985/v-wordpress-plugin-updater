@@ -22,9 +22,9 @@ class PluginModel
     public static string $dir = PLUGINS_DIR;
 
     /**
-     * Return array of plugin file paths.
+     * Return array of plugin data.
      *
-     * @return array<int, string>
+     * @return array<int, array{slug: string, version: string}>
      */
     public static function getPlugins(): array
     {

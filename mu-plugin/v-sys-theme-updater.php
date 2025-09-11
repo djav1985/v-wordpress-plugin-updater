@@ -201,7 +201,7 @@ function vontmnt_theme_updater_run_updates(): void {
  * @link    https://vontainment.com
  *
  * Update a single theme. */
-function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
+function vontmnt_theme_update_single( string $theme_slug, string $installed_version ): void {
 	// Atomic locking using add_option pattern
 	$lock_key = 'vontmnt_updating_theme_' . md5( $theme_slug );
 	if ( ! add_option( $lock_key, time(), '', false ) ) {

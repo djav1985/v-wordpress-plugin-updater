@@ -145,10 +145,10 @@ function vontmnt_log_update_context( string $type, string $slug, string $version
  *
  * @param int    $timestamp The timestamp when the event should run.
  * @param string $hook      The action hook name.
- * @param array  $args      Arguments to pass to the hook.
+ * @param array<mixed> $args      Arguments to pass to the hook.
  */
 if ( ! function_exists( 'vontmnt_schedule_unique_single_event' ) ) {
-function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args ): void {
+function vontmnt_schedule_unique_single_event( int $timestamp, string $hook, array $args = [] ): void {
 	if ( ! wp_next_scheduled( $hook, $args ) ) {
 		wp_schedule_single_event( $timestamp, $hook, $args );
 	}
@@ -230,7 +230,7 @@ function vontmnt_plugin_updater_run_updates(): void {
  *
  * Update a single plugin. */
 if ( ! function_exists( 'vontmnt_plugin_update_single' ) ) {
-function vontmnt_plugin_update_single( $plugin_path, $installed_version ): void {
+function vontmnt_plugin_update_single( string $plugin_path, string $installed_version ): void {
 	// Atomic locking using add_option pattern with TTL support
 	$lock_key = 'vontmnt_updating_' . md5( $plugin_path );
 	$lock_ttl = 300; // 5 minutes TTL to handle crashes
