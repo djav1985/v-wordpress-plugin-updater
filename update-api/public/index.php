@@ -6,29 +6,24 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: index.php
  * Description: WordPress Update API
  */
 
 use App\Core\Router;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
+use App\Core\SessionManager;
 
-$secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-session_set_cookie_params([
-                           'path'     => '/',
-                           'httponly' => true,
-                           'secure'   => $secureFlag,
-                           'samesite' => 'Lax',
-                          ]);
-session_start();
-session_regenerate_id(true);
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-require_once '../config.php';
-require_once '../autoload.php';
+$session = SessionManager::getInstance();
+$session->start();
+$session->regenerate();
 
-ErrorMiddleware::handle(function (): void {
-    $router = new Router();
-    $router->dispatch($_SERVER['REQUEST_URI']);
+ErrorManager::handle(function (): void {
+    $router = Router::getInstance();
+    $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 });

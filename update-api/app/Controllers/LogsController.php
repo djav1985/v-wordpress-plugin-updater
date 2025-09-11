@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: LogsController.php
  * Description: WordPress Update API
@@ -15,47 +15,46 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Core\ErrorMiddleware;
+use App\Core\ErrorManager;
 use App\Models\LogModel;
+use App\Helpers\MessageHelper;
+use App\Core\Csrf;
 
 class LogsController extends Controller
 {
     /**
-     * Handles the request for the logs page.
-     *
-     * Generates log output for plugins and themes and includes the log view.
-     *
-     * @return void
+     * Handles GET requests for the logs page.
      */
-    public static function handleRequest(): void
+    public function handleRequest(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (
-                isset($_POST['csrf_token'], $_SESSION['csrf_token']) &&
-                hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
-            ) {
-                if (isset($_POST['clear_logs'])) {
-                    LogModel::clearAllLogs();
-                    $_SESSION['messages'][] = 'Logs cleared successfully.';
-                }
-                header('Location: /logs');
-                exit();
-            }
-            $error = 'Invalid Form Action.';
-            ErrorMiddleware::logMessage($error);
-            $_SESSION['messages'][] = $error;
-            header('Location: /logs');
-            exit();
-        }
-
         $ploutput = LogModel::processLogFile('plugin.log');
         $thoutput = LogModel::processLogFile('theme.log');
 
-        // Use the render method to include the logs view
-        (new self())->render('logs', [
+        $this->render('logs', [
             'ploutput' => $ploutput,
             'thoutput' => $thoutput,
         ]);
     }
 
+    /**
+     * Handles POST submissions on the logs page.
+     */
+    public function handleSubmission(): void
+    {
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Csrf::validate($token)) {
+            $error = 'Invalid Form Action.';
+            ErrorManager::getInstance()->log($error);
+            MessageHelper::addMessage($error);
+            header('Location: /logs');
+            exit();
+        }
+
+        if (isset($_POST['clear_logs'])) {
+            LogModel::clearAllLogs();
+            MessageHelper::addMessage('Logs cleared successfully.');
+        }
+        header('Location: /logs');
+        exit();
+    }
 }

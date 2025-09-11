@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: login.php
  * Description: WordPress Update API
@@ -30,6 +30,7 @@
         <img src="/assets/images/logo.png" alt="Logo" class="logo">
         <h2>API Update Admin</h2>
         <form method="post" action="/login">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <label>Username:</label>
             <input type="text" name="username"><br><br>
             <label>Password:</label>
@@ -37,6 +38,6 @@
             <input type="submit" value="Log In">
         </form>
     </div>
-    <?php App\Core\ErrorMiddleware::displayAndClearMessages(); ?>
+    <?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>
 </html>

@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: header.php
  * Description: WordPress Update API
@@ -36,6 +36,7 @@
     </div>
     <div class="logout-button">
         <form action="/login" method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <button class="orange-button" type="submit" name="logout">Logout</button>
         </form>
     </div>

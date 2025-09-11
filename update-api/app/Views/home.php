@@ -6,13 +6,16 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: home.php
  * Description: WordPress Update API
  */
 
 require_once __DIR__ . '/layouts/header.php';
+
+/** @var string $hostsTableHtml */
+$hostsTableHtml = $hostsTableHtml ?? '';
 
 ?>
 
@@ -25,14 +28,10 @@ require_once __DIR__ . '/layouts/header.php';
         <h2>Add Entry</h2>
         <form class="entry-form" method="post" action="/home">
             <input type="hidden" name="csrf_token"
-                   value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+                   value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <div class="form-group">
                 <label for="domain">Domain:</label>
                 <input type="text" name="domain" id="domain" required>
-            </div>
-            <div class="form-group">
-                <label for="key">Key:</label>
-                <input type="text" name="key" id="key" required>
             </div>
             <div class="form-group">
                 <input type="submit" name="add_entry" value="Add Entry">

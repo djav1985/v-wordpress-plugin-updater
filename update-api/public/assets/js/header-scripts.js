@@ -6,7 +6,8 @@
  *
  * Displays a toast message.
  * @param {string} message - The message to display. */
-function showToast(message) {
+function showToast(message)
+{
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.textContent = message;
@@ -21,3 +22,12 @@ function showToast(message) {
         }, 500);
     }, 3000);
 }
+
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("hosts-key")) {
+        const key = e.target.value;
+        navigator.clipboard.writeText(key).then(() => {
+            showToast("Key copied to clipboard");
+        });
+    }
+});

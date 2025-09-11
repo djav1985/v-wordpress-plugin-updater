@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: footer.php
  * Description: WordPress Update API
@@ -18,6 +18,6 @@
     <p>&copy; <?php echo date("Y"); ?> Vontainment. All Rights Reserved.</p>
 </footer>
 <script src="/assets/js/footer-scripts.js"></script>
-<?php App\Core\ErrorMiddleware::displayAndClearMessages(); ?>
+<?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>
 </html>

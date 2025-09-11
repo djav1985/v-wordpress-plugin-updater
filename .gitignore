@@ -1,3 +1,5 @@
 # Ignore files and directories that should not be tracked by Git
 .vscode/
-*.code-workspace
+update-api/storage/BLACKLIST.json
+vendor/
+node_modules/

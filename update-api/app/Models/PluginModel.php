@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 3.0.0
+ * Version: 4.0.0
  *
  * File: PluginModel.php
  * Description: WordPress Update API
@@ -14,7 +14,8 @@
 
 namespace App\Models;
 
-use App\Core\Utility;
+use App\Core\DatabaseManager;
+use App\Helpers\Validation;
 
 class PluginModel
 {
@@ -23,12 +24,20 @@ class PluginModel
     /**
      * Return array of plugin file paths.
      *
-     * @return array
+     * @return array<int, string>
      */
     public static function getPlugins(): array
     {
-        $plugins = glob(self::$dir . '/*.zip');
-        return array_reverse($plugins ?: []);
+        $conn = DatabaseManager::getConnection();
+        $rows = $conn->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
+        $plugins = [];
+        foreach ($rows as $row) {
+            $plugins[] = [
+                'slug' => $row['slug'],
+                'version' => $row['version'],
+            ];
+        }
+        return $plugins;
     }
 
     /**
@@ -45,7 +54,11 @@ class PluginModel
             file_exists($plugin_path) &&
             dirname(realpath($plugin_path)) === realpath(self::$dir)
         ) {
-            return unlink($plugin_path);
+            unlink($plugin_path);
+            $slug = explode('_', basename($plugin_name))[0];
+            $conn = DatabaseManager::getConnection();
+            $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
+            return true;
         }
 
         return false;
@@ -54,10 +67,10 @@ class PluginModel
     /**
      * Upload plugin files.
      *
-     * @param array $fileArray $_FILES['plugin_file'] array structure
-     * @param bool  $isAjax    Whether the request was via AJAX
+     * @param array<string, array<int, mixed>> $fileArray $_FILES['plugin_file'] structure
+     * @param bool                              $isAjax    Whether the request was via AJAX
      *
-     * @return array Array of status messages
+     * @return string[] Array of status messages
      */
     public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
@@ -66,19 +79,14 @@ class PluginModel
         $total_files = count($fileArray['name']);
 
         for ($i = 0; $i < $total_files; $i++) {
-            $file_name = isset($fileArray['name'][$i]) ? Utility::validateFilename($fileArray['name'][$i]) : '';
+            $file_name = isset($fileArray['name'][$i]) ? Validation::validateFilename($fileArray['name'][$i]) : '';
             $file_tmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
             $file_error = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
             $plugin_slug = explode('_', $file_name)[0];
-            $existing_plugins = glob(self::$dir . '/' . $plugin_slug . '_*');
-            foreach ($existing_plugins as $plugin) {
-                if (is_file($plugin)) {
-                    unlink($plugin);
-                }
-            }
-
+            $conn = DatabaseManager::getConnection();
+            $current = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$plugin_slug]);
             $max_upload_size = min(
                 self::_parseIniSize(ini_get('upload_max_filesize')),
                 self::_parseIniSize(ini_get('post_max_size'))
@@ -96,8 +104,32 @@ class PluginModel
                 continue;
             }
 
+            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+                $slug = $matches[1];
+                $version = $matches[2];
+                if ($current && version_compare($version, $current, '<=')) {
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                        '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
+                    continue;
+                }
+                // Remove old plugin files
+                $existing_plugins = glob(self::$dir . '/' . $plugin_slug . '_*');
+                foreach ($existing_plugins as $plugin) {
+                    if (is_file($plugin)) {
+                        unlink($plugin);
+                    }
+                }
+            }
+
             $plugin_path = self::$dir . '/' . $file_name;
             if (move_uploaded_file($file_tmp, $plugin_path)) {
+                if (isset($slug) && isset($version)) {
+                    $conn->executeStatement(
+                        'INSERT INTO plugins (slug, version) VALUES (?, ?) '
+                        . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                        [$slug, $version]
+                    );
+                }
                 $messages[] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
             } else {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
