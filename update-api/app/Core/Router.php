@@ -18,6 +18,7 @@ use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 use App\Core\SessionManager;
+use App\Core\Response;
 
 class Router
 {
@@ -28,9 +29,8 @@ class Router
     {
         $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
             // Redirect the root URL to the home page for convenience
-            $r->addRoute('GET', '/', function (): void {
-                header('Location: /home');
-                exit();
+            $r->addRoute('GET', '/', function (): Response {
+                return Response::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
@@ -66,11 +66,11 @@ class Router
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                header('HTTP/1.0 404 Not Found');
+                http_response_code(404);
                 require __DIR__ . '/../Views/404.php';
                 break;
             case Dispatcher::METHOD_NOT_ALLOWED:
-                header('HTTP/1.0 405 Method Not Allowed');
+                http_response_code(405);
                 break;
             case Dispatcher::FOUND:
                 if (is_array($routeInfo[1])) {
@@ -80,28 +80,56 @@ class Router
                         ? str_starts_with($route, '/api')
                         : strpos($route, '/api') === 0;
                     if ($isApi) {
-                    $query = parse_url($uri, PHP_URL_QUERY);
-                    parse_str($query ?? '', $params);
-                    $required = (function_exists('str_starts_with') ? str_starts_with($route, '/api/key') : strpos($route, '/api/key') === 0)
-                        ? ['type', 'domain']
-                        : ['type', 'domain', 'key', 'slug', 'version'];
-                    foreach ($required as $key) {
-                        if (!isset($params[$key])) {
-                            $isApi = false;
-                            break;
+                        $query = parse_url($uri, PHP_URL_QUERY);
+                        parse_str($query ?? '', $params);
+                        $required = (function_exists('str_starts_with') ? str_starts_with($route, '/api/key') : strpos($route, '/api/key') === 0)
+                            ? ['type', 'domain']
+                            : ['type', 'domain', 'key', 'slug', 'version'];
+                        foreach ($required as $key) {
+                            if (!isset($params[$key])) {
+                                $isApi = false;
+                                break;
+                            }
                         }
-                    }
                     }
                     if ($route !== '/login' && !$isApi) {
                         if (!SessionManager::getInstance()->requireAuth()) {
+                            $this->sendResponse(Response::redirect('/login'));
                             return;
                         }
                     }
-                    call_user_func_array([new $class(), $action], $vars);
+                    $response = call_user_func_array([new $class(), $action], $vars);
+                    if ($response instanceof Response) {
+                        $this->sendResponse($response);
+                    }
                 } elseif (is_callable($routeInfo[1])) {
-                    call_user_func($routeInfo[1]);
+                    $response = call_user_func($routeInfo[1]);
+                    if ($response instanceof Response) {
+                        $this->sendResponse($response);
+                    }
                 }
                 break;
         }
+    }
+
+    private function sendResponse(Response $response): void
+    {
+        http_response_code($response->status);
+        foreach ($response->headers as $name => $value) {
+            header($name . ': ' . $value);
+        }
+
+        if ($response->file !== null) {
+            readfile($response->file);
+            return;
+        }
+
+        if ($response->view !== null) {
+            extract($response->data);
+            require __DIR__ . '/../Views/' . $response->view . '.php';
+            return;
+        }
+
+        echo $response->body;
     }
 }

@@ -104,7 +104,7 @@ class PluginModel
                 continue;
             }
 
-            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+            if (preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
                 $slug = $matches[1];
                 $version = $matches[2];
                 if ($current && version_compare($version, $current, '<=')) {

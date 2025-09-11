@@ -54,7 +54,7 @@ class PluginModelDbTest extends TestCase
         $tmp = tempnam(sys_get_temp_dir(), 'pl');
         file_put_contents($tmp, 'data');
         $files = [
-            'name'     => ['sample_1.0.zip'],
+            'name'     => ['sample1_test_1.0.zip'],
             'tmp_name' => [$tmp],
             'error'    => [UPLOAD_ERR_OK],
             'size'     => [filesize($tmp)],
@@ -62,7 +62,7 @@ class PluginModelDbTest extends TestCase
         $messages = PluginModel::uploadFiles($files);
         $this->assertStringContainsString('uploaded successfully', $messages[0]);
         $conn = DatabaseManager::getConnection();
-        $row = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['sample']);
+        $row = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['sample1_test']);
         $this->assertSame('1.0', $row['version']);
     }
 

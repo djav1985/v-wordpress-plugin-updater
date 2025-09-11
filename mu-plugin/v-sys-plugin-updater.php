@@ -46,8 +46,18 @@ function vontmnt_get_api_key(): string {
                         if ( file_exists( $wp_config ) && is_writable( $wp_config ) ) {
                                 $config = file_get_contents( $wp_config );
                                 if ( false !== $config ) {
-                                        $config = preg_replace( "/define\(\s*'VONTMNT_UPDATE_KEYREGEN'\s*,\s*true\s*\);/i", "define('VONTMNT_UPDATE_KEYREGEN', false);", $config );
-                                        file_put_contents( $wp_config, $config );
+                                        $backup = $wp_config . '.bak';
+                                        if ( ! copy( $wp_config, $backup ) ) {
+                                                error_log( 'Failed to back up wp-config.php' );
+                                                return is_string( $key ) ? $key : '';
+                                        }
+                                        $updated = preg_replace( "/define\(\s*'VONTMNT_UPDATE_KEYREGEN'\s*,\s*true\s*\);/i", "define('VONTMNT_UPDATE_KEYREGEN', false);", $config, 1, $count );
+                                        if ( null === $updated || 0 === $count || false === file_put_contents( $wp_config, $updated ) ) {
+                                                error_log( 'Failed to update VONTMNT_UPDATE_KEYREGEN in wp-config.php' );
+                                                copy( $backup, $wp_config );
+                                                return '';
+                                        }
+                                        unlink( $backup );
                                 }
                         }
                 }
@@ -268,101 +278,96 @@ function vontmnt_plugin_update_single( string $plugin_path, string $installed_ve
 		VONTMNT_API_URL
 	);
 
-	// Use wp_remote_get instead of cURL.
-	$response = wp_remote_get( $api_url );
-	if ( is_wp_error( $response ) ) {
-		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
-		delete_option( $lock_key );
-		return;
-	}
-	
-	$http_code     = wp_remote_retrieve_response_code( $response );
-	$response_body = wp_remote_retrieve_body( $response );
+        require_once ABSPATH . 'wp-admin/includes/file.php';
 
-	if ( $http_code === 200 && ! empty( $response_body ) ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		
-		// Initialize WP_Filesystem before any file operations
-		global $wp_filesystem;
-		if ( empty( $wp_filesystem ) ) {
-			WP_Filesystem();
-		}
-		
-		$upload_dir      = wp_upload_dir();
-		
-		// Ensure the upload directory exists
-		if ( ! wp_mkdir_p( $upload_dir['path'] ) ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to create upload directory' );
-			delete_option( $lock_key );
-			return;
-		}
-		
-		$plugin_zip_file = $upload_dir['path'] . '/' . $plugin_slug . '.zip';
-		
-		// Stream large files to disk instead of loading into memory
-		$temp_file = wp_tempnam( $plugin_zip_file );
-		$stream_response = wp_remote_get( $api_url, array( 'stream' => true, 'filename' => $temp_file ) );
-		
-		if ( is_wp_error( $stream_response ) ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to stream update package' );
-			delete_option( $lock_key );
-			return;
-		}
-		
-		// Move temp file to final location (allow overwrite)
-		if ( file_exists( $plugin_zip_file ) ) {
-			wp_delete_file( $plugin_zip_file );
-		}
-		if ( ! $wp_filesystem->move( $temp_file, $plugin_zip_file ) ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to move update package' );
-			wp_delete_file( $temp_file );
-			delete_option( $lock_key );
-			return;
-		}
-		
-		$response_size = filesize( $plugin_zip_file );
+        // Initialize WP_Filesystem before any file operations
+        global $wp_filesystem;
+        if ( empty( $wp_filesystem ) ) {
+                WP_Filesystem();
+        }
 
-		// Validate ZIP package before installation
-		if ( ! vontmnt_validate_zip_package( $plugin_zip_file ) ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Invalid ZIP package' );
-			wp_delete_file( $plugin_zip_file );
-			delete_option( $lock_key );
-			return;
-		}
+        $upload_dir = wp_upload_dir();
 
-		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		$upgrader = new Plugin_Upgrader();
-		$callback = function ( $options ) use ( $plugin_zip_file ) {
-			$options['package']           = $plugin_zip_file;
-			$options['clear_destination'] = true;
-			return $options;
-		};
-		add_filter( 'upgrader_package_options', $callback );
-		$result = $upgrader->install( $plugin_zip_file );
-		remove_filter( 'upgrader_package_options', $callback );
+        // Ensure the upload directory exists
+        if ( ! wp_mkdir_p( $upload_dir['path'] ) ) {
+                vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, 0, 0, 'failed', 'Failed to create upload directory' );
+                delete_option( $lock_key );
+                return;
+        }
 
-		// Delete the plugin zip file using wp_delete_file.
-		wp_delete_file( $plugin_zip_file );
-		
-		// Post-install housekeeping: refresh plugin update data
-		if ( function_exists( 'wp_clean_plugins_cache' ) ) {
-			wp_clean_plugins_cache( true );
-		}
-		
-		// Log success or failure
-		if ( ! is_wp_error( $result ) && $result ) {
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'success', 'Plugin updated successfully' );
-		} else {
-			$error_msg = is_wp_error( $result ) ? $result->get_error_message() : 'Installation failed';
-			vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', $error_msg );
-		}
-	} elseif ( 204 === $http_code ) {
-		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'skipped', 'No update available' );
-	} else {
-		vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Unexpected HTTP response' );
-	}
-	
-	// Release the lock
-	delete_option( $lock_key );
+        $plugin_zip_file = $upload_dir['path'] . '/' . $plugin_slug . '.zip';
+
+        // Stream download directly to temp file
+        $temp_file = wp_tempnam( $plugin_zip_file );
+        $response = wp_remote_get( $api_url, array( 'stream' => true, 'filename' => $temp_file ) );
+
+        if ( is_wp_error( $response ) ) {
+                vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
+                delete_option( $lock_key );
+                return;
+        }
+
+        $http_code = wp_remote_retrieve_response_code( $response );
+
+        if ( 200 === $http_code && file_exists( $temp_file ) ) {
+                // Move temp file to final location (allow overwrite)
+                if ( file_exists( $plugin_zip_file ) ) {
+                        wp_delete_file( $plugin_zip_file );
+                }
+                if ( ! $wp_filesystem->move( $temp_file, $plugin_zip_file ) ) {
+                        vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, 0, 'failed', 'Failed to move update package' );
+                        wp_delete_file( $temp_file );
+                        delete_option( $lock_key );
+                        return;
+                }
+
+                $response_size = filesize( $plugin_zip_file );
+
+                // Validate ZIP package before installation
+                if ( ! vontmnt_validate_zip_package( $plugin_zip_file ) ) {
+                        vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Invalid ZIP package' );
+                        wp_delete_file( $plugin_zip_file );
+                        delete_option( $lock_key );
+                        return;
+                }
+
+                require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+                $upgrader = new Plugin_Upgrader();
+                $callback = function ( $options ) use ( $plugin_zip_file ) {
+                        $options['package']           = $plugin_zip_file;
+                        $options['clear_destination'] = true;
+                        return $options;
+                };
+                add_filter( 'upgrader_package_options', $callback );
+                $result = $upgrader->install( $plugin_zip_file );
+                remove_filter( 'upgrader_package_options', $callback );
+
+                // Delete the plugin zip file using wp_delete_file.
+                wp_delete_file( $plugin_zip_file );
+
+                // Post-install housekeeping: refresh plugin update data
+                if ( function_exists( 'wp_clean_plugins_cache' ) ) {
+                        wp_clean_plugins_cache( true );
+                }
+
+                // Log success or failure
+                if ( ! is_wp_error( $result ) && $result ) {
+                        vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'success', 'Plugin updated successfully' );
+                } else {
+                        $error_msg = is_wp_error( $result ) ? $result->get_error_message() : 'Installation failed';
+                        vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', $error_msg );
+                }
+        } elseif ( 204 === $http_code ) {
+                $response_size = file_exists( $temp_file ) ? filesize( $temp_file ) : 0;
+                vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'skipped', 'No update available' );
+                wp_delete_file( $temp_file );
+        } else {
+                $response_size = file_exists( $temp_file ) ? filesize( $temp_file ) : 0;
+                vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, $http_code, $response_size, 'failed', 'Unexpected HTTP response' );
+                wp_delete_file( $temp_file );
+        }
+
+        // Release the lock
+        delete_option( $lock_key );
 }
 }

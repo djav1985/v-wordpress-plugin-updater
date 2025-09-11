@@ -40,11 +40,9 @@ class HostsModel
      */
     public static function addEntry(string $domain, string $key): bool
     {
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
-        $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $encrypted = Encryption::encrypt($safe_key);
+        $encrypted = Encryption::encrypt($key);
         $conn = DatabaseManager::getConnection();
-        return $conn->executeStatement('INSERT INTO hosts (domain, key, send_auth) VALUES (?, ?, 1)', [$safe_domain, $encrypted]) > 0;
+        return $conn->executeStatement('INSERT INTO hosts (domain, key, send_auth) VALUES (?, ?, 1)', [$domain, $encrypted]) > 0;
     }
 
     /**
@@ -52,11 +50,9 @@ class HostsModel
      */
     public static function updateEntry(int $line, string $domain, string $key): bool
     {
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
-        $safe_key = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-        $encrypted = Encryption::encrypt($safe_key);
+        $encrypted = Encryption::encrypt($key);
         $conn = DatabaseManager::getConnection();
-        return $conn->executeStatement('REPLACE INTO hosts (domain, key, send_auth) VALUES (?, ?, 1)', [$safe_domain, $encrypted]) > 0;
+        return $conn->executeStatement('REPLACE INTO hosts (domain, key, send_auth) VALUES (?, ?, 1)', [$domain, $encrypted]) > 0;
     }
 
     /**
@@ -64,11 +60,10 @@ class HostsModel
      */
     public static function deleteEntry(int $line, string $domain): bool
     {
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $conn = DatabaseManager::getConnection();
-        $result = $conn->executeStatement('DELETE FROM hosts WHERE domain = ?', [$safe_domain]) > 0;
+        $result = $conn->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]) > 0;
         if ($result) {
-            $conn->executeStatement('DELETE FROM logs WHERE domain = ?', [$safe_domain]);
+            $conn->executeStatement('DELETE FROM logs WHERE domain = ?', [$domain]);
         }
         return $result;
     }
@@ -78,9 +73,8 @@ class HostsModel
      */
     public static function markSendAuth(string $domain): void
     {
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $conn = DatabaseManager::getConnection();
-        $conn->executeStatement('UPDATE hosts SET send_auth = 1 WHERE domain = ?', [$safe_domain]);
+        $conn->executeStatement('UPDATE hosts SET send_auth = 1 WHERE domain = ?', [$domain]);
     }
 
     /**
@@ -88,11 +82,10 @@ class HostsModel
      */
     public static function getKeyIfSendAuth(string $domain): ?string
     {
-        $safe_domain = htmlspecialchars($domain, ENT_QUOTES, 'UTF-8');
         $conn = DatabaseManager::getConnection();
-        $row = $conn->fetchAssociative('SELECT key, send_auth FROM hosts WHERE domain = ?', [$safe_domain]);
+        $row = $conn->fetchAssociative('SELECT key, send_auth FROM hosts WHERE domain = ?', [$domain]);
         if ($row && (int) $row['send_auth'] === 1) {
-            $conn->executeStatement('UPDATE hosts SET send_auth = 0 WHERE domain = ?', [$safe_domain]);
+            $conn->executeStatement('UPDATE hosts SET send_auth = 0 WHERE domain = ?', [$domain]);
             return Encryption::decrypt($row['key']);
         }
         return null;

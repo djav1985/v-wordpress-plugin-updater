@@ -79,7 +79,7 @@ class Validation
     public static function validateFilename(string $filename): ?string
     {
         $filename = basename(trim($filename));
-        return preg_match('/^[A-Za-z-]+_[0-9.]+\.zip$/', $filename) ? $filename : null;
+        return preg_match('/^[A-Za-z0-9_-]+_[0-9.]+\.zip$/', $filename) ? $filename : null;
     }
 
     /**

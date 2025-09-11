@@ -487,7 +487,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    mkdir -p /storage/themes
    mkdir -p /storage/logs
    ```
-3. Edit `/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, and paths under `BASE_DIR` if the defaults do not match your setup.
+3. Edit `/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD_HASH` (generate with `password_hash()`), `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
 4. Set an `ENCRYPTION_KEY` environment variable used to secure host keys:
 
    ```sh
@@ -500,7 +500,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    define('VONTMNT_UPDATE_KEYREGEN', true); // set to true to fetch/regenerate the key
    ```
    The updater will fetch the API key from `/api/key` when this constant is true or when no key is stored. The key is saved as the `vontmnt_api_key` option and `wp-config.php` is rewritten to disable regeneration after the first retrieval.
-6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written.
+6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `/storage/logs/app.log`).
 
 7. From the `update-api/` directory run `php install.php` to create the SQLite database and required tables, including the blacklist. Ensure `storage/updater.sqlite` is writable by the web server.
 

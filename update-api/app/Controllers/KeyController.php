@@ -19,51 +19,44 @@ use App\Models\HostsModel;
 use App\Models\Blacklist;
 use App\Core\ErrorManager;
 use App\Core\Controller;
+use App\Core\Response;
 
 class KeyController extends Controller
 {
     /**
      * Handle API requests for retrieving host keys.
      */
-    public function handleRequest(): void
+    public function handleRequest(): Response
     {
         $ip = $_SERVER['REMOTE_ADDR'];
         if (Blacklist::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
-            http_response_code(403);
             ErrorManager::getInstance()->log('Forbidden or invalid request from ' . $ip);
-            return;
+            return new Response(403);
         }
 
         $required = ['type', 'domain'];
         foreach ($required as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '') {
-                http_response_code(400);
                 ErrorManager::getInstance()->log('Bad request missing parameter: ' . $p);
-                return;
+                return new Response(400);
             }
         }
         if ($_GET['type'] !== 'auth') {
-            http_response_code(400);
             ErrorManager::getInstance()->log('Bad request invalid type');
-            return;
+            return new Response(400);
         }
 
         $domain = Validation::validateDomain($_GET['domain']);
         if ($domain === null) {
-            http_response_code(400);
             ErrorManager::getInstance()->log('Bad request invalid parameter: domain');
-            return;
+            return new Response(400);
         }
 
         $key = HostsModel::getKeyIfSendAuth($domain);
         if ($key !== null) {
-            header('Content-Type: text/plain');
-            http_response_code(200);
-            echo $key;
-            return;
+            return Response::text($key);
         }
 
-        http_response_code(403);
-        return;
+        return new Response(403);
     }
 }

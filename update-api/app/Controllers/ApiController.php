@@ -20,16 +20,16 @@ use App\Models\Blacklist;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Core\DatabaseManager;
+use App\Core\Response;
 
 class ApiController extends Controller
 {
-    public function handleRequest(): void
+    public function handleRequest(): Response
     {
         $ip = $_SERVER['REMOTE_ADDR'];
         if (Blacklist::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
-            http_response_code(403);
             ErrorManager::getInstance()->log('Forbidden or invalid request from ' . $ip);
-            exit();
+            return new Response(403);
         }
 
         $params = [
@@ -42,9 +42,8 @@ class ApiController extends Controller
         $values = [];
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
-                http_response_code(400);
                 ErrorManager::getInstance()->log('Bad request missing parameter: ' . $p);
-                exit();
+                return new Response(400);
             }
             $values[] = $_GET[$p];
         }
@@ -69,9 +68,8 @@ class ApiController extends Controller
             $invalid[] = 'version';
         }
         if (!empty($invalid)) {
-            http_response_code(400);
             ErrorManager::getInstance()->log('Bad request invalid parameter: ' . implode(', ', $invalid));
-            exit();
+            return new Response(400);
         }
 
         $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
@@ -88,35 +86,34 @@ class ApiController extends Controller
                     if (version_compare($dbVersion, $version, '>')) {
                         $file_path = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
                         if (is_file($file_path)) {
-                            header('Content-Type: application/octet-stream');
-                            header('Content-Disposition: attachment; filename="' . basename($file_path) . '"');
-                            header('Content-Length: ' . filesize($file_path));
-                            readfile($file_path);
+                            $headers = [
+                                'Content-Type' => 'application/octet-stream',
+                                'Content-Disposition' => 'attachment; filename="' . basename($file_path) . '"',
+                                'Content-Length' => (string) filesize($file_path),
+                            ];
                             $conn->executeStatement(
                                 'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                                 [$domain, $type, date('Y-m-d'), 'Success']
                             );
                             ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                            exit();
+                            return Response::file($file_path, $headers);
                         }
                     }
-                    http_response_code(204);
                     $conn->executeStatement(
                         'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                         [$domain, $type, date('Y-m-d'), 'Success']
                     );
                     ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                    exit();
+                    return new Response(204);
                 }
             }
         }
 
-        http_response_code(403);
         $conn->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
             [$domain, $type, date('Y-m-d'), 'Failed']
         );
         ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
-        exit();
+        return new Response(403);
     }
 }
