@@ -41,7 +41,7 @@ function vontmnt_get_api_key(): string {
                 $response = wp_remote_get( $api_url );
                 if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
                         $key = wp_remote_retrieve_body( $response );
-                        update_option( 'vontmnt_api_key', $key, false );
+                        update_option( 'vontmnt_api_key', $key );
                         $wp_config = ABSPATH . 'wp-config.php';
                         if ( file_exists( $wp_config ) && is_writable( $wp_config ) ) {
                                 $config = file_get_contents( $wp_config );
