@@ -93,18 +93,14 @@ class Router
                     }
                     }
                     if ($route !== '/login' && !$isApi) {
-                        SessionManager::getInstance()->requireAuth();
+                        if (!SessionManager::getInstance()->requireAuth()) {
+                            return;
+                        }
                     }
                     call_user_func_array([new $class(), $action], $vars);
                 } elseif (is_callable($routeInfo[1])) {
                     call_user_func($routeInfo[1]);
                 }
-                if ($route !== '/login' && !$isApi) {
-                    if (!SessionManager::getInstance()->requireAuth()) {
-                        return;
-                    }
-                }
-                call_user_func_array([new $class(), $action], $vars);
                 break;
         }
     }

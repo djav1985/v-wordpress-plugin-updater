@@ -87,6 +87,7 @@ class PluginsController extends Controller
 
     /**
      * Generates an HTML table row for a plugin.
+     * @param array{slug: string, version: string} $pluginName
      */
     private static function generatePluginTableRow(array $pluginName): string
     {
@@ -129,17 +130,6 @@ class PluginsController extends Controller
                     </thead>
                     <tbody>';
             foreach ($pluginsColumn1 as $plugin) {
-                if (is_string($plugin)) {
-                    // Legacy: parse filename like slug_version.zip
-                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($plugin), $matches)) {
-                        $plugin = [
-                            'slug' => $matches[1],
-                            'version' => $matches[2],
-                        ];
-                    } else {
-                        continue;
-                    }
-                }
                 $pluginsTableHtml .= self::generatePluginTableRow($plugin);
             }
 
@@ -153,16 +143,6 @@ class PluginsController extends Controller
                 </thead>
                 <tbody>';
             foreach ($pluginsColumn2 as $plugin) {
-                if (is_string($plugin)) {
-                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($plugin), $matches)) {
-                        $plugin = [
-                            'slug' => $matches[1],
-                            'version' => $matches[2],
-                        ];
-                    } else {
-                        continue;
-                    }
-                }
                 $pluginsTableHtml .= self::generatePluginTableRow($plugin);
             }
 

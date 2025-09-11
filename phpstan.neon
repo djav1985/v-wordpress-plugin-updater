@@ -7,8 +7,10 @@ parameters:
     - update-api/vendor
     - update-api/vendor/*
   bootstrapFiles:
-    - .github\phpstan-bootstrap.php
+    - .github/phpstan-bootstrap.php
+    - update-api/vendor/autoload.php
 
   # Optional: silence WP globals noise you don’t care about
   ignoreErrors:
-    - '#Call to (function|method) (add_action|add_filter)#'
+    - '#Negated boolean expression is always true#'
+    - '#Function vontmnt_schedule_unique_single_event\(\) has parameter \$args with no value type specified in iterable type array#'

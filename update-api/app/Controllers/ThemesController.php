@@ -85,6 +85,7 @@ class ThemesController extends Controller
 
     /**
      * Generates an HTML table row for a theme.
+     * @param array{slug: string, version: string} $theme
      */
     private static function generateThemeTableRow(array $theme): string
     {
@@ -127,17 +128,6 @@ class ThemesController extends Controller
                      </thead>
                      <tbody>';
             foreach ($themes_column1 as $theme) {
-                if (is_string($theme)) {
-                    // Legacy: parse filename like slug_version.zip
-                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($theme), $matches)) {
-                        $theme = [
-                            'slug' => $matches[1],
-                            'version' => $matches[2],
-                        ];
-                    } else {
-                        continue;
-                    }
-                }
                 $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div><div class="column"><table>
@@ -150,16 +140,6 @@ class ThemesController extends Controller
                  </thead>
                  <tbody>';
             foreach ($themes_column2 as $theme) {
-                if (is_string($theme)) {
-                    if (preg_match('/^(.+)_([\d\.]+)\.zip$/', basename($theme), $matches)) {
-                        $theme = [
-                            'slug' => $matches[1],
-                            'version' => $matches[2],
-                        ];
-                    } else {
-                        continue;
-                    }
-                }
                 $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div></div>';

@@ -22,9 +22,9 @@ class ThemeModel
     public static string $dir = THEMES_DIR;
 
     /**
-     * Return array of theme file paths.
+     * Return array of theme data.
      *
-     * @return array<int, string>
+     * @return array<int, array{slug: string, version: string}>
      */
     public static function getThemes(): array
     {

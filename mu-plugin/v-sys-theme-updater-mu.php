@@ -210,7 +210,7 @@ function vontmnt_theme_updater_run_updates(): void {
  * @license https://opensource.org/licenses/MIT MIT License
  * @link    https://vontainment.com
  */
-function vontmnt_theme_update_single( $theme_slug, $installed_version ): void {
+function vontmnt_theme_update_single( string $theme_slug, string $installed_version ): void {
 	if ( ! is_main_site() ) {
 		return;
 	}
