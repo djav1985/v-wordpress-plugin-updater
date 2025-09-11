@@ -38,7 +38,7 @@ class ErrorManager
 
     public function log(string $message, string $type = 'error'): void
     {
-        $logFile = __DIR__ . '/../../php_app.log';
+        $logFile = defined('LOG_FILE') ? LOG_FILE : (__DIR__ . '/../../php_app.log');
         $timestamp = date('Y-m-d H:i:s');
         $logMessage = "[$timestamp] [$type]: $message\n";
         error_log($logMessage, 3, $logFile);

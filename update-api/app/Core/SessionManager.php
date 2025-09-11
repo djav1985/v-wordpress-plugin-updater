@@ -89,8 +89,7 @@ class SessionManager
         }
 
         if (!$this->isValid()) {
-            header('Location: /login');
-            exit();
+            return false;
         }
 
         return true;

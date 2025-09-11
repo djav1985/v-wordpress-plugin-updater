@@ -12,7 +12,7 @@
  */
 
 define('VALID_USERNAME', 'admin');
-define('VALID_PASSWORD', 'password');
+define('VALID_PASSWORD_HASH', '$2y$10$tYi5dWtBVRNkLqoSwV0yfuzM9Wh6A7O6oDulEGaM1lM3FsIaVvQ9e');
 
 define('ENCRYPTION_KEY', getenv('ENCRYPTION_KEY') ?: '');
 
@@ -23,4 +23,5 @@ define('HOSTS_ACL', BASE_DIR);
 define('PLUGINS_DIR', BASE_DIR . '/storage/plugins');
 define('THEMES_DIR', BASE_DIR . '/storage/themes');
 define('LOG_DIR', BASE_DIR . '/storage/logs');
+define('LOG_FILE', LOG_DIR . '/app.log');
 define('DB_FILE', BASE_DIR . '/storage/updater.sqlite');

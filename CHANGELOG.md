@@ -10,6 +10,14 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
 - **Split update loops into single-item tasks**: Refactored plugin and theme updaters to use asynchronous per-item processing. Daily update checks now schedule individual `wp_schedule_single_event()` tasks for each plugin/theme instead of processing all items synchronously. Added `vontmnt_plugin_update_single()` and `vontmnt_theme_update_single()` callback functions.
 - Added comprehensive test coverage for database manager, router dispatching, plugin model uploads, session manager, updater error handling, and URL encoding.
+- Stored admin password as a hash and verified with `password_verify` during login.
+- Controllers now return structured `Response` objects; router and session handling updated accordingly.
+- Expanded filename validation to allow digits and underscores in slugs and updated tests.
+- Introduced configurable `LOG_FILE` and centralized logging through `ErrorManager`.
+- Made `SessionManager::requireAuth` non-terminating, returning a boolean instead.
+- Enhanced `vontmnt_get_api_key` with wp-config backups and validation.
+- Streamlined plugin updates using a single streaming `wp_remote_get` call.
+- Removed HTML escaping in `HostsModel` in favor of parameterized queries.
 
 ## 4.0.0
 - Added PHP_CodeSniffer with WordPress Coding Standards for linting.
