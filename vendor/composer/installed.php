@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-copilot/fix-d4bad72a-26e6-46d2-919d-20b97bcf1178',
-        'version' => 'dev-copilot/fix-d4bad72a-26e6-46d2-919d-20b97bcf1178',
-        'reference' => 'd8902d3ac148ce9819bcfa378252ab93e6cc311c',
+        'pretty_version' => 'dev-copilot/fix-9c34f85b-0dbb-4591-a1cc-433f6a705755',
+        'version' => 'dev-copilot/fix-9c34f85b-0dbb-4591-a1cc-433f6a705755',
+        'reference' => '24f354d78cc7e83b67d2b5637a82aa7f62c0847d',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-copilot/fix-d4bad72a-26e6-46d2-919d-20b97bcf1178',
-            'version' => 'dev-copilot/fix-d4bad72a-26e6-46d2-919d-20b97bcf1178',
-            'reference' => 'd8902d3ac148ce9819bcfa378252ab93e6cc311c',
+            'pretty_version' => 'dev-copilot/fix-9c34f85b-0dbb-4591-a1cc-433f6a705755',
+            'version' => 'dev-copilot/fix-9c34f85b-0dbb-4591-a1cc-433f6a705755',
+            'reference' => '24f354d78cc7e83b67d2b5637a82aa7f62c0847d',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
