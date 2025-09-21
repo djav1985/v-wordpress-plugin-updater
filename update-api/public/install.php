@@ -48,6 +48,7 @@ try {
     $hosts = $schema->createTable('hosts');
     $hosts->addColumn('domain', 'text');
     $hosts->addColumn('key', 'text');
+    $hosts->addColumn('old_key', 'text', ['notnull' => false]);
     $hosts->addColumn('send_auth', 'boolean', ['default' => 0]);
     $hosts->setPrimaryKey(['domain']);
 

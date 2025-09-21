@@ -25,11 +25,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Retrieve the API key, requesting from the server when needed.
+ * Also handles key refresh when server signals an update is required.
  */
 if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
 function vontmnt_get_api_key(): string {
         $key = get_option( 'vontmnt_api_key' );
-        if ( ! $key || ( defined( 'VONTMNT_UPDATE_KEYREGEN' ) && VONTMNT_UPDATE_KEYREGEN ) ) {
+        if ( ! $key ) {
                 $base    = defined( 'VONTMNT_API_URL' ) ? VONTMNT_API_URL : '';
                 $api_url = add_query_arg(
                         array(
@@ -42,17 +43,39 @@ function vontmnt_get_api_key(): string {
                 if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
                         $key = wp_remote_retrieve_body( $response );
                         update_option( 'vontmnt_api_key', $key );
-                        $wp_config = ABSPATH . 'wp-config.php';
-                        if ( file_exists( $wp_config ) && is_writable( $wp_config ) ) {
-                                $config = file_get_contents( $wp_config );
-                                if ( false !== $config ) {
-                                        $config = preg_replace( "/define\(\s*'VONTMNT_UPDATE_KEYREGEN'\s*,\s*true\s*\);/i", "define('VONTMNT_UPDATE_KEYREGEN', false);", $config );
-                                        file_put_contents( $wp_config, $config );
-                                }
-                        }
                 }
         }
         return is_string( $key ) ? $key : '';
+}
+}
+
+/**
+ * Refresh API key when server indicates an update is needed.
+ */
+if ( ! function_exists( 'vontmnt_refresh_api_key' ) ) {
+function vontmnt_refresh_api_key(): string {
+        $old_key = get_option( 'vontmnt_api_key' );
+        if ( ! $old_key ) {
+                return vontmnt_get_api_key();
+        }
+        
+        $base    = defined( 'VONTMNT_API_URL' ) ? VONTMNT_API_URL : '';
+        $api_url = add_query_arg(
+                array(
+                        'type'     => 'auth',
+                        'domain'   => wp_parse_url( site_url(), PHP_URL_HOST ),
+                        'old_key'  => $old_key,
+                ),
+                rtrim( $base, '/' ) . '/key'
+        );
+        $response = wp_remote_get( $api_url );
+        if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+                $new_key = wp_remote_retrieve_body( $response );
+                update_option( 'vontmnt_api_key', $new_key );
+                return $new_key;
+        }
+        
+        return $old_key;
 }
 }
 
@@ -229,6 +252,35 @@ function vontmnt_theme_update_single( string $theme_slug, string $installed_vers
 	
 	$http_code     = wp_remote_retrieve_response_code( $response );
 	$response_body = wp_remote_retrieve_body( $response );
+
+	if ( 401 === $http_code ) {
+		// Server is signaling key refresh needed
+		$key = vontmnt_get_api_key(); // Get the current key for comparison
+		$refreshed_key = vontmnt_refresh_api_key();
+		if ( $refreshed_key !== $key ) {
+			// Key was refreshed, retry the request with new key
+			$api_url = add_query_arg(
+				array(
+					'type'    => 'theme',
+					'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
+					'slug'    => $theme_slug,
+					'version' => $installed_version,
+					'key'     => $refreshed_key,
+				),
+				VONTMNT_API_URL
+			);
+			
+			$response = wp_remote_get( $api_url );
+			if ( is_wp_error( $response ) ) {
+				vontmnt_log_update_context( 'theme', $theme_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
+				delete_option( $lock_key );
+				return;
+			}
+			
+			$http_code     = wp_remote_retrieve_response_code( $response );
+			$response_body = wp_remote_retrieve_body( $response );
+		}
+	}
 
 	if ( $http_code === 200 && ! empty( $response_body ) ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
