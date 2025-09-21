@@ -52,6 +52,24 @@ class KeyController extends Controller
             return new Response(400);
         }
 
+        // Check if this is a key refresh request (includes old_key parameter)
+        if (isset($_GET['old_key']) && $_GET['old_key'] !== '') {
+            $oldKey = Validation::validateKey($_GET['old_key']);
+            if ($oldKey === null) {
+                ErrorManager::getInstance()->log('Bad request invalid parameter: old_key');
+                return new Response(400);
+            }
+            
+            $newKey = HostsModel::validateAndCompleteKeyUpdate($domain, $oldKey);
+            if ($newKey !== null) {
+                return Response::text($newKey);
+            }
+            
+            ErrorManager::getInstance()->log('Key refresh failed for domain: ' . $domain);
+            return new Response(403);
+        }
+
+        // Standard key request
         $key = HostsModel::getKeyIfSendAuth($domain);
         if ($key !== null) {
             return Response::text($key);

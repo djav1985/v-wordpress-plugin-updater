@@ -40,7 +40,7 @@ class ApiKeyHelperTest extends TestCase
         if (!defined('ABSPATH')) {
             define('ABSPATH', sys_get_temp_dir() . '/');
         }
-        file_put_contents(ABSPATH . 'wp-config.php', "<?php\ndefine('VONTMNT_UPDATE_KEYREGEN', true);\n");
+        file_put_contents(ABSPATH . 'wp-config.php', "<?php\n// Test config file\n");
         if (!defined('VONTMNT_API_URL')) {
             define('VONTMNT_API_URL', 'https://example.com/api');
         }
@@ -53,11 +53,25 @@ class ApiKeyHelperTest extends TestCase
         $key1 = \vontmnt_get_api_key();
         $this->assertSame('secret', $key1);
         $this->assertSame(1, $remote_calls);
-        $content = file_get_contents(ABSPATH . 'wp-config.php');
-        $this->assertStringContainsString("VONTMNT_UPDATE_KEYREGEN', false", $content);
         $key2 = \vontmnt_get_api_key();
         $this->assertSame('secret', $key2);
         $this->assertSame(1, $remote_calls);
+    }
+
+    public function testKeyRefreshFunctionality(): void
+    {
+        global $options, $remote_calls;
+        require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
+        
+        // Set up initial key
+        $options['vontmnt_api_key'] = 'old-key-123';
+        $remote_calls = 0;
+        
+        // Test refresh functionality
+        $refreshed_key = \vontmnt_refresh_api_key();
+        $this->assertSame('secret', $refreshed_key);
+        $this->assertSame(1, $remote_calls);
+        $this->assertSame('secret', $options['vontmnt_api_key']);
     }
 }
 }

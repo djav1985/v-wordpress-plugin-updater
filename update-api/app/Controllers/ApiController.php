@@ -106,6 +106,13 @@ class ApiController extends Controller
                     ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
                     return new Response(204);
                 }
+            } else {
+                // Key mismatch - check if key update is pending
+                if (HostsModel::isKeyUpdatePending($domain)) {
+                    // Signal client to refresh key with 401 Unauthorized
+                    ErrorManager::getInstance()->log($domain . ' Key update required');
+                    return new Response(401);
+                }
             }
         }
 

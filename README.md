@@ -497,9 +497,8 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
    ```php
    define('VONTMNT_API_URL', 'https://example.com/api');
-   define('VONTMNT_UPDATE_KEYREGEN', true); // set to true to fetch/regenerate the key
    ```
-   The updater will fetch the API key from `/api/key` when this constant is true or when no key is stored. The key is saved as the `vontmnt_api_key` option and `wp-config.php` is rewritten to disable regeneration after the first retrieval.
+   The updater will automatically fetch the API key from `/api/key` when no key is stored. The key is saved as the `vontmnt_api_key` option. When the server indicates a key update is required (via HTTP 401 response), the client will automatically refresh the key using the old key for validation.
 6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `/storage/logs/app.log`).
 
 7. From the `update-api/` directory run `php install.php` to create the SQLite database and required tables, including the blacklist. Ensure `storage/updater.sqlite` is writable by the web server.
