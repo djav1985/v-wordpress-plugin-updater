@@ -5,6 +5,15 @@ namespace App\Models {
     {
         return copy($from, $to);
     }
+
+    function ini_get($varname)
+    {
+        global $test_ini_values;
+        if (isset($test_ini_values[$varname])) {
+            return $test_ini_values[$varname];
+        }
+        return \ini_get($varname);
+    }
 }
 
 namespace Tests {
@@ -68,8 +77,11 @@ class PluginModelDbTest extends TestCase
 
     public function testUploadFileTooLargeReturnsError(): void
     {
-        $oldUpload = ini_set('upload_max_filesize', '1K');
-        $oldPost   = ini_set('post_max_size', '1K');
+        global $test_ini_values;
+        $test_ini_values = [
+            'upload_max_filesize' => '1K',
+            'post_max_size' => '1K',
+        ];
         $tmp = tempnam(sys_get_temp_dir(), 'pl');
         file_put_contents($tmp, str_repeat('a', 2048));
         $files = [
@@ -80,8 +92,7 @@ class PluginModelDbTest extends TestCase
         ];
         $messages = PluginModel::uploadFiles($files);
         $this->assertStringContainsString('File size exceeds', $messages[0]);
-        ini_set('upload_max_filesize', $oldUpload);
-        ini_set('post_max_size', $oldPost);
+        $test_ini_values = [];
     }
 
     public function testUploadNonZipReturnsError(): void

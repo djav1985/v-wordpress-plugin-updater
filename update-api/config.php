@@ -14,7 +14,10 @@
 define('VALID_USERNAME', 'admin');
 define('VALID_PASSWORD_HASH', '$2y$10$tYi5dWtBVRNkLqoSwV0yfuzM9Wh6A7O6oDulEGaM1lM3FsIaVvQ9e');
 
-define('ENCRYPTION_KEY', getenv('ENCRYPTION_KEY') ?: '98aafe518ece74e33d92a2e7c4833dd4632afc208f1a978ed13b2b59d74e9af3');
+define(
+    'ENCRYPTION_KEY',
+    getenv('ENCRYPTION_KEY') ?: '98aafe518ece74e33d92a2e7c4833dd4632afc208f1a978ed13b2b59d74e9af3'
+);
 
 define('SESSION_TIMEOUT_LIMIT', 1800);
 

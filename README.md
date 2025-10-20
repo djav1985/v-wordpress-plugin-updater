@@ -508,6 +508,73 @@ When a host entry is created or its key regenerated, update the client installat
 
 ---
 
+## API Specification
+
+The Update API provides endpoints for checking and retrieving plugin and theme updates.
+
+### API Endpoint
+
+**Base URL:** `/api`
+
+**Method:** `GET`
+
+### Required Parameters
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `type` | string | Type of update (plugin or theme) | `plugin` or `theme` |
+| `domain` | string | Domain making the request | `example.com` |
+| `key` | string | API key for authentication | `your-api-key` |
+| `slug` | string | Plugin or theme slug | `my-plugin` |
+| `version` | string | Current installed version | `1.0.0` |
+
+### Response Codes
+
+| Code | Description |
+|------|-------------|
+| `200 OK` | Update available, returns update package |
+| `204 No Content` | No update available, current version is up to date |
+| `400 Bad Request` | Missing required parameters |
+| `403 Forbidden` | Invalid authentication, IP blacklisted, or domain not authorized |
+
+### Example Request
+
+```
+GET /api?type=plugin&domain=example.com&key=your-api-key&slug=my-plugin&version=1.0.0
+```
+
+### Example Response (Update Available)
+
+**Status:** `200 OK`
+
+**Headers:**
+```
+Content-Type: application/zip
+Content-Disposition: attachment; filename="my-plugin_1.1.0.zip"
+```
+
+**Body:** Binary ZIP file contents
+
+### Example Response (No Update)
+
+**Status:** `204 No Content`
+
+No response body.
+
+### Security
+
+- All requests are logged with domain, date, and status
+- Failed authentication attempts are tracked per IP address
+- IPs are automatically blacklisted after 3 failed login attempts
+- Blacklisted IPs are automatically removed after 7 days
+- Non-blacklisted IPs with no activity are removed after 3 days
+
+### Rate Limiting
+
+The API uses IP-based blacklisting for rate limiting. After 3 failed authentication attempts, an IP will be blacklisted for 7 days.
+
+---
+
 ## Roadmap
 
 - [X] **`Task 1`**: <strike>Convert to MVC framework</strike>
