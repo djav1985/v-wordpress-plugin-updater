@@ -31,6 +31,11 @@ class V_WP_Updater_Plugin_Updater
 	 */
 	public function run_updates(): void
 	{
+		// Check if plugin updates are enabled.
+		if ( ! vontmnt_option_is_true( 'update_plugins' ) ) {
+			return;
+		}
+
 		include_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 		if (! $this->validate_constants()) {

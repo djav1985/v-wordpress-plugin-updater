@@ -13,28 +13,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Clears the scheduled plugin update event.
+ * Performs all uninstallation tasks.
  *
- * Removes the scheduled event for plugin updates if it exists.
+ * Clears all scheduled cron jobs.
  *
- * @since 1.0.0
+ * @since 2.0.0
  * @return void
  */
-function vontmnt_clear_plugin_update_schedule(): void {
+function vontmnt_uninstall(): void {
+	// Clear plugin update schedule.
 	if ( wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
 		wp_clear_scheduled_hook( 'vontmnt_plugin_updater_check_updates' );
 	}
-}
 
-/**
- * Clears the scheduled theme update event.
- *
- * Removes the scheduled event for theme updates if it exists.
- *
- * @since 1.0.0
- * @return void
- */
-function vontmnt_clear_theme_update_schedule(): void {
+	// Clear theme update schedule.
 	if ( wp_next_scheduled( 'vontmnt_theme_updater_check_updates' ) ) {
 		wp_clear_scheduled_hook( 'vontmnt_theme_updater_check_updates' );
 	}
