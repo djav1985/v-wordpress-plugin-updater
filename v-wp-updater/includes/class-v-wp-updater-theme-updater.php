@@ -170,6 +170,17 @@ class V_WP_Updater_Theme_Updater {
 			return array( 'reason' => 'error' );
 		}
 
+		// Validate file size (max 50MB).
+		$max_size = 50 * 1024 * 1024;
+		if ( strlen( $file_content ) > $max_size ) {
+			return array( 'reason' => 'error' );
+		}
+
+		// Validate ZIP file signature (first 4 bytes should be PK\x03\x04 for ZIP files).
+		if ( 0 !== strpos( $file_content, "PK\x03\x04" ) && 0 !== strpos( $file_content, "PK\x05\x06" ) ) {
+			return array( 'reason' => 'error' );
+		}
+
 		$safe_filename  = sanitize_file_name( $theme_slug . '-update.zip' );
 		$theme_zip_file = $upload_dir['path'] . '/' . $safe_filename;
 
