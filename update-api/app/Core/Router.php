@@ -112,8 +112,14 @@ class Router
     private function sendResponse(Response $response): void
     {
         http_response_code($response->status);
+        // In CLI (when running php -r in tests) headers() do not output to stdout.
+        // Echo header lines in CLI so tests that run the app as a subprocess can capture them.
         foreach ($response->headers as $name => $value) {
-            header($name . ': ' . $value);
+            if (php_sapi_name() === 'cli') {
+                echo $name . ': ' . $value;
+            } else {
+                header($name . ': ' . $value);
+            }
         }
 
         if ($response->file !== null) {

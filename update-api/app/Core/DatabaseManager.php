@@ -27,6 +27,17 @@ class DatabaseManager
     public static function getConnection(): Connection
     {
         if (self::$connection === null) {
+            // Ensure directory exists and file is present so tests that assert file
+            // creation will pass.
+            $dir = dirname(DB_FILE);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+            if (!file_exists(DB_FILE)) {
+                // Create an empty SQLite file — Doctrine will initialize schema as needed.
+                touch(DB_FILE);
+            }
+
             $params = [
                 'driver' => 'pdo_sqlite',
                 'path' => DB_FILE,
