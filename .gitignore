@@ -2,4 +2,6 @@
 .vscode/
 update-api/storage/BLACKLIST.json
 update-api/storage/logs/
+update-api/storage/*.sqlite
 node_modules/
+.phpunit.result.cache

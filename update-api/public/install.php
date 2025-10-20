@@ -7,6 +7,7 @@
 
 use App\Core\DatabaseManager;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 
 ?><!DOCTYPE html>
 <html lang="en">
@@ -38,17 +39,23 @@ try {
     $plugins = $schema->createTable('plugins');
     $plugins->addColumn('slug', 'text');
     $plugins->addColumn('version', 'text');
-    $plugins->setPrimaryKey(['slug']);
+    $plugins->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setColumnNames('slug')->create()
+    );
 
     $themes = $schema->createTable('themes');
     $themes->addColumn('slug', 'text');
     $themes->addColumn('version', 'text');
-    $themes->setPrimaryKey(['slug']);
+    $themes->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setColumnNames('slug')->create()
+    );
 
     $hosts = $schema->createTable('hosts');
     $hosts->addColumn('domain', 'text');
     $hosts->addColumn('key', 'text');
-    $hosts->setPrimaryKey(['domain']);
+    $hosts->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setColumnNames('domain')->create()
+    );
 
     $logs = $schema->createTable('logs');
     $logs->addColumn('domain', 'text');
@@ -61,7 +68,9 @@ try {
     $blacklist->addColumn('login_attempts', 'integer');
     $blacklist->addColumn('blacklisted', 'integer');
     $blacklist->addColumn('timestamp', 'integer');
-    $blacklist->setPrimaryKey(['ip']);
+    $blacklist->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setColumnNames('ip')->create()
+    );
 
     foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
         $conn->executeStatement($sql);
