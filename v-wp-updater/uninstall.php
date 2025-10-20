@@ -20,14 +20,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.0.0
  * @return void
  */
-function vontmnt_uninstall(): void {
+function v_updater_uninstall(): void {
 	// Clear plugin update schedule.
-	if ( wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'vontmnt_plugin_updater_check_updates' );
+	if ( wp_next_scheduled( 'v_updater_plugin_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'v_updater_plugin_check_updates' );
 	}
 
 	// Clear theme update schedule.
-	if ( wp_next_scheduled( 'vontmnt_theme_updater_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'vontmnt_theme_updater_check_updates' );
+	if ( wp_next_scheduled( 'v_updater_theme_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'v_updater_theme_check_updates' );
 	}
 }

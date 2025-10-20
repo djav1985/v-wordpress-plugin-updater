@@ -32,7 +32,7 @@ class V_WP_Updater_Theme_Updater
 	public function run_updates(): void
 	{
 		// Check if theme updates are enabled.
-		if ( ! vontmnt_option_is_true( 'update_themes' ) ) {
+		if ( ! v_updater_option_is_true( 'update_themes' ) ) {
 			return;
 		}
 
@@ -63,11 +63,11 @@ class V_WP_Updater_Theme_Updater
 			}
 		}
 
-		update_option('vontmnt-thup', $update_successful);
+		update_option('v_updater_theme_update_status', $update_successful);
 		$message = $update_successful
 			? __('✅ Themes updated successfully!', 'v-wp-updater')
 			: __('❌ Error updating themes.', 'v-wp-updater');
-		set_transient('vontmnt_widget_status_message', $message, 30);
+		set_transient('v_updater_widget_status_message', $message, 30);
 	}
 
 	/**
@@ -78,8 +78,8 @@ class V_WP_Updater_Theme_Updater
 	 */
 	private function validate_constants(): bool
 	{
-		$update_key = vontmnt_get_option( 'update_key' );
-		$update_url = vontmnt_get_option( 'update_theme_url' );
+		$update_key = v_updater_get_option( 'update_key' );
+		$update_url = v_updater_get_option( 'update_theme_url' );
 		return ! empty( $update_key ) && ! empty( $update_url );
 	}
 
@@ -97,12 +97,13 @@ class V_WP_Updater_Theme_Updater
 	{
 		$api_url = add_query_arg(
 			array(
+				'type'    => 'theme',
 				'domain'  => rawurlencode(wp_parse_url(site_url(), PHP_URL_HOST)),
-				'theme'   => rawurlencode($theme_slug),
+				'slug'    => rawurlencode($theme_slug),
 				'version' => rawurlencode($installed_version),
-				'key'     => vontmnt_get_option( 'update_key' ),
+				'key'     => v_updater_get_option( 'update_key' ),
 			),
-			vontmnt_get_option( 'update_theme_url' )
+			v_updater_get_option( 'update_theme_url' )
 		);
 
 		$response = wp_remote_get($api_url, array('sslverify' => true, 'timeout' => 30));
