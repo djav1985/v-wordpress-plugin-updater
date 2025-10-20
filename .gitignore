@@ -2,5 +2,4 @@
 .vscode/
 update-api/storage/BLACKLIST.json
 update-api/storage/logs/
-vendor/
 node_modules/

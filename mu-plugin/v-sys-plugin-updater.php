@@ -30,21 +30,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
 function vontmnt_get_api_key(): string {
         $key = get_option( 'vontmnt_api_key' );
-        if ( ! $key ) {
-                $base    = defined( 'VONTMNT_API_URL' ) ? VONTMNT_API_URL : '';
-                $api_url = add_query_arg(
-                        array(
-                                'type'   => 'auth',
-                                'domain' => wp_parse_url( site_url(), PHP_URL_HOST ),
-                        ),
-                        rtrim( $base, '/' ) . '/key'
-                );
-                $response = wp_remote_get( $api_url );
-                if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-                        $key = wp_remote_retrieve_body( $response );
-                        update_option( 'vontmnt_api_key', $key );
-                }
-        }
         return is_string( $key ) ? $key : '';
 }
 }
@@ -322,35 +307,7 @@ function vontmnt_plugin_update_single( string $plugin_path, string $installed_ve
 
         $http_code = wp_remote_retrieve_response_code( $response );
 
-        if ( 401 === $http_code ) {
-                // Server is signaling key refresh needed
-                $refreshed_key = vontmnt_refresh_api_key();
-                if ( $refreshed_key !== $key ) {
-                        // Key was refreshed, retry the request with new key
-                        $api_url = add_query_arg(
-                                array(
-                                        'type'    => 'plugin',
-                                        'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
-                                        'slug'    => $plugin_slug,
-                                        'version' => $installed_version,
-                                        'key'     => $refreshed_key,
-                                ),
-                                VONTMNT_API_URL
-                        );
-                        
-                        wp_delete_file( $temp_file );
-                        $temp_file = wp_tempnam( $plugin_zip_file );
-                        $response = wp_remote_get( $api_url, array( 'stream' => true, 'filename' => $temp_file ) );
-                        
-                        if ( is_wp_error( $response ) ) {
-                                vontmnt_log_update_context( 'plugin', $plugin_slug, $installed_version, $api_url, 0, 0, 'failed', 'HTTP error: ' . $response->get_error_message() );
-                                delete_option( $lock_key );
-                                return;
-                        }
-                        
-                        $http_code = wp_remote_retrieve_response_code( $response );
-                }
-        }
+        // Treat 401 as failure — key rotation feature removed
 
         if ( 200 === $http_code && file_exists( $temp_file ) ) {
                 // Move temp file to final location (allow overwrite)

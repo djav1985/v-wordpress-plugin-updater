@@ -48,30 +48,24 @@ class ApiKeyHelperTest extends TestCase
 
     public function testOptionPersistence(): void
     {
-        global $remote_calls;
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
+        // No option set -> helper returns empty string
         $key1 = \vontmnt_get_api_key();
-        $this->assertSame('secret', $key1);
-        $this->assertSame(1, $remote_calls);
+        $this->assertSame('', $key1);
+        // Set an option and verify helper returns stored value
+        global $options;
+        $options['vontmnt_api_key'] = 'stored-key';
         $key2 = \vontmnt_get_api_key();
-        $this->assertSame('secret', $key2);
-        $this->assertSame(1, $remote_calls);
+        $this->assertSame('stored-key', $key2);
     }
 
     public function testKeyRefreshFunctionality(): void
     {
-        global $options, $remote_calls;
+        // Key refresh feature removed; ensure helper returns stored value only
+        global $options;
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
-        
-        // Set up initial key
-        $options['vontmnt_api_key'] = 'old-key-123';
-        $remote_calls = 0;
-        
-        // Test refresh functionality
-        $refreshed_key = \vontmnt_refresh_api_key();
-        $this->assertSame('secret', $refreshed_key);
-        $this->assertSame(1, $remote_calls);
-        $this->assertSame('secret', $options['vontmnt_api_key']);
+        $options['vontmnt_api_key'] = 'only-key';
+        $this->assertSame('only-key', \vontmnt_get_api_key());
     }
 }
 }

@@ -54,7 +54,6 @@ class HomeController extends Controller
         if (isset($_POST['add_entry'])) {
             $newKey = Validation::generateKey();
             if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
-                HostsModel::markSendAuth($domain);
                 MessageHelper::addMessage('Entry added successfully.');
             } else {
                 $error = 'Failed to add entry.';
@@ -64,7 +63,6 @@ class HomeController extends Controller
         } elseif (isset($_POST['regen_entry'])) {
             $newKey = Validation::generateKey();
             if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
-                HostsModel::markSendAuth($domain);
                 MessageHelper::addMessage('Key regenerated successfully.');
             } else {
                 $error = 'Failed to regenerate key.';

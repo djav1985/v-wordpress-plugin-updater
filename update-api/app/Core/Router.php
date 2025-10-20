@@ -42,8 +42,7 @@ class Router
             $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
-            $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
-            $r->addRoute('GET', '/api/key', ['\\App\\Controllers\\KeyController', 'handleRequest']);
+                $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
         });
     }
 
@@ -82,9 +81,7 @@ class Router
                     if ($isApi) {
                         $query = parse_url($uri, PHP_URL_QUERY);
                         parse_str($query ?? '', $params);
-                        $required = (function_exists('str_starts_with') ? str_starts_with($route, '/api/key') : strpos($route, '/api/key') === 0)
-                            ? ['type', 'domain']
-                            : ['type', 'domain', 'key', 'slug', 'version'];
+                        $required = ['type', 'domain', 'key', 'slug', 'version'];
                         foreach ($required as $key) {
                             if (!isset($params[$key])) {
                                 $isApi = false;

@@ -17,6 +17,7 @@ namespace App\Controllers;
 use App\Helpers\Validation;
 use App\Helpers\Encryption;
 use App\Models\Blacklist;
+use App\Models\HostsModel;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Core\DatabaseManager;

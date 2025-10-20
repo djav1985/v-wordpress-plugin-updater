@@ -647,6 +647,7 @@ return array(
     'PHPUnit\\Runner\\CodeCoverage' => $vendorDir . '/phpunit/phpunit/src/Runner/CodeCoverage.php',
     'PHPUnit\\Runner\\DeprecationCollector\\Collector' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/Collector.php',
     'PHPUnit\\Runner\\DeprecationCollector\\Facade' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/Facade.php',
+    'PHPUnit\\Runner\\DeprecationCollector\\InIsolationCollector' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/InIsolationCollector.php',
     'PHPUnit\\Runner\\DeprecationCollector\\Subscriber' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/Subscriber/Subscriber.php',
     'PHPUnit\\Runner\\DeprecationCollector\\TestPreparedSubscriber' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/Subscriber/TestPreparedSubscriber.php',
     'PHPUnit\\Runner\\DeprecationCollector\\TestTriggeredDeprecationSubscriber' => $vendorDir . '/phpunit/phpunit/src/Runner/DeprecationCollector/Subscriber/TestTriggeredDeprecationSubscriber.php',

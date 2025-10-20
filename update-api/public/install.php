@@ -48,8 +48,6 @@ try {
     $hosts = $schema->createTable('hosts');
     $hosts->addColumn('domain', 'text');
     $hosts->addColumn('key', 'text');
-    $hosts->addColumn('old_key', 'text', ['notnull' => false]);
-    $hosts->addColumn('send_auth', 'boolean', ['default' => 0]);
     $hosts->setPrimaryKey(['domain']);
 
     $logs = $schema->createTable('logs');
@@ -78,8 +76,8 @@ try {
         foreach ($lines as $line) {
             list($domain, $key) = explode(' ', $line, 2);
             $conn->executeStatement(
-                'INSERT INTO hosts (domain, key, send_auth) VALUES (?, ?, 0) ' .
-                'ON CONFLICT(domain) DO UPDATE SET key = excluded.key, send_auth = 0',
+                'INSERT INTO hosts (domain, key) VALUES (?, ?) ' .
+                'ON CONFLICT(domain) DO UPDATE SET key = excluded.key',
                 [$domain, $key]
             );
         }
