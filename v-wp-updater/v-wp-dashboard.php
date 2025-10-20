@@ -155,14 +155,14 @@ function v_updater_admin_styles( string $hook ): void {
 add_action( 'admin_enqueue_scripts', 'v_updater_admin_styles' );
 
 // Register theme updater hook.
-$theme_updater_file = __DIR__ . '/includes/class-v-wp-dashboard-theme-updater.php';
+$theme_updater_file = __DIR__ . '/includes/class-v-wp-updater-theme-updater.php';
 if ( file_exists( $theme_updater_file ) ) {
 	include_once $theme_updater_file;
-	if ( class_exists( 'V_WP_Dashboard_Theme_Updater' ) ) {
+	if ( class_exists( 'V_WP_Updater_Theme_Updater' ) ) {
 		add_action(
 			'v_updater_theme_check_updates',
 			function () {
-				$theme_updater = new V_WP_Dashboard_Theme_Updater();
+				$theme_updater = new V_WP_Updater_Theme_Updater();
 				$theme_updater->run_updates();
 			}
 		);
@@ -170,14 +170,14 @@ if ( file_exists( $theme_updater_file ) ) {
 }
 
 // Register plugin updater hook.
-$plugin_updater_file = __DIR__ . '/includes/class-v-wp-dashboard-plugin-updater.php';
+$plugin_updater_file = __DIR__ . '/includes/class-v-wp-updater-plugin-updater.php';
 if ( file_exists( $plugin_updater_file ) ) {
 	include_once $plugin_updater_file;
-	if ( class_exists( 'V_WP_Dashboard_Plugin_Updater' ) ) {
+	if ( class_exists( 'V_WP_Updater_Plugin_Updater' ) ) {
 		add_action(
 			'v_updater_plugin_check_updates',
 			function () {
-				$plugin_updater = new V_WP_Dashboard_Plugin_Updater();
+				$plugin_updater = new V_WP_Updater_Plugin_Updater();
 				$plugin_updater->run_updates();
 			}
 		);

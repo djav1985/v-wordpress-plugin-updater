@@ -37,11 +37,28 @@ function v_updater_widget_settings_display(): void {
 	$updates = array(
 		'title'  => __( 'Update Settings', 'v-wp-updater' ),
 		'fields' => array(
-			'update_plugins'    => array( 'label' => __( 'Enable Plugin Updates', 'v-wp-updater' ), 'type' => 'select' ),
-			'update_themes'     => array( 'label' => __( 'Enable Theme Updates', 'v-wp-updater' ), 'type' => 'select' ),
-			'update_key'        => array( 'label' => __( 'Update Key', 'v-wp-updater' ), 'type' => 'text' ),
-			'update_plugin_url' => array( 'label' => __( 'Plugin Update URL', 'v-wp-updater' ), 'type' => 'text', 'default' => 'https://wp-updates.servicesbyv.com/plugins/api.php' ),
-			'update_theme_url'  => array( 'label' => __( 'Theme Update URL', 'v-wp-updater' ), 'type' => 'text', 'default' => 'https://wp-updates.servicesbyv.com/themes/api.php' ),
+			'update_plugins'    => array(
+				'label' => __( 'Enable Plugin Updates', 'v-wp-updater' ),
+				'type'  => 'select',
+			),
+			'update_themes'     => array(
+				'label' => __( 'Enable Theme Updates', 'v-wp-updater' ),
+				'type'  => 'select',
+			),
+			'update_key'        => array(
+				'label' => __( 'Update Key', 'v-wp-updater' ),
+				'type'  => 'text',
+			),
+			'update_plugin_url' => array(
+				'label'   => __( 'Plugin Update URL', 'v-wp-updater' ),
+				'type'    => 'text',
+				'default' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
+			),
+			'update_theme_url'  => array(
+				'label'   => __( 'Theme Update URL', 'v-wp-updater' ),
+				'type'    => 'text',
+				'default' => 'https://wp-updates.servicesbyv.com/themes/api.php',
+			),
 		),
 	);
 
