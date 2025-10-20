@@ -100,14 +100,26 @@ class SingleItemSchedulingTest extends TestCase
 {
     protected function setUp(): void
     {
-        global $scheduled_events, $transients;
+        global $scheduled_events, $transients, $__vontmnt_test_storage;
         $scheduled_events = array();
         $transients = array();
+        if (!isset($__vontmnt_test_storage)) {
+            $__vontmnt_test_storage = [];
+        }
+        $__vontmnt_test_storage['scheduled'] = [];
+        $__vontmnt_test_storage['transients'] = [];
+        $__vontmnt_test_storage['options'] = [];
     }
 
     public function testPluginUpdaterSchedulesIndividualEvents(): void
     {
-        global $scheduled_events;
+        global $scheduled_events, $__wp_plugins;
+        
+        // Set up mock plugins
+        $__wp_plugins = array(
+            'plugin1/plugin1.php' => array('Version' => '1.0.0'),
+            'plugin2/plugin2.php' => array('Version' => '2.0.0')
+        );
         
         // Include and mock the functions we need
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater-mu.php';
@@ -133,7 +145,13 @@ class SingleItemSchedulingTest extends TestCase
 
     public function testUniqueSchedulingPreventsDoubleBooking(): void
     {
-        global $scheduled_events;
+        global $scheduled_events, $__wp_plugins;
+        
+        // Set up mock plugins
+        $__wp_plugins = array(
+            'plugin1/plugin1.php' => array('Version' => '1.0.0'),
+            'plugin2/plugin2.php' => array('Version' => '2.0.0')
+        );
         
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater-mu.php';
         
@@ -155,23 +173,36 @@ class SingleItemSchedulingTest extends TestCase
 
     public function testTransientPreventsConcurrentScheduling(): void
     {
-        global $transients;
+        global $__wp_plugins, $scheduled_events;
+        
+        // Set up mock plugins
+        $__wp_plugins = array(
+            'plugin1/plugin1.php' => array('Version' => '1.0.0'),
+            'plugin2/plugin2.php' => array('Version' => '2.0.0')
+        );
         
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater-mu.php';
         
-        // Simulate existing transient
-        \set_transient('vontmnt_updates_scheduling', 1, 60);
+        // Simulate existing lock using add_option (which is how the function actually locks)
+        \add_option('vontmnt_updates_scheduling', time(), '', false);
         
-        // Call should return early due to transient
+        // Call should return early due to lock
         \vontmnt_plugin_updater_run_updates();
         
-        global $scheduled_events;
-        $this->assertCount(0, $scheduled_events, 'No events should be scheduled when transient is set');
+        $this->assertCount(0, $scheduled_events, 'No events should be scheduled when lock exists');
     }
 
     public function testThemeUpdaterSchedulesIndividualEvents(): void
     {
-        global $scheduled_events;
+        global $scheduled_events, $__wp_themes;
+        
+        // Set up mock themes
+        $theme1 = new MockTheme('theme1', '1.0.0');
+        $theme2 = new MockTheme('theme2', '2.0.0');
+        $__wp_themes = array(
+            'theme1' => $theme1,
+            'theme2' => $theme2
+        );
         
         // Include and mock the functions we need  
         require_once __DIR__ . '/../mu-plugin/v-sys-theme-updater-mu.php';

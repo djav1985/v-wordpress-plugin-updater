@@ -65,11 +65,11 @@ class Router
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                http_response_code(404);
+                header('HTTP/1.0 404 Not Found');
                 require __DIR__ . '/../Views/404.php';
                 break;
             case Dispatcher::METHOD_NOT_ALLOWED:
-                http_response_code(405);
+                header('HTTP/1.0 405 Method Not Allowed');
                 break;
             case Dispatcher::FOUND:
                 if (is_array($routeInfo[1])) {
@@ -115,11 +115,6 @@ class Router
         // In CLI (when running php -r in tests) headers() do not output to stdout.
         // Echo header lines in CLI so tests that run the app as a subprocess can capture them.
         foreach ($response->headers as $name => $value) {
-            // Echo header first so subprocess-based tests capture output even if
-            // a namespaced header() override throws an exception.
-            if (php_sapi_name() === 'cli') {
-                echo $name . ': ' . $value;
-            }
             // Call header() (unqualified) so tests that define a namespaced
             // header() function can intercept it.
             header($name . ': ' . $value);

@@ -168,5 +168,47 @@ if (!function_exists('add_action')) { function add_action(...$args) { return tru
 if (!function_exists('add_filter')) { function add_filter(...$args) { return true; } }
 if (!function_exists('remove_filter')) { function remove_filter(...$args) { return true; } }
 
+// Additional WordPress functions needed by mu-plugin tests
+if (!function_exists('is_main_site')) { function is_main_site() { return true; } }
+if (!function_exists('wp_parse_url')) { function wp_parse_url($url, $component = -1) { return parse_url($url, $component); } }
+if (!function_exists('wp_upload_dir')) { function wp_upload_dir() { return ['basedir' => sys_get_temp_dir() . '/wp-content/uploads']; } }
+if (!function_exists('wp_tempnam')) { function wp_tempnam($filename = '', $dir = '') { return tempnam($dir ?: sys_get_temp_dir(), $filename); } }
+if (!function_exists('wp_mkdir_p')) { function wp_mkdir_p($target) { return @mkdir($target, 0777, true) || is_dir($target); } }
+if (!function_exists('wp_delete_file')) { function wp_delete_file($file) { return @unlink($file); } }
+if (!function_exists('wp_filesystem')) { function wp_filesystem() { return true; } }
+if (!function_exists('wp_clean_plugins_cache')) { function wp_clean_plugins_cache() { return true; } }
+if (!function_exists('wp_clean_themes_cache')) { function wp_clean_themes_cache() { return true; } }
+if (!function_exists('wp_remote_get')) { 
+    function wp_remote_get($url, $args = []) {
+        global $__wp_remote_responses;
+        if (isset($__wp_remote_responses[$url])) {
+            return $__wp_remote_responses[$url];
+        }
+        return ['response' => ['code' => 200], 'body' => ''];
+    }
+}
+if (!function_exists('wp_remote_retrieve_response_code')) {
+    function wp_remote_retrieve_response_code($response) {
+        return $response['response']['code'] ?? 200;
+    }
+}
+if (!function_exists('wp_remote_retrieve_body')) {
+    function wp_remote_retrieve_body($response) {
+        return $response['body'] ?? '';
+    }
+}
+if (!function_exists('get_plugins')) {
+    function get_plugins() {
+        global $__wp_plugins;
+        return $__wp_plugins ?? [];
+    }
+}
+if (!function_exists('wp_get_themes')) {
+    function wp_get_themes() {
+        global $__wp_themes;
+        return $__wp_themes ?? [];
+    }
+}
+
 // Allow vendor autoload to be loaded by phpunit.xml bootstrap (vendor/autoload.php)
 // If phpunit.xml already bootstraps vendor/autoload.php, this file will be included after.
