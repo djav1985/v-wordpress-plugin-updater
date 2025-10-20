@@ -61,7 +61,7 @@ class ApiKeyHelperTest extends TestCase
 
     public function testKeyRefreshFunctionality(): void
     {
-        // Key refresh feature removed; ensure helper returns stored value only
+        // Legacy key-exchange feature removed; ensure helper returns stored value only
         global $options;
         require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
         $options['vontmnt_api_key'] = 'only-key';

@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Retrieve the API key, requesting from the server when needed.
- * Also handles key refresh when server signals an update is required.
+ * Clients must use the stored API key option.
  */
 if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
 function vontmnt_get_api_key(): string {

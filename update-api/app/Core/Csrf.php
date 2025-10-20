@@ -1,4 +1,16 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
+
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.0.0
+ *
+ * File: Csrf.php
+ * Description: CSRF validation helper
+ */
 
 namespace App\Core;
 

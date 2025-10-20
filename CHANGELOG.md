@@ -3,9 +3,8 @@
 All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
-- Added `vontmnt_get_api_key` helper in mu-plugins to cache API keys and auto-regenerate via the `/api/key` endpoint.
-- Introduced `send_auth` flag and `KeyController` so keys are retrievable once per regeneration.
+-## Unreleased
+- Removed legacy key-exchange workflow; clients now use a stored API key.
 - Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.
 - Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
 - **Split update loops into single-item tasks**: Refactored plugin and theme updaters to use asynchronous per-item processing. Daily update checks now schedule individual `wp_schedule_single_event()` tasks for each plugin/theme instead of processing all items synchronously. Added `vontmnt_plugin_update_single()` and `vontmnt_theme_update_single()` callback functions.

@@ -114,7 +114,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │       ├── info.php
     │   │       └── users.php
     │   ├── autoload.php
-    │   ├── config.php
+		Note: Clients must store the API key (`vontmnt_api_key`) by configuration or provisioning. The updater now uses the stored key only.
     │   ├── php.ini
     │   ├── public
     │   │   ├── .htaccess
@@ -131,24 +131,15 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
     │   │   │       ├── footer-scripts.js
     │   │   │       └── header-scripts.js
     │   │   ├── favicon.ico
-    │   │   ├── index.php
     │   │   └── robots.txt
     │   └── storage
     │       ├── updater.sqlite
-    │       └── logs
-    │           ├── php_app.log
-    │           ├── plugin.log
-    │           └── theme.log
-    └── v-wordpress-plugin-updater.png
-```
 
-### Project Index
 
 <details open>
 	<summary><b><code>V-WORDPRESS-PLUGIN-UPDATER/</code></b></summary>
 	<!-- __root__ Submodule -->
 	<details>
-		<summary><b>__root__</b></summary>
 		<blockquote>
 			<div class='directory-path' style='padding: 8px 0; color: #666;'>
 				<code><b>⦿ __root__</b></code>
@@ -498,7 +489,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
    ```php
    define('VONTMNT_API_URL', 'https://example.com/api');
    ```
-   The updater will automatically fetch the API key from `/api/key` when no key is stored. The key is saved as the `vontmnt_api_key` option. When the server indicates a key update is required (via HTTP 401 response), the client will automatically refresh the key using the old key for validation.
+	The updater uses the API key stored in the `vontmnt_api_key` option. Ensure this option is set in WordPress via provisioning or wp-config constants before enabling the mu-plugin.
 6. Ensure the web server user owns the `/storage` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `/storage/logs/app.log`).
 
 7. From the `update-api/` directory run `php install.php` to create the SQLite database and required tables, including the blacklist. Ensure `storage/updater.sqlite` is writable by the web server.
@@ -507,7 +498,7 @@ The v-wordpress-plugin-updater project is designed to streamline the management 
 
 NOTE: Make sure to set /public/ as doc root.
 
-When a host entry is created or its key regenerated, the server marks it to send the key once. The `/api/key` endpoint returns the key only while this flag is set, then disables it after the first retrieval.
+When a host entry is created or its key regenerated, update the client installation with the new key using your provisioning process. The server no longer exposes a one-time retrieval endpoint.
 
 ### Usage
 

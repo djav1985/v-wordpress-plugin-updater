@@ -25,42 +25,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Retrieve the API key, requesting from the server when needed.
- * Also handles key refresh when server signals an update is required.
+ * Clients must use the stored API key option.
  */
 if ( ! function_exists( 'vontmnt_get_api_key' ) ) {
 function vontmnt_get_api_key(): string {
         $key = get_option( 'vontmnt_api_key' );
         return is_string( $key ) ? $key : '';
-}
-}
-
-/**
- * Refresh API key when server indicates an update is needed.
- */
-if ( ! function_exists( 'vontmnt_refresh_api_key' ) ) {
-function vontmnt_refresh_api_key(): string {
-        $old_key = get_option( 'vontmnt_api_key' );
-        if ( ! $old_key ) {
-                return vontmnt_get_api_key();
-        }
-        
-        $base    = defined( 'VONTMNT_API_URL' ) ? VONTMNT_API_URL : '';
-        $api_url = add_query_arg(
-                array(
-                        'type'     => 'auth',
-                        'domain'   => wp_parse_url( site_url(), PHP_URL_HOST ),
-                        'old_key'  => $old_key,
-                ),
-                rtrim( $base, '/' ) . '/key'
-        );
-        $response = wp_remote_get( $api_url );
-        if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-                $new_key = wp_remote_retrieve_body( $response );
-                update_option( 'vontmnt_api_key', $new_key );
-                return $new_key;
-        }
-        
-        return $old_key;
 }
 }
 
