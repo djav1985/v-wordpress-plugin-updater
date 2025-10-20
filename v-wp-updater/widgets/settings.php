@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.0.0
  * @return void
  */
-function vontmnt_widget_settings_display(): void {
+function v_updater_widget_settings_display(): void {
 	// Check current user capability.
 	if ( ! current_user_can( 'manage_options' ) ) {
 		echo '<p>' . esc_html__( 'You do not have permission to access this settings widget.', 'v-wp-updater' ) . '</p>';
@@ -26,10 +26,10 @@ function vontmnt_widget_settings_display(): void {
 	}
 
 	// Handle form submission: verify nonce and capability.
-	if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['vontmnt_settings_nonce'] ) ) {
+	if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['v_updater_settings_nonce'] ) ) {
 		// check_admin_referer will verify the nonce and die on failure.
-		check_admin_referer( 'vontmnt_save_settings', 'vontmnt_settings_nonce' );
-		vontmnt_save_settings();
+		check_admin_referer( 'v_updater_save_settings', 'v_updater_settings_nonce' );
+		v_updater_save_settings();
 		echo '<div class="notice notice-success"><p>' . esc_html__( 'Settings saved successfully!', 'v-wp-updater' ) . '</p></div>';
 	}
 
@@ -37,24 +37,41 @@ function vontmnt_widget_settings_display(): void {
 	$updates = array(
 		'title'  => __( 'Update Settings', 'v-wp-updater' ),
 		'fields' => array(
-			'update_plugins'    => array( 'label' => __( 'Enable Plugin Updates', 'v-wp-updater' ), 'type' => 'select' ),
-			'update_themes'     => array( 'label' => __( 'Enable Theme Updates', 'v-wp-updater' ), 'type' => 'select' ),
-			'update_key'        => array( 'label' => __( 'Update Key', 'v-wp-updater' ), 'type' => 'text' ),
-			'update_plugin_url' => array( 'label' => __( 'Plugin Update URL', 'v-wp-updater' ), 'type' => 'text', 'default' => 'https://wp-updates.servicesbyv.com/plugins/api.php' ),
-			'update_theme_url'  => array( 'label' => __( 'Theme Update URL', 'v-wp-updater' ), 'type' => 'text', 'default' => 'https://wp-updates.servicesbyv.com/themes/api.php' ),
+			'update_plugins'    => array(
+				'label' => __( 'Enable Plugin Updates', 'v-wp-updater' ),
+				'type'  => 'select',
+			),
+			'update_themes'     => array(
+				'label' => __( 'Enable Theme Updates', 'v-wp-updater' ),
+				'type'  => 'select',
+			),
+			'update_key'        => array(
+				'label' => __( 'Update Key', 'v-wp-updater' ),
+				'type'  => 'text',
+			),
+			'update_plugin_url' => array(
+				'label'   => __( 'Plugin Update URL', 'v-wp-updater' ),
+				'type'    => 'text',
+				'default' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
+			),
+			'update_theme_url'  => array(
+				'label'   => __( 'Theme Update URL', 'v-wp-updater' ),
+				'type'    => 'text',
+				'default' => 'https://wp-updates.servicesbyv.com/themes/api.php',
+			),
 		),
 	);
 
-	echo '<div class="vwp-widget vwp-widget-settings">';
+	echo '<div class="v-updater-widget v-updater-widget-settings">';
 	echo '<form method="post" action="">';
-	wp_nonce_field( 'vontmnt_save_settings', 'vontmnt_settings_nonce' );
+	wp_nonce_field( 'v_updater_save_settings', 'v_updater_settings_nonce' );
 
 	echo '<h3>' . esc_html( $updates['title'] ) . '</h3>';
 	echo '<table class="form-table">';
 
 	foreach ( $updates['fields'] as $field_key => $field ) {
-		$option_name = 'vontmnt_' . $field_key;
-		$value       = vontmnt_get_option( $field_key, $field['default'] ?? '' );
+		$option_name = 'v_updater_' . $field_key;
+		$value       = v_updater_get_option( $field_key, $field['default'] ?? '' );
 
 		echo '<tr>';
 		echo '<th scope="row"><label for="' . esc_attr( $option_name ) . '">' . esc_html( $field['label'] ) . '</label></th>';
@@ -86,7 +103,7 @@ function vontmnt_widget_settings_display(): void {
  * @since 2.0.0
  * @return void
  */
-function vontmnt_save_settings(): void {
+function v_updater_save_settings(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
@@ -102,7 +119,7 @@ function vontmnt_save_settings(): void {
 
 	// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce already verified in display handler.
 	foreach ( $keys as $key ) {
-		$option_name = 'vontmnt_' . $key;
+		$option_name = 'v_updater_' . $key;
 		if ( isset( $_POST[ $option_name ] ) ) {
 			$value = sanitize_text_field( wp_unslash( $_POST[ $option_name ] ) );
 			update_option( $option_name, $value, false );
