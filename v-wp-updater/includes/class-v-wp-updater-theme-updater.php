@@ -118,14 +118,21 @@ class V_WP_Updater_Theme_Updater {
 		if ( 204 === $http_code ) {
 			return array( 'reason' => 'no_update' );
 		}
-		if ( 401 === $http_code ) {
+		if ( 401 === $http_code || 403 === $http_code ) {
 			return array( 'reason' => 'unauthorized' );
 		}
+		if ( 200 !== $http_code ) {
+			return array( 'reason' => 'error' );
+		}
 
+		// The API returns the zip file directly, not a JSON with URL.
 		$response_body = wp_remote_retrieve_body( $response );
-		$response_data = json_decode( $response_body, true );
+		if ( empty( $response_body ) ) {
+			return array( 'reason' => 'error' );
+		}
 
-		$upgrade_result = $this->perform_theme_upgrade( $theme_slug, $response_data['zip_url'] );
+		// Run upgrader with the file content.
+		$upgrade_result = $this->perform_theme_upgrade( $theme_slug, $response_body );
 
 		// After upgrade, check installed version.
 		$themes      = wp_get_themes();
@@ -147,14 +154,13 @@ class V_WP_Updater_Theme_Updater {
 	 *
 	 * @since 1.0.0
 	 * @param string $theme_slug   Theme slug.
-	 * @param string $download_url Download URL.
+	 * @param string $file_content Zip file content from API.
 	 * @return array {
 	 *     @type string $reason Result status: updated|error.
 	 * }
 	 */
-	private function perform_theme_upgrade( string $theme_slug, string $download_url ): array {
-		$download_url = esc_url_raw( $download_url );
-		if ( empty( $download_url ) ) {
+	private function perform_theme_upgrade( string $theme_slug, string $file_content ): array {
+		if ( empty( $file_content ) ) {
 			return array( 'reason' => 'error' );
 		}
 
@@ -167,18 +173,18 @@ class V_WP_Updater_Theme_Updater {
 		$safe_filename  = sanitize_file_name( $theme_slug . '-update.zip' );
 		$theme_zip_file = $upload_dir['path'] . '/' . $safe_filename;
 
-		$tmp_file = download_url( $download_url, 300 );
-		if ( is_wp_error( $tmp_file ) ) {
+		// Write the file content to a temporary file.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		if ( false === file_put_contents( $theme_zip_file, $file_content ) ) {
 			return array( 'reason' => 'error' );
 		}
 
-		if ( ! copy( $tmp_file, $theme_zip_file ) ) {
-			wp_delete_file( $tmp_file );
-			return array( 'reason' => 'error' );
-		}
-		wp_delete_file( $tmp_file );
+		$result = $this->install_theme_upgrade( $theme_slug, $theme_zip_file );
 
-		return $this->install_theme_upgrade( $theme_slug, $theme_zip_file );
+		// Clean up the temporary file.
+		wp_delete_file( $theme_zip_file );
+
+		return $result;
 	}
 
 	/**
@@ -213,9 +219,6 @@ class V_WP_Updater_Theme_Updater {
 		);
 
 		remove_filter( 'upgrader_pre_download', $filter_callback, 10 );
-		if ( file_exists( $theme_zip_file ) ) {
-			wp_delete_file( $theme_zip_file );
-		}
 
 		if ( is_wp_error( $result ) || false === $result || ! empty( $skin->errors ) ) {
 			return array( 'reason' => 'error' );

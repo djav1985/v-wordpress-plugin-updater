@@ -122,15 +122,21 @@ class V_WP_Updater_Plugin_Updater {
 		if ( 204 === $http_code ) {
 			return array( 'reason' => 'no_update' );
 		}
-		if ( 401 === $http_code ) {
+		if ( 401 === $http_code || 403 === $http_code ) {
 			return array( 'reason' => 'unauthorized' );
 		}
+		if ( 200 !== $http_code ) {
+			return array( 'reason' => 'error' );
+		}
 
+		// The API returns the zip file directly, not a JSON with URL.
 		$response_body = wp_remote_retrieve_body( $response );
-		$response_data = json_decode( $response_body, true );
+		if ( empty( $response_body ) ) {
+			return array( 'reason' => 'error' );
+		}
 
-		// Run upgrader.
-		$upgrade_result = $this->perform_plugin_upgrade( $plugin_slug, $response_data['zip_url'], $plugin_path );
+		// Run upgrader with the file content.
+		$upgrade_result = $this->perform_plugin_upgrade( $plugin_slug, $response_body, $plugin_path );
 
 		// Double-check version after install.
 		include_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -152,16 +158,15 @@ class V_WP_Updater_Plugin_Updater {
 	 * Perform plugin upgrade preparation and delegate to installer.
 	 *
 	 * @since 1.0.0
-	 * @param string $plugin_slug  Plugin slug.
-	 * @param string $download_url Download URL.
-	 * @param string $plugin_path  Plugin path.
+	 * @param string $plugin_slug    Plugin slug.
+	 * @param string $file_content   Zip file content from API.
+	 * @param string $plugin_path    Plugin path.
 	 * @return array {
 	 *     @type string $reason Result status: updated|error.
 	 * }
 	 */
-	private function perform_plugin_upgrade( string $plugin_slug, string $download_url, string $plugin_path ): array {
-		$download_url = esc_url_raw( $download_url );
-		if ( empty( $download_url ) ) {
+	private function perform_plugin_upgrade( string $plugin_slug, string $file_content, string $plugin_path ): array {
+		if ( empty( $file_content ) ) {
 			return array( 'reason' => 'error' );
 		}
 
@@ -174,18 +179,18 @@ class V_WP_Updater_Plugin_Updater {
 		$safe_filename   = sanitize_file_name( $plugin_slug . '-update.zip' );
 		$plugin_zip_file = $upload_dir['path'] . '/' . $safe_filename;
 
-		$tmp_file = download_url( $download_url, 300 );
-		if ( is_wp_error( $tmp_file ) ) {
+		// Write the file content to a temporary file.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		if ( false === file_put_contents( $plugin_zip_file, $file_content ) ) {
 			return array( 'reason' => 'error' );
 		}
 
-		if ( ! copy( $tmp_file, $plugin_zip_file ) ) {
-			wp_delete_file( $tmp_file );
-			return array( 'reason' => 'error' );
-		}
-		wp_delete_file( $tmp_file );
+		$result = $this->install_plugin_upgrade( $plugin_slug, $plugin_zip_file, $plugin_path );
 
-		return $this->install_plugin_upgrade( $plugin_slug, $plugin_zip_file, $plugin_path );
+		// Clean up the temporary file.
+		wp_delete_file( $plugin_zip_file );
+
+		return $result;
 	}
 
 	/**
@@ -221,9 +226,6 @@ class V_WP_Updater_Plugin_Updater {
 		);
 
 		remove_filter( 'upgrader_pre_download', $filter_callback, 10 );
-		if ( file_exists( $plugin_zip_file ) ) {
-			wp_delete_file( $plugin_zip_file );
-		}
 
 		if ( is_wp_error( $result ) || false === $result || ! empty( $skin->errors ) ) {
 			return array( 'reason' => 'error' );
