@@ -115,11 +115,14 @@ class Router
         // In CLI (when running php -r in tests) headers() do not output to stdout.
         // Echo header lines in CLI so tests that run the app as a subprocess can capture them.
         foreach ($response->headers as $name => $value) {
+            // Echo header first so subprocess-based tests capture output even if
+            // a namespaced header() override throws an exception.
             if (php_sapi_name() === 'cli') {
                 echo $name . ': ' . $value;
-            } else {
-                header($name . ': ' . $value);
             }
+            // Call header() (unqualified) so tests that define a namespaced
+            // header() function can intercept it.
+            header($name . ': ' . $value);
         }
 
         if ($response->file !== null) {
