@@ -82,9 +82,12 @@ class PluginModel
             $file_name = isset($fileArray['name'][$i]) ? Validation::validateFilename($fileArray['name'][$i]) : '';
             $file_tmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
             $file_error = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
-            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            
+            // Use the original filename for error messages if validation failed
+            $original_filename = isset($fileArray['name'][$i]) ? basename($fileArray['name'][$i]) : 'unknown';
+            $file_extension = $file_name ? strtolower(pathinfo($file_name, PATHINFO_EXTENSION)) : '';
 
-            $plugin_slug = explode('_', $file_name)[0];
+            $plugin_slug = $file_name ? explode('_', $file_name)[0] : '';
             $conn = DatabaseManager::getConnection();
             $current = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$plugin_slug]);
             $max_upload_size = min(
@@ -93,22 +96,22 @@ class PluginModel
             );
 
             if ($fileArray['size'][$i] > $max_upload_size) {
-                $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
                     '. File size exceeds the maximum allowed size of ' . ($max_upload_size / (1024 * 1024)) . ' MB.';
                 continue;
             }
 
             if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
                 continue;
             }
 
-            if (preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+            if ($file_name && preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
                 $slug = $matches[1];
                 $version = $matches[2];
                 if ($current && version_compare($version, $current, '<=')) {
-                    $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') .
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
                         '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
                     continue;
                 }
@@ -121,18 +124,20 @@ class PluginModel
                 }
             }
 
-            $plugin_path = self::$dir . '/' . $file_name;
-            if (move_uploaded_file($file_tmp, $plugin_path)) {
-                if (isset($slug) && isset($version)) {
-                    $conn->executeStatement(
-                        'INSERT INTO plugins (slug, version) VALUES (?, ?) '
-                        . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                        [$slug, $version]
-                    );
+            if ($file_name) {
+                $plugin_path = self::$dir . '/' . $file_name;
+                if (move_uploaded_file($file_tmp, $plugin_path)) {
+                    if (isset($slug) && isset($version)) {
+                        $conn->executeStatement(
+                            'INSERT INTO plugins (slug, version) VALUES (?, ?) '
+                            . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                            [$slug, $version]
+                        );
+                    }
+                    $messages[] = htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
+                } else {
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8');
                 }
-                $messages[] = htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
-            } else {
-                $messages[] = 'Error uploading: ' . htmlspecialchars($file_name, ENT_QUOTES, 'UTF-8');
             }
         }
 
