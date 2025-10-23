@@ -34,7 +34,7 @@ class Validation
 
     public static function generateKey(int $length = 32): string
     {
-        $bytes = random_bytes((int) ceil($length / 2));
+        $bytes = \random_bytes((int) ceil($length / 2));
         return substr(bin2hex($bytes), 0, $length);
     }
 

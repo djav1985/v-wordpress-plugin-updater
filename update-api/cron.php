@@ -11,12 +11,30 @@ require_once __DIR__ . '/vendor/autoload.php';
 use App\Core\DatabaseManager;
 use App\Core\ErrorManager;
 use App\Helpers\WorkerHelper;
+use App\Helpers\CronWorker;
 
 const JOB_NAME = 'v-updater-cron';
+
+/**
+ * @return never
+ */
+function printUsage(): void
+{
+    echo "Usage:\n";
+    echo "  php cron.php\n";
+    echo "  php cron.php worker\n";
+    exit(1);
+}
 
 // Parse command line arguments
 $options = getopt('', ['worker']);
 $isWorker = isset($options['worker']);
+
+// Derive raw args (excluding script name) and show usage when none provided
+$args = $GLOBALS['argv'] ?? [];
+if (empty($args)) {
+        printUsage();
+}
 
 // Run as background worker if --worker flag is provided
 if ($isWorker) {
@@ -58,57 +76,13 @@ function runCronJob(bool $isWorker): void
     $conn = DatabaseManager::getConnection();
     
     // Sync plugins and themes
-    syncDir(PLUGINS_DIR, 'plugins', $conn);
-    syncDir(THEMES_DIR, 'themes', $conn);
+    CronWorker::syncDir(PLUGINS_DIR, 'plugins', $conn);
+    CronWorker::syncDir(THEMES_DIR, 'themes', $conn);
     
     // Clean up blacklist: remove blocked IPs after 7 days, unblocked after 3 days
-    cleanupBlacklist($conn);
+    CronWorker::cleanupBlacklist($conn);
     
     if (!$isWorker) {
         echo "Cron job completed successfully.\n";
     }
-}
-
-function syncDir(string $dir, string $table, \Doctrine\DBAL\Connection $conn): void
-{
-    $files = glob($dir . '/*.zip');
-    $found = [];
-    foreach ($files as $file) {
-        $name = basename($file);
-        if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $name, $matches)) {
-            $slug = $matches[1];
-            $version = $matches[2];
-            $found[$slug] = true;
-            $conn->executeStatement(
-                "INSERT INTO $table (slug, version) VALUES (?, ?) " .
-                "ON CONFLICT(slug) DO UPDATE SET version = excluded.version",
-                [$slug, $version]
-            );
-        }
-    }
-    $rows = $conn->fetchAllAssociative("SELECT slug FROM $table");
-    foreach ($rows as $row) {
-        if (!isset($found[$row['slug']])) {
-            $conn->executeStatement("DELETE FROM $table WHERE slug = ?", [$row['slug']]);
-        }
-    }
-}
-
-function cleanupBlacklist(\Doctrine\DBAL\Connection $conn): void
-{
-    $currentTime = time();
-    $sevenDaysAgo = $currentTime - (7 * 24 * 60 * 60);
-    $threeDaysAgo = $currentTime - (3 * 24 * 60 * 60);
-
-    // Remove IPs that were blocked more than 7 days ago
-    $conn->executeStatement(
-        'DELETE FROM blacklist WHERE blacklisted = 1 AND timestamp < ?',
-        [$sevenDaysAgo]
-    );
-
-    // Remove IPs that are not blocked and haven't been updated in 3 days
-    $conn->executeStatement(
-        'DELETE FROM blacklist WHERE blacklisted = 0 AND timestamp < ?',
-        [$threeDaysAgo]
-    );
 }

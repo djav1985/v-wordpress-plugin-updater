@@ -26,7 +26,7 @@ class Encryption
     {
         $key = hash('sha256', ENCRYPTION_KEY, true);
         $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        $iv = random_bytes($iv_length);
+        $iv = \random_bytes($iv_length);
         $cipher = openssl_encrypt($plain, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $cipher);
     }
