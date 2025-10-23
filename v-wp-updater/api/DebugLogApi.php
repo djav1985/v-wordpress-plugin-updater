@@ -147,8 +147,8 @@ class DebugLogApi {
 		Logger::info( 'DebugLog API: Get debug log endpoint called', array( 'lines' => $lines ) );
 
 		try {
-                        // Get the debug log file path.
-                        $log_file = DebugLog::get_log_path();
+						// Get the debug log file path.
+						$log_file = DebugLog::get_log_path();
 
 			// Check if the log file exists.
 			if ( ! file_exists( $log_file ) ) {
