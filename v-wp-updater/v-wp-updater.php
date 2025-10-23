@@ -119,7 +119,7 @@ function vwpu_dashboard_setup(): void {
 	}
 }
 if ( $is_admin_context ) {
-        add_action( 'wp_dashboard_setup', 'vwpu_dashboard_setup' );
+		add_action( 'wp_dashboard_setup', 'vwpu_dashboard_setup' );
 }
 
 /**
@@ -150,17 +150,17 @@ add_action( 'vwpu_plugin_updater_check_updates', 'vwpu_run_plugin_updater' );
  * Initialize Plugin API if update_key is set.
  */
 function vwpu_initialize_plugin_api(): void {
-        if ( ! ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) ) {
-                return;
-        }
+	if ( ! ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) ) {
+			return;
+	}
 
-        $update_key = Options::get( 'update_key' );
-        if ( empty( $update_key ) ) {
-                return;
-        }
+		$update_key = Options::get( 'update_key' );
+	if ( empty( $update_key ) ) {
+			return;
+	}
 
-        PluginApi::get_instance();
-        ThemeApi::get_instance();
-        DebugLogApi::get_instance();
+		PluginApi::get_instance();
+		ThemeApi::get_instance();
+		DebugLogApi::get_instance();
 }
 add_action( 'init', 'vwpu_initialize_plugin_api' );

@@ -36,7 +36,7 @@ function vwpu_widget_settings_display(): void {
 
 		// Define settings structure.
 		$settings = array(
-			'updates'  => array(
+			'updates' => array(
 				'title'  => __( 'Update Settings', 'v-wp-updater' ),
 				'fields' => array(
 					'update_plugins'    => array(
@@ -74,7 +74,7 @@ function vwpu_widget_settings_display(): void {
 			echo '<table class="form-table">';
 
 			foreach ( $section['fields'] as $field_key => $field ) {
-				$value   = Options::get( $field_key, $field['default'] ?? '' );
+				$value     = Options::get( $field_key, $field['default'] ?? '' );
 				$is_masked = in_array( $field_key, $masked_fields, true );
 
 				// For masked fields, check if there's already a value and display placeholder.
@@ -141,7 +141,7 @@ function vwpu_save_settings(): void {
 
 			// For masked fields, only update if a new value was provided.
 			if ( in_array( $field_key, array( 'update_key' ), true ) ) {
-				if ( ! empty( $value ) && $value !== '********' ) {
+				if ( ! empty( $value ) && '********' !== $value ) {
 					Options::set( $field_key, $value );
 				}
 			} else {

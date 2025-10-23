@@ -90,11 +90,11 @@ class Options {
 	 */
 	public static function initialize_defaults(): void {
 		$defaults = array(
-			'update_plugins'          => 'false',
-			'update_themes'           => 'false',
-			'update_key'              => '',
-			'update_plugin_url'       => 'https://wp-updates.servicesbyv.com/plugins/api.php',
-			'update_theme_url'        => 'https://wp-updates.servicesbyv.com/themes/api.php',
+			'update_plugins'    => 'false',
+			'update_themes'     => 'false',
+			'update_key'        => '',
+			'update_plugin_url' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
+			'update_theme_url'  => 'https://wp-updates.servicesbyv.com/themes/api.php',
 		);
 
 		foreach ( $defaults as $option_name => $default_value ) {
