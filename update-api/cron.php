@@ -2,73 +2,71 @@
 // phpcs:ignoreFile PSR1.Files.SideEffects
 
 if (php_sapi_name() !== 'cli') {
-    exit("CLI only\n");
+    http_response_code(403);
+    exit('Forbidden');
 }
 
-require __DIR__ . '/vendor/autoload.php';
-$_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';
-require __DIR__ . '/config.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Core\DatabaseManager;
+use App\Core\ErrorManager;
+use App\Helpers\WorkerHelper;
 
-$conn = DatabaseManager::getConnection();
+const JOB_NAME = 'v-updater-cron';
 
 // Parse command line arguments
 $options = getopt('', ['worker']);
 $isWorker = isset($options['worker']);
 
-// Lock mechanism to ensure only one instance runs at a time
-$lockFile = sys_get_temp_dir() . '/v-updater-cron.lock';
-$lockHandle = fopen($lockFile, 'c+');
-
-if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
-    if (!$isWorker) {
-        echo "Another cron job is already running. Exiting.\n";
+// Run as background worker if --worker flag is provided
+if ($isWorker) {
+    if (!WorkerHelper::canLaunch(JOB_NAME)) {
+        exit(0);
     }
-    fclose($lockHandle);
+    $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' > /dev/null 2>&1 &';
+    exec($cmd);
     exit(0);
 }
 
-// Run as background worker if --worker flag is provided
-if ($isWorker) {
-    // Detach from terminal for background execution (requires PCNTL extension)
-    if (function_exists('pcntl_fork') && function_exists('posix_setsid')) {
-        /** @var int|false $pid */
-        // @phpstan-ignore-next-line
-        /** @psalm-suppress UndefinedFunction */
-        $pid = pcntl_fork(); // @intelephense-ignore-line
-        if ($pid === -1) {
-            echo "Could not fork process\n";
-            exit(1);
-        } elseif ($pid > 0) {
-            // Parent process exits, child continues
-            exit(0);
+ErrorManager::handle(function () use ($isWorker): void {
+    $lock = WorkerHelper::claimLock(JOB_NAME);
+    if ($lock === null) {
+        if (!$isWorker) {
+            echo "Another cron job is already running. Exiting.\n";
         }
-        // Child process becomes session leader
-        // @phpstan-ignore-next-line
-        /** @psalm-suppress UndefinedFunction */
-        if (posix_setsid() === -1) { // @intelephense-ignore-line
-            echo "Could not detach from terminal\n";
-            exit(1);
-        }
+        return;
     }
-}
 
-try {
+    $release = static function () use ($lock): void {
+        WorkerHelper::releaseLock($lock);
+    };
+
+    register_shutdown_function($release);
+
+    try {
+        runCronJob($isWorker);
+    } finally {
+        $release();
+    }
+});
+
+function runCronJob(bool $isWorker): void
+{
+    $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';
+    require __DIR__ . '/config.php';
+    
+    $conn = DatabaseManager::getConnection();
+    
     // Sync plugins and themes
     syncDir(PLUGINS_DIR, 'plugins', $conn);
     syncDir(THEMES_DIR, 'themes', $conn);
-
+    
     // Clean up blacklist: remove blocked IPs after 7 days, unblocked after 3 days
     cleanupBlacklist($conn);
-
+    
     if (!$isWorker) {
         echo "Cron job completed successfully.\n";
     }
-} finally {
-    // Release the lock
-    flock($lockHandle, LOCK_UN);
-    fclose($lockHandle);
 }
 
 function syncDir(string $dir, string $table, \Doctrine\DBAL\Connection $conn): void

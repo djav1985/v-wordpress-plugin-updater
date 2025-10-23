@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-copilot/update-theme-plugin-actions',
-        'version' => 'dev-copilot/update-theme-plugin-actions',
-        'reference' => 'abef6d8a24f67edf541195f5573473846f8b3111',
+        'pretty_version' => 'dev-copilot/update-cron-job-implementation',
+        'version' => 'dev-copilot/update-cron-job-implementation',
+        'reference' => '8033f38bbea0907fa77ca1362bdd7d8e495d9cc3',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-copilot/update-theme-plugin-actions',
-            'version' => 'dev-copilot/update-theme-plugin-actions',
-            'reference' => 'abef6d8a24f67edf541195f5573473846f8b3111',
+            'pretty_version' => 'dev-copilot/update-cron-job-implementation',
+            'version' => 'dev-copilot/update-cron-job-implementation',
+            'reference' => '8033f38bbea0907fa77ca1362bdd7d8e495d9cc3',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
