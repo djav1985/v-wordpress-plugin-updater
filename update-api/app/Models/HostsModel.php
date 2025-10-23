@@ -36,6 +36,22 @@ class HostsModel
     }
 
     /**
+     * Return all hosts (domain only).
+     *
+     * @return array<int, string>
+     */
+    public static function getHosts(): array
+    {
+        $conn = DatabaseManager::getConnection();
+        $rows = $conn->fetchAllAssociative('SELECT domain FROM hosts ORDER BY domain');
+        $hosts = [];
+        foreach ($rows as $row) {
+            $hosts[] = $row['domain'];
+        }
+        return $hosts;
+    }
+
+    /**
      * Add an entry to the hosts table.
      */
     public static function addEntry(string $domain, string $key): bool
