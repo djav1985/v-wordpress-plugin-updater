@@ -39,6 +39,22 @@ class PluginApi {
 	private static ?self $instance = null;
 
 	/**
+	 * REST API namespace.
+	 *
+	 * @since 2.0.0
+	 * @var string
+	 */
+	private const NAMESPACE = 'vwpd/v1';
+
+	/**
+	 * REST API route.
+	 *
+	 * @since 2.0.0
+	 * @var string
+	 */
+	private const ROUTE = '/plugins';
+
+	/**
 	 * Private constructor to prevent direct instantiation.
 	 *
 	 * @since 2.0.0
@@ -79,22 +95,19 @@ class PluginApi {
 	 */
 	public function register_rest_routes(): void {
 		register_rest_route(
-			'v-wp-dashboard/v1',
-			'/plugins',
+			self::NAMESPACE,
+			self::ROUTE,
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_plugins' ),
-				'permission_callback' => array( $this, 'check_authentication' ),
-			)
-		);
-
-		register_rest_route(
-			'v-wp-dashboard/v1',
-			'/install-plugin',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'install_plugin' ),
-				'permission_callback' => array( $this, 'check_authentication' ),
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_plugins' ),
+					'permission_callback' => array( $this, 'check_authentication' ),
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'install_plugin' ),
+					'permission_callback' => array( $this, 'check_authentication' ),
+				),
 			)
 		);
 	}
@@ -133,13 +146,17 @@ class PluginApi {
 	}
 
 	/**
-	 * Get the list of plugins.
+	 * Get list of all installed plugins.
 	 *
 	 * @since 2.0.0
-	 *
+	 * @param WP_REST_Request $request The REST request (unused).
 	 * @return WP_REST_Response|WP_Error Response with plugins list or error.
+	 * @phpcsSuppress Generic.CodeAnalysis.UnusedFunctionParameter
+	 * @phpcsSuppress VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 	 */
-	public function get_plugins(): WP_REST_Response|WP_Error {
+	public function get_plugins( WP_REST_Request $request ) {
+		unset( $request ); // Parameter required by REST signature.
+
 		try {
 			if ( ! function_exists( 'get_plugins' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -180,59 +197,60 @@ class PluginApi {
 	}
 
 	/**
-	 * Install a new plugin.
+	 * Install a plugin from an uploaded ZIP package.
 	 *
 	 * @since 2.0.0
-	 *
-	 * @param WP_REST_Request $request Full request object.
+	 * @param WP_REST_Request $request The REST request.
 	 * @return WP_REST_Response|WP_Error Response with installation result or error.
 	 */
 	public function install_plugin( WP_REST_Request $request ) {
-		$files         = $request->get_file_params();
-		$package_field = $files['package'] ?? null;
-		$filename      = '';
+		$file_params = $request->get_file_params();
+		$package     = $file_params['package'] ?? null;
 
-		if ( is_array( $package_field ) && isset( $package_field['name'] ) ) {
-			$filename = sanitize_file_name( (string) $package_field['name'] );
-		}
+		if ( empty( $package ) ) {
+			Logger::error( 'Plugin API: Installation failed - missing package upload' );
 
-		if ( ! is_array( $package_field ) || empty( $package_field['tmp_name'] ) ) {
 			return new WP_Error(
-				'missing_package_file',
-				__( 'A plugin package upload is required.', 'v-wp-dashboard' ),
+				'missing_package',
+				__( 'An uploaded plugin ZIP is required.', 'v-wp-dashboard' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		if ( isset( $package_field['error'] ) && 0 !== (int) $package_field['error'] ) {
+		if ( UPLOAD_ERR_OK !== ( $package['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			Logger::error(
+				'Plugin API: Installation failed - upload error',
+				array( 'code' => $package['error'] ?? null )
+			);
+
 			return new WP_Error(
-				'package_upload_error',
-				__( 'Plugin package upload failed.', 'v-wp-dashboard' ),
+				'upload_error',
+				__( 'Failed to upload plugin package.', 'v-wp-dashboard' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		Logger::info( 'Plugin API: Installing plugin', array( 'filename' => $filename ) );
+		Logger::info(
+			'Plugin API: Installing plugin from upload',
+			array( 'file_name' => $package['name'] ?? 'unknown' )
+		);
 
 		try {
-			$package_path = $this->store_uploaded_plugin_package( $package_field );
+			$package_path = $this->store_uploaded_package( $package );
 
 			if ( is_wp_error( $package_path ) ) {
-				Logger::error( 'Plugin API: Package validation failed', array( 'error' => $package_path->get_error_message() ) );
-
-				return new WP_Error(
-					'package_validation_failed',
-					sprintf(
-						/* translators: %s: Error message */
-						__( 'Failed to process plugin package: %s', 'v-wp-dashboard' ),
-						$package_path->get_error_message()
-					),
-					array( 'status' => 400 )
+				Logger::error(
+					'Plugin API: Upload handling failed',
+					array( 'error' => $package_path->get_error_message() )
 				);
+
+				return $package_path;
 			}
 
+			// Install the plugin.
 			$result = $this->perform_plugin_install( $package_path );
 
+			// Clean up the uploaded file.
 			if ( file_exists( $package_path ) ) {
 				wp_delete_file( $package_path );
 			}
@@ -276,13 +294,13 @@ class PluginApi {
 	}
 
 	/**
-	 * Persist the uploaded plugin package to the uploads directory.
+	 * Move an uploaded package into a managed location.
 	 *
-	 * @since 2.0.3
-	 * @param array $package_field Uploaded file data from the REST request.
+	 * @since 2.0.0
+	 * @param array $package Uploaded file data from the REST request.
 	 * @return string|WP_Error Path to stored package or WP_Error on failure.
 	 */
-	private function store_uploaded_plugin_package( array $package_field ) {
+	private function store_uploaded_package( array $package ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 
 		$upload_dir = wp_upload_dir();
@@ -290,37 +308,18 @@ class PluginApi {
 			return new WP_Error( 'upload_dir_error', $upload_dir['error'] );
 		}
 
-		if ( ! wp_mkdir_p( $upload_dir['path'] ) ) {
-			return new WP_Error( 'upload_dir_error', 'Unable to create uploads directory.' );
+		$overrides = array(
+			'test_form' => false,
+			'mimes'     => array( 'zip' => 'application/zip' ),
+		);
+
+		$uploaded = wp_handle_upload( $package, $overrides );
+
+		if ( isset( $uploaded['error'] ) ) {
+			return new WP_Error( 'upload_error', $uploaded['error'], array( 'status' => 400 ) );
 		}
 
-		$original_name = isset( $package_field['name'] ) ? sanitize_file_name( (string) $package_field['name'] ) : '';
-		if ( '' === $original_name ) {
-			$original_name = 'plugin-' . time() . '.zip';
-		}
-
-		if ( '.zip' !== strtolower( substr( $original_name, -4 ) ) ) {
-			$original_name .= '.zip';
-		}
-
-		$filename     = wp_unique_filename( $upload_dir['path'], $original_name );
-		$package_path = trailingslashit( $upload_dir['path'] ) . $filename;
-
-		if ( empty( $package_field['tmp_name'] ) || ! file_exists( $package_field['tmp_name'] ) ) {
-			return new WP_Error( 'invalid_upload', 'Uploaded plugin package could not be found.' );
-		}
-
-		if ( ! copy( $package_field['tmp_name'], $package_path ) ) {
-			return new WP_Error( 'copy_failed', 'Unable to store the uploaded plugin package.' );
-		}
-
-		$file_type = wp_check_filetype_and_ext( $package_path, basename( $package_path ), array( 'zip' => 'application/zip' ) );
-		if ( empty( $file_type['ext'] ) || 'zip' !== $file_type['ext'] ) {
-			wp_delete_file( $package_path );
-			return new WP_Error( 'invalid_file_type', 'Uploaded file is not a valid ZIP archive.' );
-		}
-
-		return $package_path;
+		return $uploaded['file'];
 	}
 
 	/**
