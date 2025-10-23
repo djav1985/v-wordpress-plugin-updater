@@ -53,7 +53,7 @@ class WorkerHelper
      * @param string $jobName The name of the job
      * @return resource|null Lock handle if successful, null if lock already held
      */
-    public static function claimLock(string $jobName)
+    public static function claimLock(string $jobName): mixed
     {
         $lockFile = self::getLockFilePath($jobName);
         $handle = fopen($lockFile, 'c+');
@@ -80,10 +80,10 @@ class WorkerHelper
     /**
      * Release a lock for a job
      *
-     * @param resource $lockHandle The lock handle returned by claimLock
+     * @param resource|null $lockHandle The lock handle returned by claimLock
      * @return void
      */
-    public static function releaseLock($lockHandle): void
+    public static function releaseLock(mixed $lockHandle): void
     {
         if (is_resource($lockHandle)) {
             flock($lockHandle, LOCK_UN);

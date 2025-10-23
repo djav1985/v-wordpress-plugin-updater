@@ -55,9 +55,8 @@ ErrorManager::handle(function (): void {
         return;
     }
 
-    $release = static function () use (&$lock): void {
+    $release = static function () use ($lock): void {
         WorkerHelper::releaseLock($lock);
-        $lock = null;
     };
 
     register_shutdown_function($release);
