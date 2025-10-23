@@ -4,7 +4,7 @@
  *
  * Handles the uninstallation and cleanup of scheduled tasks.
  *
- * @package V_WP_Updater
+ * @package V_WP_Dashboard
  * @since 1.0.0
  */
 
@@ -13,21 +13,79 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Performs all uninstallation tasks.
+ * Main uninstallation function that handles all plugin cleanup tasks.
  *
- * Clears all scheduled cron jobs.
+ * This function performs the complete uninstallation:
+ * - Clears all scheduled cron jobs
+ * - Deletes plugin options
  *
  * @since 2.0.0
  * @return void
  */
-function v_updater_uninstall(): void {
-	// Clear plugin update schedule.
-	if ( wp_next_scheduled( 'v_updater_plugin_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'v_updater_plugin_check_updates' );
-	}
+function vontmnt_uninstall(): void {
+	// Clear all scheduled cron jobs.
+	vontmnt_clear_plugin_update_schedule();
+	vontmnt_clear_theme_update_schedule();
+	vontmnt_clear_debug_log_deletion();
+	vontmnt_clear_backup_creation_schedule();
 
-	// Clear theme update schedule.
-	if ( wp_next_scheduled( 'v_updater_theme_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'v_updater_theme_check_updates' );
+	// Delete plugin options.
+	delete_option( 'vontmnt-plup' );
+	delete_option( 'vontmnt-thup' );
+}
+
+/**
+ * Clears the scheduled plugin update event.
+ *
+ * Removes the scheduled event for plugin updates if it exists.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function vontmnt_clear_plugin_update_schedule(): void {
+	if ( wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'vontmnt_plugin_updater_check_updates' );
+	}
+}
+
+/**
+ * Clears the scheduled theme update event.
+ *
+ * Removes the scheduled event for theme updates if it exists.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function vontmnt_clear_theme_update_schedule(): void {
+	if ( wp_next_scheduled( 'vontmnt_theme_updater_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'vontmnt_theme_updater_check_updates' );
+	}
+}
+
+/**
+ * Clears the scheduled debug log deletion event.
+ *
+ * Removes the scheduled event for debug log deletion if it exists.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function vontmnt_clear_debug_log_deletion(): void {
+	if ( wp_next_scheduled( 'delete_debug_log_weekly_event' ) ) {
+		wp_clear_scheduled_hook( 'delete_debug_log_weekly_event' );
+	}
+}
+
+/**
+ * Clears the scheduled backup creation event.
+ *
+ * Removes the scheduled event for backup creation if it exists.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function vontmnt_clear_backup_creation_schedule(): void {
+	if ( wp_next_scheduled( 'vontmnt_create_backup' ) ) {
+		wp_clear_scheduled_hook( 'vontmnt_create_backup' );
 	}
 }

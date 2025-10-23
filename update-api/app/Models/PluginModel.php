@@ -84,7 +84,15 @@ class PluginModel
             $file_error = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
             
             // Use the original filename for error messages if validation failed
-            $original_filename = isset($fileArray['name'][$i]) ? basename($fileArray['name'][$i]) : 'unknown';
+            if (isset($fileArray['name'][$i])) {
+                if (is_array($fileArray['name'])) {
+                    $original_filename = basename($fileArray['name'][$i]);
+                } else {
+                    $original_filename = basename($fileArray['name']);
+                }
+            } else {
+                $original_filename = 'unknown';
+            }
             $file_extension = $file_name ? strtolower(pathinfo($file_name, PATHINFO_EXTENSION)) : '';
 
             $plugin_slug = $file_name ? explode('_', $file_name)[0] : '';

@@ -1,31 +1,134 @@
-/* V WP Updater Admin Dashboard Styles */
+/* V_WP_Dashboard Admin Dashboard Styles */
 #wpbody-content #dashboard-widgets {
 	display: flex;
 	flex-wrap: wrap;
 }
 
-#v_updater_widget_settings {
+#vontmnt_widget_main {
 	order: 1;
 	width: calc(66.66% - 10px);
 }
 
+#vontmnt_widget_left,
+#vontmnt_widget_right {
+	order: 2;
+	width: calc(33.33% - 10px);
+}
+
 @media (max-width: 1024px) {
-	#v_updater_widget_settings {
+	#vontmnt_widget_main {
 		width: 100%;
+	}
+
+	#vontmnt_widget_left,
+	#vontmnt_widget_right {
+		width: 50%;
 	}
 }
 
 @media (max-width: 768px) {
-	#v_updater_widget_settings {
+
+	#vontmnt_widget_main,
+	#vontmnt_widget_left,
+	#vontmnt_widget_right {
 		width: 100%;
 	}
 }
 
-/* Widget container styles */
-.v-updater-widget {
+/* Standardized widget container styles */
+.vwp-widget-status .vwp-status {
+	margin: 5px 0;
+	border-radius: 5px;
 	padding: 10px;
+	font-size: 14px;
 }
 
-.v-updater-widget-settings .form-table {
+.vwp-status.success {
+	border-left: 5px solid #28a745;
+	background: #d4edda;
+}
+
+.vwp-status.error {
+	border-left: 5px solid #dc3545;
+	background: #f8d7da;
+}
+
+.vwp-status.warning {
+	border-left: 5px solid #ffc107;
+	background: #fff3cd;
+}
+
+.vwp-status.optimization {
+	border-left: 5px solid #007bff;
+	background: #cce5ff;
+}
+
+.vwp-status.security {
+	border-left: 5px solid #17a2b8;
+	background: #d1ecf1;
+}
+
+.vwp-widget-log .vwp-log-container {
+	border: 2px solid #000;
+	border-radius: 4px;
+	padding: 10px;
+	height: 400px;
+	overflow: auto;
+	color: #181818;
+	font-size: 12px;
+	line-height: 1.5;
+	font-family: monospace;
+}
+
+.vwp-widget-services .vwp-services-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+}
+
+.vwp-button-container .vwp-button {
+	padding: 4px 10px;
+	width: 100%;
+}
+
+.vontainment-news-feed {
+	margin: 20px 0;
+	border: 2px solid #000;
+	border-radius: 4px;
+	padding: 0 10px;
+}
+
+.vwp-server-control-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+	gap: 10px;
+	margin-top: 20px;
+}
+
+.vwp-server-control-grid .server-button {
+	width: 100%;
+	text-decoration: none;
+}
+
+.vwp-server-control-grid .server-button button {
+	width: 100%;
+}
+
+.vwp-widget-support .vwp-support-iframe {
+	border: none;
+	width: 100%;
+	height: 850px;
+}
+
+.vwp-contact-info {
+	margin-top: 20px;
+	text-align: center;
+}
+
+.vwp-status-message {
 	margin-top: 10px;
+	border-radius: 4px;
+	padding: 8px 12px;
+	color: #000;
+	font-size: 13px;
 }

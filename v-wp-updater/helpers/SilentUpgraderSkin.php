@@ -2,12 +2,17 @@
 /**
  * Silent Upgrader Skin for WordPress Updates.
  *
- * @package V_WP_Updater
+ * @package V_WP_Dashboard
  * @since 1.0.0
  */
 
+namespace VWPDashboard\Helpers;
+
+use WP_Error;
+use WP_Upgrader_Skin;
+
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+		exit;
 }
 
 /**
@@ -18,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 1.0.0
  * @see WP_Upgrader_Skin
  */
-class V_WP_Updater_Silent_Upgrader_Skin extends WP_Upgrader_Skin {
+class SilentUpgraderSkin extends WP_Upgrader_Skin {
 	/**
 	 * Stores feedback messages.
 	 *

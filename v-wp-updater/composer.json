@@ -1,0 +1,17 @@
+{
+    "name": "vontmnt/v-wp-dashboard-plugin",
+    "description": "Autoloader configuration for the Vontainment WP Dashboard plugin",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "VWPDashboard\\Helpers\\": "helpers/",
+            "VWPDashboard\\Services\\": "services/",
+            "VWPDashboard\\Utilities\\": "utilities/",
+            "VWPDashboard\\Api\\": "api/"
+        }
+    }
+}

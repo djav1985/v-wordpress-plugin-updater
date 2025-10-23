@@ -1,104 +1,124 @@
 <?php
 /**
- * Plugin Name: V WP Updater
+ * Plugin Name: WP By Vontainment
  * Plugin URI:  https://vontainment.com
- * Description: WordPress plugin and theme updater
+ * Description: Our custom enhancements, optimizations, updates, backups, security and support provided by Vontainment Premium Services.
  * Version:     2.0.0
  * Author:      Vontainment
  * Author URI:  https://vontainment.com
  * License:     MIT
- * Text Domain: v-wp-updater
+ * Text Domain: v-wp-dashboard
  *
- * @package V_WP_Updater
+ * @package V_WP_Dashboard
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-		exit;
+	exit;
 }
 
-/**
- * Get an option value from the database.
- *
- * @since 2.0.0
- * @param string $key The option key without the v_updater_ prefix.
- * @param mixed  $default Default value if option doesn't exist.
- * @return mixed The option value or default.
- */
-function v_updater_get_option( string $key, $default = '' ) {
-	return get_option( 'v_updater_' . $key, $default );
+// Load Composer autoloader.
+require_once __DIR__ . '/vendor/autoload.php';
+
+use VWPDashboard\Services\CacheClearer;
+use VWPDashboard\Services\PluginUpdater;
+use VWPDashboard\Services\RemoteBackup;
+use VWPDashboard\Services\ThemeUpdater;
+use VWPDashboard\Services\Impersonation;
+use VWPDashboard\Api\PluginApi;
+use VWPDashboard\Api\ThemeApi;
+use VWPDashboard\Api\DebugLogApi;
+use VWPDashboard\Utilities\Ajax;
+use VWPDashboard\Utilities\Cron;
+use VWPDashboard\Helpers\Logger;
+use VWPDashboard\Helpers\Options;
+use VWPDashboard\Helpers\Security;
+use VWPDashboard\Services\SupportBot;
+use VWPDashboard\Utilities\WidgetRegistry;
+
+// Determine execution context flags up front so conditional bootstrapping can
+// avoid loading admin-specific functionality on frontend requests.
+$is_admin_context = is_admin();
+$doing_ajax       = function_exists( 'wp_doing_ajax' ) && wp_doing_ajax();
+
+// Initialize utility classes only when an administrative or AJAX context is in play.
+if ( $is_admin_context || $doing_ajax ) {
+        Ajax::register_handlers();
+
+        if ( $is_admin_context ) {
+                SupportBot::init();
+        }
 }
 
-/**
- * Check if an option is set to 'true'.
- *
- * @since 2.0.0
- * @param string $key The option key without the v_updater_ prefix.
- * @return bool True if option value is 'true', false otherwise.
- */
-function v_updater_option_is_true( string $key ): bool {
-	return 'true' === v_updater_get_option( $key, 'false' );
-}
+Cron::register_schedules();
 
 /**
  * Runs on plugin activation.
  *
- * Schedules updates and downloads WP-CLI. Schedules plugin and theme updates, debug log deletion, and remote backups.
+ * Calls the main installation function to handle all setup tasks.
  *
  * @since 1.0.0
  * @return void
  */
-function v_updater_activate(): void {
-	if ( ! current_user_can( 'manage_options' ) ) {
+function vontmnt_dashboard_activate(): void {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
 		return;
 	}
 
 	try {
-		$install_file = plugin_dir_path( __FILE__ ) . 'install.php';
-		if ( file_exists( $install_file ) ) {
-			include_once $install_file;
-			if ( function_exists( 'v_updater_install' ) ) {
-				v_updater_install();
-			}
-		}
+		include_once plugin_dir_path( __FILE__ ) . 'install.php';
+		vontmnt_install();
 	} catch ( Exception $e ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Activation error: ' . esc_html( $e->getMessage() ) );
-		}
+		Logger::error( 'Activation error', array( 'exception' => $e->getMessage() ) );
 	}
 }
-register_activation_hook( __FILE__, 'v_updater_activate' );
+register_activation_hook( __FILE__, 'vontmnt_dashboard_activate' );
 
 /**
- * Runs on plugin deactivation/uninstall.
+ * Runs on plugin deactivation.
  *
- * Clears scheduled tasks for plugin and theme updates, debug log deletion, and backups.
+ * Clears all scheduled events without deleting stored options so settings persist.
+ *
+ * @since 2.0.0
+ * @return void
+ */
+function vontmnt_dashboard_deactivate(): void {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+	}
+
+	try {
+			include_once plugin_dir_path( __FILE__ ) . 'uninstall.php';
+			vontmnt_clear_plugin_update_schedule();
+			vontmnt_clear_theme_update_schedule();
+			vontmnt_clear_debug_log_deletion();
+			vontmnt_clear_backup_creation_schedule();
+	} catch ( Exception $e ) {
+			Logger::error( 'Deactivation error', array( 'exception' => $e->getMessage() ) );
+	}
+}
+register_deactivation_hook( __FILE__, 'vontmnt_dashboard_deactivate' );
+
+/**
+ * Runs on plugin uninstall.
+ *
+ * Calls the main uninstallation function to handle all cleanup tasks.
  *
  * @since 1.0.0
  * @return void
  */
-function v_updater_cleanup(): void {
-	if ( ! current_user_can( 'manage_options' ) ) {
-		return;
+function vontmnt_dashboard_uninstall(): void {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
 	}
 
 	try {
-		$uninstall_file = __DIR__ . '/uninstall.php';
-		if ( file_exists( $uninstall_file ) ) {
-			include_once $uninstall_file;
-			if ( function_exists( 'v_updater_uninstall' ) ) {
-				v_updater_uninstall();
-			}
-		}
+			include_once plugin_dir_path( __FILE__ ) . 'uninstall.php';
+			vontmnt_uninstall();
 	} catch ( Exception $e ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Deactivation error: ' . esc_html( $e->getMessage() ) );
-		}
+			Logger::error( 'Uninstall error', array( 'exception' => $e->getMessage() ) );
 	}
 }
-register_deactivation_hook( __FILE__, 'v_updater_cleanup' );
-register_uninstall_hook( __FILE__, 'v_updater_cleanup' );
+register_uninstall_hook( __FILE__, 'vontmnt_dashboard_uninstall' );
 
 /**
  * Sets up dashboard widgets and styles.
@@ -108,78 +128,147 @@ register_uninstall_hook( __FILE__, 'v_updater_cleanup' );
  * @since 1.0.0
  * @return void
  */
-function v_updater_dashboard_setup(): void {
-	// Remove inline CSS, styles will be enqueued below.
+function vontmnt_dashboard_setup(): void {
+                // Enqueue admin dashboard styles for V_WP_Dashboard widgets.
+                $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+        if ( $screen && 'dashboard' === $screen->id ) {
+                        wp_enqueue_style(
+                                'v-wp-dashboard-admin',
+                                plugin_dir_url( __FILE__ ) . 'assets/styles.css',
+                                array(),
+                                filemtime( plugin_dir_path( __FILE__ ) . 'assets/styles.css' )
+                        );
+        }
 
-	// Access the global $wp_meta_boxes variable to manipulate dashboard widgets.
-	global $wp_meta_boxes;
+		// Remove default WordPress widgets.
+		WidgetRegistry::remove_default_widgets();
 
-	remove_meta_box( 'dashboard_quick_press', 'dashboard', 'side' );
-	remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
-	remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
-	remove_meta_box( 'dashboard_right_now', 'dashboard', 'normal' );
+		$widgets_dir = plugin_dir_path( __FILE__ ) . 'widgets/';
 
-	// Settings widget include (only if present).
-	$widget_dir = __DIR__ . '/widgets/';
-	if ( file_exists( $widget_dir . 'settings.php' ) ) {
-		include_once $widget_dir . 'settings.php';
+		// Ensure the settings widget is only available to privileged Vontainment administrators.
+		$widget_overrides = array();
+	if ( ! ( Security::is_vontainment_user() && Security::can_manage_options() ) ) {
+			$widget_overrides['settings.php'] = false;
 	}
 
-	// Register settings widget for users with manage_options capability.
-	if ( function_exists( 'v_updater_widget_settings_display' ) && current_user_can( 'manage_options' ) ) {
-		wp_add_dashboard_widget( 'v_updater_widget_settings', __( 'V WP Updater Settings', 'v-wp-updater' ), 'v_updater_widget_settings_display' );
-	}
+		// Register all dashboard widgets automatically.
+		WidgetRegistry::register_widgets( $widgets_dir, $widget_overrides );
+
+		// Set default widget order if user hasn't customized.
+		WidgetRegistry::set_default_widget_order();
+}
+if ( $is_admin_context ) {
+        add_action( 'wp_dashboard_setup', 'vontmnt_dashboard_setup' );
 }
 
 /**
- * Enqueue admin dashboard styles for V_WP_Updater widgets.
- *
- * @param string $hook The current admin page hook.
+ * Initialize cache clearer when cache-clearing options are enabled.
  */
-function v_updater_admin_styles( string $hook ): void {
-	if ( 'index.php' === $hook ) {
-		$css_file = __DIR__ . '/assets/styles.css';
-		if ( file_exists( $css_file ) ) {
-			wp_enqueue_style(
-				'v-wp-updater-admin',
-				plugin_dir_url( __FILE__ ) . 'assets/styles.css',
-				array(),
-				filemtime( $css_file )
-			);
-		} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'v-wp-updater: CSS file not found: ' . $css_file );
-		}
-	}
-}
-add_action( 'admin_enqueue_scripts', 'v_updater_admin_styles' );
+function vontmnt_initialize_cache_clearer(): void {
+        $relevant_context = is_admin()
+                || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )
+                || ( defined( 'DOING_CRON' ) && DOING_CRON )
+                || ( defined( 'REST_REQUEST' ) && REST_REQUEST )
+                || ( defined( 'WP_CLI' ) && WP_CLI )
+                || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST )
+                || ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) );
 
-// Register theme updater hook.
-$theme_updater_file = __DIR__ . '/includes/class-v-wp-updater-theme-updater.php';
-if ( file_exists( $theme_updater_file ) ) {
-	include_once $theme_updater_file;
-	if ( class_exists( 'V_WP_Updater_Theme_Updater' ) ) {
-		add_action(
-			'v_updater_theme_check_updates',
-			function () {
-				$theme_updater = new V_WP_Updater_Theme_Updater();
-				$theme_updater->run_updates();
-			}
-		);
-	}
-}
+        if ( ! $relevant_context ) {
+                return;
+        }
 
-// Register plugin updater hook.
-$plugin_updater_file = __DIR__ . '/includes/class-v-wp-updater-plugin-updater.php';
-if ( file_exists( $plugin_updater_file ) ) {
-	include_once $plugin_updater_file;
-	if ( class_exists( 'V_WP_Updater_Plugin_Updater' ) ) {
-		add_action(
-			'v_updater_plugin_check_updates',
-			function () {
-				$plugin_updater = new V_WP_Updater_Plugin_Updater();
-				$plugin_updater->run_updates();
-			}
-		);
+        if (
+                        Options::is_true( 'clear_caches_hestia' ) ||
+                        Options::is_true( 'clear_caches_cloudflare' ) ||
+			Options::is_true( 'clear_caches_opcache' )
+	) {
+				CacheClearer::get_instance();
 	}
 }
+add_action( 'init', 'vontmnt_initialize_cache_clearer' );
+
+/**
+ * Run theme updater if enabled.
+ */
+function vontmnt_run_theme_updater() {
+	if ( ! Options::is_true( 'update_themes' ) ) {
+		return;
+	}
+		$theme_updater = new ThemeUpdater();
+	$theme_updater->run_updates();
+}
+add_action( 'vontmnt_theme_updater_check_updates', 'vontmnt_run_theme_updater' );
+
+/**
+ * Run plugin updater if enabled.
+ */
+function vontmnt_run_plugin_updater() {
+	if ( ! Options::is_true( 'update_plugins' ) ) {
+		return;
+	}
+		$plugin_updater = new PluginUpdater();
+	$plugin_updater->run_updates();
+}
+add_action( 'vontmnt_plugin_updater_check_updates', 'vontmnt_run_plugin_updater' );
+
+/**
+ * Run remote backup if enabled.
+ */
+function vontmnt_run_remote_backup() {
+	if ( ! Options::is_true( 'remote_backups' ) ) {
+		return;
+	}
+		$backup_handler = new RemoteBackup();
+	return $backup_handler->create_backup();
+}
+add_action( 'vontmnt_create_backup', 'vontmnt_run_remote_backup' );
+
+/**
+ * Instantiate impersonation only for the 'vontainment' user.
+ */
+function vontmnt_run_impersonation() {
+        if ( ! is_user_logged_in() ) {
+                return;
+        }
+
+        $admin_bar_available = function_exists( 'is_admin_bar_showing' ) && is_admin_bar_showing();
+
+        if ( ! is_admin() && ! $admin_bar_available ) {
+                return;
+        }
+
+        $current_user_id = get_current_user_id();
+        $has_impersonator = (bool) get_transient( 'vontainment_impersonator_' . $current_user_id );
+
+        if ( Security::is_vontainment_user() || $has_impersonator ) {
+                new Impersonation();
+        }
+}
+add_action( 'init', 'vontmnt_run_impersonation' );
+
+/**
+ * Delete debug log weekly event handler.
+ */
+function vontmnt_delete_debug_log_weekly(): void {
+		\VWPDashboard\Helpers\DebugLog::delete_log_file();
+}
+add_action( 'delete_debug_log_weekly_event', 'vontmnt_delete_debug_log_weekly' );
+
+/**
+ * Initialize Plugin API if update_key is set.
+ */
+function vontmnt_initialize_plugin_api(): void {
+        if ( ! ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) ) {
+                return;
+        }
+
+        $update_key = Options::get( 'update_key' );
+        if ( empty( $update_key ) ) {
+                return;
+        }
+
+        PluginApi::get_instance();
+        ThemeApi::get_instance();
+        DebugLogApi::get_instance();
+}
+add_action( 'init', 'vontmnt_initialize_plugin_api' );
