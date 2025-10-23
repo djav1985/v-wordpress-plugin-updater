@@ -31,9 +31,12 @@ if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
 
 // Run as background worker if --worker flag is provided
 if ($isWorker) {
-    // Detach from terminal for background execution
-    if (function_exists('pcntl_fork')) {
-        $pid = pcntl_fork();
+    // Detach from terminal for background execution (requires PCNTL extension)
+    if (function_exists('pcntl_fork') && function_exists('posix_setsid')) {
+        /** @var int|false $pid */
+        // @phpstan-ignore-next-line
+        /** @psalm-suppress UndefinedFunction */
+        $pid = pcntl_fork(); // @intelephense-ignore-line
         if ($pid === -1) {
             echo "Could not fork process\n";
             exit(1);
@@ -42,7 +45,9 @@ if ($isWorker) {
             exit(0);
         }
         // Child process becomes session leader
-        if (posix_setsid() === -1) {
+        // @phpstan-ignore-next-line
+        /** @psalm-suppress UndefinedFunction */
+        if (posix_setsid() === -1) { // @intelephense-ignore-line
             echo "Could not detach from terminal\n";
             exit(1);
         }

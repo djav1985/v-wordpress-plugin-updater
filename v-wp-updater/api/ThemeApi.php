@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * Theme API Service
  *
@@ -123,7 +123,7 @@ class ThemeApi {
 				Logger::error( 'Theme API authentication failed: Missing API key' );
 			return new WP_Error(
 				'missing_api_key',
-				__( 'API key is required.', 'v-wp-dashboard' ),
+				__( 'API key is required.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -132,7 +132,7 @@ class ThemeApi {
 			Logger::error( 'Theme API authentication failed: Invalid API key' );
 			return new WP_Error(
 				'invalid_api_key',
-				__( 'Invalid API key.', 'v-wp-dashboard' ),
+				__( 'Invalid API key.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -176,7 +176,7 @@ class ThemeApi {
 			Logger::error( 'Theme API: Error listing themes', array( 'exception' => $e->getMessage() ) );
 			return new WP_Error(
 				'theme_list_error',
-				__( 'Failed to retrieve theme list.', 'v-wp-dashboard' ),
+				__( 'Failed to retrieve theme list.', 'v-wp-updater' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -198,7 +198,7 @@ class ThemeApi {
 
 			return new WP_Error(
 				'missing_package',
-				__( 'An uploaded theme ZIP is required.', 'v-wp-dashboard' ),
+				__( 'An uploaded theme ZIP is required.', 'v-wp-updater' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -211,7 +211,7 @@ class ThemeApi {
 
 			return new WP_Error(
 				'upload_error',
-				__( 'Failed to upload theme package.', 'v-wp-dashboard' ),
+				__( 'Failed to upload theme package.', 'v-wp-updater' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -238,7 +238,7 @@ class ThemeApi {
 						'install_failed',
 						sprintf(
 							/* translators: %s: Error message */
-							__( 'Failed to install theme: %s', 'v-wp-dashboard' ),
+							__( 'Failed to install theme: %s', 'v-wp-updater' ),
 							$result->get_error_message()
 						),
 						array( 'status' => 500 )
@@ -248,7 +248,7 @@ class ThemeApi {
 			return new WP_REST_Response(
 				array(
 					'success' => true,
-					'message' => __( 'Theme installed successfully.', 'v-wp-dashboard' ),
+					'message' => __( 'Theme installed successfully.', 'v-wp-updater' ),
 				),
 				200
 			);
@@ -258,7 +258,7 @@ class ThemeApi {
 				'theme_install_error',
 				sprintf(
 					/* translators: %s: Error message */
-					__( 'An error occurred: %s', 'v-wp-dashboard' ),
+					__( 'An error occurred: %s', 'v-wp-updater' ),
 					$e->getMessage()
 				),
 				array( 'status' => 500 )

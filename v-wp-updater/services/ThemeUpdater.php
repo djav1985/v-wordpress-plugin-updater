@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * Theme Updater
  *
@@ -175,14 +175,14 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	 * {@inheritdoc}
 	 */
 	protected function get_success_message(): string {
-		return __( '✅ Themes updated successfully!', 'v-wp-dashboard' );
+		return __( '✅ Themes updated successfully!', 'v-wp-updater' );
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	protected function get_error_message(): string {
-		return __( '❌ Error updating themes.', 'v-wp-dashboard' );
+		return __( '❌ Error updating themes.', 'v-wp-updater' );
 	}
 
 	/**

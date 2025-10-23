@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * Plugin API Service
  *
@@ -126,7 +126,7 @@ class PluginApi {
 			Logger::error( 'Plugin API authentication failed: Missing API key' );
 			return new WP_Error(
 				'missing_api_key',
-				__( 'API key is required.', 'v-wp-dashboard' ),
+				__( 'API key is required.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -137,7 +137,7 @@ class PluginApi {
 			Logger::error( 'Plugin API authentication failed: Invalid API key' );
 			return new WP_Error(
 				'invalid_api_key',
-				__( 'Invalid API key.', 'v-wp-dashboard' ),
+				__( 'Invalid API key.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -190,7 +190,7 @@ class PluginApi {
 
 			return new WP_Error(
 				'plugin_list_error',
-				__( 'Failed to retrieve plugin list.', 'v-wp-dashboard' ),
+				__( 'Failed to retrieve plugin list.', 'v-wp-updater' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -212,7 +212,7 @@ class PluginApi {
 
 			return new WP_Error(
 				'missing_package',
-				__( 'An uploaded plugin ZIP is required.', 'v-wp-dashboard' ),
+				__( 'An uploaded plugin ZIP is required.', 'v-wp-updater' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -225,7 +225,7 @@ class PluginApi {
 
 			return new WP_Error(
 				'upload_error',
-				__( 'Failed to upload plugin package.', 'v-wp-dashboard' ),
+				__( 'Failed to upload plugin package.', 'v-wp-updater' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -262,7 +262,7 @@ class PluginApi {
 					'install_failed',
 					sprintf(
 						/* translators: %s: Error message */
-						__( 'Failed to install plugin: %s', 'v-wp-dashboard' ),
+						__( 'Failed to install plugin: %s', 'v-wp-updater' ),
 						$result->get_error_message()
 					),
 					array( 'status' => 500 )
@@ -274,7 +274,7 @@ class PluginApi {
 			return new WP_REST_Response(
 				array(
 					'success' => true,
-					'message' => __( 'Plugin installed successfully.', 'v-wp-dashboard' ),
+					'message' => __( 'Plugin installed successfully.', 'v-wp-updater' ),
 				),
 				200
 			);
@@ -285,7 +285,7 @@ class PluginApi {
 				'plugin_install_error',
 				sprintf(
 					/* translators: %s: Error message */
-					__( 'An error occurred: %s', 'v-wp-dashboard' ),
+					__( 'An error occurred: %s', 'v-wp-updater' ),
 					$e->getMessage()
 				),
 				array( 'status' => 500 )

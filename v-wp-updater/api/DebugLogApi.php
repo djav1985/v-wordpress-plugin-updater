@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * DebugLog API Service
  *
@@ -67,7 +67,7 @@ class DebugLogApi {
 			Logger::error( 'DebugLog API authentication failed: Missing API key' );
 			return new WP_Error(
 				'missing_api_key',
-				__( 'API key is required.', 'v-wp-dashboard' ),
+				__( 'API key is required.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -76,7 +76,7 @@ class DebugLogApi {
 			Logger::error( 'DebugLog API authentication failed: Invalid API key' );
 			return new WP_Error(
 				'invalid_api_key',
-				__( 'Invalid API key.', 'v-wp-dashboard' ),
+				__( 'Invalid API key.', 'v-wp-updater' ),
 				array( 'status' => 401 )
 			);
 		}

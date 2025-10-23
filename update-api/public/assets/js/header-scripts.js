@@ -1,4 +1,4 @@
-/** 
+/**
  * @package UpdateAPI
  * @author  Vontainment <services@vontainment.com>
  * @license https://opensource.org/licenses/MIT MIT License
@@ -6,8 +6,7 @@
  *
  * Displays a toast message.
  * @param {string} message - The message to display. */
-function showToast(message)
-{
+function showToast(message) {
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.textContent = message;

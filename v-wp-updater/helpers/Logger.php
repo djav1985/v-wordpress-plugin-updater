@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * Logger Utility Class
  *
@@ -93,7 +93,7 @@ class Logger {
 	 * @return string The formatted message.
 	 */
 	private static function format_message( string $level, string $message, array $context = array() ): string {
-		$formatted = sprintf( '[V-WP-Dashboard] [%s] %s', $level, $message );
+		$formatted = sprintf( '[v-wp-updater] [%s] %s', $level, $message );
 
 		if ( ! empty( $context ) ) {
 			$formatted .= ' | Context: ' . wp_json_encode( $context );

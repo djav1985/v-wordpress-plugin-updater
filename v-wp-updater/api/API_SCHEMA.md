@@ -20,37 +20,43 @@ matches the stored update key.
 - **Methods:** `GET`, `POST`
 
 ### GET `/plugins`
+
 Retrieves metadata for every installed plugin.
 
 **Query Parameters:** _None_
 
 **Success Response:** `200 OK`
+
 ```json
 {
   "success": true,
   "plugins": [
     {
-      "name": "string",      // Human-readable plugin name
-      "version": "string",   // Installed version
-      "slug": "string",      // Directory name of the plugin
-      "file": "string",      // Plugin entry file path (e.g. "plugin-dir/plugin.php")
-      "active": true          // Whether the plugin is active
+      "name": "string", // Human-readable plugin name
+      "version": "string", // Installed version
+      "slug": "string", // Directory name of the plugin
+      "file": "string", // Plugin entry file path (e.g. "plugin-dir/plugin.php")
+      "active": true // Whether the plugin is active
     }
   ],
-  "count": 1                 // Number of plugins returned
+  "count": 1 // Number of plugins returned
 }
 ```
 
 **Failure Responses:**
+
 - `500 Internal Server Error` with code `plugin_list_error` when plugin metadata cannot be retrieved.
 
 ### POST `/plugins`
+
 Installs a plugin from an uploaded ZIP package.
 
 **Request Body:** `multipart/form-data`
+
 - `package` (file, required): Plugin ZIP archive to install.
 
 **Success Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -59,6 +65,7 @@ Installs a plugin from an uploaded ZIP package.
 ```
 
 **Failure Responses:**
+
 - `400 Bad Request` with code `missing_package` when no file is uploaded.
 - `400 Bad Request` with code `upload_error` when the file upload fails validation or transmission.
 - `500 Internal Server Error` with code `install_failed` if the installer returns an error or `false`.
@@ -73,18 +80,20 @@ Installs a plugin from an uploaded ZIP package.
 - **Methods:** `GET`, `POST`
 
 ### GET `/themes`
+
 Retrieves metadata for every installed theme.
 
 **Success Response:** `200 OK`
+
 ```json
 {
   "success": true,
   "themes": [
     {
-      "name": "string",      // Theme display name
-      "version": "string",   // Installed version
-      "slug": "string",      // Theme directory slug
-      "active": false         // Whether the theme is the active stylesheet
+      "name": "string", // Theme display name
+      "version": "string", // Installed version
+      "slug": "string", // Theme directory slug
+      "active": false // Whether the theme is the active stylesheet
     }
   ],
   "count": 1
@@ -92,15 +101,19 @@ Retrieves metadata for every installed theme.
 ```
 
 **Failure Responses:**
+
 - `500 Internal Server Error` with code `theme_list_error` if the theme list cannot be generated.
 
 ### POST `/themes`
+
 Installs a theme from an uploaded ZIP package.
 
 **Request Body:** `multipart/form-data`
+
 - `package` (file, required): Theme ZIP archive to install.
 
 **Success Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -109,6 +122,7 @@ Installs a theme from an uploaded ZIP package.
 ```
 
 **Failure Responses:**
+
 - `400 Bad Request` with code `missing_package` when no file is uploaded.
 - `400 Bad Request` with code `upload_error` when the uploaded ZIP cannot be processed.
 - `500 Internal Server Error` with code `install_failed` when the upgrader reports failure.
@@ -123,13 +137,16 @@ Installs a theme from an uploaded ZIP package.
 - **Methods:** `GET`
 
 ### GET `/debuglog`
+
 Fetches the tail of the WordPress debug log.
 
 **Query Parameters:**
+
 - `lines` (integer, optional, default: `100`)
   - Number of lines to return from the end of the log file. Values < 1 reset to 100.
 
 **Success Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -142,6 +159,7 @@ Fetches the tail of the WordPress debug log.
 ```
 
 **Failure Responses:**
+
 - `404 Not Found` when the debug log file does not exist, returning:
   ```json
   {
@@ -154,14 +172,16 @@ Fetches the tail of the WordPress debug log.
 ---
 
 ## Common Error Format
+
 Errors emitted by the API use the standard WordPress `WP_Error` structure. REST responses encapsulate
 these errors as:
+
 ```json
 {
-  "code": "string",   // Error identifier (see endpoint-specific tables)
+  "code": "string", // Error identifier (see endpoint-specific tables)
   "message": "string",
   "data": {
-    "status": 500     // HTTP status code matching the response
+    "status": 500 // HTTP status code matching the response
   }
 }
 ```
