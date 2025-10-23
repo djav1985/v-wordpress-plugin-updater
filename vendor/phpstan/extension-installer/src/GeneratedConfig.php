@@ -12,7 +12,7 @@ final class GeneratedConfig
 	public const EXTENSIONS = array (
   'szepeviktor/phpstan-wordpress' => 
   array (
-    'install_path' => 'D:\\Git Repos\\appsbyv\\v-wordpress-plugin-updater\\vendor/szepeviktor/phpstan-wordpress',
+    'install_path' => '/home/runner/work/v-wordpress-plugin-updater/v-wordpress-plugin-updater/vendor/szepeviktor/phpstan-wordpress',
     'relative_install_path' => '../../../szepeviktor/phpstan-wordpress',
     'extra' => 
     array (

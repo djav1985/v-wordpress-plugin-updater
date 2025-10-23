@@ -4,12 +4,12 @@
  *
  * Provides a template method workflow for remote updates.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  */
 
-namespace VWPDashboard\Utilities;
+namespace VWPU\Helpers;
 
-use VWPDashboard\Helpers\Options;
+use VWPU\Helpers\Options;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -4,11 +4,11 @@
  *
  * Helper class for managing plugin options with namespace support.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since   2.0.0
  */
 
-namespace VWPDashboard\Helpers;
+namespace VWPU\Helpers;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,7 +29,7 @@ class Options {
 	 * @since 2.0.0
 	 * @var string
 	 */
-	private const PREFIX = 'vontmnt_';
+	private const PREFIX = 'vwpu_';
 
 	/**
 	 * Get an option value with automatic prefixing.
@@ -90,27 +90,11 @@ class Options {
 	 */
 	public static function initialize_defaults(): void {
 		$defaults = array(
-			'clear_caches_hestia'     => 'false',
-			'clear_caches_cloudflare' => 'false',
-			'cloudflare_email'        => '',
-			'cloudflare_zone_id'      => '',
-			'cloudflare_api_key'      => '',
-			'clear_caches_opcache'    => 'false',
-			'update_plugins'          => 'false',
-			'update_themes'           => 'false',
-			'update_key'              => '',
-			'update_plugin_url'       => 'https://wp-updates.servicesbyv.com/plugins/api.php',
-			'update_theme_url'        => 'https://wp-updates.servicesbyv.com/themes/api.php',
-			'remote_backups'          => 'false',
-			'remote_backups_timing'   => '',
-			'ssh_host'                => '',
-			'ssh_port'                => '',
-			'ssh_user'                => '',
-			'ssh_password'            => '',
-			'remote_backup_dir'       => '',
-			'max_backups'             => '5',
-			'pushover_token'          => '',
-			'pushover_user'           => '',
+			'update_plugins'    => 'false',
+			'update_themes'     => 'false',
+			'update_key'        => '',
+			'update_plugin_url' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
+			'update_theme_url'  => 'https://wp-updates.servicesbyv.com/themes/api.php',
 		);
 
 		foreach ( $defaults as $option_name => $default_value ) {

@@ -13,6 +13,9 @@
  */
 
 require_once __DIR__ . '/layouts/header.php';
+
+/** @var array<int, string> $hosts */
+$hosts = $hosts ?? [];
 ?>
 
 <div class="content-box">
@@ -39,6 +42,36 @@ require_once __DIR__ . '/layouts/header.php';
     <div id="message-container">
       <h2>Upload Status</h2>
     </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div id="actionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeActionModal()">&times;</span>
+    <h2>Plugin Action: <span id="modalPluginName"></span></h2>
+    <form id="actionForm" method="POST" action="/plupdate">
+      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+      <input type="hidden" name="plugin_name" id="modalPluginFile">
+      
+      <div class="form-group">
+        <label for="domainSelect">Select Domain:</label>
+        <select name="domain" id="domainSelect" class="domain-select">
+          <option value="">-- Select Domain --</option>
+          <?php foreach ($hosts as $host): ?>
+            <option value="<?php echo htmlspecialchars($host, ENT_QUOTES, 'UTF-8'); ?>">
+              <?php echo htmlspecialchars($host, ENT_QUOTES, 'UTF-8'); ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="submit" name="delete_plugin" class="red-button">Delete</button>
+        <button type="submit" name="install_plugin" class="green-button">Install</button>
+        <button type="button" class="orange-button" onclick="closeActionModal()">Close</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -76,5 +109,23 @@ require_once __DIR__ . '/layouts/header.php';
       }
     });
   });
+
+  function openPluginActionModal(pluginFile, pluginName) {
+    document.getElementById('modalPluginFile').value = pluginFile;
+    document.getElementById('modalPluginName').textContent = pluginName;
+    document.getElementById('actionModal').style.display = 'block';
+  }
+
+  function closeActionModal() {
+    document.getElementById('actionModal').style.display = 'none';
+  }
+
+  // Close modal when clicking outside of it
+  window.onclick = function(event) {
+    var modal = document.getElementById('actionModal');
+    if (event.target == modal) {
+      closeActionModal();
+    }
+  }
 </script>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

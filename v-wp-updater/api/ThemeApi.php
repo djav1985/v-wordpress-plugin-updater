@@ -4,14 +4,14 @@
  *
  * REST API endpoint for listing and installing themes.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since   2.0.0
  */
 
-namespace VWPDashboard\Api;
+namespace VWPU\Api;
 
-use VWPDashboard\Helpers\Logger;
-use VWPDashboard\Helpers\Options;
+use VWPU\Helpers\Logger;
+use VWPU\Helpers\Options;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;

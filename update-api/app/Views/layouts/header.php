@@ -54,5 +54,8 @@
     <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') {
         echo 'active';
                                             } ?>">View Logs</button></a>
+    <a href="/sitelogs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/sitelogs') {
+        echo 'active';
+                                            } ?>">Site Logs</button></a>
 </div>
 <div class="content">

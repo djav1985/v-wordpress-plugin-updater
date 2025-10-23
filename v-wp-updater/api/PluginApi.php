@@ -4,15 +4,15 @@
  *
  * REST API endpoint for listing and installing plugins.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since   2.0.0
  */
 
-namespace VWPDashboard\Api;
+namespace VWPU\Api;
 
-use VWPDashboard\Helpers\Logger;
-use VWPDashboard\Helpers\Options;
-use VWPDashboard\Helpers\SilentUpgraderSkin;
+use VWPU\Helpers\Logger;
+use VWPU\Helpers\Options;
+use VWPU\Helpers\SilentUpgraderSkin;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;

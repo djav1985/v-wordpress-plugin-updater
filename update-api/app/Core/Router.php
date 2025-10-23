@@ -42,6 +42,8 @@ class Router
             $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
+            $r->addRoute('GET', '/sitelogs', ['\\App\\Controllers\\SiteLogsController', 'handleRequest']);
+            $r->addRoute('POST', '/sitelogs', ['\\App\\Controllers\\SiteLogsController', 'handleSubmission']);
                 $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
         });
     }

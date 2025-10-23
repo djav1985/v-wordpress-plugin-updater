@@ -4,11 +4,11 @@
  *
  * Centralized logging functionality with consistent error handling.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since   2.0.0
  */
 
-namespace VWPDashboard\Helpers;
+namespace VWPU\Helpers;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
