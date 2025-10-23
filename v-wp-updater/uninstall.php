@@ -4,7 +4,7 @@
  *
  * Handles the uninstallation and cleanup of scheduled tasks.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since 1.0.0
  */
 
@@ -22,16 +22,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.0.0
  * @return void
  */
-function vontmnt_uninstall(): void {
+function vwpu_uninstall_cleanup(): void {
 	// Clear all scheduled cron jobs.
-	vontmnt_clear_plugin_update_schedule();
-	vontmnt_clear_theme_update_schedule();
-	vontmnt_clear_debug_log_deletion();
-	vontmnt_clear_backup_creation_schedule();
+	vwpu_clear_plugin_update_schedule();
+	vwpu_clear_theme_update_schedule();
 
 	// Delete plugin options.
-	delete_option( 'vontmnt-plup' );
-	delete_option( 'vontmnt-thup' );
+	delete_option( 'vwpu-plup' );
+	delete_option( 'vwpu-thup' );
 }
 
 /**
@@ -42,9 +40,9 @@ function vontmnt_uninstall(): void {
  * @since 1.0.0
  * @return void
  */
-function vontmnt_clear_plugin_update_schedule(): void {
-	if ( wp_next_scheduled( 'vontmnt_plugin_updater_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'vontmnt_plugin_updater_check_updates' );
+function vwpu_clear_plugin_update_schedule(): void {
+	if ( wp_next_scheduled( 'vwpu_plugin_updater_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'vwpu_plugin_updater_check_updates' );
 	}
 }
 
@@ -56,36 +54,8 @@ function vontmnt_clear_plugin_update_schedule(): void {
  * @since 1.0.0
  * @return void
  */
-function vontmnt_clear_theme_update_schedule(): void {
-	if ( wp_next_scheduled( 'vontmnt_theme_updater_check_updates' ) ) {
-		wp_clear_scheduled_hook( 'vontmnt_theme_updater_check_updates' );
-	}
-}
-
-/**
- * Clears the scheduled debug log deletion event.
- *
- * Removes the scheduled event for debug log deletion if it exists.
- *
- * @since 1.0.0
- * @return void
- */
-function vontmnt_clear_debug_log_deletion(): void {
-	if ( wp_next_scheduled( 'delete_debug_log_weekly_event' ) ) {
-		wp_clear_scheduled_hook( 'delete_debug_log_weekly_event' );
-	}
-}
-
-/**
- * Clears the scheduled backup creation event.
- *
- * Removes the scheduled event for backup creation if it exists.
- *
- * @since 1.0.0
- * @return void
- */
-function vontmnt_clear_backup_creation_schedule(): void {
-	if ( wp_next_scheduled( 'vontmnt_create_backup' ) ) {
-		wp_clear_scheduled_hook( 'vontmnt_create_backup' );
+function vwpu_clear_theme_update_schedule(): void {
+	if ( wp_next_scheduled( 'vwpu_theme_updater_check_updates' ) ) {
+		wp_clear_scheduled_hook( 'vwpu_theme_updater_check_updates' );
 	}
 }

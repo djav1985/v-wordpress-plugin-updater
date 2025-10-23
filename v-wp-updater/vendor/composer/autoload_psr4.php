@@ -6,7 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'VWPDashboard\\Utilities\\' => array($baseDir . '/utilities'),
-    'VWPDashboard\\Services\\' => array($baseDir . '/services'),
-    'VWPDashboard\\Helpers\\' => array($baseDir . '/helpers'),
+    'VWPU\\Services\\' => array($baseDir . '/services'),
+    'VWPU\\Helpers\\' => array($baseDir . '/helpers'),
+    'VWPU\\Api\\' => array($baseDir . '/api'),
 );

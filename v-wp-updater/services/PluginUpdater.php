@@ -4,14 +4,14 @@
  *
  * Handles the updating of WordPress plugins.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since 1.0.0
  */
 
-namespace VWPDashboard\Services;
+namespace VWPU\Services;
 
-use VWPDashboard\Helpers\SilentUpgraderSkin;
-use VWPDashboard\Utilities\AbstractRemoteUpdater;
+use VWPU\Helpers\SilentUpgraderSkin;
+use VWPU\Helpers\AbstractRemoteUpdater;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

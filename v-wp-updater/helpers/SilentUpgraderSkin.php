@@ -2,11 +2,11 @@
 /**
  * Silent Upgrader Skin for WordPress Updates.
  *
- * @package V_WP_Dashboard
+ * @package VWPU
  * @since 1.0.0
  */
 
-namespace VWPDashboard\Helpers;
+namespace VWPU\Helpers;
 
 use WP_Error;
 use WP_Upgrader_Skin;

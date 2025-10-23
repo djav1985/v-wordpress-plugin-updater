@@ -9,24 +9,24 @@ class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
     public static $prefixLengthsPsr4 = array (
         'V' => 
         array (
-            'VWPDashboard\\Utilities\\' => 23,
-            'VWPDashboard\\Services\\' => 22,
-            'VWPDashboard\\Helpers\\' => 21,
+            'VWPU\\Services\\' => 14,
+            'VWPU\\Helpers\\' => 13,
+            'VWPU\\Api\\' => 9,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'VWPDashboard\\Utilities\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/utilities',
-        ),
-        'VWPDashboard\\Services\\' => 
+        'VWPU\\Services\\' => 
         array (
             0 => __DIR__ . '/../..' . '/services',
         ),
-        'VWPDashboard\\Helpers\\' => 
+        'VWPU\\Helpers\\' => 
         array (
             0 => __DIR__ . '/../..' . '/helpers',
+        ),
+        'VWPU\\Api\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/api',
         ),
     );
 
