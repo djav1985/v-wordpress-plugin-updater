@@ -8,6 +8,7 @@ if (php_sapi_name() !== 'cli') {
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use App\Core\DatabaseManager;
 use App\Core\ErrorManager;
 use App\Helpers\WorkerHelper;
 
@@ -54,7 +55,7 @@ function runCronJob(bool $isWorker): void
     $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';
     require __DIR__ . '/config.php';
     
-    $conn = \App\Core\DatabaseManager::getConnection();
+    $conn = DatabaseManager::getConnection();
     
     // Sync plugins and themes
     syncDir(PLUGINS_DIR, 'plugins', $conn);
