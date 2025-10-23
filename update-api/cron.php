@@ -11,47 +11,28 @@ require_once __DIR__ . '/vendor/autoload.php';
 use App\Core\ErrorManager;
 use App\Helpers\WorkerHelper;
 
-const JOB = 'sync-reports';
+const JOB_NAME = 'v-updater-cron';
 
-function printUsage(): void
-{
-    echo "Usage:\n";
-    echo "  php cron.php " . JOB . "\n";
-    echo "  php cron.php worker " . JOB . "\n";
-    exit(1);
-}
+// Parse command line arguments
+$options = getopt('', ['worker']);
+$isWorker = isset($options['worker']);
 
-function launchWorker(): void
-{
-    $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' ' . JOB . ' > /dev/null 2>&1 &';
-    exec($cmd);
-}
-
-$args = array_slice($argv, 1);
-if ($args === []) {
-    printUsage();
-}
-
-if ($args[0] === 'worker') {
-    if (!isset($args[1]) || $args[1] !== JOB) {
-        printUsage();
-    }
-    if (!WorkerHelper::canLaunch(JOB)) {
-        echo "Job already running.\n";
+// Run as background worker if --worker flag is provided
+if ($isWorker) {
+    if (!WorkerHelper::canLaunch(JOB_NAME)) {
         exit(0);
     }
-    launchWorker();
+    $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' > /dev/null 2>&1 &';
+    exec($cmd);
     exit(0);
 }
 
-if ($args[0] !== JOB) {
-    printUsage();
-}
-
-ErrorManager::handle(function (): void {
-    $lock = WorkerHelper::claimLock(JOB);
+ErrorManager::handle(function () use ($isWorker): void {
+    $lock = WorkerHelper::claimLock(JOB_NAME);
     if ($lock === null) {
-        echo "Job already running.\n";
+        if (!$isWorker) {
+            echo "Another cron job is already running. Exiting.\n";
+        }
         return;
     }
 
@@ -62,13 +43,13 @@ ErrorManager::handle(function (): void {
     register_shutdown_function($release);
 
     try {
-        runSyncReports();
+        runCronJob($isWorker);
     } finally {
         $release();
     }
 });
 
-function runSyncReports(): void
+function runCronJob(bool $isWorker): void
 {
     $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';
     require __DIR__ . '/config.php';
@@ -82,7 +63,9 @@ function runSyncReports(): void
     // Clean up blacklist: remove blocked IPs after 7 days, unblocked after 3 days
     cleanupBlacklist($conn);
     
-    echo "Cron job completed successfully.\n";
+    if (!$isWorker) {
+        echo "Cron job completed successfully.\n";
+    }
 }
 
 function syncDir(string $dir, string $table, \Doctrine\DBAL\Connection $conn): void

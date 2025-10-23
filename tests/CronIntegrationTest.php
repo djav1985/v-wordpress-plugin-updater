@@ -14,38 +14,12 @@ class CronIntegrationTest extends TestCase
         $this->assertTrue(file_exists($this->cronPath), 'cron.php file must exist');
     }
 
-    public function testCronUsageWithNoArguments(): void
-    {
-        $output = shell_exec("php {$this->cronPath} 2>&1");
-        $this->assertStringContainsString('Usage:', $output);
-        $this->assertStringContainsString('php cron.php sync-reports', $output);
-        $this->assertStringContainsString('php cron.php worker sync-reports', $output);
-    }
-
-    public function testCronUsageWithInvalidJob(): void
-    {
-        $output = shell_exec("php {$this->cronPath} invalid-job 2>&1");
-        $this->assertStringContainsString('Usage:', $output);
-    }
-
-    public function testCronWorkerUsageWithInvalidJob(): void
-    {
-        $output = shell_exec("php {$this->cronPath} worker invalid-job 2>&1");
-        $this->assertStringContainsString('Usage:', $output);
-    }
-
-    public function testCronWorkerUsageWithNoJob(): void
-    {
-        $output = shell_exec("php {$this->cronPath} worker 2>&1");
-        $this->assertStringContainsString('Usage:', $output);
-    }
-
-    public function testCronExecutesWithCorrectJobName(): void
+    public function testCronExecutesDirectly(): void
     {
         // Initialize the database if not already done
         $this->initializeDatabase();
         
-        $output = shell_exec("php {$this->cronPath} sync-reports 2>&1");
+        $output = shell_exec("php {$this->cronPath} 2>&1");
         $this->assertStringContainsString('Cron job completed successfully', $output);
     }
 
@@ -54,7 +28,7 @@ class CronIntegrationTest extends TestCase
         // Initialize the database if not already done
         $this->initializeDatabase();
         
-        $output = shell_exec("php {$this->cronPath} worker sync-reports 2>&1");
+        $output = shell_exec("php {$this->cronPath} --worker 2>&1");
         // Worker should launch silently and exit immediately
         $this->assertEmpty(trim($output));
     }
