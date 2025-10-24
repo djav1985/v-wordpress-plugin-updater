@@ -3,7 +3,8 @@
 All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
--## Unreleased
+## Unreleased
+- **Updated README.md to match current codebase**: Replaced all references to obsolete `mu-plugin/` directory with `v-wp-updater/`. Updated project structure documentation to reflect dual-component architecture (Update API Server + WordPress Client Plugin). Removed references to non-existent files (HOSTS, autoload.php) and controllers (AccountsController, InfoController, UsersController). Added documentation for SiteLogsController and cron.php with worker mode. Updated installation and usage sections with accurate paths and separate setup procedures for API server and client plugin.
 - Removed legacy key-exchange workflow; clients now use a stored API key.
 - Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.
 - Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
