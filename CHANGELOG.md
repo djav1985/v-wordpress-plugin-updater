@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Updated `update-api/cron.php` to accept the positional `worker` argument, reject unknown CLI options, and propagate non-zero exit codes when cron work fails via `ErrorManager`.
+- Added integration tests covering worker invocation, argument validation, and CLI error handling, plus lightweight mu-plugin fixtures required for the suite.
 - **Updated README.md to match current codebase**: Replaced all references to obsolete `mu-plugin/` directory with `v-wp-updater/`. Updated project structure documentation to reflect dual-component architecture (Update API Server + WordPress Client Plugin). Removed references to non-existent files (HOSTS, autoload.php) and controllers (AccountsController, InfoController, UsersController). Added documentation for SiteLogsController and cron.php with worker mode. Updated installation and usage sections with accurate paths and separate setup procedures for API server and client plugin.
 - Removed legacy key-exchange workflow; clients now use a stored API key.
 - Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.

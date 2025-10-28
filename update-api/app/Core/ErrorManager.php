@@ -58,8 +58,19 @@ class ErrorManager
             ' in ' . $exception->getFile() .
             ' on line ' . $exception->getLine();
         $this->log($message, 'exception');
+
+        if (PHP_SAPI === 'cli') {
+            if (defined('STDERR')) {
+                fwrite(STDERR, $message . "\n");
+            } else {
+                echo $message . "\n";
+            }
+            exit(1);
+        }
+
         http_response_code(500);
         echo 'Something went wrong. Please try again later.';
+        exit(1);
     }
 
     public function handleShutdown(): void

@@ -15,28 +15,41 @@ use App\Helpers\CronWorker;
 
 const JOB_NAME = 'v-updater-cron';
 
-/**
- * @return never
- */
-function printUsage(): void
+function printUsage(string $errorMessage = ''): void
 {
-    echo "Usage:\n";
-    echo "  php cron.php\n";
-    echo "  php cron.php worker\n";
+    $usage = "Usage:\n"
+        . "  php cron.php\n"
+        . "  php cron.php --worker\n"
+        . "  php cron.php worker\n";
+
+    if ($errorMessage !== '') {
+        $usage = $errorMessage . "\n\n" . $usage;
+    }
+
+    if (PHP_SAPI === 'cli' && defined('STDERR')) {
+        fwrite(STDERR, $usage . "\n");
+    } else {
+        echo $usage . "\n";
+    }
+
     exit(1);
 }
 
-// Parse command line arguments
-$options = getopt('', ['worker']);
-$isWorker = isset($options['worker']);
+$rawArgs = $GLOBALS['argv'] ?? [];
+array_shift($rawArgs); // remove script name
 
-// Derive raw args (excluding script name) and show usage when none provided
-$args = $GLOBALS['argv'] ?? [];
-if (empty($args)) {
-        printUsage();
+$isWorker = false;
+
+foreach ($rawArgs as $arg) {
+    if ($arg === '--worker' || $arg === 'worker') {
+        $isWorker = true;
+        continue;
+    }
+
+    printUsage("Unrecognized argument: {$arg}");
 }
 
-// Run as background worker if --worker flag is provided
+// Run as background worker if worker flag/argument is provided
 if ($isWorker) {
     if (!WorkerHelper::canLaunch(JOB_NAME)) {
         exit(0);
