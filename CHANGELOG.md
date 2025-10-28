@@ -11,7 +11,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Updated installation to use `VONTMNT_UPDATE_KEYREGEN` instead of `VONTMENT_KEY`.
 - Consolidated `VONTMENT_PLUGINS` and `VONTMENT_THEMES` into a single `VONTMNT_API_URL` constant.
 - **Split update loops into single-item tasks**: Refactored plugin and theme updaters to use asynchronous per-item processing. Daily update checks now schedule individual `wp_schedule_single_event()` tasks for each plugin/theme instead of processing all items synchronously. Added `vontmnt_plugin_update_single()` and `vontmnt_theme_update_single()` callback functions.
-- Added comprehensive test coverage for database manager, router dispatching, plugin model uploads, session manager, updater error handling, and URL encoding.
+- **Expanded test coverage to reflect current codebase**: Added comprehensive tests for ThemeModel, Encryption, Blacklist, CronWorker, Validation, Response, Csrf, and MessageHelper classes. Test suite expanded from 37 to 105 tests with 241 assertions, providing coverage for all major components including models, helpers, and core classes.
 - Stored admin password as a hash and verified with `password_verify` during login.
 - Controllers now return structured `Response` objects; router and session handling updated accordingly.
 - Expanded filename validation to allow digits and underscores in slugs and updated tests.
