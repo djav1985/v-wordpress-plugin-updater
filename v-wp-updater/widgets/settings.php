@@ -24,7 +24,7 @@ function vwpu_widget_settings_display(): void {
 			return;
 	}
 
-		$masked_fields = array(
+		$maskedFields = array(
 			'update_key',
 		);
 
@@ -69,36 +69,36 @@ function vwpu_widget_settings_display(): void {
 		echo '<form method="post" action="">';
 		wp_nonce_field( 'vwpu_save_settings', 'vwpu_settings_nonce' );
 
-		foreach ( $settings as $section_key => $section ) {
+		foreach ( $settings as $sectionKey => $section ) {
 			echo '<h3>' . esc_html( $section['title'] ) . '</h3>';
 			echo '<table class="form-table">';
 
-			foreach ( $section['fields'] as $field_key => $field ) {
-				$value     = Options::get( $field_key, $field['default'] ?? '' );
-				$is_masked = in_array( $field_key, $masked_fields, true );
+			foreach ( $section['fields'] as $fieldKey => $field ) {
+				$value    = Options::get( $fieldKey, $field['default'] ?? '' );
+				$isMasked = in_array( $fieldKey, $maskedFields, true );
 
 				// For masked fields, check if there's already a value and display placeholder.
-				if ( $is_masked && ! empty( $value ) ) {
-					$display_value = '********';
+				if ( $isMasked && ! empty( $value ) ) {
+					$displayValue = '********';
 				} else {
-					$display_value = $value;
+					$displayValue = $value;
 				}
 
 				echo '<tr>';
-				echo '<th scope="row"><label for="' . esc_attr( $field_key ) . '">' . esc_html( $field['label'] ) . '</label></th>';
+				echo '<th scope="row"><label for="' . esc_attr( $fieldKey ) . '">' . esc_html( $field['label'] ) . '</label></th>';
 				echo '<td>';
 
 				switch ( $field['type'] ) {
 					case 'select':
-						echo '<select name="' . esc_attr( $field_key ) . '" id="' . esc_attr( $field_key ) . '">';
+						echo '<select name="' . esc_attr( $fieldKey ) . '" id="' . esc_attr( $fieldKey ) . '">';
 						echo '<option value="false"' . selected( $value, 'false', false ) . '>' . esc_html__( 'Disabled', 'v-wp-updater' ) . '</option>';
 						echo '<option value="true"' . selected( $value, 'true', false ) . '>' . esc_html__( 'Enabled', 'v-wp-updater' ) . '</option>';
 						echo '</select>';
 						break;
 
 					case 'text':
-						echo '<input type="text" name="' . esc_attr( $field_key ) . '" id="' . esc_attr( $field_key ) . '" value="' . esc_attr( $display_value ) . '" class="regular-text"';
-						if ( $is_masked && ! empty( $value ) ) {
+						echo '<input type="text" name="' . esc_attr( $fieldKey ) . '" id="' . esc_attr( $fieldKey ) . '" value="' . esc_attr( $displayValue ) . '" class="regular-text"';
+						if ( $isMasked && ! empty( $value ) ) {
 							echo ' placeholder="' . esc_attr__( 'Leave blank to keep current value', 'v-wp-updater' ) . '"';
 						}
 						echo ' />';
@@ -127,7 +127,7 @@ function vwpu_save_settings(): void {
 		return;
 	}
 
-	$field_keys = array(
+	$fieldKeys = array(
 		'update_plugins',
 		'update_themes',
 		'update_key',
@@ -135,17 +135,17 @@ function vwpu_save_settings(): void {
 		'update_theme_url',
 	);
 
-	foreach ( $field_keys as $field_key ) {
-		if ( isset( $_POST[ $field_key ] ) ) {
-			$value = sanitize_text_field( wp_unslash( $_POST[ $field_key ] ) );
+	foreach ( $fieldKeys as $fieldKey ) {
+		if ( isset( $_POST[ $fieldKey ] ) ) {
+			$value = sanitize_text_field( wp_unslash( $_POST[ $fieldKey ] ) );
 
 			// For masked fields, only update if a new value was provided.
-			if ( in_array( $field_key, array( 'update_key' ), true ) ) {
+			if ( in_array( $fieldKey, array( 'update_key' ), true ) ) {
 				if ( ! empty( $value ) && '********' !== $value ) {
-					Options::set( $field_key, $value );
+					Options::set( $fieldKey, $value );
 				}
 			} else {
-				Options::set( $field_key, $value );
+				Options::set( $fieldKey, $value );
 			}
 		}
 	}

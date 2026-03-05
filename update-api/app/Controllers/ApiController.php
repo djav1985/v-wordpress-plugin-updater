@@ -78,26 +78,26 @@ class ApiController extends Controller
         $conn = DatabaseManager::getConnection();
         $hostRow = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         if ($hostRow) {
-            $host_key = EncryptionHelper::decrypt($hostRow['key']);
-            if ($host_key !== null && $host_key === $key) {
+            $hostKey = EncryptionHelper::decrypt($hostRow['key']);
+            if ($hostKey !== null && $hostKey === $key) {
                 $table = $type === 'theme' ? 'themes' : 'plugins';
                 $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
                 if ($row) {
                     $dbVersion = $row['version'];
                     if (version_compare($dbVersion, $version, '>')) {
-                        $file_path = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
-                        if (is_file($file_path)) {
+                        $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
+                        if (is_file($filePath)) {
                             $headers = [
                                 'Content-Type' => 'application/octet-stream',
-                                'Content-Disposition' => 'attachment; filename="' . basename($file_path) . '"',
-                                'Content-Length' => (string) filesize($file_path),
+                                'Content-Disposition' => 'attachment; filename="' . basename($filePath) . '"',
+                                'Content-Length' => (string) filesize($filePath),
                             ];
                             $conn->executeStatement(
                                 'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                                 [$domain, $type, date('Y-m-d'), 'Success']
                             );
                             ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                            return Response::file($file_path, $headers);
+                            return Response::file($filePath, $headers);
                         }
                     }
                     $conn->executeStatement(

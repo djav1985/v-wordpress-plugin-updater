@@ -34,31 +34,31 @@ class LogModel
             'SELECT domain, date, status FROM logs WHERE type = ? ORDER BY date DESC',
             [$type]
         );
-        $log_by_domain = [];
+        $logByDomain = [];
         foreach ($rows as $row) {
-            if (!isset($log_by_domain[$row['domain']])) {
-                $log_by_domain[$row['domain']] = [
+            if (!isset($logByDomain[$row['domain']])) {
+                $logByDomain[$row['domain']] = [
                     'date' => $row['date'],
                     'status' => $row['status'],
                 ];
             }
         }
 
-        if (empty($log_by_domain)) {
+        if (empty($logByDomain)) {
             return 'Log file not found.';
         }
 
         ob_start();
         echo '<div class="log-row">';
-        foreach ($log_by_domain as $domain => $entry) {
-            $date_diff = (strtotime(date('Y-m-d')) - strtotime($entry['date'])) / (60 * 60 * 24);
+        foreach ($logByDomain as $domain => $entry) {
+            $dateDiff = (strtotime(date('Y-m-d')) - strtotime($entry['date'])) / (60 * 60 * 24);
             $classes = '';
             if ($entry['status'] == 'Failed') {
                 $classes .= ' error';
             } elseif ($entry['status'] == 'Success') {
                 $classes .= ' success';
             }
-            if ($date_diff > 30) {
+            if ($dateDiff > 30) {
                 $classes .= ' lost';
             }
             $classes = trim($classes);

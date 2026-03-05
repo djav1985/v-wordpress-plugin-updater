@@ -39,25 +39,25 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	 * Fetch the remote package metadata for a theme.
 	 *
 	 * @param array  $item              Theme metadata.
-	 * @param string $installed_version Installed version string.
-	 * @param string $update_key        API key used for requests.
-	 * @param string $update_url        API endpoint used for requests.
+	 * @param string $installedVersion Installed version string.
+	 * @param string $updateKey        API key used for requests.
+	 * @param string $updateUrl        API endpoint used for requests.
 	 *
 	 * @return array
 	 */
-	protected function fetch_package( array $item, string $installed_version, string $update_key, string $update_url ): array {
-		$api_url = add_query_arg(
+	protected function fetch_package( array $item, string $installedVersion, string $updateKey, string $updateUrl ): array {
+		$apiUrl = add_query_arg(
 			array(
 				'domain'  => rawurlencode( wp_parse_url( site_url(), PHP_URL_HOST ) ),
 				'theme'   => rawurlencode( $item['slug'] ),
-				'version' => rawurlencode( $installed_version ),
-				'key'     => $update_key,
+				'version' => rawurlencode( $installedVersion ),
+				'key'     => $updateKey,
 			),
-			$update_url
+			$updateUrl
 		);
 
 		$response = wp_remote_get(
-			$api_url,
+			$apiUrl,
 			array(
 				'sslverify' => true,
 				'timeout'   => 30,
@@ -68,26 +68,26 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 			return array( 'status' => 'error' );
 		}
 
-		$http_code = wp_remote_retrieve_response_code( $response );
+		$httpCode = wp_remote_retrieve_response_code( $response );
 
-		if ( 204 === $http_code ) {
+		if ( 204 === $httpCode ) {
 			return array( 'status' => 'no_update' );
 		}
 
-		if ( 401 === $http_code ) {
+		if ( 401 === $httpCode ) {
 			return array( 'status' => 'unauthorized' );
 		}
 
-		$response_body = wp_remote_retrieve_body( $response );
-		$response_data = json_decode( $response_body, true );
+		$responseBody = wp_remote_retrieve_body( $response );
+		$responseData = json_decode( $responseBody, true );
 
-		if ( empty( $response_data['zip_url'] ) ) {
+		if ( empty( $responseData['zip_url'] ) ) {
 			return array( 'status' => 'error' );
 		}
 
 		return array(
 			'status'       => 'update',
-			'download_url' => $response_data['zip_url'],
+			'download_url' => $responseData['zip_url'],
 		);
 	}
 
@@ -99,9 +99,9 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	protected function enumerate_installed_items(): iterable {
 		$themes = wp_get_themes();
 
-		foreach ( $themes as $theme_slug => $theme ) {
+		foreach ( $themes as $themeSlug => $theme ) {
 			yield array(
-				'slug'    => $theme_slug,
+				'slug'    => $themeSlug,
 				'version' => $theme->get( 'Version' ),
 			);
 		}
@@ -111,31 +111,31 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	 * Perform a theme installation using the WordPress upgrader.
 	 *
 	 * @param array  $item         Theme metadata.
-	 * @param string $package_path Local path to the downloaded package.
+	 * @param string $packagePath Local path to the downloaded package.
 	 *
 	 * @return bool
 	 */
-	protected function perform_install( array $item, string $package_path ): bool {
+	protected function perform_install( array $item, string $packagePath ): bool {
 		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
 				$skin = new SilentUpgraderSkin();
 		$upgrader     = new \Theme_Upgrader( $skin );
 
-		$filter_callback = static function ( $reply, $package ) use ( $package_path ) {
-			return ( $package === $package_path ) ? $package_path : $reply;
+		$filterCallback = static function ( $reply, $package ) use ( $packagePath ) {
+			return ( $package === $packagePath ) ? $packagePath : $reply;
 		};
 
-		add_filter( 'upgrader_pre_download', $filter_callback, 10, 2 );
+		add_filter( 'upgrader_pre_download', $filterCallback, 10, 2 );
 
 		$result = $upgrader->install(
-			$package_path,
+			$packagePath,
 			array(
 				'clear_update_cache' => true,
 				'overwrite_package'  => true,
 			)
 		);
 
-		remove_filter( 'upgrader_pre_download', $filter_callback, 10 );
+		remove_filter( 'upgrader_pre_download', $filterCallback, 10 );
 
 		return ! ( is_wp_error( $result ) || false === $result || ! empty( $skin->errors ) );
 	}

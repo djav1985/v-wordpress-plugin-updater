@@ -9,6 +9,8 @@
   <!-- WordPress rules for v-wp-updater -->
   <rule ref="WordPress-Core">
     <include-pattern>v-wp-updater/</include-pattern>
+    <!-- Allow camelCase variable names consistently across the project -->
+    <exclude name="WordPress.NamingConventions.ValidVariableName"/>
   </rule>
 
   <!-- Generic PHP rules for update-api -->

@@ -62,8 +62,8 @@ class DebugLogApi {
 	}
 
 	public function check_authentication( WP_REST_Request $request ) {
-		$api_key = $request->get_header( 'X-API-Key' );
-		if ( empty( $api_key ) ) {
+		$apiKey = $request->get_header( 'X-API-Key' );
+		if ( empty( $apiKey ) ) {
 			Logger::error( 'DebugLog API authentication failed: Missing API key' );
 			return new WP_Error(
 				'missing_api_key',
@@ -71,8 +71,8 @@ class DebugLogApi {
 				array( 'status' => 401 )
 			);
 		}
-		$stored_key = Options::get( 'update_key' );
-		if ( empty( $stored_key ) || ! hash_equals( $stored_key, $api_key ) ) {
+		$storedKey = Options::get( 'update_key' );
+		if ( empty( $storedKey ) || ! hash_equals( $storedKey, $apiKey ) ) {
 			Logger::error( 'DebugLog API authentication failed: Invalid API key' );
 			return new WP_Error(
 				'invalid_api_key',
@@ -88,8 +88,8 @@ class DebugLogApi {
 		if ( $lines < 1 ) {
 			$lines = 100;
 		}
-		$log_path = defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ? WP_DEBUG_LOG : ABSPATH . 'wp-content/debug.log';
-		if ( ! file_exists( $log_path ) ) {
+		$logPath = defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ? WP_DEBUG_LOG : ABSPATH . 'wp-content/debug.log';
+		if ( ! file_exists( $logPath ) ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -99,12 +99,12 @@ class DebugLogApi {
 				404
 			);
 		}
-		$log_lines = $this->tail_file( $log_path, $lines );
+		$logLines = $this->tail_file( $logPath, $lines );
 		return new WP_REST_Response(
 			array(
 				'success' => true,
 				'lines'   => $lines,
-				'log'     => $log_lines,
+				'log'     => $logLines,
 			),
 			200
 		);
@@ -117,19 +117,19 @@ class DebugLogApi {
 			return array();
 		}
 		fseek( $f, 0, SEEK_END );
-		$pos        = ftell( $f );
-		$data       = '';
-		$line_count = 0;
-		while ( $pos > 0 && $line_count <= $lines ) {
-			$read_size = ( $pos - $buffer > 0 ) ? $buffer : $pos;
-			$pos      -= $read_size;
+		$pos       = ftell( $f );
+		$data      = '';
+		$lineCount = 0;
+		while ( $pos > 0 && $lineCount <= $lines ) {
+			$readSize = ( $pos - $buffer > 0 ) ? $buffer : $pos;
+			$pos     -= $readSize;
 			fseek( $f, $pos );
-			$chunk      = fread( $f, $read_size );
-			$data       = $chunk . $data;
-			$line_count = substr_count( $data, "\n" );
+			$chunk     = fread( $f, $readSize );
+			$data      = $chunk . $data;
+			$lineCount = substr_count( $data, "\n" );
 		}
 		fclose( $f );
-		$lines_arr = explode( "\n", $data );
-		return array_slice( $lines_arr, -$lines );
+		$linesArr = explode( "\n", $data );
+		return array_slice( $linesArr, -$lines );
 	}
 }

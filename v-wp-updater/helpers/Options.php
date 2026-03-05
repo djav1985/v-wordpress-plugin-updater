@@ -35,47 +35,47 @@ class Options {
 	 * Get an option value with automatic prefixing.
 	 *
 	 * @since 2.0.0
-	 * @param string $option_key     The option key without the prefix.
-	 * @param mixed  $default_value  Optional. Default value to return if the option does not exist.
+	 * @param string $optionKey     The option key without the prefix.
+	 * @param mixed  $defaultValue  Optional. Default value to return if the option does not exist.
 	 * @return mixed The option value or default.
 	 */
-	public static function get( string $option_key, $default_value = '' ) {
-		return get_option( self::PREFIX . $option_key, $default_value );
+	public static function get( string $optionKey, $defaultValue = '' ) {
+		return get_option( self::PREFIX . $optionKey, $defaultValue );
 	}
 
 	/**
 	 * Set an option value with automatic prefixing.
 	 *
 	 * @since 2.0.0
-	 * @param string $option_key  The option key without the prefix.
+	 * @param string $optionKey  The option key without the prefix.
 	 * @param mixed  $value       The value to set.
 	 * @param bool   $autoload    Optional. Whether to autoload the option. Default false.
 	 * @return bool True if option was updated, false otherwise.
 	 */
-	public static function set( string $option_key, $value, bool $autoload = false ): bool {
-		return update_option( self::PREFIX . $option_key, $value, $autoload ? 'yes' : 'no' );
+	public static function set( string $optionKey, $value, bool $autoload = false ): bool {
+		return update_option( self::PREFIX . $optionKey, $value, $autoload ? 'yes' : 'no' );
 	}
 
 	/**
 	 * Delete an option with automatic prefixing.
 	 *
 	 * @since 2.0.0
-	 * @param string $option_key The option key without the prefix.
+	 * @param string $optionKey The option key without the prefix.
 	 * @return bool True if option was deleted, false otherwise.
 	 */
-	public static function delete( string $option_key ): bool {
-		return delete_option( self::PREFIX . $option_key );
+	public static function delete( string $optionKey ): bool {
+		return delete_option( self::PREFIX . $optionKey );
 	}
 
 	/**
 	 * Check if a plugin option is true (with automatic prefixing).
 	 *
 	 * @since 2.0.0
-	 * @param string $option_key Option key without prefix.
+	 * @param string $optionKey Option key without prefix.
 	 * @return bool True if option is set and truthy.
 	 */
-	public static function is_true( string $option_key ): bool {
-		$value = self::get( $option_key, 'false' );
+	public static function is_true( string $optionKey ): bool {
+		$value = self::get( $optionKey, 'false' );
 		if ( is_bool( $value ) ) {
 			return $value;
 		}
@@ -97,10 +97,10 @@ class Options {
 			'update_theme_url'  => 'https://wp-updates.servicesbyv.com/themes/api.php',
 		);
 
-		foreach ( $defaults as $option_name => $default_value ) {
+		foreach ( $defaults as $optionName => $defaultValue ) {
 			// Only add if option doesn't exist yet.
-			if ( false === get_option( self::PREFIX . $option_name, false ) ) {
-				add_option( self::PREFIX . $option_name, $default_value, '', 'no' );
+			if ( false === get_option( self::PREFIX . $optionName, false ) ) {
+				add_option( self::PREFIX . $optionName, $defaultValue, '', 'no' );
 			}
 		}
 	}

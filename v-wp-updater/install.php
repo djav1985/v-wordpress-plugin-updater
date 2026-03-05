@@ -35,13 +35,13 @@ function vwpu_install(): void {
 	vwpu_schedule_theme_updates();
 
 	// Ensure options are set with autoload disabled.
-	$plup_val = get_option( 'vwpu-plup', false );
+	$plupVal = get_option( 'vwpu-plup', false );
 	delete_option( 'vwpu-plup' );
-	add_option( 'vwpu-plup', $plup_val, '', 'no' );
+	add_option( 'vwpu-plup', $plupVal, '', 'no' );
 
-	$thup_val = get_option( 'vwpu-thup', false );
+	$thupVal = get_option( 'vwpu-thup', false );
 	delete_option( 'vwpu-thup' );
-	add_option( 'vwpu-thup', $thup_val, '', 'no' );
+	add_option( 'vwpu-thup', $thupVal, '', 'no' );
 
 	Logger::info( 'Plugin activation completed successfully' );
 }

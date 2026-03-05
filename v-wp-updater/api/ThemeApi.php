@@ -118,8 +118,8 @@ class ThemeApi {
 		 * @return bool|WP_Error True if authenticated, WP_Error otherwise.
 		 */
 	public function check_authentication( WP_REST_Request $request ) {
-			$api_key = $request->get_header( 'X-API-Key' );
-		if ( empty( $api_key ) ) {
+			$apiKey = $request->get_header( 'X-API-Key' );
+		if ( empty( $apiKey ) ) {
 				Logger::error( 'Theme API authentication failed: Missing API key' );
 			return new WP_Error(
 				'missing_api_key',
@@ -127,8 +127,8 @@ class ThemeApi {
 				array( 'status' => 401 )
 			);
 		}
-			$stored_key = Options::get( 'update_key' );
-		if ( empty( $stored_key ) || ! hash_equals( $stored_key, $api_key ) ) {
+			$storedKey = Options::get( 'update_key' );
+		if ( empty( $storedKey ) || ! hash_equals( $storedKey, $apiKey ) ) {
 			Logger::error( 'Theme API authentication failed: Invalid API key' );
 			return new WP_Error(
 				'invalid_api_key',
@@ -153,14 +153,14 @@ class ThemeApi {
 			if ( ! function_exists( 'wp_get_themes' ) ) {
 				require_once ABSPATH . 'wp-includes/theme.php';
 			}
-				$all_themes = wp_get_themes();
-				$themes     = array();
-			foreach ( $all_themes as $theme_slug => $theme_obj ) {
+				$allThemes = wp_get_themes();
+				$themes    = array();
+			foreach ( $allThemes as $themeSlug => $themeObj ) {
 				$themes[] = array(
-					'name'    => $theme_obj->get( 'Name' ),
-					'version' => $theme_obj->get( 'Version' ),
-					'slug'    => $theme_slug,
-					'active'  => ( wp_get_theme()->get_stylesheet() === $theme_slug ),
+					'name'    => $themeObj->get( 'Name' ),
+					'version' => $themeObj->get( 'Version' ),
+					'slug'    => $themeSlug,
+					'active'  => ( wp_get_theme()->get_stylesheet() === $themeSlug ),
 				);
 			}
 				Logger::info( 'Theme API: Listed themes', array( 'count' => count( $themes ) ) );
@@ -190,8 +190,8 @@ class ThemeApi {
 	 * @return WP_REST_Response|WP_Error Response with installation result or error.
 	 */
 	public function install_theme( WP_REST_Request $request ) {
-		$file_params = $request->get_file_params();
-		$package     = $file_params['package'] ?? null;
+		$fileParams = $request->get_file_params();
+		$package    = $fileParams['package'] ?? null;
 
 		if ( empty( $package ) ) {
 			Logger::error( 'Theme API: Installation failed - missing package upload' );
@@ -222,15 +222,15 @@ class ThemeApi {
 		);
 
 		try {
-			$package_path = $this->store_uploaded_package( $package );
-			if ( is_wp_error( $package_path ) ) {
-				Logger::error( 'Theme API: Upload handling failed', array( 'error' => $package_path->get_error_message() ) );
+			$packagePath = $this->store_uploaded_package( $package );
+			if ( is_wp_error( $packagePath ) ) {
+				Logger::error( 'Theme API: Upload handling failed', array( 'error' => $packagePath->get_error_message() ) );
 
-				return $package_path;
+				return $packagePath;
 			}
-			$result = $this->perform_theme_install( $package_path );
-			if ( file_exists( $package_path ) ) {
-				wp_delete_file( $package_path );
+			$result = $this->perform_theme_install( $packagePath );
+			if ( file_exists( $packagePath ) ) {
+				wp_delete_file( $packagePath );
 			}
 			if ( is_wp_error( $result ) ) {
 				Logger::error( 'Theme API: Installation failed', array( 'error' => $result->get_error_message() ) );
@@ -275,9 +275,9 @@ class ThemeApi {
 	 */
 	private function store_uploaded_package( array $package ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
-		$upload_dir = wp_upload_dir();
-		if ( ! empty( $upload_dir['error'] ) ) {
-			return new WP_Error( 'upload_dir_error', $upload_dir['error'] );
+		$uploadDir = wp_upload_dir();
+		if ( ! empty( $uploadDir['error'] ) ) {
+			return new WP_Error( 'upload_dir_error', $uploadDir['error'] );
 		}
 		$overrides = array(
 			'test_form' => false,
@@ -295,25 +295,25 @@ class ThemeApi {
 		 * Perform theme installation.
 		 *
 		 * @since 2.0.0
-		 * @param string $package_path Path to the theme package.
+		 * @param string $packagePath Path to the theme package.
 		 * @return bool|WP_Error True on success, WP_Error on failure.
 		 */
-	private function perform_theme_install( string $package_path ) {
+	private function perform_theme_install( string $packagePath ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-			$skin        = new \WP_Upgrader_Skin();
-			$upgrader    = new \Theme_Upgrader( $skin );
-		$filter_callback = static function ( $reply, $package ) use ( $package_path ) {
-			return ( $package === $package_path ) ? $package_path : $reply;
+			$skin       = new \WP_Upgrader_Skin();
+			$upgrader   = new \Theme_Upgrader( $skin );
+		$filterCallback = static function ( $reply, $package ) use ( $packagePath ) {
+			return ( $package === $packagePath ) ? $packagePath : $reply;
 		};
-			add_filter( 'upgrader_pre_download', $filter_callback, 10, 2 );
+			add_filter( 'upgrader_pre_download', $filterCallback, 10, 2 );
 			$result = $upgrader->install(
-				$package_path,
+				$packagePath,
 				array(
 					'clear_update_cache' => true,
 					'overwrite_package'  => true,
 				)
 			);
-		remove_filter( 'upgrader_pre_download', $filter_callback, 10 );
+		remove_filter( 'upgrader_pre_download', $filterCallback, 10 );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}

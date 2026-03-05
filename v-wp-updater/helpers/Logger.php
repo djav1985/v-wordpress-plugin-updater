@@ -38,9 +38,9 @@ class Logger {
 			return;
 		}
 
-		$formatted_message = self::format_message( 'DEBUG', $message, $context );
+		$formattedMessage = self::format_message( 'DEBUG', $message, $context );
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( $formatted_message );
+		error_log( $formattedMessage );
 	}
 
 	/**
@@ -58,9 +58,9 @@ class Logger {
 			return;
 		}
 
-		$formatted_message = self::format_message( 'INFO', $message, $context );
+		$formattedMessage = self::format_message( 'INFO', $message, $context );
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( $formatted_message );
+		error_log( $formattedMessage );
 	}
 
 	/**
@@ -78,9 +78,9 @@ class Logger {
 			return;
 		}
 
-		$formatted_message = self::format_message( 'ERROR', $message, $context );
+		$formattedMessage = self::format_message( 'ERROR', $message, $context );
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( $formatted_message );
+		error_log( $formattedMessage );
 	}
 
 	/**

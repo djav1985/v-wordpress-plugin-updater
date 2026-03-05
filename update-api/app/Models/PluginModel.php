@@ -43,19 +43,19 @@ class PluginModel
     /**
      * Delete a plugin file.
      *
-     * @param string $plugin_name
+     * @param string $pluginName
      *
      * @return bool True on success, false otherwise.
      */
-    public static function deletePlugin(string $plugin_name): bool
+    public static function deletePlugin(string $pluginName): bool
     {
-        $plugin_path = self::$dir . '/' . basename($plugin_name);
+        $pluginPath = self::$dir . '/' . basename($pluginName);
         if (
-            file_exists($plugin_path) &&
-            dirname(realpath($plugin_path)) === realpath(self::$dir)
+            file_exists($pluginPath) &&
+            dirname(realpath($pluginPath)) === realpath(self::$dir)
         ) {
-            unlink($plugin_path);
-            $slug = explode('_', basename($plugin_name))[0];
+            unlink($pluginPath);
+            $slug = explode('_', basename($pluginName))[0];
             $conn = DatabaseManager::getConnection();
             $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
             return true;
@@ -75,66 +75,66 @@ class PluginModel
     public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
         $messages = [];
-        $allowed_extensions = ['zip'];
-        $total_files = count($fileArray['name']);
+        $allowedExtensions = ['zip'];
+        $totalFiles = count($fileArray['name']);
 
-        for ($i = 0; $i < $total_files; $i++) {
-            $file_name = isset($fileArray['name'][$i]) ? ValidationHelper::validateFilename($fileArray['name'][$i]) : '';
-            $file_tmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
-            $file_error = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
+        for ($i = 0; $i < $totalFiles; $i++) {
+            $fileName = isset($fileArray['name'][$i]) ? ValidationHelper::validateFilename($fileArray['name'][$i]) : '';
+            $fileTmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
+            $fileError = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
             
             // Use the original filename for error messages if validation failed
             if (isset($fileArray['name'][$i])) {
                 if (is_array($fileArray['name'])) {
-                    $original_filename = basename($fileArray['name'][$i]);
+                    $originalFilename = basename($fileArray['name'][$i]);
                 } else {
-                    $original_filename = basename($fileArray['name']);
+                    $originalFilename = basename($fileArray['name']);
                 }
             } else {
-                $original_filename = 'unknown';
+                $originalFilename = 'unknown';
             }
-            $file_extension = $file_name ? strtolower(pathinfo($file_name, PATHINFO_EXTENSION)) : '';
+            $fileExtension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : '';
 
-            $plugin_slug = $file_name ? explode('_', $file_name)[0] : '';
+            $pluginSlug = $fileName ? explode('_', $fileName)[0] : '';
             $conn = DatabaseManager::getConnection();
-            $current = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$plugin_slug]);
-            $max_upload_size = min(
+            $current = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
+            $maxUploadSize = min(
                 self::_parseIniSize(ini_get('upload_max_filesize')),
                 self::_parseIniSize(ini_get('post_max_size'))
             );
 
-            if ($fileArray['size'][$i] > $max_upload_size) {
-                $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
-                    '. File size exceeds the maximum allowed size of ' . ($max_upload_size / (1024 * 1024)) . ' MB.';
+            if ($fileArray['size'][$i] > $maxUploadSize) {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
+                    '. File size exceeds the maximum allowed size of ' . ($maxUploadSize / (1024 * 1024)) . ' MB.';
                 continue;
             }
 
-            if ($file_error !== UPLOAD_ERR_OK || !in_array($file_extension, $allowed_extensions)) {
-                $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
+            if ($fileError !== UPLOAD_ERR_OK || !in_array($fileExtension, $allowedExtensions)) {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
                 continue;
             }
 
-            if ($file_name && preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $file_name, $matches)) {
+            if ($fileName && preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
                 $slug = $matches[1];
                 $version = $matches[2];
                 if ($current && version_compare($version, $current, '<=')) {
-                    $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') .
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
                         '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
                     continue;
                 }
                 // Remove old plugin files
-                $existing_plugins = glob(self::$dir . '/' . $plugin_slug . '_*');
-                foreach ($existing_plugins as $plugin) {
+                $existingPlugins = glob(self::$dir . '/' . $pluginSlug . '_*');
+                foreach ($existingPlugins as $plugin) {
                     if (is_file($plugin)) {
                         unlink($plugin);
                     }
                 }
             }
 
-            if ($file_name) {
-                $plugin_path = self::$dir . '/' . $file_name;
-                if (move_uploaded_file($file_tmp, $plugin_path)) {
+            if ($fileName) {
+                $pluginPath = self::$dir . '/' . $fileName;
+                if (move_uploaded_file($fileTmp, $pluginPath)) {
                     if (isset($slug) && isset($version)) {
                         $conn->executeStatement(
                             'INSERT INTO plugins (slug, version) VALUES (?, ?) '
@@ -142,9 +142,9 @@ class PluginModel
                             [$slug, $version]
                         );
                     }
-                    $messages[] = htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
+                    $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
                 } else {
-                    $messages[] = 'Error uploading: ' . htmlspecialchars($original_filename, ENT_QUOTES, 'UTF-8');
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
                 }
             }
         }

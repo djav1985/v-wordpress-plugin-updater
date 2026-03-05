@@ -29,7 +29,7 @@ use VWPU\Helpers\Options;
 
 // Determine execution context flags up front so conditional bootstrapping can
 // avoid loading admin-specific functionality on frontend requests.
-$is_admin_context = is_admin();
+$isAdminContext = is_admin();
 
 /**
  * Runs on plugin activation.
@@ -107,10 +107,10 @@ register_uninstall_hook( __FILE__, 'vwpu_uninstall' );
  * @return void
  */
 function vwpu_dashboard_setup(): void {
-	$widgets_dir = plugin_dir_path( __FILE__ ) . 'widgets/';
+	$widgetsDir = plugin_dir_path( __FILE__ ) . 'widgets/';
 
-	if ( file_exists( $widgets_dir . 'settings.php' ) ) {
-		require_once $widgets_dir . 'settings.php';
+	if ( file_exists( $widgetsDir . 'settings.php' ) ) {
+		require_once $widgetsDir . 'settings.php';
 		wp_add_dashboard_widget(
 			'vwpu_settings_widget',
 			__( 'V WordPress Updater Settings', 'v-wp-updater' ),
@@ -118,7 +118,7 @@ function vwpu_dashboard_setup(): void {
 		);
 	}
 }
-if ( $is_admin_context ) {
+if ( $isAdminContext ) {
 		add_action( 'wp_dashboard_setup', 'vwpu_dashboard_setup' );
 }
 
@@ -129,8 +129,8 @@ function vwpu_run_theme_updater() {
 	if ( ! Options::is_true( 'update_themes' ) ) {
 		return;
 	}
-		$theme_updater = new ThemeUpdater();
-	$theme_updater->run_updates();
+		$themeUpdater = new ThemeUpdater();
+	$themeUpdater->run_updates();
 }
 add_action( 'vwpu_theme_updater_check_updates', 'vwpu_run_theme_updater' );
 
@@ -141,8 +141,8 @@ function vwpu_run_plugin_updater() {
 	if ( ! Options::is_true( 'update_plugins' ) ) {
 		return;
 	}
-		$plugin_updater = new PluginUpdater();
-	$plugin_updater->run_updates();
+		$pluginUpdater = new PluginUpdater();
+	$pluginUpdater->run_updates();
 }
 add_action( 'vwpu_plugin_updater_check_updates', 'vwpu_run_plugin_updater' );
 
@@ -154,8 +154,8 @@ function vwpu_initialize_plugin_api(): void {
 			return;
 	}
 
-		$update_key = Options::get( 'update_key' );
-	if ( empty( $update_key ) ) {
+		$updateKey = Options::get( 'update_key' );
+	if ( empty( $updateKey ) ) {
 			return;
 	}
 

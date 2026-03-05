@@ -25,8 +25,8 @@ class EncryptionHelper
     public static function encrypt(string $plain): string
     {
         $key = hash('sha256', ENCRYPTION_KEY, true);
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        $iv = \random_bytes($iv_length);
+        $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = \random_bytes($ivLength);
         $cipher = openssl_encrypt($plain, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $cipher);
     }
@@ -43,14 +43,14 @@ class EncryptionHelper
         if ($data === false) {
             return null;
         }
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        if (strlen($data) <= $iv_length) {
+        $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+        if (strlen($data) <= $ivLength) {
             return null;
         }
-        $iv = substr($data, 0, $iv_length);
-        $cipher_text = substr($data, $iv_length);
+        $iv = substr($data, 0, $ivLength);
+        $cipherText = substr($data, $ivLength);
         $plain = openssl_decrypt(
-            $cipher_text,
+            $cipherText,
             'aes-256-cbc',
             hash('sha256', ENCRYPTION_KEY, true),
             OPENSSL_RAW_DATA,
