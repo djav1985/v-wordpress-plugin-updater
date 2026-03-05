@@ -15,12 +15,11 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Helpers\Validation;
-use App\Models\Blacklist;
+use App\Helpers\ValidationHelper;
+use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
 use App\Core\SessionManager;
-use App\Core\Csrf;
 use App\Core\Response;
 
 class LoginController extends Controller
@@ -38,7 +37,7 @@ class LoginController extends Controller
     {
         $session = SessionManager::getInstance();
         $token = $_POST['csrf_token'] ?? '';
-        if (!Csrf::validate($token)) {
+        if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid CSRF token.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
@@ -49,8 +48,8 @@ class LoginController extends Controller
             return self::logoutUser();
         }
 
-        $username = isset($_POST['username']) ? Validation::validateUsername($_POST['username']) : null;
-        $password = isset($_POST['password']) ? Validation::validatePassword($_POST['password']) : null;
+        $username = isset($_POST['username']) ? ValidationHelper::validateUsername($_POST['username']) : null;
+        $password = isset($_POST['password']) ? ValidationHelper::validatePassword($_POST['password']) : null;
         if ($username === VALID_USERNAME && $password !== null && password_verify($password, VALID_PASSWORD_HASH)) {
             $session->set('logged_in', true);
             $session->set('username', $username);
@@ -61,12 +60,12 @@ class LoginController extends Controller
         }
 
         $ip = $_SERVER['REMOTE_ADDR'];
-        if (Blacklist::isBlacklisted($ip)) {
+        if (BlacklistModel::isBlacklisted($ip)) {
             $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
         } else {
-            Blacklist::updateFailedAttempts($ip);
+            BlacklistModel::updateFailedAttempts($ip);
             $error = 'Invalid username or password.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);

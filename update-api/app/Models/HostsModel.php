@@ -15,7 +15,7 @@
 namespace App\Models;
 
 use App\Core\DatabaseManager;
-use App\Helpers\Encryption;
+use App\Helpers\EncryptionHelper;
 
 class HostsModel
 {
@@ -56,7 +56,7 @@ class HostsModel
      */
     public static function addEntry(string $domain, string $key): bool
     {
-        $encrypted = Encryption::encrypt($key);
+        $encrypted = EncryptionHelper::encrypt($key);
         $conn = DatabaseManager::getConnection();
         return $conn->executeStatement('INSERT INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
     }
@@ -66,7 +66,7 @@ class HostsModel
      */
     public static function updateEntry(int $line, string $domain, string $key): bool
     {
-        $encrypted = Encryption::encrypt($key);
+        $encrypted = EncryptionHelper::encrypt($key);
         $conn = DatabaseManager::getConnection();
         return $conn->executeStatement('REPLACE INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
     }

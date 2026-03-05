@@ -11,7 +11,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 use App\Core\DatabaseManager;
 use App\Core\ErrorManager;
 use App\Helpers\WorkerHelper;
-use App\Helpers\CronWorker;
+use App\Helpers\CronHelper;
 
 const JOB_NAME = 'v-updater-cron';
 
@@ -89,11 +89,11 @@ function runCronJob(bool $isWorker): void
     $conn = DatabaseManager::getConnection();
     
     // Sync plugins and themes
-    CronWorker::syncDir(PLUGINS_DIR, 'plugins', $conn);
-    CronWorker::syncDir(THEMES_DIR, 'themes', $conn);
+    CronHelper::syncDir(PLUGINS_DIR, 'plugins', $conn);
+    CronHelper::syncDir(THEMES_DIR, 'themes', $conn);
     
     // Clean up blacklist: remove blocked IPs after 7 days, unblocked after 3 days
-    CronWorker::cleanupBlacklist($conn);
+    CronHelper::cleanupBlacklist($conn);
     
     if (!$isWorker) {
         echo "Cron job completed successfully.\n";

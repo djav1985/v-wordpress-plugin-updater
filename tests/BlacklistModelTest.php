@@ -6,14 +6,14 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use App\Core\DatabaseManager;
-use App\Models\Blacklist;
+use App\Models\BlacklistModel;
 
-class BlacklistTest extends TestCase
+class BlacklistModelTest extends TestCase
 {
     protected function setUp(): void
     {
         if (!defined('DB_FILE')) {
-            define('DB_FILE', sys_get_temp_dir() . '/test-blacklist.sqlite');
+            define('DB_FILE', sys_get_temp_dir() . '/test-blacklist-model.sqlite');
         }
         if (file_exists(DB_FILE)) {
             unlink(DB_FILE);
@@ -41,7 +41,7 @@ class BlacklistTest extends TestCase
     {
         $ip = '192.168.1.1';
         
-        Blacklist::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
         
         $conn = DatabaseManager::getConnection();
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
@@ -54,9 +54,9 @@ class BlacklistTest extends TestCase
     {
         $ip = '192.168.1.2';
         
-        Blacklist::updateFailedAttempts($ip);
-        Blacklist::updateFailedAttempts($ip);
-        Blacklist::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
         
         $conn = DatabaseManager::getConnection();
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
@@ -68,7 +68,7 @@ class BlacklistTest extends TestCase
     public function testIsBlacklistedReturnsFalseForNewIp(): void
     {
         $ip = '192.168.1.3';
-        $this->assertFalse(Blacklist::isBlacklisted($ip));
+        $this->assertFalse(BlacklistModel::isBlacklisted($ip));
     }
 
     public function testIsBlacklistedReturnsTrueForBlacklistedIp(): void
@@ -83,7 +83,7 @@ class BlacklistTest extends TestCase
             'timestamp' => time(),
         ]);
         
-        $this->assertTrue(Blacklist::isBlacklisted($ip));
+        $this->assertTrue(BlacklistModel::isBlacklisted($ip));
     }
 
     public function testIsBlacklistedReturnsFalseForNonBlacklistedIp(): void
@@ -98,7 +98,7 @@ class BlacklistTest extends TestCase
             'timestamp' => time(),
         ]);
         
-        $this->assertFalse(Blacklist::isBlacklisted($ip));
+        $this->assertFalse(BlacklistModel::isBlacklisted($ip));
     }
 
     public function testIsBlacklistedResetsExpiredBlacklist(): void
@@ -115,7 +115,7 @@ class BlacklistTest extends TestCase
         ]);
         
         // Should return false and reset the blacklist
-        $this->assertFalse(Blacklist::isBlacklisted($ip));
+        $this->assertFalse(BlacklistModel::isBlacklisted($ip));
         
         // Verify the record was updated
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
@@ -138,7 +138,7 @@ class BlacklistTest extends TestCase
         ]);
         
         // Third attempt should blacklist and update timestamp
-        Blacklist::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
         
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
         $this->assertSame(1, (int)$record['blacklisted']);

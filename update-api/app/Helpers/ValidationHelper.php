@@ -8,15 +8,16 @@
  * Link:    https://vontainment.com
  * Version: 4.0.0
  *
- * File: Validation.php
+ * File: ValidationHelper.php
  * Description: Validation helper using Respect\Validation
  */
 
 namespace App\Helpers;
 
 use Respect\Validation\Validator as v;
+use App\Core\SessionManager;
 
-class Validation
+class ValidationHelper
 {
     public static function validateDomain(string $domain): ?string
     {
@@ -70,5 +71,17 @@ class Validation
     {
         $password = trim($password);
         return strlen($password) >= 6 ? $password : null;
+    }
+
+    /**
+     * Validate a CSRF token against the session token.
+     *
+     * @param string $token Token provided by the client.
+     * @return bool True when the token matches the session token.
+     */
+    public static function validateCsrfToken(string $token): bool
+    {
+        $sessionToken = SessionManager::getInstance()->get('csrf_token');
+        return is_string($sessionToken) && $sessionToken !== '' && hash_equals($sessionToken, $token);
     }
 }
