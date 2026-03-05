@@ -16,6 +16,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\HostsModel;
+use App\Helpers\Validation;
 use App\Core\Csrf;
 use App\Core\ErrorManager;
 use App\Core\Response;
@@ -48,6 +49,11 @@ class SiteLogsController extends Controller
         $domain = $_POST['domain'] ?? '';
         if (empty($domain)) {
             return Response::json(['success' => false, 'message' => 'Domain is required.'], 400);
+        }
+
+        $domain = Validation::validateDomain($domain);
+        if ($domain === null) {
+            return Response::json(['success' => false, 'message' => 'Invalid domain.'], 400);
         }
 
         $lines = isset($_POST['lines']) ? (int)$_POST['lines'] : 250;

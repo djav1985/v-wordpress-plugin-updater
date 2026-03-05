@@ -82,7 +82,7 @@ class PluginsController extends Controller
             $plugin_name = isset($_POST['plugin_name'])
                 ? Validation::validateSlug($_POST['plugin_name'])
                 : null;
-            $domain = isset($_POST['domain']) ? $_POST['domain'] : null;
+            $domain = isset($_POST['domain']) ? Validation::validateDomain($_POST['domain']) : null;
 
             if ($plugin_name === null || $domain === null) {
                 $error = 'Invalid plugin name or domain.';

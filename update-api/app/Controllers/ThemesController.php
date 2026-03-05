@@ -80,7 +80,7 @@ class ThemesController extends Controller
             $theme_name = isset($_POST['theme_name'])
                 ? Validation::validateSlug($_POST['theme_name'])
                 : null;
-            $domain = isset($_POST['domain']) ? $_POST['domain'] : null;
+            $domain = isset($_POST['domain']) ? Validation::validateDomain($_POST['domain']) : null;
 
             if ($theme_name === null || $domain === null) {
                 $error = 'Invalid theme name or domain.';
