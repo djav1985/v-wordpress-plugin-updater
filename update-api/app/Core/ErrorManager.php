@@ -36,6 +36,16 @@ class ErrorManager
         return self::$instance;
     }
 
+    public static function handle(callable $callback): void
+    {
+        $manager = self::getInstance();
+        try {
+            $callback();
+        } catch (Throwable $exception) {
+            $manager->handleException($exception);
+        }
+    }
+    
     public function log(string $message, string $type = 'error'): void
     {
         $logFile = defined('LOG_FILE') ? LOG_FILE : (__DIR__ . '/../../php_app.log');
@@ -81,16 +91,6 @@ class ErrorManager
             $this->log($message, 'fatal');
             http_response_code(500);
             echo 'A critical error occurred.';
-        }
-    }
-
-    public static function handle(callable $callback): void
-    {
-        $manager = self::getInstance();
-        try {
-            $callback();
-        } catch (Throwable $exception) {
-            $manager->handleException($exception);
         }
     }
 }

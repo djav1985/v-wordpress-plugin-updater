@@ -6,3 +6,7 @@ update-api/storage/*.sqlite
 node_modules/
 .phpunit.result.cache
 .phpunit.cache/
+
+
+#Ignore insiders AI rules
+.github\instructions\codacy.instructions.md

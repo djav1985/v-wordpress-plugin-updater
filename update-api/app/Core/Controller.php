@@ -17,9 +17,10 @@ namespace App\Core;
 class Controller
 {
     /**
-     * Render a view and pass data to it.
+     * Renders a view file with the provided data.
      *
-     * @param array<string, mixed> $data
+     * @param string $view The view name relative to the Views directory.
+     * @param array<string, mixed> $data Optional data extracted for use within the view.
      */
     protected function render(string $view, array $data = []): void
     {
