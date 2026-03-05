@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Helpers\EncryptionHelper;
 
-class EncryptionTest extends TestCase
+class EncryptionHelperTest extends TestCase
 {
     protected function setUp(): void
     {
