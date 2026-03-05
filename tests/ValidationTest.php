@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Helpers\ValidationHelper;
 
-class ValidationTest extends TestCase
+class ValidationHelperTest extends TestCase
 {
     public function testValidateDomainAcceptsValidDomains(): void
     {
