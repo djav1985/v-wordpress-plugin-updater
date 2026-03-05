@@ -5,7 +5,7 @@ namespace Tests;
 require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
-use App\Core\Csrf;
+use App\Helpers\ValidationHelper;
 use App\Core\SessionManager;
 
 class CsrfTest extends TestCase
@@ -53,7 +53,7 @@ class CsrfTest extends TestCase
         $csrfToken = $session->get('csrf_token');
         $this->assertIsString($csrfToken);
         
-        $result = Csrf::validate($csrfToken);
+        $result = ValidationHelper::validateCsrfToken($csrfToken);
         $this->assertTrue($result);
     }
 
@@ -64,7 +64,7 @@ class CsrfTest extends TestCase
         $session = SessionManager::getInstance();
         $session->start();
         
-        $result = Csrf::validate('wrong-token');
+        $result = ValidationHelper::validateCsrfToken('wrong-token');
         $this->assertFalse($result);
     }
 
@@ -75,7 +75,7 @@ class CsrfTest extends TestCase
         $session = SessionManager::getInstance();
         $session->start();
         
-        $result = Csrf::validate('');
+        $result = ValidationHelper::validateCsrfToken('');
         $this->assertFalse($result);
     }
 
@@ -88,7 +88,7 @@ class CsrfTest extends TestCase
         $session->start();
         $session->set('csrf_token', '');
         
-        $result = Csrf::validate('any-token');
+        $result = ValidationHelper::validateCsrfToken('any-token');
         $this->assertFalse($result);
     }
 
@@ -107,7 +107,7 @@ class CsrfTest extends TestCase
         // Try with token that differs by one character
         $tamperedToken = substr($csrfToken, 0, -1) . 'X';
         
-        $result = Csrf::validate($tamperedToken);
+        $result = ValidationHelper::validateCsrfToken($tamperedToken);
         $this->assertFalse($result);
     }
 }

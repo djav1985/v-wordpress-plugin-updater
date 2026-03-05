@@ -6,9 +6,9 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use App\Core\DatabaseManager;
-use App\Helpers\CronWorker;
+use App\Helpers\CronHelper;
 
-class CronWorkerTest extends TestCase
+class CronHelperTest extends TestCase
 {
     private string $testPluginsDir;
     private string $testThemesDir;
@@ -16,7 +16,7 @@ class CronWorkerTest extends TestCase
     protected function setUp(): void
     {
         if (!defined('DB_FILE')) {
-            define('DB_FILE', sys_get_temp_dir() . '/test-cronworker.sqlite');
+            define('DB_FILE', sys_get_temp_dir() . '/test-cronhelper.sqlite');
         }
         
         $this->testPluginsDir = sys_get_temp_dir() . '/test-plugins-cron';
@@ -74,7 +74,7 @@ class CronWorkerTest extends TestCase
         file_put_contents($this->testPluginsDir . '/another-plugin_2.0.zip', 'data');
         
         $conn = DatabaseManager::getConnection();
-        CronWorker::syncDir($this->testPluginsDir, 'plugins', $conn);
+        CronHelper::syncDir($this->testPluginsDir, 'plugins', $conn);
         
         $plugins = $conn->fetchAllAssociative('SELECT * FROM plugins ORDER BY slug');
         $this->assertCount(2, $plugins);
@@ -92,7 +92,7 @@ class CronWorkerTest extends TestCase
         // Create newer version
         file_put_contents($this->testPluginsDir . '/my-plugin_2.0.zip', 'data');
         
-        CronWorker::syncDir($this->testPluginsDir, 'plugins', $conn);
+        CronHelper::syncDir($this->testPluginsDir, 'plugins', $conn);
         
         $plugin = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['my-plugin']);
         $this->assertSame('2.0', $plugin['version']);
@@ -107,7 +107,7 @@ class CronWorkerTest extends TestCase
         // Only create file for 'another-plugin'
         file_put_contents($this->testPluginsDir . '/another-plugin_1.0.zip', 'data');
         
-        CronWorker::syncDir($this->testPluginsDir, 'plugins', $conn);
+        CronHelper::syncDir($this->testPluginsDir, 'plugins', $conn);
         
         $plugins = $conn->fetchAllAssociative('SELECT * FROM plugins');
         $this->assertCount(1, $plugins);
@@ -122,7 +122,7 @@ class CronWorkerTest extends TestCase
         file_put_contents($this->testPluginsDir . '/valid-plugin_1.0.zip', 'data');
         
         $conn = DatabaseManager::getConnection();
-        CronWorker::syncDir($this->testPluginsDir, 'plugins', $conn);
+        CronHelper::syncDir($this->testPluginsDir, 'plugins', $conn);
         
         $plugins = $conn->fetchAllAssociative('SELECT * FROM plugins');
         $this->assertCount(1, $plugins);
@@ -149,7 +149,7 @@ class CronWorkerTest extends TestCase
             'timestamp' => time() - (2 * 24 * 60 * 60), // 2 days ago
         ]);
         
-        CronWorker::cleanupBlacklist($conn);
+        CronHelper::cleanupBlacklist($conn);
         
         $records = $conn->fetchAllAssociative('SELECT * FROM blacklist');
         $this->assertCount(1, $records);
@@ -176,7 +176,7 @@ class CronWorkerTest extends TestCase
             'timestamp' => time() - (1 * 24 * 60 * 60), // 1 day ago
         ]);
         
-        CronWorker::cleanupBlacklist($conn);
+        CronHelper::cleanupBlacklist($conn);
         
         $records = $conn->fetchAllAssociative('SELECT * FROM blacklist');
         $this->assertCount(1, $records);
@@ -188,7 +188,7 @@ class CronWorkerTest extends TestCase
         file_put_contents($this->testThemesDir . '/my-theme_1.0.zip', 'data');
         
         $conn = DatabaseManager::getConnection();
-        CronWorker::syncDir($this->testThemesDir, 'themes', $conn);
+        CronHelper::syncDir($this->testThemesDir, 'themes', $conn);
         
         $themes = $conn->fetchAllAssociative('SELECT * FROM themes');
         $this->assertCount(1, $themes);

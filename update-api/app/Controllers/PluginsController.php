@@ -14,12 +14,11 @@
 
 namespace App\Controllers;
 
-use App\Helpers\Validation;
+use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
-use App\Core\Csrf;
 use App\Core\Response;
 
 class PluginsController extends Controller
@@ -43,7 +42,7 @@ class PluginsController extends Controller
     public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
-        if (!Csrf::validate($token)) {
+        if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -68,7 +67,7 @@ class PluginsController extends Controller
             return Response::redirect('/plupdate');
         } elseif (isset($_POST['delete_plugin'])) {
             $plugin_name = isset($_POST['plugin_name'])
-                ? Validation::validateSlug($_POST['plugin_name'])
+                ? ValidationHelper::validateSlug($_POST['plugin_name'])
                 : null;
             if ($plugin_name !== null && PluginModel::deletePlugin($plugin_name)) {
                 MessageHelper::addMessage('Plugin deleted successfully!');
@@ -80,9 +79,9 @@ class PluginsController extends Controller
             return Response::redirect('/plupdate');
         } elseif (isset($_POST['install_plugin'])) {
             $plugin_name = isset($_POST['plugin_name'])
-                ? Validation::validateSlug($_POST['plugin_name'])
+                ? ValidationHelper::validateSlug($_POST['plugin_name'])
                 : null;
-            $domain = isset($_POST['domain']) ? Validation::validateDomain($_POST['domain']) : null;
+            $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
 
             if ($plugin_name === null || $domain === null) {
                 $error = 'Invalid plugin name or domain.';
@@ -121,7 +120,7 @@ class PluginsController extends Controller
             return ['success' => false, 'message' => 'Domain not found in hosts table.'];
         }
         
-        $key = \App\Helpers\Encryption::decrypt($key_encrypted);
+        $key = \App\Helpers\EncryptionHelper::decrypt($key_encrypted);
         
         // Prepare the API request
         $url = 'https://' . $domain . '/wp-json/vwpd/v1/plugins';

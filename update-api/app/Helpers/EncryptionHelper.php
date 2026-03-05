@@ -8,13 +8,13 @@
  * Link:    https://vontainment.com
  * Version: 4.0.0
  *
- * File: Encryption.php
+ * File: EncryptionHelper.php
  * Description: WordPress Update API
  */
 
 namespace App\Helpers;
 
-class Encryption
+class EncryptionHelper
 {
     /**
      * Encrypt a string using AES-256-CBC.

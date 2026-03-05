@@ -16,8 +16,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\HostsModel;
-use App\Helpers\Validation;
-use App\Core\Csrf;
+use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Core\Response;
 
@@ -40,7 +39,7 @@ class SiteLogsController extends Controller
     public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
-        if (!Csrf::validate($token)) {
+        if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
             return Response::json(['success' => false, 'message' => $error], 400);
@@ -51,7 +50,7 @@ class SiteLogsController extends Controller
             return Response::json(['success' => false, 'message' => 'Domain is required.'], 400);
         }
 
-        $domain = Validation::validateDomain($domain);
+        $domain = ValidationHelper::validateDomain($domain);
         if ($domain === null) {
             return Response::json(['success' => false, 'message' => 'Invalid domain.'], 400);
         }
@@ -84,7 +83,7 @@ class SiteLogsController extends Controller
             ];
         }
         
-        $key = \App\Helpers\Encryption::decrypt($key_encrypted);
+        $key = \App\Helpers\EncryptionHelper::decrypt($key_encrypted);
         
         // Prepare the API request
         $url = 'https://' . $domain . '/wp-json/vwpd/v1/debuglog?lines=' . $lines;

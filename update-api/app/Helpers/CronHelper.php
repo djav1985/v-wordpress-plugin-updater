@@ -7,7 +7,7 @@ use Doctrine\DBAL\Connection;
 /**
  * Helper utilities for cron synchronization and housekeeping tasks.
  */
-final class CronWorker
+final class CronHelper
 {
     /**
      * Sync ZIP artifacts in a directory into the given table, keeping only discovered slugs.

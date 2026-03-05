@@ -5,7 +5,7 @@ namespace Tests;
 require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
-use App\Helpers\Encryption;
+use App\Helpers\EncryptionHelper;
 
 class EncryptionTest extends TestCase
 {
@@ -19,7 +19,7 @@ class EncryptionTest extends TestCase
     public function testEncryptReturnsBase64String(): void
     {
         $plaintext = 'secret message';
-        $encrypted = Encryption::encrypt($plaintext);
+        $encrypted = EncryptionHelper::encrypt($plaintext);
         
         $this->assertIsString($encrypted);
         $this->assertNotEmpty($encrypted);
@@ -31,8 +31,8 @@ class EncryptionTest extends TestCase
     public function testDecryptReturnsOriginalPlaintext(): void
     {
         $plaintext = 'secret message';
-        $encrypted = Encryption::encrypt($plaintext);
-        $decrypted = Encryption::decrypt($encrypted);
+        $encrypted = EncryptionHelper::encrypt($plaintext);
+        $decrypted = EncryptionHelper::decrypt($encrypted);
         
         $this->assertSame($plaintext, $decrypted);
     }
@@ -47,15 +47,15 @@ class EncryptionTest extends TestCase
         ];
         
         foreach ($values as $value) {
-            $encrypted = Encryption::encrypt($value);
-            $decrypted = Encryption::decrypt($encrypted);
+            $encrypted = EncryptionHelper::encrypt($value);
+            $decrypted = EncryptionHelper::decrypt($encrypted);
             $this->assertSame($value, $decrypted, "Failed for value: $value");
         }
     }
 
     public function testDecryptInvalidBase64ReturnsNull(): void
     {
-        $result = Encryption::decrypt('not-valid-base64!!!');
+        $result = EncryptionHelper::decrypt('not-valid-base64!!!');
         $this->assertNull($result);
     }
 
@@ -63,7 +63,7 @@ class EncryptionTest extends TestCase
     {
         // Create a valid base64 string that's too short
         $shortData = base64_encode('short');
-        $result = Encryption::decrypt($shortData);
+        $result = EncryptionHelper::decrypt($shortData);
         $this->assertNull($result);
     }
 
@@ -71,23 +71,23 @@ class EncryptionTest extends TestCase
     {
         // Due to random IV, encrypting the same plaintext twice should produce different results
         $plaintext = 'same message';
-        $encrypted1 = Encryption::encrypt($plaintext);
-        $encrypted2 = Encryption::encrypt($plaintext);
+        $encrypted1 = EncryptionHelper::encrypt($plaintext);
+        $encrypted2 = EncryptionHelper::encrypt($plaintext);
         
         $this->assertNotSame($encrypted1, $encrypted2);
         // But both should decrypt to the same plaintext
-        $this->assertSame($plaintext, Encryption::decrypt($encrypted1));
-        $this->assertSame($plaintext, Encryption::decrypt($encrypted2));
+        $this->assertSame($plaintext, EncryptionHelper::decrypt($encrypted1));
+        $this->assertSame($plaintext, EncryptionHelper::decrypt($encrypted2));
     }
 
     public function testDecryptTamperedDataReturnsNull(): void
     {
         $plaintext = 'original message';
-        $encrypted = Encryption::encrypt($plaintext);
+        $encrypted = EncryptionHelper::encrypt($plaintext);
         
         // Tamper with the encrypted data by changing a character
         $tampered = substr($encrypted, 0, -5) . 'XXXXX';
-        $result = Encryption::decrypt($tampered);
+        $result = EncryptionHelper::decrypt($tampered);
         
         // Decryption should fail and return null or not match original
         $this->assertNotSame($plaintext, $result);

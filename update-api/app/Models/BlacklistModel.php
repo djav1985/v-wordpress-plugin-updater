@@ -8,7 +8,7 @@
  * Link:    https://vontainment.com
  * Version: 4.0.0
  *
- * File: Blacklist.php
+ * File: BlacklistModel.php
  * Description: WordPress Update API
  */
 
@@ -16,7 +16,7 @@ namespace App\Models;
 
 use App\Core\DatabaseManager;
 
-class Blacklist
+class BlacklistModel
 {
     /**
      * Get database connection.

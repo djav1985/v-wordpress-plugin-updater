@@ -14,9 +14,9 @@
 
 namespace App\Controllers;
 
-use App\Helpers\Validation;
-use App\Helpers\Encryption;
-use App\Models\Blacklist;
+use App\Helpers\ValidationHelper;
+use App\Helpers\EncryptionHelper;
+use App\Models\BlacklistModel;
 use App\Models\HostsModel;
 use App\Core\ErrorManager;
 use App\Core\Controller;
@@ -28,7 +28,7 @@ class ApiController extends Controller
     public function handleRequest(): Response
     {
         $ip = $_SERVER['REMOTE_ADDR'];
-        if (Blacklist::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+        if (BlacklistModel::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
             ErrorManager::getInstance()->log('Forbidden or invalid request from ' . $ip);
             return new Response(403);
         }
@@ -50,10 +50,10 @@ class ApiController extends Controller
         }
         list($type, $domain, $key, $slug, $version) = $values;
 
-        $domain  = Validation::validateDomain($domain);
-        $key     = Validation::validateKey($key);
-        $slug    = Validation::validateSlug($slug);
-        $version = Validation::validateVersion($version);
+        $domain  = ValidationHelper::validateDomain($domain);
+        $key     = ValidationHelper::validateKey($key);
+        $slug    = ValidationHelper::validateSlug($slug);
+        $version = ValidationHelper::validateVersion($version);
 
         $invalid = [];
         if ($domain === null) {
@@ -78,7 +78,7 @@ class ApiController extends Controller
         $conn = DatabaseManager::getConnection();
         $hostRow = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         if ($hostRow) {
-            $host_key = Encryption::decrypt($hostRow['key']);
+            $host_key = EncryptionHelper::decrypt($hostRow['key']);
             if ($host_key !== null && $host_key === $key) {
                 $table = $type === 'theme' ? 'themes' : 'plugins';
                 $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
@@ -111,7 +111,7 @@ class ApiController extends Controller
         }
 
         // Increment failed attempts for this IP (may blacklist after threshold)
-        Blacklist::updateFailedAttempts($ip);
+        BlacklistModel::updateFailedAttempts($ip);
 
         $conn->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',

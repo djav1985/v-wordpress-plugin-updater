@@ -14,14 +14,13 @@
 
 namespace App\Controllers;
 
-use App\Helpers\Validation;
-use App\Helpers\Encryption;
+use App\Helpers\ValidationHelper;
+use App\Helpers\EncryptionHelper;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\HostsModel;
 use App\Helpers\MessageHelper;
 use App\Core\SessionManager;
-use App\Core\Csrf;
 use App\Core\Response;
 
 class HomeController extends Controller
@@ -42,17 +41,17 @@ class HomeController extends Controller
     public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
-        if (!Csrf::validate($token)) {
+        if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
             return Response::redirect('/home');
         }
 
-        $domain = isset($_POST['domain']) ? Validation::validateDomain($_POST['domain']) : null;
+        $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
         $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
         if (isset($_POST['add_entry'])) {
-            $newKey = Validation::generateKey();
+            $newKey = ValidationHelper::generateKey();
             if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Entry added successfully.');
             } else {
@@ -61,7 +60,7 @@ class HomeController extends Controller
                 MessageHelper::addMessage($error);
             }
         } elseif (isset($_POST['regen_entry'])) {
-            $newKey = Validation::generateKey();
+            $newKey = ValidationHelper::generateKey();
             if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
                 MessageHelper::addMessage('Key regenerated successfully.');
             } else {
@@ -131,7 +130,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Encryption::decrypt($encryptedKey) ?? '';
+                $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -152,7 +151,7 @@ class HomeController extends Controller
                 $fields = explode(' ', $entry);
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
-                $key = Encryption::decrypt($encryptedKey) ?? '';
+                $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 

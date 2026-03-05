@@ -18,7 +18,7 @@ use App\Core\Controller;
 use App\Core\ErrorManager;
 use App\Models\LogModel;
 use App\Helpers\MessageHelper;
-use App\Core\Csrf;
+use App\Helpers\ValidationHelper;
 use App\Core\Response;
 
 class LogsController extends Controller
@@ -43,7 +43,7 @@ class LogsController extends Controller
     public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
-        if (!Csrf::validate($token)) {
+        if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
