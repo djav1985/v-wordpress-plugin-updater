@@ -60,4 +60,32 @@ class Response
     {
         return new self($status, $headers, '', $path);
     }
+
+    /**
+     * Create JSON response.
+     *
+     * @param mixed $data
+     */
+    public static function json(mixed $data, int $status = 200): self
+    {
+        try {
+            $json = json_encode($data, \JSON_THROW_ON_ERROR | \JSON_INVALID_UTF8_SUBSTITUTE);
+
+            return new self($status, ['Content-Type' => 'application/json'], $json);
+        } catch (\JsonException $e) {
+            // Log the encoding failure and return a safe 500 response.
+            if (class_exists(ErrorManager::class)) {
+                ErrorManager::getInstance()->log(
+                    'JSON encoding failed in Response::json(): ' . $e->getMessage(),
+                    'error'
+                );
+            }
+
+            return new self(
+                500,
+                ['Content-Type' => 'text/plain'],
+                'Internal Server Error'
+            );
+        }
+    }
 }
