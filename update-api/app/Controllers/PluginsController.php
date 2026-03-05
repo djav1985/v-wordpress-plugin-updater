@@ -20,18 +20,18 @@ use App\Core\Controller;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
 use App\Core\Csrf;
-use App\Core\SessionManager;
+use App\Core\Response;
 
 class PluginsController extends Controller
 {
     /**
      * Handles GET requests for plugin-related actions.
      */
-    public function handleRequest(): void
+    public function handleRequest(): Response
     {
         $pluginsTableHtml = self::getPluginsTableHtml();
         $hosts = \App\Models\HostsModel::getHosts();
-        $this->render('plupdate', [
+        return Response::view('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
             'hosts' => $hosts,
         ]);
@@ -40,7 +40,7 @@ class PluginsController extends Controller
     /**
      * Handles POST submissions for plugin-related actions.
      */
-    public function handleSubmission(): void
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
@@ -49,13 +49,10 @@ class PluginsController extends Controller
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                http_response_code(400);
-                echo $error;
-                exit();
+                return Response::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            header('Location: /');
-            exit();
+            return Response::redirect('/');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -63,14 +60,12 @@ class PluginsController extends Controller
         if (isset($_FILES['plugin_file'])) {
             $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
             if ($isAjax) {
-                echo implode("\n", $messages);
-                exit();
+                return Response::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            header('Location: /plupdate');
-            exit();
+            return Response::redirect('/plupdate');
         } elseif (isset($_POST['delete_plugin'])) {
             $plugin_name = isset($_POST['plugin_name'])
                 ? Validation::validateSlug($_POST['plugin_name'])
@@ -82,27 +77,25 @@ class PluginsController extends Controller
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
             }
-            header('Location: /plupdate');
-            exit();
+            return Response::redirect('/plupdate');
         } elseif (isset($_POST['install_plugin'])) {
             $plugin_name = isset($_POST['plugin_name'])
                 ? Validation::validateSlug($_POST['plugin_name'])
                 : null;
             $domain = isset($_POST['domain']) ? $_POST['domain'] : null;
-            
+
             if ($plugin_name === null || $domain === null) {
                 $error = 'Invalid plugin name or domain.';
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
-                header('Location: /plupdate');
-                exit();
+                return Response::redirect('/plupdate');
             }
-            
+
             $result = self::installPluginToDomain($plugin_name, $domain);
             MessageHelper::addMessage($result['message']);
-            header('Location: /plupdate');
-            exit();
+            return Response::redirect('/plupdate');
         }
+        return Response::redirect('/plupdate');
     }
 
     /**

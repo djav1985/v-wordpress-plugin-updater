@@ -60,4 +60,14 @@ class Response
     {
         return new self($status, $headers, '', $path);
     }
+
+    /**
+     * Create JSON response.
+     *
+     * @param mixed $data
+     */
+    public static function json(mixed $data, int $status = 200): self
+    {
+        return new self($status, ['Content-Type' => 'application/json'], json_encode($data, JSON_THROW_ON_ERROR));
+    }
 }

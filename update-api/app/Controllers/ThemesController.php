@@ -20,18 +20,18 @@ use App\Core\Controller;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
 use App\Core\Csrf;
-use App\Core\SessionManager;
+use App\Core\Response;
 
 class ThemesController extends Controller
 {
     /**
      * Handles GET requests for theme-related actions.
      */
-    public function handleRequest(): void
+    public function handleRequest(): Response
     {
         $themesTableHtml = self::getThemesTableHtml();
         $hosts = \App\Models\HostsModel::getHosts();
-        $this->render('thupdate', [
+        return Response::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
             'hosts' => $hosts,
         ]);
@@ -40,7 +40,7 @@ class ThemesController extends Controller
     /**
      * Handles POST submissions for theme-related actions.
      */
-    public function handleSubmission(): void
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
@@ -49,13 +49,10 @@ class ThemesController extends Controller
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                http_response_code(400);
-                echo $error;
-                exit();
+                return Response::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            header('Location: /');
-            exit();
+            return Response::redirect('/');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -63,14 +60,12 @@ class ThemesController extends Controller
         if (isset($_FILES['theme_file'])) {
             $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
             if ($isAjax) {
-                echo implode("\n", $messages);
-                exit();
+                return Response::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            header('Location: /thupdate');
-            exit();
+            return Response::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
             $theme_name = isset($_POST['theme_name']) ? Validation::validateSlug($_POST['theme_name']) : null;
             if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
@@ -80,27 +75,25 @@ class ThemesController extends Controller
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
             }
-            header('Location: /thupdate');
-            exit();
+            return Response::redirect('/thupdate');
         } elseif (isset($_POST['install_theme'])) {
             $theme_name = isset($_POST['theme_name'])
                 ? Validation::validateSlug($_POST['theme_name'])
                 : null;
             $domain = isset($_POST['domain']) ? $_POST['domain'] : null;
-            
+
             if ($theme_name === null || $domain === null) {
                 $error = 'Invalid theme name or domain.';
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
-                header('Location: /thupdate');
-                exit();
+                return Response::redirect('/thupdate');
             }
-            
+
             $result = self::installThemeToDomain($theme_name, $domain);
             MessageHelper::addMessage($result['message']);
-            header('Location: /thupdate');
-            exit();
+            return Response::redirect('/thupdate');
         }
+        return Response::redirect('/thupdate');
     }
 
     /**

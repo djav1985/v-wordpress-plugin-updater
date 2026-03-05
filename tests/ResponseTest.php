@@ -120,4 +120,23 @@ class ResponseTest extends TestCase
         
         $this->assertSame(206, $response->status);
     }
+
+    public function testJsonCreatesJsonResponse(): void
+    {
+        $data = ['success' => true, 'message' => 'OK'];
+        $response = Response::json($data);
+
+        $this->assertSame(200, $response->status);
+        $this->assertSame(['Content-Type' => 'application/json'], $response->headers);
+        $this->assertSame(json_encode($data), $response->body);
+        $this->assertNull($response->file);
+    }
+
+    public function testJsonWithCustomStatus(): void
+    {
+        $response = Response::json(['error' => 'Not found'], 404);
+
+        $this->assertSame(404, $response->status);
+        $this->assertSame(json_encode(['error' => 'Not found']), $response->body);
+    }
 }

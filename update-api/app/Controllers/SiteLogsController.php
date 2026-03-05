@@ -16,19 +16,19 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\HostsModel;
-use App\Helpers\MessageHelper;
 use App\Core\Csrf;
 use App\Core\ErrorManager;
+use App\Core\Response;
 
 class SiteLogsController extends Controller
 {
     /**
      * Handles GET requests for site logs.
      */
-    public function handleRequest(): void
+    public function handleRequest(): Response
     {
         $hosts = HostsModel::getHosts();
-        $this->render('sitelogs', [
+        return Response::view('sitelogs', [
             'hosts' => $hosts,
         ]);
     }
@@ -36,31 +36,25 @@ class SiteLogsController extends Controller
     /**
      * Handles POST requests to fetch logs for a domain.
      */
-    public function handleSubmission(): void
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $error]);
-            exit();
+            return Response::json(['success' => false, 'message' => $error], 400);
         }
 
         $domain = $_POST['domain'] ?? '';
         if (empty($domain)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Domain is required.']);
-            exit();
+            return Response::json(['success' => false, 'message' => 'Domain is required.'], 400);
         }
 
         $lines = isset($_POST['lines']) ? (int)$_POST['lines'] : 250;
-        
+
         $result = self::fetchSiteLogs($domain, $lines);
-        
-        http_response_code($result['success'] ? 200 : 500);
-        echo json_encode($result);
-        exit();
+
+        return Response::json($result, $result['success'] ? 200 : 500);
     }
 
     /**
