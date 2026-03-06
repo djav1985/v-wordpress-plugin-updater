@@ -1,8 +1,14 @@
 <?php
 
 /**
- * V-WordPress-Plugin-Updater Installer
- * Runs in browser and provides HTML status updates.
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.0.0
+ *
+ * File: install.php
+ * Description: WordPress Update API
  */
 
 use App\Core\DatabaseManager;

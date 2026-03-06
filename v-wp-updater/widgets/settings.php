@@ -1,9 +1,13 @@
 <?php
 /**
- * Settings Widget
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * @package VWPU
- * @since   2.0.0
+ * File: settings.php
+ * Description: V WordPress Plugin Updater
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.0.0
+ *
+ * File: CronHelper.php
+ * Description: WordPress Update API
+ */
+
 namespace App\Helpers;
 
 use Doctrine\DBAL\Connection;

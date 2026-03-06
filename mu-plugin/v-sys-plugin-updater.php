@@ -2,6 +2,9 @@
 /**
  * Plugin Name: V Sys Plugin Updater
  * Description: Provides helper functions used by the Vontainment updater tests.
+ *
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
  */
 
 if (!function_exists('vontmnt_get_api_key')) {

@@ -1,11 +1,13 @@
 <?php
 /**
- * Install Functions
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * Handles the installation and scheduling of updates for plugins and themes.
- *
- * @package VWPU
- * @since 1.0.0
+ * File: install.php
+ * Description: V WordPress Plugin Updater
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
