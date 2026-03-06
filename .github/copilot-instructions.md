@@ -12,10 +12,24 @@ Both components are independently deployable—the API runs on a web server, the
 
 **Separate Namespaces**: `App\` (API server) vs `VWPU\` (WordPress plugin)—never mix them.
 
+**Unified Framework Architecture**:
+Both `update-api/` and `root/` applications share identical core patterns:
+- **SessionManager**: Singleton with CSRF management, timeout tracking, IP blacklisting (7 days blocked, 3 days unblocked)
+- **Response**: Immutable fluent API with static factories (`Response::view()`, `Response::redirect()`, `Response::text()`)
+- **Controller**: Base class with `render()` method; all handlers return Response objects (never echo/exit)
+- **Entry Point**: Explicit URL parsing in `public/index.php` before routing (`parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)`)
+- **Router**: Receives pre-parsed path; uses FastRoute dispatcher; enforces authentication except `/login` (and `/api` or `/feeds/` in respective apps)
+
+**Architecture Differences** (intentional, domain-specific):
+- **update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment
+- **root**: Full-featured application with Service layer (StatusService, CacheService, QueueService), MySQL database, complex domain logic
+Both approaches are valid—choose based on application complexity.
+
 **Database Strategy**: 
 - API uses SQLite via Doctrine DBAL (`storage/updater.sqlite`)
-- Schema: `plugins`, `themes`, `hosts`, `logs`, `blacklist` tables
-- Managed by `DatabaseManager::getConnection()` (singleton)
+- Root uses MySQL via custom DatabaseManager with retry logic
+- Schema: API has `plugins`, `themes`, `hosts`, `logs`, `blacklist` tables
+- Managed by `DatabaseManager::getConnection()` or `DatabaseManager::getInstance()` (singletons)
 - Cron sync (`cron.php`) keeps database in sync with filesystem
 
 **Routing**: FastRoute-based dispatcher in `App\Core\Router` with Response objects (not direct output). All routes require authentication except `/api` (validates domain+key) and `/login`.
@@ -24,6 +38,40 @@ Both components are independently deployable—the API runs on a web server, the
 - API keys encrypted with `App\Helpers\Encryption` using `ENCRYPTION_KEY` env var
 - IP blacklisting auto-expires (7 days blocked, 3 days unblocked)
 - `SessionManager` enforces timeout (1800s) and user agent validation
+- CSRF tokens initialized in bootstrap after session start
+- Session regenerated only after successful login
+
+## Entry Point & Routing Design
+
+### public/index.php - Best Practices
+Both `update-api/public/index.php` and `root/public/index.php` follow this pattern:
+```php
+require_once __DIR__ . '/../config.php';              // Absolute __DIR__ paths (not relative ../)
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$session = SessionManager::getInstance();
+$session->start();
+if (!$session->get('csrf_token')) {
+    $session->set('csrf_token', bin2hex(random_bytes(32)));  // CSRF token init (once per session)
+}
+
+ErrorManager::handle(function (): void {
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);  // CRITICAL: Parse URL path before routing
+    Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
+});
+```
+**Key Points**:
+- Use absolute paths with `__DIR__` (not relative `../`)
+- Parse URL path in index.php (`parse_url()` separates query string)
+- Pass only the path to Router (Router assumes path is pre-parsed)
+- CSRF token initialization happens in bootstrap (not in SessionManager::start())
+- Session regeneration only happens after successful login (in LoginController)
+
+### Router::dispatch() Contract
+- **Receives**: Pre-parsed path (no query string, e.g., `/home` not `/home?foo=bar`)
+- **Responsibility**: Match path to route, instantiate controller, call handleRequest or handleSubmission
+- **Returns**: Nothing (sends Response via sendResponse() internally)
+- **Important**: Router does NOT parse URL—caller (index.php) is responsible
 
 ## Critical Developer Workflows
 
@@ -63,17 +111,26 @@ Update packages **must** follow: `{slug}_{version}.zip` (e.g., `my-plugin_1.2.3.
 - Cron syncs to database with slug extraction and version parsing
 - API serves newest version (via `version_compare()`) when client requests
 
-### API Response Pattern
-Controllers return `Response` objects, never echo directly:
+### Response Pattern - Static Factories (Preferred)
+Controllers return `Response` objects using static factories for clarity:
 ```php
-// ✓ Correct
-return new Response(200, 'Hello');
-return Response::file($path, $headers);
+// ✓ Correct - Use static factories (cleaner, intent-clear)
+return Response::view('page', ['key' => 'value'], 200);
 return Response::redirect('/home');
+return Response::text('Plain text response', 200);
+return Response::json(['data' => 'value'], 200);
+return Response::file('/path/to/file', 'application/pdf', 200);
+return Response::html('<h1>HTML</h1>', 200);
 
-// ✗ Wrong
-echo "Hello"; exit;
+// ✓ Also correct - Fluent API for complex responses
+return (new Response(403))->withHeader('X-Custom', 'value');
+
+// ✗ Wrong - Never echo directly
+echo "Hello"; 
+header('Location: /home');
+exit;
 ```
+**Key Pattern**: Use static factory methods (`Response::view()`, `Response::redirect()`) for standard responses. They are cleaner than constructor + fluent method calls.
 
 ### Validation Flow
 All external input goes through `App\Helpers\Validation`:
@@ -86,19 +143,86 @@ Used for domain, key, slug, version. Whitelist approach—reject early.
 ### WordPress Plugin Options
 Client plugin stores config in `vontmnt_*` options (managed by `VWPU\Helpers\Options`):
 - `vontmnt_api_key`: Encrypted API key (never exposed in API responses)
-- `vontmnt_update_plugins`: Enable/disable plugin updates
-- `vontmnt_update_themes`: Enable/disable theme updates
+- `vontmnt_updaControllers & Routes
 
-Check via `Options::is_true('update_plugins')` before running updaters.
-
-### Logging Standards
+**Controller Pattern**:
 ```php
-ErrorManager::getInstance()->log($message, 'info');  // API server
-Logger::info($message, $context);                    // WordPress plugin
-```
-API logs to `LOG_FILE` (default: `storage/logs/app.log`). WordPress uses WP debug log when enabled.
+namespace App\Controllers;
+use App\Core\Controller;
+use App\Core\Response;
 
-## Integration Points
+class NewController extends Controller {
+    /**
+     * Display form or view (GET request).
+     * @return Response
+     */
+    public function handleRequest(): Response {
+        return Response::view('newpage', ['data' => 'value']);
+    }
+
+    /**
+     * Process form submission (POST request).
+     * @return Response
+     */
+    public function handleSubmission(): Response {
+        if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            MessageHelper::addMessage('Invalid CSRF token.');
+            return Response::redirect('/newpage');
+        }
+        // Process data
+        return Response::redirect('/newpage');
+    }
+}
+```
+
+**Route Registration**:
+```php
+// In App\Core\Router::__construct()
+$r->addRoute('GET', '/newpage', [NewController::class, 'handleRequest']);
+$r->addRoute('POST', '/newpage', [NewController::class, 'handleSubmission']);
+```
+**Pattern**: GET shows form/view via `handleRequest()`, POST processes via `handleSubmission()`. Both return `Response`. Controllers inherit from `Controller` base class (provides `render()` helper).
+
+## SessionManager Best Practices
+
+### Initialization Flow
+```php
+// In public/index.php (BOOTSTRAP PHASE)
+$session = SessionManager::getInstance();
+$session->start();
+if (!$session->get('csrf_token')) {
+    $session->set('csrf_token', bin2hex(random_bytes(32)));  // Initialize CSRF token once
+}
+
+// Later in LoginController::handleSubmission() (AFTER AUTHENTICATION)
+SessionManager::getInstance()->regenerate();  // Regenerate session ID for security
+$session->set('timeout', time());             // Track session start time
+$session->set('is_admin', $userInfo->admin);  // Store user flags if needed
+```
+
+### Common Session Operations
+```php
+// Get value with default
+$username = $session->get('username', null);
+
+// Check if session is valid (checks timeout, user agent, not blacklisted)
+if (!$session->isValid()) {
+    // Session expired or compromised
+}
+
+// Check authentication and redirect if needed
+if (!$session->requireAuth()) {
+    // User not authenticated, redirect to login
+}
+
+// Destroy session (logout)
+$session->destroy();
+
+// Regenerate session ID (after login)
+$session->regenerate();
+```
+
+## Common Patterns
 
 ### Server Setup
 1. Set `update-api/public/` as web server document root
@@ -138,8 +262,6 @@ Downloads ZIP                 Logs request in database
     ↓
 Installs via WP upgrader
 ```
-
-## Common Patterns
 
 ### Testing Controllers with Mocks
 ```php
