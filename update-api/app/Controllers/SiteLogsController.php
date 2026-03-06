@@ -129,7 +129,7 @@ class SiteLogsController extends Controller
             return [
                 'success' => false,
                 'logs' => '',
-                'message' => 'Failed to fetch logs from ' . $domain . ': HTTP ' . $httpCode
+                'message' => 'Failed to fetch logs from ' . $domain . ': HTTP ' . $httpCode . '. Details: ' . $errorMsg
             ];
         }
     }
