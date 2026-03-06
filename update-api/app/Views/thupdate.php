@@ -107,12 +107,21 @@ $hosts = $hosts ?? [];
     });
   });
 
+  /**
+   * Open the theme action modal and populate it with the selected theme's data.
+   *
+   * @param {string} themeFile - The theme directory/file identifier.
+   * @param {string} themeName - The human-readable theme name.
+   */
   function openThemeActionModal(themeFile, themeName) {
     document.getElementById('modalThemeFile').value = themeFile;
     document.getElementById('modalThemeName').textContent = themeName;
     document.getElementById('actionModal').style.display = 'block';
   }
 
+  /**
+   * Hide the action modal.
+   */
   function closeActionModal() {
     document.getElementById('actionModal').style.display = 'none';
   }

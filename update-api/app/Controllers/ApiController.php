@@ -25,6 +25,15 @@ use App\Core\Response;
 
 class ApiController extends Controller
 {
+    /**
+     * Handle the incoming update API request.
+     *
+     * Validates the request parameters, authenticates the host domain/key pair,
+     * and returns the update ZIP when a newer version is available, 204 when
+     * the client is already up-to-date, or 403 on authentication failure.
+     *
+     * @return Response
+     */
     public function handleRequest(): Response
     {
         $ip = $_SERVER['REMOTE_ADDR'];

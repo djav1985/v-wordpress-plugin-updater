@@ -110,12 +110,21 @@ $hosts = $hosts ?? [];
     });
   });
 
+  /**
+   * Open the plugin action modal and populate it with the selected plugin's data.
+   *
+   * @param {string} pluginFile - The plugin file path identifier.
+   * @param {string} pluginName - The human-readable plugin name.
+   */
   function openPluginActionModal(pluginFile, pluginName) {
     document.getElementById('modalPluginFile').value = pluginFile;
     document.getElementById('modalPluginName').textContent = pluginName;
     document.getElementById('actionModal').style.display = 'block';
   }
 
+  /**
+   * Hide the action modal.
+   */
   function closeActionModal() {
     document.getElementById('actionModal').style.display = 'none';
   }

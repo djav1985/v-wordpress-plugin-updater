@@ -25,6 +25,9 @@ class Router
     private static ?Router $instance = null;
     private Dispatcher $dispatcher;
 
+    /**
+     * Build the FastRoute dispatcher and register all application routes.
+     */
     private function __construct()
     {
         $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {

@@ -153,6 +153,11 @@ $hosts = $hosts ?? [];
 </style>
 
 <script>
+/**
+ * Fetch and display remote debug log entries for the given domain.
+ *
+ * @param {string} domain - The site domain whose logs should be fetched.
+ */
 function viewLogs(domain) {
   var statusDiv = document.getElementById('log-status');
   var logViewer = document.getElementById('log-viewer');

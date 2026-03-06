@@ -27,10 +27,18 @@ class DebugLogApi {
 	private const NAMESPACE        = 'vwpd/v1';
 	private const ROUTE            = '/debuglog';
 
+	/**
+	 * Register the REST API routes on construction.
+	 */
 	private function __construct() {
 		$this->register_routes();
 	}
 
+	/**
+	 * Return the singleton DebugLogApi instance, creating it on first call.
+	 *
+	 * @return self
+	 */
 	public static function get_instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -38,10 +46,20 @@ class DebugLogApi {
 		return self::$instance;
 	}
 
+	/**
+	 * Hook the REST route registration into the WordPress rest_api_init action.
+	 *
+	 * @return void
+	 */
 	private function register_routes(): void {
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 	}
 
+	/**
+	 * Register the /debuglog REST route with WordPress.
+	 *
+	 * @return void
+	 */
 	public function register_rest_routes(): void {
 		register_rest_route(
 			self::NAMESPACE,
@@ -63,6 +81,12 @@ class DebugLogApi {
 		);
 	}
 
+	/**
+	 * Permission callback: verify the X-API-Key header against the stored update key.
+	 *
+	 * @param WP_REST_Request $request The incoming REST request.
+	 * @return true|WP_Error True on success, WP_Error on authentication failure.
+	 */
 	public function check_authentication( WP_REST_Request $request ) {
 		$api_key = $request->get_header( 'X-API-Key' );
 		if ( empty( $api_key ) ) {
@@ -85,6 +109,12 @@ class DebugLogApi {
 		return true;
 	}
 
+	/**
+	 * Return the last N lines of the WordPress debug log.
+	 *
+	 * @param WP_REST_Request $request REST request; accepts optional 'lines' integer param.
+	 * @return WP_REST_Response
+	 */
 	public function get_debug_log( WP_REST_Request $request ) {
 		$lines = (int) $request->get_param( 'lines' );
 		if ( $lines < 1 ) {
@@ -112,6 +142,13 @@ class DebugLogApi {
 		);
 	}
 
+	/**
+	 * Read the last N lines from a file without loading the whole file into memory.
+	 *
+	 * @param string $filepath Absolute path to the file to read.
+	 * @param int    $lines    Number of lines to return from the end of the file.
+	 * @return array<int, string> Array of lines, or an empty array on failure.
+	 */
 	private function tail_file( string $filepath, int $lines ): array {
 		$buffer = 4096;
 		$f      = fopen( $filepath, 'rb' );
