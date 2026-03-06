@@ -60,26 +60,45 @@ class Router
         return self::$instance;
     }
 
+    /**
+     * Dispatches the request to the appropriate controller action.
+     *
+     * The caller (e.g., index.php) is responsible for parsing the URI path
+     * from REQUEST_URI and passing only the path component (no query string).
+     *
+     * If a controller action returns a Response instance the Router emits it
+     * via sendResponse(). Actions that handle output themselves (header/echo/exit)
+     * continue to work unchanged.
+     *
+     * @param string $method HTTP method of the incoming request.
+     * @param string $uri    The requested URI path (query string should be pre-parsed by caller).
+     */
     public function dispatch(string $method, string $uri): void
     {
-        $route = strtok($uri, '?');
+        // Router receives already-parsed path; use as-is.
+        $route = $uri;
+
         $routeInfo = $this->dispatcher->dispatch($method, $route);
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                header('HTTP/1.0 404 Not Found');
-                require __DIR__ . '/../Views/404.php';
+                $this->sendResponse(Response::view('404', [], 404));
                 break;
+
             case Dispatcher::METHOD_NOT_ALLOWED:
-                header('HTTP/1.0 405 Method Not Allowed');
+                $this->sendResponse(new Response(405));
                 break;
+
             case Dispatcher::FOUND:
-                if (is_array($routeInfo[1])) {
-                    [$class, $action] = $routeInfo[1];
-                    $vars = $routeInfo[2];
-                    $isApi = function_exists('str_starts_with')
-                        ? str_starts_with($route, '/api')
-                        : strpos($route, '/api') === 0;
+                $handler = $routeInfo[1];
+                $vars    = $routeInfo[2];
+
+                if (is_array($handler) && count($handler) === 2) {
+                    [$class, $action] = $handler;
+
+                    // API routes are publicly accessible if they have all required params;
+                    // everything else requires authentication.
+                    $isApi = str_starts_with($route, '/api');
                     if ($isApi) {
                         $query = parse_url($uri, PHP_URL_QUERY);
                         parse_str($query ?? '', $params);
@@ -91,48 +110,68 @@ class Router
                             }
                         }
                     }
+
                     if ($route !== '/login' && !$isApi) {
                         if (!SessionManager::getInstance()->requireAuth()) {
                             $this->sendResponse(Response::redirect('/login'));
                             return;
                         }
                     }
-                    $response = call_user_func_array([new $class(), $action], $vars);
-                    if ($response instanceof Response) {
-                        $this->sendResponse($response);
+
+                    $result = call_user_func_array([new $class(), $action], $vars);
+                    if ($result instanceof Response) {
+                        $this->sendResponse($result);
                     }
-                } elseif (is_callable($routeInfo[1])) {
-                    $response = call_user_func($routeInfo[1]);
-                    if ($response instanceof Response) {
-                        $this->sendResponse($response);
+                } elseif (is_callable($handler)) {
+                    $result = call_user_func($handler);
+                    if ($result instanceof Response) {
+                        $this->sendResponse($result);
                     }
                 }
                 break;
         }
     }
 
+    /**
+     * Emit a Response to the client.
+     *
+     * Handles three output modes in order of priority:
+     *  1. View  — requires the named view file and extracts view data into scope.
+     *  2. File  — delegates to Response::send() which calls readfile().
+     *  3. Body  — delegates to Response::send() which echoes the body string.
+     *
+     * @param Response $response The response to emit.
+     */
     private function sendResponse(Response $response): void
     {
-        http_response_code($response->status);
-        // In CLI (when running php -r in tests) headers() do not output to stdout.
-        // Echo header lines in CLI so tests that run the app as a subprocess can capture them.
-        foreach ($response->headers as $name => $value) {
-            // Call header() (unqualified) so tests that define a namespaced
-            // header() function can intercept it.
-            header($name . ': ' . $value);
-        }
+        if ($response->getView() !== null) {
+            if (!headers_sent()) {
+                http_response_code($response->getStatusCode());
 
-        if ($response->file !== null) {
-            readfile($response->file);
+                foreach ($response->getHeaders() as $name => $values) {
+                    $replace = true;
+                    foreach ($values as $value) {
+                        header($name . ': ' . $value, $replace);
+                        $replace = false;
+                    }
+                }
+            }
+
+            $data = $response->getViewData();
+            if (is_array($data)) {
+                extract($data, EXTR_SKIP);
+            }
+
+            $view = $response->getView();
+            if (!is_string($view) || !preg_match('/^[A-Za-z0-9_\/-]+$/', $view) || str_contains($view, '..')) {
+                throw new \RuntimeException('Invalid view name');
+            }
+
+            require __DIR__ . '/../Views/' . $view . '.php';
             return;
         }
 
-        if ($response->view !== null) {
-            extract($response->data);
-            require __DIR__ . '/../Views/' . $response->view . '.php';
-            return;
-        }
-
-        echo $response->body;
+        // File streaming and plain body output are both handled by send().
+        $response->send();
     }
 }

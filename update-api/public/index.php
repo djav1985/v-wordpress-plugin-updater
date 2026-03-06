@@ -12,18 +12,21 @@
  * Description: WordPress Update API
  */
 
-use App\Core\Router;
-use App\Core\ErrorManager;
-use App\Core\SessionManager;
-
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Core\Router;
+use App\Core\ErrorManager;
+use App\Core\SessionManager;
+use function random_bytes;
+
 $session = SessionManager::getInstance();
 $session->start();
-$session->regenerate();
+if (!$session->get('csrf_token')) {
+    $session->set('csrf_token', bin2hex(random_bytes(32)));
+}
 
 ErrorManager::handle(function (): void {
-    $router = Router::getInstance();
-    $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
 });

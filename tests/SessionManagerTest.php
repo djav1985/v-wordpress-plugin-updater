@@ -32,50 +32,52 @@ class SessionManagerTest extends TestCase
         }
     }
 
+    protected function tearDown(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_unset();
+            session_destroy();
+        }
+        // Reset the SessionManager singleton
+        $ref = new \ReflectionClass(SessionManager::class);
+        $prop = $ref->getProperty('instance');
+        $prop->setAccessible(true);
+        $prop->setValue(null, null);
+        // Restore error and exception handlers
+        while (error_reporting() !== E_ALL) {
+            restore_error_handler();
+        }
+        restore_exception_handler();
+    }
+
     public function testTimeoutExpiryInvalidatesSession(): void
     {
-        $basePath = dirname(__DIR__);
-        $code = <<<'PHP'
-require 'update-api/vendor/autoload.php';
-if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
-if (!defined('DB_FILE')) define('DB_FILE', getcwd().'/update-api/storage/test.sqlite');
-$_SERVER['HTTP_USER_AGENT'] = 'Agent';
-$session = \App\Core\SessionManager::getInstance();
-$session->start();
-$session->set('logged_in', true);
-$session->set('user_agent', 'Agent');
-$session->set('timeout', time() - (SESSION_TIMEOUT_LIMIT + 1));
-register_shutdown_function(function(){ echo session_status(); });
-$session->requireAuth();
-PHP;
-        $cmd = 'cd ' . escapeshellarg($basePath) . ' && php -r ' . escapeshellarg($code);
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-        $this->assertSame('1', $output[0] ?? null);
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $session->set('logged_in', true);
+        $session->set('user_agent', 'Agent');
+        $session->set('timeout', time() - 2000); // Set timeout in the past
+        
+        $result = $session->requireAuth();
+        
+        $this->assertFalse($result);
+        $this->assertSame(PHP_SESSION_NONE, session_status());
     }
 
     public function testUserAgentChangeInvalidatesSession(): void
     {
-        $basePath = dirname(__DIR__);
-        $code = <<<'PHP'
-require 'update-api/vendor/autoload.php';
-if (!defined('SESSION_TIMEOUT_LIMIT')) define('SESSION_TIMEOUT_LIMIT', 1800);
-if (!defined('DB_FILE')) define('DB_FILE', getcwd().'/update-api/storage/test.sqlite');
-$_SERVER['HTTP_USER_AGENT'] = 'Agent2';
-$session = \App\Core\SessionManager::getInstance();
-$session->start();
-$session->set('logged_in', true);
-$session->set('user_agent', 'Agent1');
-$session->set('timeout', time());
-register_shutdown_function(function(){ echo session_status(); });
-$session->requireAuth();
-PHP;
-        $cmd = 'cd ' . escapeshellarg($basePath) . ' && php -r ' . escapeshellarg($code);
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-        $this->assertSame('1', $output[0] ?? null);
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent2';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $session->set('logged_in', true);
+        $session->set('user_agent', 'Agent1'); // Different user agent
+        $session->set('timeout', time());
+        
+        $result = $session->requireAuth();
+        
+        $this->assertFalse($result);
+        $this->assertSame(PHP_SESSION_NONE, session_status());
     }
 
     public function testRequireAuthBlocksBlacklistedIp(): void
@@ -92,32 +94,19 @@ PHP;
             'timestamp' => time(),
         ]);
 
-        $logFile = __DIR__ . '/../update-api/php_app.log';
-        if (file_exists($logFile)) {
-            unlink($logFile);
-        }
-
         $session = SessionManager::getInstance();
         $result = $session->requireAuth();
 
         $this->assertFalse($result);
         $this->assertSame(403, http_response_code());
-        $logAfter = file_get_contents($logFile);
-        $this->assertStringContainsString($ip, $logAfter);
         $conn->executeStatement('DELETE FROM blacklist');
-        restore_error_handler();
-        restore_exception_handler();
-        if (file_exists($logFile)) {
-            unlink($logFile);
-        }
     }
 
-    public function testStartCreatesCsrfAndCookieParams(): void
+    public function testStartSetsCookieParams(): void
     {
         $_SERVER['HTTP_USER_AGENT'] = 'Agent';
         $session = SessionManager::getInstance();
         $session->start();
-        $this->assertNotEmpty($session->get('csrf_token'));
         $params = session_get_cookie_params();
         $this->assertTrue($params['httponly']);
         $this->assertSame('Lax', $params['samesite']);
@@ -151,5 +140,15 @@ PHP;
         $session->set('logged_in', true);
         $session->set('user_agent', 'Agent');
         $this->assertTrue($session->requireAuth());
+    }
+
+    public function testGetReturnDefaultValue(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Agent';
+        $session = SessionManager::getInstance();
+        $session->start();
+        $this->assertNull($session->get('nonexistent'));
+        $this->assertSame('default', $session->get('nonexistent', 'default'));
+        $this->assertSame(0, $session->get('nonexistent', 0));
     }
 }

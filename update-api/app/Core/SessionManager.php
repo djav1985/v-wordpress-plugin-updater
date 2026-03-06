@@ -1,4 +1,16 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
+
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.0.0
+ *
+ * File: SessionManager.php
+ * Description: Centralized session management
+ */
 
 namespace App\Core;
 
@@ -7,13 +19,24 @@ use App\Core\ErrorManager;
 
 class SessionManager
 {
-    private static ?self $instance = null;
+    /**
+     * Singleton instance of the SessionManager.
+     */
+    private static ?SessionManager $instance = null;
 
+    /**
+     * Private constructor to prevent direct instantiation.
+     */
     private function __construct()
     {
     }
 
-    public static function getInstance(): self
+    /**
+     * Retrieve the singleton instance.
+     *
+     * @return SessionManager
+     */
+    public static function getInstance(): SessionManager
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -21,31 +44,44 @@ class SessionManager
         return self::$instance;
     }
 
+    /**
+     * Start the session with secure cookie parameters.
+     *
+     * @return void
+     */
     public function start(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-            session_set_cookie_params([
-                'path'     => '/',
-                'httponly' => true,
-                'secure'   => $secure,
-                'samesite' => 'Lax',
-            ]);
+        $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        session_set_cookie_params([
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => $secureFlag,
+            'samesite' => 'Lax',
+        ]);
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
-            if (!$this->get('csrf_token')) {
-                $this->set('csrf_token', bin2hex(random_bytes(32)));
-            }
         }
     }
 
+    /**
+     * Destroy the current session and its data.
+     *
+     * @return void
+     */
     public function destroy(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
-            session_unset();
+            $_SESSION = [];
             session_destroy();
         }
     }
 
+    /**
+     * Regenerate the session ID to prevent fixation.
+     *
+     * @return void
+     */
     public function regenerate(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -53,45 +89,72 @@ class SessionManager
         }
     }
 
-    public function get(string $key): mixed
+    /**
+     * Retrieve a value from the session.
+     *
+     * @param string $key     Session key to retrieve.
+     * @param mixed  $default Default value if key does not exist.
+     * @return mixed
+     */
+    public function get(string $key, mixed $default = null): mixed
     {
-        return $_SESSION[$key] ?? null;
+        return $_SESSION[$key] ?? $default;
     }
 
+    /**
+     * Set a session value.
+     *
+     * @param string $key   Session key to set.
+     * @param mixed  $value Value to store.
+     * @return void
+     */
     public function set(string $key, mixed $value): void
     {
         $_SESSION[$key] = $value;
     }
 
-    private function isValid(): bool
+    /**
+     * Validate the current session and update timeout.
+     *
+     * @return bool True if the session is valid and user is logged in
+     */
+    public function isValid(): bool
     {
         $timeoutLimit = defined('SESSION_TIMEOUT_LIMIT') ? SESSION_TIMEOUT_LIMIT : 1800;
         $timeout = $this->get('timeout');
-        $timeoutExceeded = $timeout !== null && (time() - $timeout > $timeoutLimit);
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $userAgentChanged = ($this->get('user_agent') !== null && $this->get('user_agent') !== $userAgent);
+        $timeoutExceeded = is_int($timeout) && (time() - $timeout > $timeoutLimit);
+
+        $userAgent = $this->get('user_agent');
+        $userAgentChanged = is_string($userAgent) && $userAgent !== ($_SERVER['HTTP_USER_AGENT'] ?? '');
+
         if ($timeoutExceeded || $userAgentChanged) {
             $this->destroy();
             return false;
         }
 
         $this->set('timeout', time());
+
         return $this->get('logged_in') === true;
     }
 
+    /**
+     * Enforce that the current request comes from an authenticated user.
+     *
+     * Returns true when the session is valid and the user is authenticated.
+     * Returns false when the session is invalid (caller should redirect to login).
+     * When the remote IP is blacklisted (403), logs the attempt and returns false.
+     *
+     * @return bool True if authenticated, false otherwise.
+     */
     public function requireAuth(): bool
     {
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
         if ($ip && BlacklistModel::isBlacklisted($ip)) {
-            ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
             http_response_code(403);
+            ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
             return false;
         }
 
-        if (!$this->isValid()) {
-            return false;
-        }
-
-        return true;
+        return $this->isValid();
     }
 }

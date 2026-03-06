@@ -1,0 +1,5 @@
+[2026-03-06 00:40:24] [error]: Blacklisted IP attempted access: 10.0.0.1
+[2026-03-06 00:41:34] [error]: Blacklisted IP attempted access: 10.0.0.1
+[2026-03-06 00:55:11] [exception]: Uncaught Exception: boom in C:\Users\djav1\AppData\Local\Temp\croB717.tmp.php on line 6
+[2026-03-06 01:19:13] [exception]: Uncaught Exception: boom in C:\Users\djav1\AppData\Local\Temp\croB73B.tmp.php on line 6
+[2026-03-06 01:20:15] [exception]: Uncaught Exception: boom in C:\Users\djav1\AppData\Local\Temp\croAB8E.tmp.php on line 6

@@ -87,17 +87,14 @@ class ApiController extends Controller
                     if (version_compare($dbVersion, $version, '>')) {
                         $file_path = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
                         if (is_file($file_path)) {
-                            $headers = [
-                                'Content-Type' => 'application/octet-stream',
-                                'Content-Disposition' => 'attachment; filename="' . basename($file_path) . '"',
-                                'Content-Length' => (string) filesize($file_path),
-                            ];
                             $conn->executeStatement(
                                 'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                                 [$domain, $type, date('Y-m-d'), 'Success']
                             );
                             ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                            return Response::file($file_path, $headers);
+                            return Response::file($file_path, 'application/octet-stream')
+                                ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($file_path) . '"')
+                                ->withAddedHeader('Content-Length', (string) filesize($file_path));
                         }
                     }
                     $conn->executeStatement(
