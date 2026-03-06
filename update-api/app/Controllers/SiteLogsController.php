@@ -73,9 +73,9 @@ class SiteLogsController extends Controller
     {
         // Get the API key for the domain
         $conn = \App\Core\DatabaseManager::getConnection();
-        $key_encrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        $keyEncrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         
-        if (!$key_encrypted) {
+        if (!$keyEncrypted) {
             return [
                 'success' => false,
                 'logs' => '',
@@ -83,7 +83,7 @@ class SiteLogsController extends Controller
             ];
         }
         
-        $key = \App\Helpers\EncryptionHelper::decrypt($key_encrypted);
+        $key = \App\Helpers\EncryptionHelper::decrypt($keyEncrypted);
         
         // Prepare the API request
         $url = 'https://' . $domain . '/wp-json/vwpd/v1/debuglog?lines=' . $lines;
@@ -99,16 +99,16 @@ class SiteLogsController extends Controller
         ]);
         
         $response = curl_exec($curl);
-        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
-        if ($http_code === 200) {
+        if ($httpCode === 200) {
             $data = json_decode($response, true);
             if ($data && isset($data['log'])) {
-                $log_text = implode("\n", $data['log']);
+                $logText = implode("\n", $data['log']);
                 return [
                     'success' => true,
-                    'logs' => $log_text,
+                    'logs' => $logText,
                     'message' => 'Logs retrieved successfully.'
                 ];
             } else {
@@ -118,18 +118,18 @@ class SiteLogsController extends Controller
                     'message' => 'Invalid response from API.'
                 ];
             }
-        } elseif ($http_code === 404) {
+        } elseif ($httpCode === 404) {
             return [
                 'success' => true,
                 'logs' => 'Debug log file not found on ' . $domain,
                 'message' => 'No logs available.'
             ];
         } else {
-            $error_msg = $response ?: 'Failed to fetch logs';
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to fetch logs');
             return [
                 'success' => false,
                 'logs' => '',
-                'message' => 'Failed to fetch logs from ' . $domain . ': HTTP ' . $http_code
+                'message' => 'Failed to fetch logs from ' . $domain . ': HTTP ' . $httpCode . '. Details: ' . $errorMsg
             ];
         }
     }

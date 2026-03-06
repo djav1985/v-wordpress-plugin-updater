@@ -66,10 +66,10 @@ class PluginsController extends Controller
             }
             return Response::redirect('/plupdate');
         } elseif (isset($_POST['delete_plugin'])) {
-            $plugin_name = isset($_POST['plugin_name'])
+            $pluginName = isset($_POST['plugin_name'])
                 ? ValidationHelper::validateSlug($_POST['plugin_name'])
                 : null;
-            if ($plugin_name !== null && PluginModel::deletePlugin($plugin_name)) {
+            if ($pluginName !== null && PluginModel::deletePlugin($pluginName)) {
                 MessageHelper::addMessage('Plugin deleted successfully!');
             } else {
                 $error = 'Failed to delete plugin file. Please try again.';
@@ -78,19 +78,19 @@ class PluginsController extends Controller
             }
             return Response::redirect('/plupdate');
         } elseif (isset($_POST['install_plugin'])) {
-            $plugin_name = isset($_POST['plugin_name'])
+            $pluginName = isset($_POST['plugin_name'])
                 ? ValidationHelper::validateSlug($_POST['plugin_name'])
                 : null;
             $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
 
-            if ($plugin_name === null || $domain === null) {
+            if ($pluginName === null || $domain === null) {
                 $error = 'Invalid plugin name or domain.';
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
                 return Response::redirect('/plupdate');
             }
 
-            $result = self::installPluginToDomain($plugin_name, $domain);
+            $result = self::installPluginToDomain($pluginName, $domain);
             MessageHelper::addMessage($result['message']);
             return Response::redirect('/plupdate');
         }
@@ -100,27 +100,27 @@ class PluginsController extends Controller
     /**
      * Install a plugin to a specific domain via REST API.
      *
-     * @param string $plugin_name The plugin slug_version
+     * @param string $pluginName The plugin slug_version
      * @param string $domain The target domain
      * @return array{success: bool, message: string}
      */
-    private static function installPluginToDomain(string $plugin_name, string $domain): array
+    private static function installPluginToDomain(string $pluginName, string $domain): array
     {
-        $plugin_path = PluginModel::$dir . '/' . basename($plugin_name);
+        $pluginPath = PluginModel::$dir . '/' . basename($pluginName);
         
-        if (!file_exists($plugin_path)) {
+        if (!file_exists($pluginPath)) {
             return ['success' => false, 'message' => 'Plugin file not found.'];
         }
         
         // Get the API key for the domain
         $conn = \App\Core\DatabaseManager::getConnection();
-        $key_encrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        $keyEncrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         
-        if (!$key_encrypted) {
+        if (!$keyEncrypted) {
             return ['success' => false, 'message' => 'Domain not found in hosts table.'];
         }
         
-        $key = \App\Helpers\EncryptionHelper::decrypt($key_encrypted);
+        $key = \App\Helpers\EncryptionHelper::decrypt($keyEncrypted);
         
         // Prepare the API request
         $url = 'https://' . $domain . '/wp-json/vwpd/v1/plugins';
@@ -134,20 +134,20 @@ class PluginsController extends Controller
                 'X-API-Key: ' . $key,
             ],
             CURLOPT_POSTFIELDS => [
-                'package' => new \CURLFile($plugin_path, 'application/zip', basename($plugin_name)),
+                'package' => new \CURLFile($pluginPath, 'application/zip', basename($pluginName)),
             ],
             CURLOPT_TIMEOUT => 300,
         ]);
         
         $response = curl_exec($curl);
-        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
-        if ($http_code === 200) {
+        if ($httpCode === 200) {
             return ['success' => true, 'message' => 'Plugin installed successfully to ' . $domain];
         } else {
-            $error_msg = $response ?: 'Failed to install plugin';
-            return ['success' => false, 'message' => 'Failed to install plugin to ' . $domain . ': ' . $error_msg];
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install plugin');
+            return ['success' => false, 'message' => 'Failed to install plugin to ' . $domain . ': ' . $errorMsg];
         }
     }
 
@@ -159,13 +159,13 @@ class PluginsController extends Controller
     {
         $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
         $version = $pluginName['version'];
-        $plugin_file = $pluginName['slug'] . '_' . $version . '.zip';
+        $pluginFile = $pluginName['slug'] . '_' . $version . '.zip';
         return '<tr>
             <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
             <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
             <td>
                 <button class="pl-submit action-btn" type="button" onclick="openPluginActionModal(\'' .
-                    htmlspecialchars($plugin_file, ENT_QUOTES, 'UTF-8') . '\', \'' .
+                    htmlspecialchars($pluginFile, ENT_QUOTES, 'UTF-8') . '\', \'' .
                     htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '\')">Action</button>
             </td>
         </tr>';

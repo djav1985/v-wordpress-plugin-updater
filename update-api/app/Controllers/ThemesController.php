@@ -66,8 +66,8 @@ class ThemesController extends Controller
             }
             return Response::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
-            $theme_name = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
-            if ($theme_name !== null && ThemeModel::deleteTheme($theme_name)) {
+            $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
+            if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
                 MessageHelper::addMessage('Theme deleted successfully!');
             } else {
                 $error = 'Failed to delete theme file. Please try again.';
@@ -76,19 +76,19 @@ class ThemesController extends Controller
             }
             return Response::redirect('/thupdate');
         } elseif (isset($_POST['install_theme'])) {
-            $theme_name = isset($_POST['theme_name'])
+            $themeName = isset($_POST['theme_name'])
                 ? ValidationHelper::validateSlug($_POST['theme_name'])
                 : null;
             $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
 
-            if ($theme_name === null || $domain === null) {
+            if ($themeName === null || $domain === null) {
                 $error = 'Invalid theme name or domain.';
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
                 return Response::redirect('/thupdate');
             }
 
-            $result = self::installThemeToDomain($theme_name, $domain);
+            $result = self::installThemeToDomain($themeName, $domain);
             MessageHelper::addMessage($result['message']);
             return Response::redirect('/thupdate');
         }
@@ -98,27 +98,27 @@ class ThemesController extends Controller
     /**
      * Install a theme to a specific domain via REST API.
      *
-     * @param string $theme_name The theme slug_version
+     * @param string $themeName The theme slug_version
      * @param string $domain The target domain
      * @return array{success: bool, message: string}
      */
-    private static function installThemeToDomain(string $theme_name, string $domain): array
+    private static function installThemeToDomain(string $themeName, string $domain): array
     {
-        $theme_path = ThemeModel::$dir . '/' . basename($theme_name);
+        $themePath = ThemeModel::$dir . '/' . basename($themeName);
         
-        if (!file_exists($theme_path)) {
+        if (!file_exists($themePath)) {
             return ['success' => false, 'message' => 'Theme file not found.'];
         }
         
         // Get the API key for the domain
         $conn = \App\Core\DatabaseManager::getConnection();
-        $key_encrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        $keyEncrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         
-        if (!$key_encrypted) {
+        if (!$keyEncrypted) {
             return ['success' => false, 'message' => 'Domain not found in hosts table.'];
         }
         
-        $key = \App\Helpers\EncryptionHelper::decrypt($key_encrypted);
+        $key = \App\Helpers\EncryptionHelper::decrypt($keyEncrypted);
         
         // Prepare the API request
         $url = 'https://' . $domain . '/wp-json/vwpd/v1/themes';
@@ -132,20 +132,20 @@ class ThemesController extends Controller
                 'X-API-Key: ' . $key,
             ],
             CURLOPT_POSTFIELDS => [
-                'package' => new \CURLFile($theme_path, 'application/zip', basename($theme_name)),
+                'package' => new \CURLFile($themePath, 'application/zip', basename($themeName)),
             ],
             CURLOPT_TIMEOUT => 300,
         ]);
         
         $response = curl_exec($curl);
-        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
-        if ($http_code === 200) {
+        if ($httpCode === 200) {
             return ['success' => true, 'message' => 'Theme installed successfully to ' . $domain];
         } else {
-            $error_msg = $response ?: 'Failed to install theme';
-            return ['success' => false, 'message' => 'Failed to install theme to ' . $domain . ': ' . $error_msg];
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install theme');
+            return ['success' => false, 'message' => 'Failed to install theme to ' . $domain . ': ' . $errorMsg];
         }
     }
 
@@ -157,13 +157,13 @@ class ThemesController extends Controller
     {
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
-        $theme_file = $theme['slug'] . '_' . $version . '.zip';
+        $themeFile = $theme['slug'] . '_' . $version . '.zip';
         return '<tr>
              <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
              <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
              <td>
                  <button class="th-submit action-btn" type="button" onclick="openThemeActionModal(\'' .
-                     htmlspecialchars($theme_file, ENT_QUOTES, 'UTF-8') . '\', \'' .
+                     htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . '\', \'' .
                      htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '\')">Action</button>
              </td>
          </tr>';
@@ -176,9 +176,9 @@ class ThemesController extends Controller
     {
         $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {
-            $half_count = (int) ceil(count($themes) / 2);
-            $themes_column1 = array_slice($themes, 0, $half_count);
-            $themes_column2 = array_slice($themes, $half_count);
+            $halfCount = (int) ceil(count($themes) / 2);
+            $themesColumn1 = array_slice($themes, 0, $halfCount);
+            $themesColumn2 = array_slice($themes, $halfCount);
             $themesTableHtml = '<div class="row"><div class="column">
                  <table>
                      <thead>
@@ -189,7 +189,7 @@ class ThemesController extends Controller
                          </tr>
                      </thead>
                      <tbody>';
-            foreach ($themes_column1 as $theme) {
+            foreach ($themesColumn1 as $theme) {
                 $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div><div class="column"><table>
@@ -201,7 +201,7 @@ class ThemesController extends Controller
                      </tr>
                  </thead>
                  <tbody>';
-            foreach ($themes_column2 as $theme) {
+            foreach ($themesColumn2 as $theme) {
                 $themesTableHtml .= self::generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div></div>';
