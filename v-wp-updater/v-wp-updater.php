@@ -9,6 +9,9 @@
  * License:     MIT
  * Text Domain: v-wp-updater
  *
+ * Project: UpdateAPI
+ * Link:    https://vontainment.com
+ *
  * @package VWPU
  */
 

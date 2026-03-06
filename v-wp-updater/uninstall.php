@@ -1,11 +1,13 @@
 <?php
 /**
- * Uninstall Functions
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * Handles the uninstallation and cleanup of scheduled tasks.
- *
- * @package VWPU
- * @since 1.0.0
+ * File: uninstall.php
+ * Description: V WordPress Plugin Updater
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -1,11 +1,13 @@
 <?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Plugin API Service
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * REST API endpoint for listing and installing plugins.
- *
- * @package VWPU
- * @since   2.0.0
+ * File: PluginApi.php
+ * Description: V WordPress Plugin Updater
  */
 
 namespace VWPU\Api;

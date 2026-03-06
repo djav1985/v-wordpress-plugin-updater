@@ -1,6 +1,17 @@
 <?php
 // phpcs:ignoreFile PSR1.Files.SideEffects
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.0.0
+ *
+ * File: cron.php
+ * Description: WordPress Update API
+ */
+
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
     exit('Forbidden');
@@ -15,7 +26,13 @@ use App\Helpers\CronHelper;
 
 const JOB_NAME = 'v-updater-cron';
 
-function printUsage(string $errorMessage = ''): void
+/**
+ * Print CLI usage instructions and exit with code 1.
+ *
+ * @param string $errorMessage Optional error message to prepend to usage text.
+ * @return never
+ */
+function printUsage(string $errorMessage = ''): never
 {
     $usage = "Usage:\n"
         . "  php cron.php\n"
@@ -81,6 +98,12 @@ ErrorManager::handle(function () use ($isWorker): void {
     }
 });
 
+/**
+ * Execute the main cron job: sync plugins/themes directories and clean up the blacklist.
+ *
+ * @param bool $isWorker Whether the script was launched in worker mode (suppresses output).
+ * @return void
+ */
 function runCronJob(bool $isWorker): void
 {
     $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';

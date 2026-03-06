@@ -1,9 +1,13 @@
 <?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Silent Upgrader Skin for WordPress Updates.
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * @package VWPU
- * @since 1.0.0
+ * File: SilentUpgraderSkin.php
+ * Description: V WordPress Plugin Updater
  */
 
 namespace VWPU\Helpers;

@@ -19,6 +19,12 @@ use App\Core\SessionManager;
 
 class ValidationHelper
 {
+    /**
+     * Validate and normalise a domain name.
+     *
+     * @param string $domain Raw domain input.
+     * @return string|null Lower-cased domain, or null when invalid.
+     */
     public static function validateDomain(string $domain): ?string
     {
         $domain = strtolower(trim($domain));
@@ -26,6 +32,12 @@ class ValidationHelper
         return $rule->validate($domain) ? $domain : null;
     }
 
+    /**
+     * Validate an API key (alphanumeric, hyphens, underscores; no whitespace).
+     *
+     * @param string $key Raw key input.
+     * @return string|null Trimmed key, or null when invalid.
+     */
     public static function validateKey(string $key): ?string
     {
         $key = trim($key);
@@ -33,12 +45,24 @@ class ValidationHelper
         return $rule->validate($key) ? $key : null;
     }
 
+    /**
+     * Generate a cryptographically random hexadecimal key.
+     *
+     * @param int $length Desired key length in characters (default 32).
+     * @return string Random hex string of the requested length.
+     */
     public static function generateKey(int $length = 32): string
     {
         $bytes = \random_bytes((int) ceil($length / 2));
         return substr(bin2hex($bytes), 0, $length);
     }
 
+    /**
+     * Validate a plugin/theme slug (alphanumeric, dots, hyphens, underscores).
+     *
+     * @param string $slug Raw slug input.
+     * @return string|null Sanitised slug, or null when invalid.
+     */
     public static function validateSlug(string $slug): ?string
     {
         $slug = basename(trim($slug));
@@ -46,6 +70,12 @@ class ValidationHelper
         return $rule->validate($slug) ? $slug : null;
     }
 
+    /**
+     * Validate an update ZIP filename in the format `{slug}_{version}.zip`.
+     *
+     * @param string $filename Raw filename input.
+     * @return string|null Sanitised filename, or null when invalid.
+     */
     public static function validateFilename(string $filename): ?string
     {
         $filename = basename(trim($filename));
@@ -53,6 +83,12 @@ class ValidationHelper
         return $rule->validate($filename) ? $filename : null;
     }
 
+    /**
+     * Validate a semantic version string (e.g. "1.2.3" or "2.0").
+     *
+     * @param string $version Raw version input.
+     * @return string|null Trimmed version string, or null when invalid.
+     */
     public static function validateVersion(string $version): ?string
     {
         $version = trim($version);
@@ -60,6 +96,12 @@ class ValidationHelper
         return $rule->validate($version) ? $version : null;
     }
 
+    /**
+     * Validate a username (3–30 alphanumeric characters, dots, hyphens, underscores).
+     *
+     * @param string $username Raw username input.
+     * @return string|null Trimmed username, or null when invalid.
+     */
     public static function validateUsername(string $username): ?string
     {
         $username = trim($username);
@@ -67,6 +109,12 @@ class ValidationHelper
         return $rule->validate($username) ? $username : null;
     }
 
+    /**
+     * Validate a password (minimum 6 characters).
+     *
+     * @param string $password Raw password input.
+     * @return string|null Trimmed password, or null when too short.
+     */
     public static function validatePassword(string $password): ?string
     {
         $password = trim($password);

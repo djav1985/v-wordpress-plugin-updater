@@ -18,6 +18,12 @@ use App\Core\SessionManager;
 
 class MessageHelper
 {
+    /**
+     * Append a flash message to the current session's message queue.
+     *
+     * @param string $message The message text to store.
+     * @return void
+     */
     public static function addMessage(string $message): void
     {
         $session = SessionManager::getInstance();
@@ -29,6 +35,11 @@ class MessageHelper
         $session->set('messages', $messages);
     }
 
+    /**
+     * Output all queued flash messages as JavaScript toast calls and clear the queue.
+     *
+     * @return void
+     */
     public static function displayAndClearMessages(): void
     {
         $session = SessionManager::getInstance();

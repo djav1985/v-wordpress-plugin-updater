@@ -1,11 +1,13 @@
 <?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Options Utility Class
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * Helper class for managing plugin options with namespace support.
- *
- * @package VWPU
- * @since   2.0.0
+ * File: Options.php
+ * Description: V WordPress Plugin Updater
  */
 
 namespace VWPU\Helpers;

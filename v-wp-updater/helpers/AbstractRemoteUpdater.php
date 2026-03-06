@@ -1,10 +1,13 @@
 <?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Abstract Remote Updater
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * Provides a template method workflow for remote updates.
- *
- * @package VWPU
+ * File: AbstractRemoteUpdater.php
+ * Description: V WordPress Plugin Updater
  */
 
 namespace VWPU\Helpers;

@@ -1,11 +1,13 @@
 <?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Logger Utility Class
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 2.0.0
  *
- * Centralized logging functionality with consistent error handling.
- *
- * @package VWPU
- * @since   2.0.0
+ * File: Logger.php
+ * Description: V WordPress Plugin Updater
  */
 
 namespace VWPU\Helpers;
