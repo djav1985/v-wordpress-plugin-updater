@@ -144,7 +144,7 @@ class ThemesController extends Controller
         if ($httpCode === 200) {
             return ['success' => true, 'message' => 'Theme installed successfully to ' . $domain];
         } else {
-            $errorMsg = $response ?: 'Failed to install theme';
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install theme');
             return ['success' => false, 'message' => 'Failed to install theme to ' . $domain . ': ' . $errorMsg];
         }
     }

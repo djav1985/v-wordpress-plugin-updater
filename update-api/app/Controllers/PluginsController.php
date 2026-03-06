@@ -146,18 +146,7 @@ class PluginsController extends Controller
         if ($httpCode === 200) {
             return ['success' => true, 'message' => 'Plugin installed successfully to ' . $domain];
         } else {
-            // Sanitize the remote response before including it in a user-visible message
-            $rawError = is_string($response) ? $response : '';
-            $sanitizedError = strip_tags($rawError);
-            // Neutralize any closing script tags to avoid breaking out of <script> contexts
-            $sanitizedError = str_replace('</script', '<\/script', $sanitizedError);
-            // Optionally truncate to a reasonable length to avoid very large payloads
-            if (function_exists('mb_substr')) {
-                $sanitizedError = mb_substr($sanitizedError, 0, 500);
-            } else {
-                $sanitizedError = substr($sanitizedError, 0, 500);
-            }
-            $errorMsg = $sanitizedError !== '' ? $sanitizedError : 'Failed to install plugin';
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install plugin');
             return ['success' => false, 'message' => 'Failed to install plugin to ' . $domain . ': ' . $errorMsg];
         }
     }

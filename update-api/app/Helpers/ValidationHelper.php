@@ -84,4 +84,27 @@ class ValidationHelper
         $sessionToken = SessionManager::getInstance()->get('csrf_token');
         return is_string($sessionToken) && $sessionToken !== '' && hash_equals($sessionToken, $token);
     }
+
+    /**
+     * Sanitize a raw HTTP response body for use in user-visible messages.
+     *
+     * Strips HTML tags to eliminate injection vectors (including </script> sequences
+     * that could break out of <script> contexts when the message is rendered via
+     * json_encode). Also neutralizes any residual </script sequences as defense-in-depth,
+     * and truncates to a safe maximum length.
+     *
+     * @param mixed  $response The raw response value (may be false, null, or string).
+     * @param string $fallback Value to return when the sanitized result is empty.
+     * @return string Sanitized string safe for inclusion in user-visible messages.
+     */
+    public static function sanitizeErrorMessage(mixed $response, string $fallback = ''): string
+    {
+        $raw = is_string($response) ? $response : '';
+        // strip_tags removes HTML tags including </script> sequences
+        $sanitized = strip_tags($raw);
+        // Defense-in-depth: neutralize any residual </script sequences
+        $sanitized = str_replace('</script', '<\/script', $sanitized);
+        $sanitized = mb_substr($sanitized, 0, 500);
+        return $sanitized !== '' ? $sanitized : $fallback;
+    }
 }

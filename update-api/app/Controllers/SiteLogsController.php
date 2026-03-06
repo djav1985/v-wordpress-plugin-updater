@@ -125,7 +125,7 @@ class SiteLogsController extends Controller
                 'message' => 'No logs available.'
             ];
         } else {
-            $errorMsg = $response ?: 'Failed to fetch logs';
+            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to fetch logs');
             return [
                 'success' => false,
                 'logs' => '',

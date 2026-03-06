@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Helpers\ValidationHelper;
 
-class ValidationHelperTest extends TestCase
+class ValidationTest extends TestCase
 {
     public function testValidateDomainAcceptsValidDomains(): void
     {
@@ -155,5 +155,55 @@ class ValidationHelperTest extends TestCase
         $this->assertNull(ValidationHelper::validatePassword(''));
         $this->assertNull(ValidationHelper::validatePassword('12345'));
         $this->assertNull(ValidationHelper::validatePassword('pass'));
+    }
+
+    public function testSanitizeErrorMessageStripsHtmlTags(): void
+    {
+        $this->assertSame('Error occurred', ValidationHelper::sanitizeErrorMessage('<b>Error occurred</b>'));
+        $this->assertSame('Bad request', ValidationHelper::sanitizeErrorMessage('<p>Bad request</p>'));
+    }
+
+    public function testSanitizeErrorMessageNeutralizesScriptTags(): void
+    {
+        $result = ValidationHelper::sanitizeErrorMessage('error</script><script>alert(1)</script>');
+        // strip_tags removes HTML tags including </script> to prevent script injection
+        $this->assertStringNotContainsString('</script>', $result);
+        $this->assertStringNotContainsString('<script>', $result);
+
+        // str_replace neutralizes any remaining </script sequences not caught by strip_tags
+        $result2 = ValidationHelper::sanitizeErrorMessage('text<\/script>more');
+        $this->assertStringNotContainsString('</script>', $result2);
+    }
+
+    public function testSanitizeErrorMessageIsSafeInJsContext(): void
+    {
+        // Messages are rendered via json_encode inside <script> blocks.
+        // The sanitized output must not contain </script> which would break HTML parsing.
+        $payload = 'error</script><script>alert(1);</script>';
+        $sanitized = ValidationHelper::sanitizeErrorMessage($payload, 'fallback');
+        $jsEncoded = json_encode($sanitized);
+        $this->assertStringNotContainsString('</script>', $jsEncoded);
+    }
+
+    public function testSanitizeErrorMessageTruncatesLongStrings(): void
+    {
+        $long = str_repeat('a', 600);
+        $result = ValidationHelper::sanitizeErrorMessage($long);
+        $this->assertSame(500, mb_strlen($result));
+    }
+
+    public function testSanitizeErrorMessageReturnsFallbackWhenEmpty(): void
+    {
+        // Empty string input
+        $this->assertSame('default error', ValidationHelper::sanitizeErrorMessage('', 'default error'));
+        // Non-string inputs (false, null) are treated as empty
+        $this->assertSame('fallback', ValidationHelper::sanitizeErrorMessage(false, 'fallback'));
+        $this->assertSame('fallback', ValidationHelper::sanitizeErrorMessage(null, 'fallback'));
+    }
+
+    public function testSanitizeErrorMessageReturnsEmptyStringWhenNoFallback(): void
+    {
+        $this->assertSame('', ValidationHelper::sanitizeErrorMessage(''));
+        $this->assertSame('', ValidationHelper::sanitizeErrorMessage(false));
     }
 }
