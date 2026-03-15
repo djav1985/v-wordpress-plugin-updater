@@ -103,11 +103,9 @@ class Router
                     // everything else requires authentication.
                     $isApi = str_starts_with($route, '/api');
                     if ($isApi) {
-                        $query = parse_url($uri, PHP_URL_QUERY);
-                        parse_str($query ?? '', $params);
                         $required = ['type', 'domain', 'key', 'slug', 'version'];
-                        foreach ($required as $key) {
-                            if (!isset($params[$key])) {
+                        foreach ($required as $param) {
+                            if (!isset($_GET[$param]) || $_GET[$param] === '') {
                                 $isApi = false;
                                 break;
                             }

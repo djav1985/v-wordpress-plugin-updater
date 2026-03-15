@@ -51,7 +51,7 @@ class PluginsController extends Controller
                 return Response::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return Response::redirect('/');
+            return Response::redirect('/plupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&

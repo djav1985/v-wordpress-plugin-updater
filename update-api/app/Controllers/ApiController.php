@@ -36,9 +36,21 @@ class ApiController extends Controller
      */
     public function handleRequest(): Response
     {
-        $ip = $_SERVER['REMOTE_ADDR'];
-        if (BlacklistModel::isBlacklisted($ip) || $_SERVER['REQUEST_METHOD'] !== 'GET') {
-            ErrorManager::getInstance()->log('Forbidden or invalid request from ' . $ip);
+        $ip     = $_SERVER['REMOTE_ADDR'] ?? '';
+        $method = $_SERVER['REQUEST_METHOD'] ?? '';
+
+        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            ErrorManager::getInstance()->log('Forbidden: missing or invalid IP address');
+            return new Response(403);
+        }
+
+        if (BlacklistModel::isBlacklisted($ip)) {
+            ErrorManager::getInstance()->log('Forbidden: blacklisted IP ' . $ip);
+            return new Response(403);
+        }
+
+        if ($method !== 'GET') {
+            ErrorManager::getInstance()->log('Forbidden: invalid request method ' . $method . ' from ' . $ip);
             return new Response(403);
         }
 
