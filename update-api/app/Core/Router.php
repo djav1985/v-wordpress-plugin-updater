@@ -105,7 +105,7 @@ class Router
                     if ($isApi) {
                         $required = ['type', 'domain', 'key', 'slug', 'version'];
                         foreach ($required as $param) {
-                            if (empty($_GET[$param])) {
+                            if (!isset($_GET[$param]) || $_GET[$param] === '') {
                                 $isApi = false;
                                 break;
                             }
