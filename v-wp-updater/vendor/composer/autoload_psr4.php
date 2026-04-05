@@ -8,5 +8,4 @@ $baseDir = dirname($vendorDir);
 return array(
     'VWPU\\Services\\' => array($baseDir . '/services'),
     'VWPU\\Helpers\\' => array($baseDir . '/helpers'),
-    'VWPU\\Api\\' => array($baseDir . '/api'),
 );

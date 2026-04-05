@@ -9,8 +9,7 @@
     "autoload": {
         "psr-4": {
             "VWPU\\Helpers\\": "helpers/",
-            "VWPU\\Services\\": "services/",
-            "VWPU\\Api\\": "api/"
+            "VWPU\\Services\\": "services/"
         }
     }
 }

@@ -20,15 +20,14 @@ class LogModel
 {
 
     /**
-     * Process a log file and generate grouped output.
+     * Process log entries from the database and generate grouped HTML output.
      *
-     * @param string $logFile
+     * @param string $type Log type: 'plugin' or 'theme'.
      *
      * @return string
      */
-    public static function processLogFile(string $logFile): string
+    public static function getLogs(string $type): string
     {
-        $type = strpos($logFile, 'theme') !== false ? 'theme' : 'plugin';
         $conn = DatabaseManager::getConnection();
         $rows = $conn->fetchAllAssociative(
             'SELECT domain, date, status FROM logs WHERE type = ? ORDER BY date DESC',
@@ -45,7 +44,7 @@ class LogModel
         }
 
         if (empty($logByDomain)) {
-            return 'Log file not found.';
+            return 'No log entries found.';
         }
 
         ob_start();
@@ -75,21 +74,6 @@ class LogModel
         $output = ob_get_contents();
         ob_end_clean();
         return $output;
-    }
-
-    /**
-     * Clear the contents of a log file without deleting it.
-     *
-     * @param string $logFile The log file name.
-     *
-     * @return bool True on success, false otherwise.
-     */
-    public static function clearLogFile(string $logFile): bool
-    {
-        $type = strpos($logFile, 'theme') !== false ? 'theme' : 'plugin';
-        $conn = DatabaseManager::getConnection();
-        $conn->executeStatement('DELETE FROM logs WHERE type = ?', [$type]);
-        return true;
     }
 
     /**

@@ -24,9 +24,6 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use VWPU\Services\PluginUpdater;
 use VWPU\Services\ThemeUpdater;
-use VWPU\Api\PluginApi;
-use VWPU\Api\ThemeApi;
-use VWPU\Api\DebugLogApi;
 use VWPU\Helpers\Logger;
 use VWPU\Helpers\Options;
 
@@ -148,22 +145,3 @@ function vwpu_run_plugin_updater() {
 	$plugin_updater->run_updates();
 }
 add_action( 'vwpu_plugin_updater_check_updates', 'vwpu_run_plugin_updater' );
-
-/**
- * Initialize Plugin API if update_key is set.
- */
-function vwpu_initialize_plugin_api(): void {
-	if ( ! ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) ) {
-			return;
-	}
-
-		$update_key = Options::get( 'update_key' );
-	if ( empty( $update_key ) ) {
-			return;
-	}
-
-		PluginApi::get_instance();
-		ThemeApi::get_instance();
-		DebugLogApi::get_instance();
-}
-add_action( 'init', 'vwpu_initialize_plugin_api' );

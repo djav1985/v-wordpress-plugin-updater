@@ -55,8 +55,8 @@ This architecture enables centralized control over plugin and theme updates acro
 | :--- | :------------------- | :------------------------------------------------------------------------------------------ |
 | ⚙️  | **Architecture**     | <ul><li>Dual-component system: standalone Update API server + WordPress client plugin</li><li>MVC architecture with FastRoute routing and Doctrine DBAL</li><li>Separate namespaces: `App\` (server) and `VWPU\` (client)</li></ul> |
 | 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>Comprehensive PHPUnit test coverage</li></ul> |
-| 📄 | **Documentation**    | <ul><li>Detailed README with installation and usage instructions</li><li>API specification with request/response examples</li><li>Inline PHPDoc comments throughout codebase</li></ul> |
-| 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>REST API endpoints for remote management</li><li>Cron-based synchronization between filesystem and database</li></ul> |
+| 📄 | **Documentation**    | <ul><li>Detailed README with installation and usage instructions</li><li>Inline PHPDoc comments throughout codebase</li></ul> |
+| 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based synchronization between filesystem and database</li></ul> |
 | 🧩 | **Modularity**        | <ul><li>Separate controllers for API, login, hosts, plugins, themes, and logs</li><li>Helper classes for encryption, validation, and message handling</li><li>Model layer for database operations (plugins, themes, hosts, logs, blacklist)</li></ul> |
 | 🧪 | **Testing**           | <ul><li>PHPUnit test suite for both components</li><li>Tests for routing, database, session management, and updater logic</li><li>Namespace-based mocking for isolated unit tests</li></ul> |
 | ⚡️  | **Performance**       | <ul><li>SQLite database for efficient metadata storage</li><li>Asynchronous update processing per plugin/theme</li><li>Background worker mode for cron synchronization</li></ul> |
@@ -74,11 +74,6 @@ This architecture enables centralized control over plugin and theme updates acro
     ├── LICENSE
     ├── README.md
     ├── v-wp-updater                        # WordPress client plugin
-    │   ├── api
-    │   │   ├── API_SCHEMA.md
-    │   │   ├── DebugLogApi.php
-    │   │   ├── PluginApi.php
-    │   │   └── ThemeApi.php
     │   ├── helpers
     │   │   ├── AbstractRemoteUpdater.php
     │   │   ├── Logger.php
@@ -100,7 +95,6 @@ This architecture enables centralized control over plugin and theme updates acro
     │   │   │   ├── LoginController.php
     │   │   │   ├── LogsController.php
     │   │   │   ├── PluginsController.php
-    │   │   │   ├── SiteLogsController.php
     │   │   │   └── ThemesController.php
     │   │   ├── Core
     │   │   │   ├── Controller.php
@@ -131,7 +125,6 @@ This architecture enables centralized control over plugin and theme updates acro
     │   │       ├── login.php
     │   │       ├── logs.php
     │   │       ├── plupdate.php
-    │   │       ├── sitelogs.php
     │   │       └── thupdate.php
     │   ├── composer.json
     │   ├── config.php
@@ -348,10 +341,6 @@ This architecture enables centralized control over plugin and theme updates acro
                                                                         <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/home.php'>home.php</a></b></td>
                                                                         <td style='padding: 8px;'>- Provides a user interface for managing allowed hosts within the WordPress Update API, enabling viewing and adding domain entries<br>- Facilitates administrative control over host configurations, ensuring secure and organized management of permitted domains for update operations<br>- Integrates form handling and display logic to support dynamic updates in the APIs host list.</td>
                                                                 </tr>
-                                                                <tr style='border-bottom: 1px solid #eee;'>
-                                                                        <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Views/sitelogs.php'>sitelogs.php</a></b></td>
-                                                                        <td style='padding: 8px;'>- Provides a site-specific log viewer interface for monitoring update activities per WordPress site<br>- Enables filtering and viewing of update logs by domain, facilitating troubleshooting and tracking of plugin and theme update operations across multiple WordPress installations managed by the Update API.</td>
-                                                                </tr>
                                                         </table>
 							<!-- layouts Submodule -->
 							<details>
@@ -416,10 +405,6 @@ This architecture enables centralized control over plugin and theme updates acro
                                                                    <td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/LoginController.php'>LoginController.php</a></b></td>
 									<td style='padding: 8px;'>- Handles user authentication within the WordPress Update API, managing login sessions, validating credentials, and redirecting users appropriately<br>- Ensures secure session management, tracks failed login attempts, and integrates blacklisting for security<br>- Facilitates user access control, enabling authenticated interactions with the API while safeguarding against unauthorized access.</td>
 								</tr>
-								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/app/Controllers/SiteLogsController.php'>SiteLogsController.php</a></b></td>
-									<td style='padding: 8px;'>- Provides site-specific log viewing capabilities within the WordPress Update API, allowing administrators to filter and view update logs by domain<br>- Facilitates detailed monitoring and troubleshooting of plugin and theme updates for individual WordPress installations, supporting the overall logging and diagnostics architecture of the update management system.</td>
-								</tr>
 							</table>
 						</blockquote>
 					</details>
@@ -462,7 +447,7 @@ This architecture enables centralized control over plugin and theme updates acro
 			</thead>
 				<tr style='border-bottom: 1px solid #eee;'>
 					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/v-wp-updater/v-wp-updater.php'>v-wp-updater.php</a></b></td>
-					<td style='padding: 8px;'>- Main plugin file for the V WordPress Plugin Updater client<br>- Implements automated plugin and theme update checking and installation by connecting to the remote Update API server<br>- Integrates with WordPress hooks to schedule daily update checks, handles API authentication, and provides REST API endpoints for remote management and debugging.</td>
+					<td style='padding: 8px;'>- Main plugin file for the V WordPress Plugin Updater client<br>- Implements automated plugin and theme update checking and installation by connecting to the remote Update API server<br>- Integrates with WordPress hooks to schedule daily update checks and handles API authentication.</td>
 				</tr>
 				<tr style='border-bottom: 1px solid #eee;'>
 					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/v-wp-updater/services/PluginUpdater.php'>PluginUpdater.php</a></b></td>
@@ -554,7 +539,7 @@ This architecture enables centralized control over plugin and theme updates acro
 
 4. **Upload Themes**: Navigate to `/thupdate` to upload theme ZIP files. Files must follow the same naming pattern as plugins.
 
-5. **View Logs**: Check `/logs` for general update activity logs, or `/sitelogs` to view logs filtered by specific WordPress sites.
+5. **View Logs**: Check `/logs` for plugin and theme update activity logs.
 
 6. The cron worker will automatically sync uploaded files to the database. Ensure the cron job is configured as described in the installation steps.
 
