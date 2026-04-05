@@ -612,7 +612,7 @@ GET /api?type=plugin&domain=example.com&key=your-api-key&slug=my-plugin&version=
 
 **Headers:**
 ```
-Content-Type: application/zip
+Content-Type: application/octet-stream
 Content-Disposition: attachment; filename="my-plugin_1.1.0.zip"
 ```
 
@@ -623,6 +623,18 @@ Content-Disposition: attachment; filename="my-plugin_1.1.0.zip"
 **Status:** `204 No Content`
 
 No response body.
+
+### Client Behavior
+
+The WordPress client plugin (`v-wp-updater`) implements this contract in
+`PluginUpdater::fetch_package` and `ThemeUpdater::fetch_package`:
+
+- Sends `type=plugin` or `type=theme` (not a separate `plugin`/`theme` parameter).
+- Sends `slug=<directory-slug>` for the resource identifier.
+- On `200`: uses the authenticated URL as `download_url`; `AbstractRemoteUpdater` streams the ZIP.
+- On `204`: returns `no_update`; no installation is attempted.
+- On `403`: returns `unauthorized`; the failure is logged. (`401` is not returned by this API.)
+- On any other code or network error: returns `error`.
 
 ### Security
 
