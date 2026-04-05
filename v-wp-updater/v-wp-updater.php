@@ -2,7 +2,7 @@
 /**
  * Plugin Name: V WordPress Plugin Updater
  * Plugin URI:  https://github.com/djav1985/v-wordpress-plugin-updater
- * Description: Automated plugin and theme updater with REST API support for remote management.
+ * Description: Automated plugin and theme updater for centralized update management.
  * Version:     2.0.0
  * Author:      Vontainment
  * Author URI:  https://vontainment.com
