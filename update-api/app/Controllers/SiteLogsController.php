@@ -109,7 +109,7 @@ class SiteLogsController extends Controller
             return [
                 'success' => false,
                 'logs' => '',
-                'message' => 'Failed to connect to ' . $domain . ': ' . $curlError,
+                'message' => 'Failed to connect to ' . htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') . ': ' . $curlError,
             ];
         }
         

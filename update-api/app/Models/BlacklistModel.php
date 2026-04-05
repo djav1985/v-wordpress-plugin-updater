@@ -52,7 +52,7 @@ class BlacklistModel
                      ELSE blacklist.blacklisted
                  END,
                  timestamp = CASE
-                     WHEN blacklist.login_attempts + 1 >= 3 AND blacklist.blacklisted = 0 THEN ?
+                     WHEN blacklist.login_attempts + 1 >= 3 THEN ?
                      ELSE blacklist.timestamp
                  END',
             [$ip, $now, $now]
