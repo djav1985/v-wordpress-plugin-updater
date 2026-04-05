@@ -21,7 +21,7 @@ the ZIP archive directly.
 
 | Parameter | Type   | Description                                    |
 |-----------|--------|------------------------------------------------|
-| `type`    | string | Resource type: `plugin` or `theme`             |
+| `type`    | string | Resource type: must be `plugin` or `theme`     |
 | `domain`  | string | Requesting site domain (e.g. `example.com`)    |
 | `key`     | string | API key issued for this domain                 |
 | `slug`    | string | Plugin/theme directory slug                    |
