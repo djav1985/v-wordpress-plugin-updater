@@ -50,8 +50,9 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	protected function fetch_package( array $item, string $installed_version, string $update_key, string $update_url ): array {
 		$api_url = add_query_arg(
 			array(
+				'type'    => 'theme',
 				'domain'  => rawurlencode( wp_parse_url( site_url(), PHP_URL_HOST ) ),
-				'theme'   => rawurlencode( $item['slug'] ),
+				'slug'    => rawurlencode( $item['slug'] ),
 				'version' => rawurlencode( $installed_version ),
 				'key'     => $update_key,
 			),
@@ -76,20 +77,17 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 			return array( 'status' => 'no_update' );
 		}
 
-		if ( 401 === $http_code ) {
+		if ( 403 === $http_code ) {
 			return array( 'status' => 'unauthorized' );
 		}
 
-		$response_body = wp_remote_retrieve_body( $response );
-		$response_data = json_decode( $response_body, true );
-
-		if ( empty( $response_data['zip_url'] ) ) {
+		if ( 200 !== $http_code ) {
 			return array( 'status' => 'error' );
 		}
 
 		return array(
 			'status'       => 'update',
-			'download_url' => $response_data['zip_url'],
+			'download_url' => $api_url,
 		);
 	}
 

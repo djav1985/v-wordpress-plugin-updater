@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- **Aligned update-check contract (Option A):** Unified the request/response protocol used between
+  the WordPress client plugin and the Update API server.
+  - `PluginUpdater::fetch_package` now sends `type=plugin&slug=<slug>` instead of `plugin=<slug>`.
+  - `ThemeUpdater::fetch_package` now sends `type=theme&slug=<slug>` instead of `theme=<slug>`.
+  - Both updaters now treat HTTP `403` as the auth-failure signal (replacing the previous incorrect
+    `401` check) to match the status code returned by `ApiController`.
+  - Both updaters now handle the direct binary ZIP response on HTTP `200` (no JSON `zip_url`
+    parsing) and return the authenticated API URL as `download_url` for `AbstractRemoteUpdater`.
+  - Added `tests/ApiControllerTest.php` covering request validation, auth failure (`403`),
+    no-update (`204`), and successful update (`200`) for both `plugin` and `theme` types.
+  - Added `tests/UpdaterFetchPackageTest.php` with 22 tests locking parameter names, status-code
+    branches, WP_Error handling, and a regression test proving a valid request reaches the
+    install path.
+  - Updated `v-wp-updater/api/API_SCHEMA.md` with the canonical update-check endpoint contract.
 - Updated `update-api/cron.php` to accept the positional `worker` argument, reject unknown CLI options, and propagate non-zero exit codes when cron work fails via `ErrorManager`.
 - Added integration tests covering worker invocation, argument validation, and CLI error handling, plus lightweight mu-plugin fixtures required for the suite.
 - **Updated README.md to match current codebase**: Replaced all references to obsolete `mu-plugin/` directory with `v-wp-updater/`. Updated project structure documentation to reflect dual-component architecture (Update API Server + WordPress Client Plugin). Removed references to non-existent files (HOSTS, autoload.php) and controllers (AccountsController, InfoController, UsersController). Added documentation for SiteLogsController and cron.php with worker mode. Updated installation and usage sections with accurate paths and separate setup procedures for API server and client plugin.

@@ -4,7 +4,54 @@ This document describes the REST API surface implemented in the `VWPDashboard\\A
 All endpoints are registered under the namespace `vwpd/v1` and require an `X-API-Key` header that
 matches the stored update key.
 
-## Authentication
+---
+
+## Update-Check Endpoint (Update API Server)
+
+The WordPress client plugin (`v-wp-updater`) communicates with the standalone **Update API Server**
+(`update-api/`) using the following contract. This is separate from the WordPress REST API endpoints
+documented below.
+
+### GET `/api`
+
+Checks whether an update is available for a plugin or theme and, when one is available, streams
+the ZIP archive directly.
+
+**Query Parameters (all required):**
+
+| Parameter | Type   | Description                                    |
+|-----------|--------|------------------------------------------------|
+| `type`    | string | Resource type: `plugin` or `theme`             |
+| `domain`  | string | Requesting site domain (e.g. `example.com`)    |
+| `key`     | string | API key issued for this domain                 |
+| `slug`    | string | Plugin/theme directory slug                    |
+| `version` | string | Currently installed version (e.g. `1.2.3`)     |
+
+**Success Responses:**
+
+- `200 OK` — A newer version exists. Response body is the raw ZIP archive with
+  `Content-Type: application/octet-stream` and
+  `Content-Disposition: attachment; filename="<slug>_<version>.zip"`.
+- `204 No Content` — The client is already on the latest version. No body.
+
+**Error Responses:**
+
+- `400 Bad Request` — A required parameter is missing or fails validation.
+- `403 Forbidden` — Authentication failed (unknown domain, invalid key, blacklisted IP, or
+  non-GET method). The client should treat `403` as an authorization failure; `401` is never
+  returned by this endpoint.
+
+**Client behavior:**
+
+1. Send a `GET` request with all five parameters.
+2. On `200`: download the response body as a ZIP and pass it to the WordPress upgrader.
+3. On `204`: no action required (already up to date).
+4. On `403`: log the failure; do not retry until credentials are verified.
+5. On any other code: log as a transient error.
+
+---
+
+## Authentication (WordPress REST API)
 
 - **Header:** `X-API-Key`
 - **Value:** A string that must match the value saved under the `update_key` option.
