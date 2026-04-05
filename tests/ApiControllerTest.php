@@ -18,6 +18,16 @@ class ApiControllerTest extends TestCase
     /** @var \Doctrine\DBAL\Connection */
     private $conn;
 
+    /**
+     * Initialize ErrorManager exactly once for the entire test class so that
+     * error/exception/shutdown handlers are registered only once, avoiding
+     * the accumulation of shutdown handlers that cannot be un-registered.
+     */
+    public static function setUpBeforeClass(): void
+    {
+        \App\Core\ErrorManager::getInstance();
+    }
+
     protected function setUp(): void
     {
         if (!defined('DB_FILE')) {
@@ -31,12 +41,6 @@ class ApiControllerTest extends TestCase
         $prop = $ref->getProperty('connection');
         $prop->setAccessible(true);
         $prop->setValue(null, null);
-
-        // Reset ErrorManager singleton so each test installs handlers fresh
-        $ref2  = new \ReflectionClass(\App\Core\ErrorManager::class);
-        $prop2 = $ref2->getProperty('instance');
-        $prop2->setAccessible(true);
-        $prop2->setValue(null, null);
 
         $this->conn = DatabaseManager::getConnection();
 
@@ -86,10 +90,6 @@ class ApiControllerTest extends TestCase
             unlink(LOG_FILE);
         }
         $_GET = [];
-
-        // Restore error/exception handlers installed by ErrorManager singleton
-        restore_error_handler();
-        restore_exception_handler();
     }
 
     // ------------------------------------------------------------------

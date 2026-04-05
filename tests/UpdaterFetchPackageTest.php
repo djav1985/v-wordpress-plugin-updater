@@ -146,6 +146,19 @@ namespace VWPU\Services {
     function add_query_arg( array $args, string $url ): string {
         return $url . '?' . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 );
     }
+
+    // Required by the prefetch path in fetch_package() (HTTP 200 branch)
+    function wp_upload_dir(): array {
+        return [ 'path' => sys_get_temp_dir(), 'error' => false ];
+    }
+
+    function sanitize_file_name( string $name ): string {
+        return preg_replace( '/[^a-zA-Z0-9._-]/', '-', $name );
+    }
+
+    function trailingslashit( string $string ): string {
+        return rtrim( $string, '/' ) . '/';
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +231,16 @@ namespace Tests {
             $GLOBALS['_wp_remote_stub'] = null;
         }
 
+        protected function tearDown(): void {
+            // Remove any prefetched ZIP files written to the temp directory by
+            // fetch_package() during the HTTP 200 test cases.
+            foreach ( glob( sys_get_temp_dir() . '/*-update.zip' ) ?: [] as $file ) {
+                if ( is_string( $file ) && file_exists( $file ) ) {
+                    unlink( $file );
+                }
+            }
+        }
+
         // -------------------------------------------------------------------
         // Helper: configure the stubbed HTTP response
         // -------------------------------------------------------------------
@@ -257,7 +280,7 @@ namespace Tests {
 
         public function testPluginFetchPackageSendsCorrectSlugVersionKey(): void {
             $capturedUrl = null;
-            $GLOBALS['_wp_remote_stub'] = static function ( string $url ) use ( &$capturedUrl ): array {
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
                 $capturedUrl = $url;
                 return [ 'code' => 204, 'body' => '' ];
             };
@@ -277,7 +300,7 @@ namespace Tests {
 
         public function testThemeFetchPackageSendsTypeAndSlugParams(): void {
             $capturedUrl = null;
-            $GLOBALS['_wp_remote_stub'] = static function ( string $url ) use ( &$capturedUrl ): array {
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
                 $capturedUrl = $url;
                 return [ 'code' => 204, 'body' => '' ];
             };
@@ -300,7 +323,7 @@ namespace Tests {
 
         public function testThemeFetchPackageSendsCorrectSlugVersionKey(): void {
             $capturedUrl = null;
-            $GLOBALS['_wp_remote_stub'] = static function ( string $url ) use ( &$capturedUrl ): array {
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
                 $capturedUrl = $url;
                 return [ 'code' => 204, 'body' => '' ];
             };
@@ -471,6 +494,12 @@ namespace Tests {
             $this->assertSame( 'my-plugin', $q['slug'] );
             $this->assertSame( '1.0.0', $q['version'] );
             $this->assertSame( 'validkey', $q['key'] );
+
+            // The ZIP body must have been saved to disk so download_package()
+            // can reuse it without a second HTTP request.
+            $expectedFile = sys_get_temp_dir() . '/my-plugin-update.zip';
+            $this->assertFileExists( $expectedFile, 'Prefetched ZIP must be written to disk' );
+            $this->assertSame( str_repeat( 'Z', 512 ), file_get_contents( $expectedFile ) );
         }
 
         public function testValidThemeRequestProgressesToInstallPath(): void {
@@ -490,6 +519,9 @@ namespace Tests {
             parse_str( (string) parse_url( $result['download_url'], PHP_URL_QUERY ), $q );
             $this->assertSame( 'theme', $q['type'] );
             $this->assertSame( 'my-theme', $q['slug'] );
+
+            $expectedFile = sys_get_temp_dir() . '/my-theme-update.zip';
+            $this->assertFileExists( $expectedFile, 'Prefetched ZIP must be written to disk' );
         }
     }
 }

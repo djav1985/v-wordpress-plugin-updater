@@ -133,12 +133,15 @@ abstract class AbstractRemoteUpdater {
 	/**
 	 * Download the remote package to a temporary location.
 	 *
+	 * Subclasses may override this method to reuse a package that was already
+	 * retrieved during the update check, avoiding a second HTTP request.
+	 *
 	 * @param string $slug         Package slug.
 	 * @param string $download_url Remote download URL.
 	 *
 	 * @return string|WP_Error Path to downloaded package or WP_Error on failure.
 	 */
-	private function download_package( string $slug, string $download_url ) {
+	protected function download_package( string $slug, string $download_url ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 
 		$upload_dir = wp_upload_dir();

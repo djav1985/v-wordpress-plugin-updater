@@ -29,6 +29,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PluginUpdater extends AbstractRemoteUpdater {
 
 	/**
+	 * Path to the ZIP file written during the update-check request.
+	 *
+	 * Set by fetch_package() when the API returns HTTP 200 so that
+	 * download_package() can reuse the already-downloaded archive instead of
+	 * making a second HTTP request.
+	 *
+	 * @var string|null
+	 */
+	private ?string $prefetched_package = null;
+
+	/**
 	 * Prepare required includes for plugin updates.
 	 *
 	 * @return void
@@ -39,6 +50,10 @@ class PluginUpdater extends AbstractRemoteUpdater {
 
 	/**
 	 * Fetch the remote package metadata for a plugin.
+	 *
+	 * When the API returns HTTP 200 the response body (the ZIP archive) is
+	 * written to a temp file immediately so that download_package() can reuse
+	 * it, avoiding a second full download of the same archive.
 	 *
 	 * @param array  $item              Plugin metadata.
 	 * @param string $installed_version Installed version string.
@@ -85,10 +100,49 @@ class PluginUpdater extends AbstractRemoteUpdater {
 			return array( 'status' => 'error' );
 		}
 
+		// Save the response body to disk now so download_package() can return
+		// this file directly, skipping a second HTTP request for the archive.
+		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) ) {
+			return array( 'status' => 'error' );
+		}
+
+		$safe_filename = sanitize_file_name( $item['slug'] . '-update.zip' );
+		$package_path  = trailingslashit( $upload_dir['path'] ) . $safe_filename;
+		$zip_body      = wp_remote_retrieve_body( $response );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		if ( false === file_put_contents( $package_path, $zip_body ) ) {
+			$this->log_debug( 'Failed to write prefetched ZIP for ' . $item['slug'] );
+			return array( 'status' => 'error' );
+		}
+
+		$this->prefetched_package = $package_path;
+
 		return array(
 			'status'       => 'update',
 			'download_url' => $api_url,
 		);
+	}
+
+	/**
+	 * Return the pre-fetched ZIP if available, otherwise fall back to a fresh download.
+	 *
+	 * {@inheritdoc}
+	 *
+	 * @param string $slug         Package slug.
+	 * @param string $download_url Remote download URL (used only when no prefetched file exists).
+	 *
+	 * @return string|\WP_Error
+	 */
+	protected function download_package( string $slug, string $download_url ) {
+		if ( null !== $this->prefetched_package ) {
+			$path                     = $this->prefetched_package;
+			$this->prefetched_package = null;
+			return $path;
+		}
+
+		return parent::download_package( $slug, $download_url );
 	}
 
 	/**
