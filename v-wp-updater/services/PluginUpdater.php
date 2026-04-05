@@ -115,7 +115,7 @@ class PluginUpdater extends AbstractRemoteUpdater {
 		}
 
 		$package_path = wp_tempnam( $item['slug'] . '-update', trailingslashit( $upload_dir['path'] ) );
-		if ( '' === $package_path ) {
+		if ( false === $package_path || '' === $package_path ) {
 			return array( 'status' => 'error' );
 		}
 
