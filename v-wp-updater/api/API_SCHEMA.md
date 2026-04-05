@@ -31,7 +31,9 @@ the ZIP archive directly.
 
 - `200 OK` — A newer version exists. Response body is the raw ZIP archive with
   `Content-Type: application/octet-stream` and
-  `Content-Disposition: attachment; filename="<slug>_<version>.zip"`.
+  `Content-Disposition: attachment; filename="<slug>_<latest-version>.zip"`, where
+  `<latest-version>` is the newest available version on the server for the requested slug
+  (not the client-supplied `version` query parameter).
 - `204 No Content` — The client is already on the latest version. No body.
 
 **Error Responses:**
