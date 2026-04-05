@@ -55,7 +55,7 @@ class SiteLogsController extends Controller
             return Response::json(['success' => false, 'message' => 'Invalid domain.'], 400);
         }
 
-        $lines = isset($_POST['lines']) ? (int)$_POST['lines'] : 250;
+        $lines = isset($_POST['lines']) ? max(1, min(1000, (int)$_POST['lines'])) : 250;
 
         $result = self::fetchSiteLogs($domain, $lines);
 
@@ -95,12 +95,23 @@ class SiteLogsController extends Controller
             CURLOPT_HTTPHEADER => [
                 'X-API-Key: ' . $key,
             ],
+            CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_TIMEOUT => 30,
         ]);
         
         $response = curl_exec($curl);
+        $curlErrno = curl_errno($curl);
+        $curlError = curl_error($curl);
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
+
+        if ($curlErrno !== 0) {
+            return [
+                'success' => false,
+                'logs' => '',
+                'message' => 'Failed to connect to ' . $domain . ': ' . $curlError,
+            ];
+        }
         
         if ($httpCode === 200) {
             $data = json_decode($response, true);

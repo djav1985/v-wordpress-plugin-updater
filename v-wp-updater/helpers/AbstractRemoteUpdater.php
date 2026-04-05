@@ -149,17 +149,21 @@ abstract class AbstractRemoteUpdater {
 			return new WP_Error( 'upload_dir_error', $upload_dir['error'] );
 		}
 
-		$safe_filename = sanitize_file_name( $slug . '-update.zip' );
-		$package_path  = trailingslashit( $upload_dir['path'] ) . $safe_filename;
-
 		$tmp_file = download_url( $download_url, 300 );
 
 		if ( is_wp_error( $tmp_file ) ) {
 			return $tmp_file;
 		}
 
+		$package_path = wp_tempnam( $slug . '-update', trailingslashit( $upload_dir['path'] ) );
+		if ( '' === $package_path ) {
+			wp_delete_file( $tmp_file );
+			return new WP_Error( 'tempnam_failed', 'Unable to create temporary file.' );
+		}
+
 		if ( ! copy( $tmp_file, $package_path ) ) {
 			wp_delete_file( $tmp_file );
+			wp_delete_file( $package_path );
 			return new WP_Error( 'copy_failed', 'Unable to copy the downloaded package.' );
 		}
 

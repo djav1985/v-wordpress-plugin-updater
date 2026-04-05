@@ -114,15 +114,19 @@ class PluginUpdater extends AbstractRemoteUpdater {
 			return array( 'status' => 'error' );
 		}
 
-		$safe_filename = sanitize_file_name( $item['slug'] . '-update.zip' );
-		$package_path  = trailingslashit( $upload_dir['path'] ) . $safe_filename;
-		$zip_body      = wp_remote_retrieve_body( $response );
+		$package_path = wp_tempnam( $item['slug'] . '-update', trailingslashit( $upload_dir['path'] ) );
+		if ( '' === $package_path ) {
+			return array( 'status' => 'error' );
+		}
+
+		$zip_body = wp_remote_retrieve_body( $response );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		if ( false === file_put_contents( $package_path, $zip_body ) ) {
 			$error     = error_get_last();
 			$error_msg = isset( $error['message'] ) ? $error['message'] : 'unknown error';
 			$this->log_debug( 'Failed to write prefetched ZIP for ' . $item['slug'] . ': ' . $error_msg );
+			wp_delete_file( $package_path );
 			return array( 'status' => 'error' );
 		}
 
