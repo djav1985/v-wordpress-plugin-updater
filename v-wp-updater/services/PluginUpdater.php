@@ -102,6 +102,13 @@ class PluginUpdater extends AbstractRemoteUpdater {
 
 		// Save the response body to disk now so download_package() can return
 		// this file directly, skipping a second HTTP request for the archive.
+
+		// Validate slug before using it in a file path to prevent traversal.
+		if ( 1 !== preg_match( '/^[a-zA-Z0-9_\-]+$/', $item['slug'] ) ) {
+			$this->log_debug( 'Rejected slug with unsafe characters: ' . $item['slug'] );
+			return array( 'status' => 'error' );
+		}
+
 		$upload_dir = wp_upload_dir();
 		if ( ! empty( $upload_dir['error'] ) ) {
 			return array( 'status' => 'error' );
@@ -113,7 +120,9 @@ class PluginUpdater extends AbstractRemoteUpdater {
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		if ( false === file_put_contents( $package_path, $zip_body ) ) {
-			$this->log_debug( 'Failed to write prefetched ZIP for ' . $item['slug'] );
+			$error     = error_get_last();
+			$error_msg = isset( $error['message'] ) ? $error['message'] : 'unknown error';
+			$this->log_debug( 'Failed to write prefetched ZIP for ' . $item['slug'] . ': ' . $error_msg );
 			return array( 'status' => 'error' );
 		}
 

@@ -147,9 +147,14 @@ namespace VWPU\Services {
         return $url . '?' . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 );
     }
 
-    // Required by the prefetch path in fetch_package() (HTTP 200 branch)
+    // Required by the prefetch path in fetch_package() (HTTP 200 branch).
+    // Uses a PID-specific subdirectory to avoid collisions with concurrent runs.
     function wp_upload_dir(): array {
-        return [ 'path' => sys_get_temp_dir(), 'error' => false ];
+        $dir = sys_get_temp_dir() . '/vwpu-test-' . getmypid();
+        if ( ! is_dir( $dir ) ) {
+            mkdir( $dir, 0755, true );
+        }
+        return [ 'path' => $dir, 'error' => false ];
     }
 
     function sanitize_file_name( string $name ): string {
@@ -232,12 +237,15 @@ namespace Tests {
         }
 
         protected function tearDown(): void {
-            // Remove any prefetched ZIP files written to the temp directory by
-            // fetch_package() during the HTTP 200 test cases.
-            foreach ( glob( sys_get_temp_dir() . '/*-update.zip' ) ?: [] as $file ) {
-                if ( is_string( $file ) && file_exists( $file ) ) {
+            // Remove the PID-specific temp directory created by the wp_upload_dir stub.
+            $testDir = sys_get_temp_dir() . '/vwpu-test-' . getmypid();
+            foreach ( glob( $testDir . '/*' ) ?: [] as $file ) {
+                if ( is_string( $file ) && is_file( $file ) ) {
                     unlink( $file );
                 }
+            }
+            if ( is_dir( $testDir ) ) {
+                rmdir( $testDir );
             }
         }
 
@@ -497,7 +505,7 @@ namespace Tests {
 
             // The ZIP body must have been saved to disk so download_package()
             // can reuse it without a second HTTP request.
-            $expectedFile = sys_get_temp_dir() . '/my-plugin-update.zip';
+            $expectedFile = sys_get_temp_dir() . '/vwpu-test-' . getmypid() . '/my-plugin-update.zip';
             $this->assertFileExists( $expectedFile, 'Prefetched ZIP must be written to disk' );
             $this->assertSame( str_repeat( 'Z', 512 ), file_get_contents( $expectedFile ) );
         }
@@ -520,7 +528,7 @@ namespace Tests {
             $this->assertSame( 'theme', $q['type'] );
             $this->assertSame( 'my-theme', $q['slug'] );
 
-            $expectedFile = sys_get_temp_dir() . '/my-theme-update.zip';
+            $expectedFile = sys_get_temp_dir() . '/vwpu-test-' . getmypid() . '/my-theme-update.zip';
             $this->assertFileExists( $expectedFile, 'Prefetched ZIP must be written to disk' );
         }
     }
