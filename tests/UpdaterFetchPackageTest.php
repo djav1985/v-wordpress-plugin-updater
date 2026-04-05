@@ -234,7 +234,7 @@ namespace Tests {
 
         public function testPluginFetchPackageSendsTypeAndSlugParams(): void {
             $capturedUrl = null;
-            $GLOBALS['_wp_remote_stub'] = static function ( string $url ) use ( &$capturedUrl ): array {
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
                 $capturedUrl = $url;
                 return [ 'code' => 204, 'body' => '' ];
             };
