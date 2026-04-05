@@ -156,7 +156,7 @@ abstract class AbstractRemoteUpdater {
 		}
 
 		$package_path = wp_tempnam( $slug . '-update', trailingslashit( $upload_dir['path'] ) );
-		if ( '' === $package_path ) {
+		if ( ! $package_path ) {
 			wp_delete_file( $tmp_file );
 			return new WP_Error( 'tempnam_failed', 'Unable to create temporary file.' );
 		}
