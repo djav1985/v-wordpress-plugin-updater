@@ -32,20 +32,46 @@ function vwpu_install(): void {
 	// Initialize default options.
 	Options::initialize_defaults();
 
+	// Preserve existing installs by migrating any legacy status keys.
+	vwpu_migrate_legacy_status_options();
+
 	// Schedule all cron jobs (regardless of option values).
 	vwpu_schedule_plugin_updates();
 	vwpu_schedule_theme_updates();
 
 	// Ensure options are set with autoload disabled.
-	$plup_val = get_option( 'vwpu-plup', false );
-	delete_option( 'vwpu-plup' );
-	add_option( 'vwpu-plup', $plup_val, '', 'no' );
+	$plugin_status = get_option( 'vwpu_plugin_update_status', false );
+	delete_option( 'vwpu_plugin_update_status' );
+	add_option( 'vwpu_plugin_update_status', $plugin_status, '', 'no' );
 
-	$thup_val = get_option( 'vwpu-thup', false );
-	delete_option( 'vwpu-thup' );
-	add_option( 'vwpu-thup', $thup_val, '', 'no' );
+	$theme_status = get_option( 'vwpu_theme_update_status', false );
+	delete_option( 'vwpu_theme_update_status' );
+	add_option( 'vwpu_theme_update_status', $theme_status, '', 'no' );
 
 	Logger::info( 'Plugin activation completed successfully' );
+}
+
+/**
+ * Migrates legacy updater status option keys to canonical keys.
+ *
+ * @since 2.0.0
+ * @return void
+ */
+function vwpu_migrate_legacy_status_options(): void {
+	$migrations = array(
+		'vontmnt-plup' => 'vwpu_plugin_update_status',
+		'vwpu-plup'    => 'vwpu_plugin_update_status',
+		'vontmnt-thup' => 'vwpu_theme_update_status',
+		'vwpu-thup'    => 'vwpu_theme_update_status',
+	);
+
+	foreach ( $migrations as $legacy_key => $canonical_key ) {
+		$legacy_value = get_option( $legacy_key, false );
+		if ( false !== $legacy_value && false === get_option( $canonical_key, false ) ) {
+			add_option( $canonical_key, $legacy_value, '', 'no' );
+		}
+		delete_option( $legacy_key );
+	}
 }
 
 /**

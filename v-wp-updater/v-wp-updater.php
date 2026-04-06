@@ -67,9 +67,46 @@ function vwpu_deactivate(): void {
 	}
 
 	try {
-			include_once plugin_dir_path( __FILE__ ) . 'uninstall.php';
+			$uninstall_file = plugin_dir_path( __FILE__ ) . 'uninstall.php';
+		if ( ! file_exists( $uninstall_file ) ) {
+			Logger::error(
+				'Deactivation cleanup include missing',
+				array(
+					'event'  => 'deactivation_cleanup',
+					'file'   => $uninstall_file,
+					'action' => 'skip_cleanup',
+				)
+			);
+			return;
+		}
+
+			include_once $uninstall_file;
+
+		if ( function_exists( 'vwpu_clear_plugin_update_schedule' ) ) {
 			vwpu_clear_plugin_update_schedule();
+		} else {
+			Logger::error(
+				'Plugin schedule cleanup helper unavailable',
+				array(
+					'event'    => 'deactivation_cleanup',
+					'function' => 'vwpu_clear_plugin_update_schedule',
+					'action'   => 'continue',
+				)
+			);
+		}
+
+		if ( function_exists( 'vwpu_clear_theme_update_schedule' ) ) {
 			vwpu_clear_theme_update_schedule();
+		} else {
+			Logger::error(
+				'Theme schedule cleanup helper unavailable',
+				array(
+					'event'    => 'deactivation_cleanup',
+					'function' => 'vwpu_clear_theme_update_schedule',
+					'action'   => 'continue',
+				)
+			);
+		}
 	} catch ( Exception $e ) {
 			Logger::error( 'Deactivation error', array( 'exception' => $e->getMessage() ) );
 	}
@@ -90,8 +127,33 @@ function vwpu_uninstall(): void {
 	}
 
 	try {
-			include_once plugin_dir_path( __FILE__ ) . 'uninstall.php';
+			$uninstall_file = plugin_dir_path( __FILE__ ) . 'uninstall.php';
+		if ( ! file_exists( $uninstall_file ) ) {
+			Logger::error(
+				'Uninstall cleanup include missing',
+				array(
+					'event'  => 'uninstall_cleanup',
+					'file'   => $uninstall_file,
+					'action' => 'skip_cleanup',
+				)
+			);
+			return;
+		}
+
+			include_once $uninstall_file;
+
+		if ( function_exists( 'vwpu_uninstall_cleanup' ) ) {
 			vwpu_uninstall_cleanup();
+		} else {
+			Logger::error(
+				'Uninstall cleanup helper unavailable',
+				array(
+					'event'    => 'uninstall_cleanup',
+					'function' => 'vwpu_uninstall_cleanup',
+					'action'   => 'continue',
+				)
+			);
+		}
 	} catch ( Exception $e ) {
 			Logger::error( 'Uninstall error', array( 'exception' => $e->getMessage() ) );
 	}

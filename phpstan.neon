@@ -1,7 +1,7 @@
 parameters:
   level: 6
   paths:
-    - mu-plugin
+    - v-wp-updater
     - update-api
   excludePaths:
     - update-api/vendor

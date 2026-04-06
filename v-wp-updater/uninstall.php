@@ -30,8 +30,12 @@ function vwpu_uninstall_cleanup(): void {
 	vwpu_clear_theme_update_schedule();
 
 	// Delete plugin options.
+	delete_option( 'vwpu_plugin_update_status' );
+	delete_option( 'vwpu_theme_update_status' );
 	delete_option( 'vwpu-plup' );
 	delete_option( 'vwpu-thup' );
+	delete_option( 'vontmnt-plup' );
+	delete_option( 'vontmnt-thup' );
 }
 
 /**
