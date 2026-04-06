@@ -95,8 +95,8 @@ class Options {
 			'update_plugins'    => 'false',
 			'update_themes'     => 'false',
 			'update_key'        => '',
-			'update_plugin_url' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
-			'update_theme_url'  => 'https://wp-updates.servicesbyv.com/themes/api.php',
+			'update_plugin_url' => 'https://wp-updates.servicesbyv.com/api',
+			'update_theme_url'  => 'https://wp-updates.servicesbyv.com/api',
 		);
 
 		foreach ( $defaults as $option_name => $default_value ) {

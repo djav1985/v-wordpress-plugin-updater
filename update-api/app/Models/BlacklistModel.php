@@ -68,7 +68,7 @@ class BlacklistModel
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
-            if (time() - (int) $record['timestamp'] > 3 * 24 * 60 * 60) {
+            if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
                 $conn->update('blacklist', [
                     'blacklisted'   => 0,
                     'login_attempts' => 0,

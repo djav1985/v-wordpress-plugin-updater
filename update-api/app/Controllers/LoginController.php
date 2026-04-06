@@ -85,7 +85,13 @@ class LoginController extends Controller
         }
 
         // Handle failed login attempt
-        $ip = $_SERVER['REMOTE_ADDR'];
+        $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
+        if (!$ip) {
+            $error = 'Unable to determine client IP.';
+            ErrorManager::getInstance()->log($error);
+            MessageHelper::addMessage($error);
+            return ResponseManager::view('login');
+        }
         if (BlacklistModel::isBlacklisted($ip)) {
             $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
             ErrorManager::getInstance()->log($error);

@@ -509,17 +509,15 @@ This architecture enables centralized control over plugin and theme updates acro
 
 1. Copy the `v-wp-updater/` directory to your WordPress installation's `wp-content/plugins/` directory.
 
-2. Define the API URL in your WordPress `wp-config.php`:
+2. Configure the API server URL and API key in WordPress using the dashboard settings widget or via provisioning:
 
    ```php
-   define('VONTMNT_API_URL', 'https://updates.example.com/api');
+   update_option('vwpu_update_plugin_url', 'https://updates.example.com/api');
+   update_option('vwpu_update_theme_url', 'https://updates.example.com/api');
+   update_option('vwpu_update_key', 'your-api-key-from-server');
    ```
 
-3. Store the API key for your WordPress site. The updater uses the API key stored in the `vontmnt_api_key` option. Set this via provisioning or use the WordPress admin panel:
-
-   ```php
-   update_option('vontmnt_api_key', 'your-api-key-from-server');
-   ```
+   Alternatively, navigate to the WordPress Dashboard → Settings widget (V WordPress Updater Settings) after activation to configure these values via the admin UI.
 
 4. Activate the plugin through the WordPress admin panel or WP-CLI.
 

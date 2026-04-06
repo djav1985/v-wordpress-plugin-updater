@@ -58,12 +58,12 @@ function vwpu_widget_settings_display(): void {
 					'update_plugin_url' => array(
 						'label'   => __( 'Plugin Update URL', 'v-wp-updater' ),
 						'type'    => 'text',
-						'default' => 'https://wp-updates.servicesbyv.com/plugins/api.php',
+						'default' => 'https://wp-updates.servicesbyv.com/api',
 					),
 					'update_theme_url'  => array(
 						'label'   => __( 'Theme Update URL', 'v-wp-updater' ),
 						'type'    => 'text',
-						'default' => 'https://wp-updates.servicesbyv.com/themes/api.php',
+						'default' => 'https://wp-updates.servicesbyv.com/api',
 					),
 				),
 			),
