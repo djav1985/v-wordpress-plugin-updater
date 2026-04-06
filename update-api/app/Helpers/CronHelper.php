@@ -25,7 +25,17 @@ final class CronHelper
      */
     public static function syncDir(string $dir, string $table, Connection $conn): void
     {
+        if (!is_dir($dir) || !is_readable($dir)) {
+            error_log(sprintf('CronHelper::syncDir cannot read directory "%s" for table "%s".', $dir, $table));
+            return;
+        }
+
         $files = glob($dir . '/*.zip');
+        if ($files === false) {
+            error_log(sprintf('CronHelper::syncDir glob() failed for directory "%s" and table "%s".', $dir, $table));
+            return;
+        }
+
         $found = [];
         foreach ($files as $file) {
             $name = basename($file);

@@ -21,6 +21,7 @@ $hostsTableHtml = $hostsTableHtml ?? '';
 
 <div class="content-box">
     <h2>Allowed Hosts</h2>
+    <p>Keys are masked by default. Use <strong>Reveal</strong> for a temporary 30-second display, then <strong>Copy</strong>.</p>
     <div id="hosts_table">
         <?php echo $hostsTableHtml; ?>
     </div>

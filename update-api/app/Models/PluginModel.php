@@ -42,32 +42,38 @@ class PluginModel
 
     /**
      * Delete a plugin file.
-     *
-     * @param string $pluginName
-     *
-     * @return bool True on success, false otherwise.
      */
     public static function deletePlugin(string $pluginName): bool
     {
         $basename = basename($pluginName);
         $parsed = ValidationHelper::parsePackageFilename($basename);
         if ($parsed === null) {
+            error_log('Plugin delete rejected: invalid filename format "' . $basename . '".');
             return false;
         }
 
         $slug = $parsed['slug'];
         $pluginPath = self::$dir . '/' . $basename;
-        if (
-            file_exists($pluginPath) &&
-            dirname(realpath($pluginPath)) === realpath(self::$dir)
-        ) {
-            unlink($pluginPath);
-            $conn = DatabaseManager::getConnection();
-            $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
-            return true;
+        if (!file_exists($pluginPath)) {
+            error_log('Plugin delete skipped: file missing "' . $pluginPath . '".');
+            return false;
         }
 
-        return false;
+        $realPath = realpath($pluginPath);
+        $realDir = realpath(self::$dir);
+        if ($realPath === false || $realDir === false || dirname($realPath) !== $realDir) {
+            error_log('Plugin delete rejected: path outside plugin directory "' . $pluginPath . '".');
+            return false;
+        }
+
+        if (!unlink($pluginPath)) {
+            error_log('Plugin delete failed: unable to unlink "' . $pluginPath . '" (permission/race condition).');
+            return false;
+        }
+
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
+        return true;
     }
 
     /**
@@ -82,23 +88,16 @@ class PluginModel
     {
         $messages = [];
         $allowedExtensions = ['zip'];
-        $totalFiles = count($fileArray['name']);
+        $normalized = self::normalizeUploadPayload($fileArray);
+        foreach ($normalized['errors'] as $errorMessage) {
+            $messages[] = $errorMessage;
+        }
 
-        for ($i = 0; $i < $totalFiles; $i++) {
-            $fileName = isset($fileArray['name'][$i]) ? ValidationHelper::validateFilename($fileArray['name'][$i]) : '';
-            $fileTmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
-            $fileError = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
-
-            // Use the original filename for error messages if validation failed
-            if (isset($fileArray['name'][$i])) {
-                if (is_array($fileArray['name'])) {
-                    $originalFilename = basename($fileArray['name'][$i]);
-                } else {
-                    $originalFilename = basename($fileArray['name']);
-                }
-            } else {
-                $originalFilename = 'unknown';
-            }
+        foreach ($normalized['entries'] as $entry) {
+            $originalFilename = basename($entry['name']);
+            $fileName = ValidationHelper::validateFilename($entry['name']) ?? '';
+            $fileTmp = $entry['tmp_name'];
+            $fileError = $entry['error'];
             $fileExtension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : '';
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $pluginSlug = $parsedFilename['slug'] ?? '';
@@ -109,7 +108,7 @@ class PluginModel
                 self::_parseIniSize(ini_get('post_max_size'))
             );
 
-            if ($fileArray['size'][$i] > $maxUploadSize) {
+            if ($entry['size'] > $maxUploadSize) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
                     '. File size exceeds the maximum allowed size of ' . ($maxUploadSize / (1024 * 1024)) . ' MB.';
                 continue;
@@ -121,7 +120,6 @@ class PluginModel
                 continue;
             }
 
-            // Validate filename format before touching the filesystem.
             if ($fileName === '' || $parsedFilename === null) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
@@ -151,37 +149,19 @@ class PluginModel
                 continue;
             }
 
-            // Save to a temporary file in the target directory first.
-            $tempPath  = self::$dir . '/' . uniqid('tmp_upload_', true) . '.zip';
+            $tempPath = self::$dir . '/' . uniqid('tmp_upload_', true) . '.zip';
             $finalPath = self::$dir . '/' . $fileName;
-
             if (!move_uploaded_file($fileTmp, $tempPath)) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
                 continue;
             }
 
-            // Atomic rename into the final filename.
-            if (!rename($tempPath, $finalPath)) {
-                @unlink($tempPath);
+            $result = self::persistUploadedArtifact($conn, 'plugins', $slug, $version, $tempPath, $finalPath);
+            if (!$result['success']) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
+                error_log($result['error']);
                 continue;
             }
-
-            // Only after a successful rename: delete superseded files and upsert DB.
-            $existingPlugins = glob(self::$dir . '/' . $pluginSlug . '_*');
-            if ($existingPlugins !== false) {
-                foreach ($existingPlugins as $plugin) {
-                    if (is_file($plugin) && $plugin !== $finalPath) {
-                        unlink($plugin);
-                    }
-                }
-            }
-
-            $conn->executeStatement(
-                'INSERT INTO plugins (slug, version) VALUES (?, ?) '
-                . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                [$slug, $version]
-            );
 
             $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
         }
@@ -190,11 +170,189 @@ class PluginModel
     }
 
     /**
+     * Persist upload with transactional DB update and filesystem compensation.
+     *
+     * @return array{success: bool, error: string}
+     */
+    private static function persistUploadedArtifact(
+        \Doctrine\DBAL\Connection $conn,
+        string $table,
+        string $slug,
+        string $version,
+        string $tempPath,
+        string $finalPath
+    ): array {
+        $deletedBackups = [];
+        $movedToFinal = false;
+
+        try {
+            $conn->beginTransaction();
+
+            if (!rename($tempPath, $finalPath)) {
+                throw new \RuntimeException('Failed to move staged upload into final path.');
+            }
+            $movedToFinal = true;
+
+            $existing = glob(self::$dir . '/' . $slug . '_*');
+            if ($existing === false) {
+                throw new \RuntimeException('Failed to list existing plugin artifacts.');
+            }
+
+            foreach ($existing as $artifact) {
+                if (!is_file($artifact) || $artifact === $finalPath) {
+                    continue;
+                }
+                $backupPath = $artifact . '.bak_upload_' . uniqid('', true);
+                if (!rename($artifact, $backupPath)) {
+                    throw new \RuntimeException('Failed to stage old plugin artifact for replacement.');
+                }
+                $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
+            }
+
+            $conn->executeStatement(
+                "INSERT INTO $table (slug, version) VALUES (?, ?) "
+                . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                [$slug, $version]
+            );
+
+            $conn->commit();
+
+            foreach ($deletedBackups as $backup) {
+                @unlink($backup['backup']);
+            }
+
+            return ['success' => true, 'error' => ''];
+        } catch (\Throwable $exception) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+
+            foreach ($deletedBackups as $backup) {
+                if (file_exists($backup['backup'])) {
+                    @rename($backup['backup'], $backup['original']);
+                }
+            }
+
+            if ($movedToFinal && file_exists($finalPath)) {
+                @unlink($finalPath);
+            }
+            if (file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+
+            return [
+                'success' => false,
+                'error' => 'Plugin upload transaction failed for slug "' . $slug . '": ' . $exception->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Normalize upload payload into a predictable list structure.
+     *
+     * @param array<string, mixed> $fileArray
+     * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]}
+     */
+    private static function normalizeUploadPayload(array $fileArray): array
+    {
+        $requiredKeys = ['name', 'tmp_name', 'error', 'size'];
+        foreach ($requiredKeys as $requiredKey) {
+            if (!array_key_exists($requiredKey, $fileArray)) {
+                return [
+                    'entries' => [],
+                    'errors' => ['Error uploading: malformed upload payload (missing "' . $requiredKey . '").'],
+                ];
+            }
+        }
+
+        $isMulti = is_array($fileArray['name'])
+            || is_array($fileArray['tmp_name'])
+            || is_array($fileArray['error'])
+            || is_array($fileArray['size']);
+
+        $entries = [];
+        $errors = [];
+
+        if (!$isMulti) {
+            $single = self::buildEntry(
+                $fileArray['name'],
+                $fileArray['tmp_name'],
+                $fileArray['error'],
+                $fileArray['size'],
+                0
+            );
+            if ($single['entry'] !== null) {
+                $entries[] = $single['entry'];
+            }
+            if ($single['error'] !== null) {
+                $errors[] = $single['error'];
+            }
+            return ['entries' => $entries, 'errors' => $errors];
+        }
+
+        if (!is_array($fileArray['name']) || !is_array($fileArray['tmp_name']) || !is_array($fileArray['error']) || !is_array($fileArray['size'])) {
+            return [
+                'entries' => [],
+                'errors' => ['Error uploading: malformed upload payload (mixed single/multi-file format).'],
+            ];
+        }
+
+        $totalFiles = count($fileArray['name']);
+        for ($i = 0; $i < $totalFiles; $i++) {
+            $single = self::buildEntry(
+                $fileArray['name'][$i] ?? null,
+                $fileArray['tmp_name'][$i] ?? null,
+                $fileArray['error'][$i] ?? null,
+                $fileArray['size'][$i] ?? null,
+                $i
+            );
+            if ($single['entry'] !== null) {
+                $entries[] = $single['entry'];
+            }
+            if ($single['error'] !== null) {
+                $errors[] = $single['error'];
+            }
+        }
+
+        return ['entries' => $entries, 'errors' => $errors];
+    }
+
+    /**
+     * Build one normalized upload entry, or a descriptive validation error.
+     *
+     * @return array{entry: array{name: string, tmp_name: string, error: int, size: int}|null, error: string|null}
+     */
+    private static function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
+    {
+        if (!is_string($name) || !is_string($tmpName)) {
+            return [
+                'entry' => null,
+                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (name/tmp_name must be strings).',
+            ];
+        }
+
+        $parsedError = filter_var($error, FILTER_VALIDATE_INT);
+        $parsedSize = filter_var($size, FILTER_VALIDATE_INT);
+        if ($parsedError === false || $parsedSize === false) {
+            return [
+                'entry' => null,
+                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (error/size must be integers).',
+            ];
+        }
+
+        return [
+            'entry' => [
+                'name' => $name,
+                'tmp_name' => $tmpName,
+                'error' => $parsedError,
+                'size' => max(0, $parsedSize),
+            ],
+            'error' => null,
+        ];
+    }
+
+    /**
      * Parse a size string from php.ini into bytes.
-     *
-     * @param string $size The size string (e.g., '64M', '128K').
-     *
-     * @return int The size in bytes.
      */
     private static function _parseIniSize(string $size): int
     {

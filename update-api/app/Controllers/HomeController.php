@@ -25,11 +25,14 @@ use App\Core\ResponseManager;
 
 class HomeController extends Controller
 {
+    private const REVEAL_WINDOW_SECONDS = 30;
+
     /**
      * Handles GET requests for managing hosts.
      */
     public function handleRequest(): ResponseManager
     {
+        self::pruneExpiredReveals();
         return ResponseManager::view('home', [
             'hostsTableHtml' => self::getHostsTableHtml(),
         ]);
@@ -49,7 +52,6 @@ class HomeController extends Controller
         }
 
         $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
-        $id = isset($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : null;
         if (isset($_POST['add_entry'])) {
             $newKey = ValidationHelper::generateKey();
             if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
@@ -61,16 +63,28 @@ class HomeController extends Controller
             }
         } elseif (isset($_POST['regen_entry'])) {
             $newKey = ValidationHelper::generateKey();
-            if ($id !== null && $domain !== null && HostsModel::updateEntry($id, $domain, $newKey)) {
+            if ($domain !== null && HostsModel::updateEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Key regenerated successfully.');
             } else {
                 $error = 'Failed to regenerate key.';
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
             }
+        } elseif (isset($_POST['reveal_entry'])) {
+            if ($domain !== null && self::revealKey($domain)) {
+                MessageHelper::addMessage('Key revealed for 30 seconds.');
+            } else {
+                $error = 'Failed to reveal key.';
+                ErrorManager::getInstance()->log($error);
+                MessageHelper::addMessage($error);
+            }
         } elseif (isset($_POST['delete_entry'])) {
-            if ($id !== null && $domain !== null && HostsModel::deleteEntry($id, $domain)) {
+            if ($domain !== null && HostsModel::deleteEntry($domain)) {
                 MessageHelper::addMessage('Entry deleted successfully.');
+            } else {
+                $error = 'Failed to delete entry.';
+                error_log($error);
+                MessageHelper::addMessage($error);
             }
         }
         return ResponseManager::redirect('/home');
@@ -81,20 +95,30 @@ class HomeController extends Controller
      */
     private static function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
     {
+        $revealed = self::getRevealedKey($domain);
+        $showingPlaintext = $revealed !== null && $revealed['key'] === $key;
+        $displayKey = $showingPlaintext ? $key : self::maskKey($key);
+        $expiresAt = $showingPlaintext ? (int) $revealed['expires_at'] : 0;
+        $copyDisabled = $showingPlaintext ? '' : ' disabled';
+        $rowId = 'host-key-' . $lineNumber;
+
         return '<tr>
             <form method="post" action="/home">
-                <input type="hidden" name="id" value="' . htmlspecialchars((string)$lineNumber, ENT_QUOTES, 'UTF-8') . '">
                 <input type="hidden" name="csrf_token" value="' .
                     htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '" readonly></td>
                 <td>
-                    <input class="hosts-key" type="text" value="' .
-                    htmlspecialchars($key, ENT_QUOTES, 'UTF-8') .
-                '" readonly>
+                    <input id="' . htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '" class="hosts-key" type="text" value="' .
+                    htmlspecialchars($displayKey, ENT_QUOTES, 'UTF-8') .
+                '" data-masked-value="' . htmlspecialchars(self::maskKey($key), ENT_QUOTES, 'UTF-8') . '" data-expires-at="' .
+                    htmlspecialchars((string) $expiresAt, ENT_QUOTES, 'UTF-8') . '" readonly>
                 </td>
                 <td>
+                    <input class="hosts-submit" type="submit" name="reveal_entry" value="Reveal">
+                    <button class="hosts-submit copy-key-btn" type="button" data-copy-target="' .
+                        htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '"' . $copyDisabled . '>Copy</button>
                     <input class="hosts-submit" type="submit" name="regen_entry" value="Regen">
                     <input class="hosts-submit" type="submit" name="delete_entry" value="Delete">
                 </td>
@@ -127,9 +151,8 @@ class HomeController extends Controller
                     <tbody>';
             foreach ($entriesColumn1 as $index => $entry) {
                 $lineNumber = $index; // Correct line number for column 1
-                $fields = explode(' ', $entry);
-                $domain = isset($fields[0]) ? $fields[0] : '';
-                $encryptedKey = $fields[1] ?? '';
+                $domain = $entry['domain'] ?? '';
+                $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
                     HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
@@ -151,9 +174,8 @@ class HomeController extends Controller
                     <tbody>';
             foreach ($entriesColumn2 as $index => $entry) {
                 $lineNumber = $index + $halfCount; // Correct line number for column 2
-                $fields = explode(' ', $entry);
-                $domain = isset($fields[0]) ? $fields[0] : '';
-                $encryptedKey = $fields[1] ?? '';
+                $domain = $entry['domain'] ?? '';
+                $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
                     HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
@@ -166,5 +188,114 @@ class HomeController extends Controller
             $hostsTableHtml = "No entries found.";
         }
         return $hostsTableHtml;
+    }
+
+    /**
+     * Reveal a host key for a short duration.
+     */
+    private static function revealKey(string $domain): bool
+    {
+        $decrypted = self::lookupDecryptedKey($domain);
+        if ($decrypted === null || $decrypted === '') {
+            return false;
+        }
+
+        $session = SessionManager::getInstance();
+        $revealed = $session->get('revealed_keys', []);
+        if (!is_array($revealed)) {
+            $revealed = [];
+        }
+        $revealed[$domain] = [
+            'key' => $decrypted,
+            'expires_at' => time() + self::REVEAL_WINDOW_SECONDS,
+        ];
+        $session->set('revealed_keys', $revealed);
+        return true;
+    }
+
+    /**
+     * Look up and decrypt a host key by domain.
+     */
+    private static function lookupDecryptedKey(string $domain): ?string
+    {
+        foreach (HostsModel::getEntries() as $entry) {
+            $entryDomain = $entry['domain'] ?? '';
+            if ($entryDomain !== $domain) {
+                continue;
+            }
+
+            $encryptedKey = $entry['key'] ?? '';
+            $key = EncryptionHelper::decrypt($encryptedKey);
+            if ($key !== null && $key !== '') {
+                HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+            }
+            return $key;
+        }
+
+        return null;
+    }
+
+    /**
+     * Return revealed key metadata when still valid.
+     *
+     * @return array{key: string, expires_at: int}|null
+     */
+    private static function getRevealedKey(string $domain): ?array
+    {
+        $revealed = SessionManager::getInstance()->get('revealed_keys', []);
+        if (!is_array($revealed) || !isset($revealed[$domain]) || !is_array($revealed[$domain])) {
+            return null;
+        }
+
+        $entry = $revealed[$domain];
+        $key = $entry['key'] ?? null;
+        $expiresAt = $entry['expires_at'] ?? 0;
+        if (!is_string($key) || !is_int($expiresAt) || $expiresAt < time()) {
+            return null;
+        }
+
+        return [
+            'key' => $key,
+            'expires_at' => $expiresAt,
+        ];
+    }
+
+    /**
+     * Purge expired key-reveal entries from session.
+     */
+    private static function pruneExpiredReveals(): void
+    {
+        $session = SessionManager::getInstance();
+        $revealed = $session->get('revealed_keys', []);
+        if (!is_array($revealed)) {
+            $session->set('revealed_keys', []);
+            return;
+        }
+
+        $filtered = [];
+        $now = time();
+        foreach ($revealed as $domain => $entry) {
+            if (!is_string($domain) || !is_array($entry)) {
+                continue;
+            }
+            $key = $entry['key'] ?? null;
+            $expiresAt = $entry['expires_at'] ?? null;
+            if (!is_string($key) || !is_int($expiresAt) || $expiresAt < $now) {
+                continue;
+            }
+            $filtered[$domain] = $entry;
+        }
+        $session->set('revealed_keys', $filtered);
+    }
+
+    /**
+     * Mask a key for default UI rendering.
+     */
+    private static function maskKey(string $key): string
+    {
+        if ($key === '') {
+            return '••••••••';
+        }
+        return str_repeat('•', max(8, strlen($key)));
     }
 }

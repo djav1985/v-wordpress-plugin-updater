@@ -114,7 +114,7 @@ class ApiController extends Controller
         }
 
         $hostKey = EncryptionHelper::decrypt($hostRow['key']);
-        if ($hostKey === null || $hostKey !== $key) {
+        if ($hostKey === null || !hash_equals($hostKey, $key)) {
             // Credential mismatch is an authentication failure and contributes to lockout budget.
             BlacklistModel::updateFailedAttempts($ip);
             $conn->executeStatement(
