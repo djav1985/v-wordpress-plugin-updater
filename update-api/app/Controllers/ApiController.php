@@ -29,8 +29,12 @@ class ApiController extends Controller
      * Handle the incoming update API request.
      *
      * Validates the request parameters, authenticates the host domain/key pair,
-     * and returns the update ZIP when a newer version is available, 204 when
-     * the client is already up-to-date, or 403 on authentication failure.
+     * and returns:
+     * - 200 with ZIP when a newer version is available
+     * - 204 when no update is available
+     * - 400 for malformed input
+     * - 403 on authentication failure
+     * - 404 when the slug is unknown for an authenticated host
      *
      * @return ResponseManager
      */
@@ -98,54 +102,67 @@ class ApiController extends Controller
 
         $conn = DatabaseManager::getConnection();
         $hostRow = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
-        if ($hostRow) {
-            $hostKey = EncryptionHelper::decrypt($hostRow['key']);
-            if ($hostKey !== null && $hostKey === $key) {
-                // Migrate legacy CBC-encrypted key to AEAD on successful auth.
-                if (EncryptionHelper::needsMigration($hostRow['key'])) {
-                    $conn->executeStatement(
-                        'UPDATE hosts SET key = ? WHERE domain = ?',
-                        [EncryptionHelper::encrypt($hostKey), $domain]
-                    );
-                }
-                $table = $type === 'theme' ? 'themes' : 'plugins';
-                $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
-                if ($row) {
-                    $dbVersion = $row['version'];
-                    if (version_compare($dbVersion, $version, '>')) {
-                        $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
-                        $contentLength = @filesize($filePath);
-                        if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
-                            $conn->executeStatement(
-                                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-                                [$domain, $type, date('Y-m-d'), 'Success']
-                            );
-                            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                            return ResponseManager::file($filePath, 'application/octet-stream')
-                                ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
-                                ->withAddedHeader('Content-Length', (string) $contentLength);
-                        }
-                        ErrorManager::getInstance()->log('Update file unavailable or unreadable: ' . $filePath);
-                        return new ResponseManager(500);
-                    }
-                    $conn->executeStatement(
-                        'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-                        [$domain, $type, date('Y-m-d'), 'Success']
-                    );
-                    ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                    return new ResponseManager(204);
-                }
-            }
+        if ($hostRow === false) {
+            // Unknown domain is an authentication failure and contributes to lockout budget.
+            BlacklistModel::updateFailedAttempts($ip);
+            $conn->executeStatement(
+                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+                [$domain, $type, date('Y-m-d'), 'Failed']
+            );
+            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
+            return new ResponseManager(403);
         }
 
-        // Increment failed attempts for this IP (may blacklist after threshold)
-        BlacklistModel::updateFailedAttempts($ip);
+        $hostKey = EncryptionHelper::decrypt($hostRow['key']);
+        if ($hostKey === null || $hostKey !== $key) {
+            // Credential mismatch is an authentication failure and contributes to lockout budget.
+            BlacklistModel::updateFailedAttempts($ip);
+            $conn->executeStatement(
+                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+                [$domain, $type, date('Y-m-d'), 'Failed']
+            );
+            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
+            return new ResponseManager(403);
+        }
+
+        // Migrate legacy CBC-encrypted key to AEAD on successful auth.
+        if (EncryptionHelper::needsMigration($hostRow['key'])) {
+            $conn->executeStatement(
+                'UPDATE hosts SET key = ? WHERE domain = ?',
+                [EncryptionHelper::encrypt($hostKey), $domain]
+            );
+        }
+
+        $table = $type === 'theme' ? 'themes' : 'plugins';
+        $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
+        if ($row === false) {
+            ErrorManager::getInstance()->log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
+            return new ResponseManager(404);
+        }
+
+        $dbVersion = $row['version'];
+        if (version_compare($dbVersion, $version, '>')) {
+            $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
+            $contentLength = @filesize($filePath);
+            if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
+                $conn->executeStatement(
+                    'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+                    [$domain, $type, date('Y-m-d'), 'Success']
+                );
+                ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+                return ResponseManager::file($filePath, 'application/octet-stream')
+                    ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
+                    ->withAddedHeader('Content-Length', (string) $contentLength);
+            }
+            ErrorManager::getInstance()->log('Update file unavailable or unreadable: ' . $filePath);
+            return new ResponseManager(500);
+        }
 
         $conn->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-            [$domain, $type, date('Y-m-d'), 'Failed']
+            [$domain, $type, date('Y-m-d'), 'Success']
         );
-        ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
-        return new ResponseManager(403);
+        ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+        return new ResponseManager(204);
     }
 }

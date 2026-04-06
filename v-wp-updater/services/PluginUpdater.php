@@ -167,8 +167,11 @@ class PluginUpdater extends AbstractRemoteUpdater {
 		$plugins = get_plugins();
 
 		foreach ( $plugins as $plugin_path => $plugin ) {
+			$dir  = dirname( $plugin_path );
+			$slug = ( '.' === $dir ) ? pathinfo( $plugin_path, PATHINFO_FILENAME ) : $dir;
+
 			yield array(
-				'slug'      => dirname( $plugin_path ),
+				'slug'      => $slug,
 				'version'   => $plugin['Version'],
 				'file_path' => $plugin_path,
 			);

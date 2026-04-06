@@ -78,6 +78,52 @@ class PluginModelDbTest extends TestCase
         $this->assertSame('1.0', $row['version']);
     }
 
+    public function testUploadValidZipWithDottedSlugInsertsRecord(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'pl');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+
+        $files = [
+            'name'     => ['sample.plugin_1.1.zip'],
+            'tmp_name' => [$tmp],
+            'error'    => [UPLOAD_ERR_OK],
+            'size'     => [filesize($tmp)],
+        ];
+
+        $messages = PluginModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+
+        $conn = DatabaseManager::getConnection();
+        $row = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['sample.plugin']);
+        $this->assertSame('1.1', $row['version']);
+    }
+
+    public function testUploadValidZipWithSingleFilePluginSlugInsertsRecord(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'pl');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('singlefileplugin.php', '<?php // plugin');
+        $zip->close();
+
+        $files = [
+            'name'     => ['singlefileplugin_2.0.zip'],
+            'tmp_name' => [$tmp],
+            'error'    => [UPLOAD_ERR_OK],
+            'size'     => [filesize($tmp)],
+        ];
+
+        $messages = PluginModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+
+        $conn = DatabaseManager::getConnection();
+        $row = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['singlefileplugin']);
+        $this->assertSame('2.0', $row['version']);
+    }
+
     public function testUploadFileTooLargeReturnsError(): void
     {
         global $test_ini_values;
@@ -152,6 +198,18 @@ class PluginModelDbTest extends TestCase
         $this->assertSame('1.0', $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', ['sample1_test']));
 
         unlink($path);
+    }
+
+    public function testDeletePluginSupportsDottedSlug(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('plugins', ['slug' => 'sample.plugin', 'version' => '1.0']);
+        $path = PLUGINS_DIR . '/sample.plugin_1.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(PluginModel::deletePlugin('sample.plugin_1.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM plugins WHERE slug = ?', ['sample.plugin']));
     }
 }
 

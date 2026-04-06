@@ -62,6 +62,26 @@ class ThemeModelDbTest extends TestCase
         $this->assertSame('1.0', $row['version']);
     }
 
+    public function testUploadValidZipWithDottedSlugInsertsRecord(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'th');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+        $files = [
+            'name'     => ['sample.theme_1.2.zip'],
+            'tmp_name' => [$tmp],
+            'error'    => [UPLOAD_ERR_OK],
+            'size'     => [filesize($tmp)],
+        ];
+        $messages = ThemeModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+        $conn = DatabaseManager::getConnection();
+        $row = $conn->fetchAssociative('SELECT * FROM themes WHERE slug = ?', ['sample.theme']);
+        $this->assertSame('1.2', $row['version']);
+    }
+
     public function testUploadFileTooLargeReturnsError(): void
     {
         global $test_ini_values;
@@ -148,6 +168,18 @@ class ThemeModelDbTest extends TestCase
         $this->assertSame('2.0', $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', ['sample_theme']));
 
         unlink($path);
+    }
+
+    public function testDeleteThemeSupportsDottedSlug(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample.theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample.theme_2.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(ThemeModel::deleteTheme('sample.theme_2.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM themes WHERE slug = ?', ['sample.theme']));
     }
 }
 

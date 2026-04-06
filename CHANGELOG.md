@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Refined Update API failure semantics and lockout accounting:
+  - `ApiController` now returns `400` for malformed input, `403` only for authentication failures, `204` for no-update responses, and `404` for authenticated unknown slugs.
+  - Blacklist increments now occur only for credential/auth failures (e.g., unknown domain or wrong key), not malformed requests or authenticated unknown slugs.
+- Unified canonical slug handling across validation and model workflows:
+  - Added shared slug/filename parsing in `ValidationHelper` (`validateSlug`, `validateFilename`, `parsePackageFilename`).
+  - Updated plugin/theme upload and delete flows to use the canonical parser, including dotted slugs and underscored slugs.
+- Added regression coverage for slug and lockout edge cases:
+  - `ApiControllerTest` now verifies malformed requests do not consume blacklist budget, wrong keys do consume budget, and authenticated unknown slugs return `404` without budget impact.
+  - Model/validation tests now cover dotted slugs, underscored slugs, and single-file plugin slug filename handling end-to-end.
+  - Added `PluginUpdaterStatusTest` for single-file plugin enumeration (`single-file-plugin.php` → `single-file-plugin`) and directory plugin slug behavior.
 - Replaced remaining obsolete `mu-plugin` test/tooling references with active `v-wp-updater` paths in `ApiKeyHelperTest`, `UpdaterEncodingTest`, and `phpstan.neon`.
 - Unified updater status options to canonical `vwpu_*` keys (`vwpu_plugin_update_status`, `vwpu_theme_update_status`) across updater services, activation defaults, and uninstall cleanup.
 - Added activation-time migration from legacy status keys (`vontmnt-*`, `vwpu-*` hyphen variants) to canonical status keys so existing installs retain prior status data.

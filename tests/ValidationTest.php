@@ -96,6 +96,25 @@ class ValidationTest extends TestCase
         $this->assertSame('my-plugin_1.0.zip', ValidationHelper::validateFilename('my-plugin_1.0.zip'));
         $this->assertSame('plugin_2.1.3.zip', ValidationHelper::validateFilename('plugin_2.1.3.zip'));
         $this->assertSame('Test-Plugin_1.0.0.zip', ValidationHelper::validateFilename('Test-Plugin_1.0.0.zip'));
+        $this->assertSame('plugin.name_1.2.3.zip', ValidationHelper::validateFilename('plugin.name_1.2.3.zip'));
+        $this->assertSame('singlefile_4.5.zip', ValidationHelper::validateFilename('singlefile_4.5.zip'));
+    }
+
+    public function testParsePackageFilenameSupportsCanonicalSlugSpec(): void
+    {
+        $this->assertSame(
+            ['slug' => 'plugin.name', 'version' => '1.2.3'],
+            ValidationHelper::parsePackageFilename('plugin.name_1.2.3.zip')
+        );
+        $this->assertSame(
+            ['slug' => 'plugin_name', 'version' => '2.0'],
+            ValidationHelper::parsePackageFilename('plugin_name_2.0.zip')
+        );
+        $this->assertSame(
+            ['slug' => 'singlefileplugin', 'version' => '3.4.5'],
+            ValidationHelper::parsePackageFilename('singlefileplugin_3.4.5.zip')
+        );
+        $this->assertNull(ValidationHelper::parsePackageFilename('plugin latest.zip'));
     }
 
     public function testValidateFilenameRejectsInvalidFilenames(): void
