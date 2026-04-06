@@ -13,29 +13,27 @@ Both components are independently deployable—the API runs on a web server, the
 **Separate Namespaces**: `App\` (API server) vs `VWPU\` (WordPress plugin)—never mix them.
 
 **Unified Framework Architecture**:
-Both `update-api/` and `root/` applications share identical core patterns:
+The `update-api/` application uses patterns shared across similar projects:
 - **SessionManager**: Singleton with CSRF management, timeout tracking, IP blacklisting (7 days blocked, 3 days unblocked)
-- **Response**: Immutable fluent API with static factories (`Response::view()`, `Response::redirect()`, `Response::text()`)
-- **Controller**: Base class with `render()` method; all handlers return Response objects (never echo/exit)
+- **ResponseManager**: Fluent API with static factory methods (`ResponseManager::view()`, `ResponseManager::redirect()`, `ResponseManager::text()`, `ResponseManager::json()`, `ResponseManager::file()`, `ResponseManager::html()`)
+- **Controller**: Base class for inheritance; all handlers return ResponseManager objects (never echo/exit)
 - **Entry Point**: Explicit URL parsing in `public/index.php` before routing (`parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)`)
-- **Router**: Receives pre-parsed path; uses FastRoute dispatcher; enforces authentication except `/login` (and `/api` or `/feeds/` in respective apps)
+- **Router**: Receives pre-parsed path; uses FastRoute dispatcher; enforces authentication except `/login` (and `/api` for public API access)
 
 **Architecture Differences** (intentional, domain-specific):
-- **update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment
-- **root**: Full-featured application with Service layer (StatusService, CacheService, QueueService), MySQL database, complex domain logic
-Both approaches are valid—choose based on application complexity.
+- **update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment for serving plugin/theme updates
+- **v-wp-updater**: WordPress plugin that consumes the update API; manages scheduled checks and WP upgrader integration
 
 **Database Strategy**: 
 - API uses SQLite via Doctrine DBAL (`storage/updater.sqlite`)
-- Root uses MySQL via custom DatabaseManager with retry logic
 - Schema: API has `plugins`, `themes`, `hosts`, `logs`, `blacklist` tables
 - Managed by `DatabaseManager::getConnection()` or `DatabaseManager::getInstance()` (singletons)
 - Cron sync (`cron.php`) keeps database in sync with filesystem
 
-**Routing**: FastRoute-based dispatcher in `App\Core\Router` with Response objects (not direct output). All routes require authentication except `/api` (validates domain+key) and `/login`.
+**Routing**: FastRoute-based dispatcher in `App\Core\Router` with ResponseManager objects (not direct output). All routes require authentication except `/api` (validates domain+key) and `/login`.
 
 **Security**: 
-- API keys encrypted with `App\Helpers\Encryption` using `ENCRYPTION_KEY` env var
+- API keys encrypted with `App\Helpers\EncryptionHelper` using `ENCRYPTION_KEY` env var
 - IP blacklisting auto-expires (7 days blocked, 3 days unblocked)
 - `SessionManager` enforces timeout (1800s) and user agent validation
 - CSRF tokens initialized in bootstrap after session start
@@ -44,7 +42,7 @@ Both approaches are valid—choose based on application complexity.
 ## Entry Point & Routing Design
 
 ### public/index.php - Best Practices
-Both `update-api/public/index.php` and `root/public/index.php` follow this pattern:
+The `update-api/public/index.php` follows this pattern:
 ```php
 require_once __DIR__ . '/../config.php';              // Absolute __DIR__ paths (not relative ../)
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -69,8 +67,8 @@ ErrorManager::handle(function (): void {
 
 ### Router::dispatch() Contract
 - **Receives**: Pre-parsed path (no query string, e.g., `/home` not `/home?foo=bar`)
-- **Responsibility**: Match path to route, instantiate controller, call handleRequest or handleSubmission
-- **Returns**: Nothing (sends Response via sendResponse() internally)
+- **Responsibility**: Match path to route using FastRoute, instantiate controller, call handleRequest or handleSubmission
+- **Returns**: Nothing (sends ResponseManager via sendResponse() internally)
 - **Important**: Router does NOT parse URL—caller (index.php) is responsible
 
 ## Critical Developer Workflows
@@ -111,77 +109,79 @@ Update packages **must** follow: `{slug}_{version}.zip` (e.g., `my-plugin_1.2.3.
 - Cron syncs to database with slug extraction and version parsing
 - API serves newest version (via `version_compare()`) when client requests
 
-### Response Pattern - Static Factories (Preferred)
-Controllers return `Response` objects using static factories for clarity:
+### ResponseManager Pattern - Static Factories (Preferred)
+Controllers return `ResponseManager` objects using static factories for clarity:
 ```php
 // ✓ Correct - Use static factories (cleaner, intent-clear)
-return Response::view('page', ['key' => 'value'], 200);
-return Response::redirect('/home');
-return Response::text('Plain text response', 200);
-return Response::json(['data' => 'value'], 200);
-return Response::file('/path/to/file', 'application/pdf', 200);
-return Response::html('<h1>HTML</h1>', 200);
-
-// ✓ Also correct - Fluent API for complex responses
-return (new Response(403))->withHeader('X-Custom', 'value');
+return ResponseManager::view('page', ['key' => 'value'], 200);
+return ResponseManager::redirect('/home');
+return ResponseManager::text('Plain text response', 200);
+return ResponseManager::json(['data' => 'value'], 200);
+return ResponseManager::file('/path/to/file', 200);
+return ResponseManager::html('<h1>HTML</h1>', 200);
 
 // ✗ Wrong - Never echo directly
 echo "Hello"; 
 header('Location: /home');
 exit;
 ```
-**Key Pattern**: Use static factory methods (`Response::view()`, `Response::redirect()`) for standard responses. They are cleaner than constructor + fluent method calls.
+**Key Pattern**: Use static factory methods (`ResponseManager::view()`, `ResponseManager::redirect()`) for all responses. This is the only approach for consistency across the codebase.
 
 ### Validation Flow
-All external input goes through `App\Helpers\Validation`:
+All external input goes through `App\Helpers\ValidationHelper`:
 ```php
-$domain = Validation::validateDomain($input);  // Returns null if invalid
-if ($domain === null) { return new Response(400); }
+$domain = ValidationHelper::validateDomain($input);  // Returns null if invalid
+if ($domain === null) { return ResponseManager::html('Invalid domain', 400); }
 ```
-Used for domain, key, slug, version. Whitelist approach—reject early.
+Validators available: `validateDomain()`, `validateKey()`, `validateSlug()`, `validateVersion()`, `generateKey()`. Whitelist approach—reject early.
 
 ### WordPress Plugin Options
-Client plugin stores config in `vontmnt_*` options (managed by `VWPU\Helpers\Options`):
-- `vontmnt_api_key`: Encrypted API key (never exposed in API responses)
-- `vontmnt_updaControllers & Routes
+Client plugin stores config in `vwpu_*` options (managed by `VWPU\Helpers\Options`):
+- `vwpu_api_url`: API server base URL
+- `vwpu_api_key`: Encrypted API key (never stored in plaintext)
+
+## Controllers & Routes
 
 **Controller Pattern**:
 ```php
 namespace App\Controllers;
 use App\Core\Controller;
-use App\Core\Response;
+use App\Core\ResponseManager;
+use App\Helpers\ValidationHelper;
+use App\Helpers\MessageHelper;
 
 class NewController extends Controller {
     /**
      * Display form or view (GET request).
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response {
-        return Response::view('newpage', ['data' => 'value']);
+    public function handleRequest(): ResponseManager {
+        return ResponseManager::view('newpage', ['data' => 'value']);
     }
 
     /**
      * Process form submission (POST request).
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleSubmission(): Response {
+    public function handleSubmission(): ResponseManager {
         if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             MessageHelper::addMessage('Invalid CSRF token.');
-            return Response::redirect('/newpage');
+            return ResponseManager::redirect('/newpage');
         }
         // Process data
-        return Response::redirect('/newpage');
+        MessageHelper::addMessage('Success!');
+        return ResponseManager::redirect('/newpage');
     }
 }
 ```
 
 **Route Registration**:
 ```php
-// In App\Core\Router::__construct()
-$r->addRoute('GET', '/newpage', [NewController::class, 'handleRequest']);
-$r->addRoute('POST', '/newpage', [NewController::class, 'handleSubmission']);
+// In App\Core\Router::__construct() - inside the RouteCollector callback
+$r->addRoute('GET', '/newpage', ['\\App\\Controllers\\NewController', 'handleRequest']);
+$r->addRoute('POST', '/newpage', ['\\App\\Controllers\\NewController', 'handleSubmission']);
 ```
-**Pattern**: GET shows form/view via `handleRequest()`, POST processes via `handleSubmission()`. Both return `Response`. Controllers inherit from `Controller` base class (provides `render()` helper).
+**Pattern**: GET shows form/view via `handleRequest()`, POST processes via `handleSubmission()`. Both return `ResponseManager`. Controllers inherit from `Controller` base class.
 
 ## SessionManager Best Practices
 
@@ -235,21 +235,22 @@ $session->regenerate();
 
 ### WordPress Client Setup
 1. Copy `v-wp-updater/` to `wp-content/plugins/`
-2. Set options (via provisioning or wp-config):
+2. Set plugin options (via provisioning or wp-config):
    ```php
-   define('VONTMNT_API_URL', 'https://updates.example.com/api');
+   // Via wp-cli or provisioning
+   update_option('vwpu_api_url', 'https://updates.example.com');
+   update_option('vwpu_api_key', 'your-encrypted-api-key');
    ```
-3. Store API key: `update_option('vontmnt_api_key', 'your-encrypted-key');`
-4. Activate plugin—scheduled checks run automatically
+3. Activate plugin—scheduled checks run automatically (daily via `vwpu_plugin_updater_check_updates` and `vwpu_theme_updater_check_updates` hooks)
 
 ### Adding New Routes
 **Update-API Server:**
 ```php
-// In App\Core\Router::__construct()
+// In App\Core\Router::__construct() - inside the RouteCollector factory callback
 $r->addRoute('GET', '/newpage', ['\\App\\Controllers\\NewController', 'handleRequest']);
 $r->addRoute('POST', '/newpage', ['\\App\\Controllers\\NewController', 'handleSubmission']);
 ```
-**Pattern**: GET shows form/view, POST handles submission. Both methods return `Response` objects.
+**Pattern**: GET shows form/view, POST handles submission. Both methods return `ResponseManager` objects.
 
 ### Dual-Component Communication Flow
 ```
@@ -276,10 +277,10 @@ Why: Allows namespace-level mocking without test framework pollution.
 
 ### Encryption Helpers
 ```php
-$encrypted = Encryption::encrypt('plaintext');  // Stores in database
-$plain = Encryption::decrypt($encrypted);        // Retrieves for comparison
+$encrypted = EncryptionHelper::encrypt('plaintext');  // Stores in database
+$plain = EncryptionHelper::decrypt($encrypted);        // Retrieves for comparison
 ```
-Uses `ENCRYPTION_KEY` constant—never commit real keys.
+Uses `ENCRYPTION_KEY` constant—never commit real keys. Located in `App\Helpers\EncryptionHelper`.
 
 ### Version Comparison
 ```php
