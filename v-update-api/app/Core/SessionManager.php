@@ -147,19 +147,6 @@ class SessionManager
     }
 
     /**
-     * Enforce that the current request comes from an authenticated user.
-     *
-     * Returns true when the session is valid and the user is authenticated.
-     * Returns false when the session is invalid (caller should redirect to login).
-     *
-     * @return bool True if authenticated, false otherwise.
-     */
-    public function requireAuth(): bool
-    {
-        return $this->isValid();
-    }
-
-    /**
      * Determine whether the current request originates from a blacklisted IP.
      *
      * @return bool True when remote IP is valid and blacklisted.

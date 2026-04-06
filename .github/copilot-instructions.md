@@ -211,7 +211,7 @@ if (!$session->isValid()) {
 }
 
 // Check authentication and redirect if needed
-if (!$session->requireAuth()) {
+if (!$session->isValid()) {
     // User not authenticated, redirect to login
 }
 

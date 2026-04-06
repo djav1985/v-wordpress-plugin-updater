@@ -5,6 +5,8 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Removed redundant `SessionManager::requireAuth()` wrapper and updated router auth checks to use `SessionManager::isValid()` directly (no behavior change).
+
 ## 4.5.0
 - Upgraded `nikic/fast-route` to `2.0.0-beta1` and aligned `Router` with the v2 configuration interface.
 - Raised minimum PHP requirements to match the current dependency set:

@@ -86,7 +86,7 @@ class Router
                             return;
                         }
 
-                        if (!$session->requireAuth()) {
+                        if (!$session->isValid()) {
                             $this->sendResponse(ResponseManager::redirect('/login'));
                             return;
                         }
