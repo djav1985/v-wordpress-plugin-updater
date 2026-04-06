@@ -14,7 +14,6 @@
 
 namespace App\Controllers;
 
-use App\Core\Controller;
 use App\Helpers\ValidationHelper;
 use App\Helpers\EncryptionHelper;
 use App\Models\BlacklistModel;
@@ -23,7 +22,7 @@ use App\Helpers\MessageHelper;
 use App\Core\SessionManager;
 use App\Core\ResponseManager;
 
-class LoginController extends Controller
+class LoginController
 {
     /**
      * Display the login form when the user is not already authenticated.
@@ -59,13 +58,13 @@ class LoginController extends Controller
                 MessageHelper::addMessage('Invalid CSRF token. Please try again.');
                 return ResponseManager::redirect('/login');
             }
-            return self::logoutUser();
+            return $this->logoutUser();
         }
 
         // Validate CSRF token
         if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $error = 'Invalid CSRF token. Please try again.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             MessageHelper::addMessage($error);
             return ResponseManager::view('login');
         }
@@ -75,7 +74,7 @@ class LoginController extends Controller
         $password = trim($_POST['password'] ?? '');
 
         // Validate credentials
-        if (self::validateCredentials($username, $password)) {
+        if ($this->validateCredentials($username, $password)) {
             $session->set('logged_in', true);
             $session->set('username', $username);
             $session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
@@ -89,18 +88,18 @@ class LoginController extends Controller
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
         if (!$ip) {
             $error = 'Unable to determine client IP.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             MessageHelper::addMessage($error);
             return ResponseManager::view('login');
         }
         if (BlacklistModel::isBlacklisted($ip)) {
             $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             MessageHelper::addMessage($error);
         } else {
             BlacklistModel::updateFailedAttempts($ip);
             $error = 'Invalid username or password.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             MessageHelper::addMessage($error);
         }
 
@@ -114,7 +113,7 @@ class LoginController extends Controller
      * @param string $password Submitted password
      * @return bool True if credentials are valid
      */
-    private static function validateCredentials(string $username, string $password): bool
+    private function validateCredentials(string $username, string $password): bool
     {
         $validatedUsername = ValidationHelper::validateUsername($username);
         $validatedPassword = ValidationHelper::validatePassword($password);
@@ -129,7 +128,7 @@ class LoginController extends Controller
      *
      * @return ResponseManager
      */
-    private static function logoutUser(): ResponseManager
+    private function logoutUser(): ResponseManager
     {
         SessionManager::getInstance()->destroy();
         return ResponseManager::redirect('/login');

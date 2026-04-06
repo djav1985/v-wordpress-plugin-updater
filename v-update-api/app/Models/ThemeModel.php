@@ -22,6 +22,20 @@ class ThemeModel
     public static string $dir = THEMES_DIR;
 
     /**
+     * Return theme version by slug, or null when not found.
+     */
+    public static function getVersionBySlug(string $slug): ?string
+    {
+        $conn = DatabaseManager::getConnection();
+        $version = $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
+        if ($version === false || $version === null) {
+            return null;
+        }
+
+        return (string) $version;
+    }
+
+    /**
      * Return array of theme data.
      *
      * @return array<int, array{slug: string, version: string}>

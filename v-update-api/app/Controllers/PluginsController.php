@@ -16,19 +16,18 @@ namespace App\Controllers;
 
 use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
-use App\Core\Controller;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
 use App\Core\ResponseManager;
 
-class PluginsController extends Controller
+class PluginsController
 {
     /**
      * Handles GET requests for plugin-related actions.
      */
     public function handleRequest(): ResponseManager
     {
-        $pluginsTableHtml = self::getPluginsTableHtml();
+        $pluginsTableHtml = $this->getPluginsTableHtml();
         return ResponseManager::view('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
         ]);
@@ -42,7 +41,7 @@ class PluginsController extends Controller
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
@@ -71,7 +70,7 @@ class PluginsController extends Controller
                 MessageHelper::addMessage('Plugin deleted successfully!');
             } else {
                 $error = 'Failed to delete plugin file. Please try again.';
-                ErrorManager::getInstance()->log($error);
+                ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
             return ResponseManager::redirect('/plupdate');
@@ -83,7 +82,7 @@ class PluginsController extends Controller
      * Generates an HTML table row for a plugin.
      * @param array{slug: string, version: string} $pluginName
      */
-    private static function generatePluginTableRow(array $pluginName): string
+    private function generatePluginTableRow(array $pluginName): string
     {
         $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
         $version = $pluginName['version'];
@@ -107,7 +106,7 @@ class PluginsController extends Controller
     /**
      * Generates the plugins table HTML for display.
      */
-    private static function getPluginsTableHtml(): string
+    private function getPluginsTableHtml(): string
     {
         $plugins = PluginModel::getPlugins();
         if (count($plugins) > 0) {
@@ -125,7 +124,7 @@ class PluginsController extends Controller
                     </thead>
                     <tbody>';
             foreach ($pluginsColumn1 as $plugin) {
-                $pluginsTableHtml .= self::generatePluginTableRow($plugin);
+                $pluginsTableHtml .= $this->generatePluginTableRow($plugin);
             }
 
             $pluginsTableHtml .= '</tbody></table></div><div class="column"><table>
@@ -138,7 +137,7 @@ class PluginsController extends Controller
                 </thead>
                 <tbody>';
             foreach ($pluginsColumn2 as $plugin) {
-                $pluginsTableHtml .= self::generatePluginTableRow($plugin);
+                $pluginsTableHtml .= $this->generatePluginTableRow($plugin);
             }
 
             $pluginsTableHtml .= '</tbody></table></div></div>';

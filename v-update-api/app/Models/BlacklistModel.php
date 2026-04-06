@@ -19,14 +19,6 @@ use App\Core\DatabaseManager;
 class BlacklistModel
 {
     /**
-     * Get database connection.
-     */
-    private static function getConnection(): \Doctrine\DBAL\Connection
-    {
-        return DatabaseManager::getConnection();
-    }
-
-    /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
      * Uses an atomic UPSERT so concurrent requests cannot race on the
@@ -37,7 +29,7 @@ class BlacklistModel
      */
     public static function updateFailedAttempts(string $ip): void
     {
-        $conn = self::getConnection();
+        $conn = DatabaseManager::getConnection();
         $now  = time();
 
         // Single atomic statement: insert on first attempt, or increment the
@@ -64,7 +56,7 @@ class BlacklistModel
      */
     public static function isBlacklisted(string $ip): bool
     {
-        $conn = self::getConnection();
+        $conn = DatabaseManager::getConnection();
         $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {

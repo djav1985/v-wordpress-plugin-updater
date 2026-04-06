@@ -18,12 +18,13 @@ use App\Helpers\ValidationHelper;
 use App\Helpers\EncryptionHelper;
 use App\Models\BlacklistModel;
 use App\Models\HostsModel;
+use App\Models\PluginModel;
+use App\Models\ThemeModel;
+use App\Models\LogModel;
 use App\Core\ErrorManager;
-use App\Core\Controller;
-use App\Core\DatabaseManager;
 use App\Core\ResponseManager;
 
-class ApiController extends Controller
+class ApiController
 {
     /**
      * Handle the incoming update API request.
@@ -44,17 +45,17 @@ class ApiController extends Controller
         $method = $_SERVER['REQUEST_METHOD'] ?? '';
 
         if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
-            ErrorManager::getInstance()->log('Forbidden: missing or invalid IP address');
+            ErrorManager::log('Forbidden: missing or invalid IP address');
             return new ResponseManager(403);
         }
 
         if (BlacklistModel::isBlacklisted($ip)) {
-            ErrorManager::getInstance()->log('Forbidden: blacklisted IP ' . $ip);
+            ErrorManager::log('Forbidden: blacklisted IP ' . $ip);
             return new ResponseManager(403);
         }
 
         if ($method !== 'GET') {
-            ErrorManager::getInstance()->log('Method not allowed for API request: ' . $method . ' from ' . $ip);
+            ErrorManager::log('Method not allowed for API request: ' . $method . ' from ' . $ip);
             return new ResponseManager(405);
         }
 
@@ -68,7 +69,7 @@ class ApiController extends Controller
         $values = [];
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
-                ErrorManager::getInstance()->log('Bad request missing parameter: ' . $p);
+                ErrorManager::log('Bad request missing parameter: ' . $p);
                 return new ResponseManager(400);
             }
             $values[] = $_GET[$p];
@@ -94,78 +95,61 @@ class ApiController extends Controller
             $invalid[] = 'version';
         }
         if (!empty($invalid)) {
-            ErrorManager::getInstance()->log('Bad request invalid parameter: ' . implode(', ', $invalid));
+            ErrorManager::log('Bad request invalid parameter: ' . implode(', ', $invalid));
             return new ResponseManager(400);
         }
 
         $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
 
-        $conn = DatabaseManager::getConnection();
-        $hostRow = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
-        if ($hostRow === false) {
+        $encryptedHostKey = HostsModel::getEncryptedKeyByDomain($domain);
+        if ($encryptedHostKey === null) {
             // Unknown domain is an authentication failure and contributes to lockout budget.
             BlacklistModel::updateFailedAttempts($ip);
-            $conn->executeStatement(
-                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-                [$domain, $type, date('Y-m-d'), 'Failed']
-            );
-            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
+            LogModel::addLog($domain, $type, 'Failed');
+            ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
             return new ResponseManager(403);
         }
 
-        $hostKey = EncryptionHelper::decrypt($hostRow['key']);
+        $hostKey = EncryptionHelper::decrypt($encryptedHostKey);
         if ($hostKey === null || !hash_equals($hostKey, $key)) {
             // Credential mismatch is an authentication failure and contributes to lockout budget.
             BlacklistModel::updateFailedAttempts($ip);
-            $conn->executeStatement(
-                'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-                [$domain, $type, date('Y-m-d'), 'Failed']
-            );
-            ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
+            LogModel::addLog($domain, $type, 'Failed');
+            ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
             return new ResponseManager(403);
         }
 
         // Migrate legacy CBC-encrypted key to AEAD on successful auth.
-        if (EncryptionHelper::needsMigration($hostRow['key'])) {
-            $conn->executeStatement(
-                'UPDATE hosts SET key = ? WHERE domain = ?',
-                [EncryptionHelper::encrypt($hostKey), $domain]
-            );
+        if (EncryptionHelper::needsMigration($encryptedHostKey)) {
+            HostsModel::updateEntry($domain, $hostKey);
         }
 
         if ($type === 'theme') {
-            $row = $conn->fetchAssociative('SELECT version FROM themes WHERE slug = ?', [$slug]);
+            $dbVersion = ThemeModel::getVersionBySlug($slug);
         } else {
-            $row = $conn->fetchAssociative('SELECT version FROM plugins WHERE slug = ?', [$slug]);
+            $dbVersion = PluginModel::getVersionBySlug($slug);
         }
-        if ($row === false) {
-            ErrorManager::getInstance()->log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
+        if ($dbVersion === null) {
+            ErrorManager::log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
             return new ResponseManager(404);
         }
 
-        $dbVersion = $row['version'];
         if (version_compare($dbVersion, $version, '>')) {
             $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
             $contentLength = @filesize($filePath);
             if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
-                $conn->executeStatement(
-                    'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-                    [$domain, $type, date('Y-m-d'), 'Success']
-                );
-                ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+                LogModel::addLog($domain, $type, 'Success');
+                ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
                 return ResponseManager::file($filePath, 'application/octet-stream')
                     ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
                     ->withAddedHeader('Content-Length', (string) $contentLength);
             }
-            ErrorManager::getInstance()->log('Update file unavailable or unreadable: ' . $filePath);
+            ErrorManager::log('Update file unavailable or unreadable: ' . $filePath);
             return new ResponseManager(500);
         }
 
-        $conn->executeStatement(
-            'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
-            [$domain, $type, date('Y-m-d'), 'Success']
-        );
-        ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
+        LogModel::addLog($domain, $type, 'Success');
+        ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
         return new ResponseManager(204);
     }
 }

@@ -20,13 +20,12 @@ use FastRoute\FastRoute;
 
 class Router
 {
-    private static ?Router $instance = null;
     private Dispatcher $dispatcher;
 
     /**
      * Build the FastRoute dispatcher and register all application routes.
      */
-    private function __construct()
+    public function __construct()
     {
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
             $r->addRoute('GET', '/', function (): ResponseManager {
@@ -46,15 +45,6 @@ class Router
         }, 'app_routes')->disableCache();
 
         $this->dispatcher = $fastRoute->dispatcher();
-    }
-
-    public static function getInstance(): Router
-    {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-
-        return self::$instance;
     }
 
     public function dispatch(string $method, string $uri): void
@@ -138,7 +128,7 @@ class Router
         if ($response->getFile() !== null) {
             $file = $response->getFile();
             if (!is_string($file) || !is_file($file) || !is_readable($file)) {
-                ErrorManager::getInstance()->log('Router refused unreadable file response: ' . (string) $file);
+                ErrorManager::log('Router refused unreadable file response: ' . (string) $file);
                 ResponseManager::text('Internal Server Error', 500)->send();
                 return;
             }

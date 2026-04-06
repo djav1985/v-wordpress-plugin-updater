@@ -20,6 +20,20 @@ use App\Helpers\EncryptionHelper;
 class HostsModel
 {
     /**
+     * Return encrypted host key for a domain, or null when not found.
+     */
+    public static function getEncryptedKeyByDomain(string $domain): ?string
+    {
+        $conn = DatabaseManager::getConnection();
+        $row = $conn->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        if ($row === false || !isset($row['key'])) {
+            return null;
+        }
+
+        return (string) $row['key'];
+    }
+
+    /**
      * Return all host entries.
      *
      * @return array<int, array{domain: string, key: string}>

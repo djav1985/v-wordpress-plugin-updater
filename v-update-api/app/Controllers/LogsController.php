@@ -14,14 +14,13 @@
 
 namespace App\Controllers;
 
-use App\Core\Controller;
 use App\Core\ErrorManager;
 use App\Models\LogModel;
 use App\Helpers\MessageHelper;
 use App\Helpers\ValidationHelper;
 use App\Core\ResponseManager;
 
-class LogsController extends Controller
+class LogsController
 {
     /**
      * Handles GET requests for the logs page.
@@ -45,7 +44,7 @@ class LogsController extends Controller
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             MessageHelper::addMessage($error);
             return ResponseManager::redirect('/logs');
         }

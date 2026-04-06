@@ -70,7 +70,7 @@ class DatabaseManager
         if ($created !== true && !is_dir($dir)) {
             $context = 'DatabaseManager failed to create database directory: ' . $dir
                 . ($error !== null ? ' (' . $error . ')' : '');
-            ErrorManager::getInstance()->log($context);
+            ErrorManager::log($context);
             throw new \RuntimeException($context);
         }
     }
@@ -99,7 +99,7 @@ class DatabaseManager
         if ($created !== true || !file_exists($path)) {
             $context = 'DatabaseManager failed to initialize database file: ' . $path
                 . ($error !== null ? ' (' . $error . ')' : '');
-            ErrorManager::getInstance()->log($context);
+            ErrorManager::log($context);
             throw new \RuntimeException($context);
         }
     }

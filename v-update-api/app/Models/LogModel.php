@@ -18,6 +18,18 @@ use App\Core\DatabaseManager;
 
 class LogModel
 {
+    /**
+     * Insert one log row.
+     */
+    public static function addLog(string $domain, string $type, string $status): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement(
+            'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
+            [$domain, $type, date('Y-m-d'), $status]
+        );
+    }
+
 
     /**
      * Process log entries from the database and generate grouped HTML output.

@@ -69,7 +69,7 @@ class ErrorManager
      * @param string $type    Severity label (e.g. 'error', 'info', 'exception', 'fatal').
      * @return void
      */
-    public function log(string $message, string $type = 'error'): void
+    public static function log(string $message, string $type = 'error'): void
     {
         $logFile = defined('LOG_FILE') ? LOG_FILE : (__DIR__ . '/../../php_app.log');
         $timestamp = date('Y-m-d H:i:s');
@@ -111,7 +111,7 @@ class ErrorManager
         $message = 'Uncaught Exception: ' . $exception->getMessage() .
             ' in ' . $exception->getFile() .
             ' on line ' . $exception->getLine();
-        $this->log($message, 'exception');
+        self::log($message, 'exception');
 
         if (PHP_SAPI === 'cli') {
             if (defined('STDERR')) {
@@ -139,9 +139,9 @@ class ErrorManager
     public function handleShutdown(): void
     {
         $error = error_get_last();
-        if ($error && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+        if ($error && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE], true)) {
             $message = "Fatal Error: {$error['message']} in {$error['file']} on line {$error['line']}";
-            $this->log($message, 'fatal');
+            self::log($message, 'fatal');
             http_response_code(500);
             echo 'A critical error occurred.';
         }

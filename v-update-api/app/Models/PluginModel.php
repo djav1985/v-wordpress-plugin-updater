@@ -22,6 +22,20 @@ class PluginModel
     public static string $dir = PLUGINS_DIR;
 
     /**
+     * Return plugin version by slug, or null when not found.
+     */
+    public static function getVersionBySlug(string $slug): ?string
+    {
+        $conn = DatabaseManager::getConnection();
+        $version = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$slug]);
+        if ($version === false || $version === null) {
+            return null;
+        }
+
+        return (string) $version;
+    }
+
+    /**
      * Return array of plugin data.
      *
      * @return array<int, array{slug: string, version: string}>

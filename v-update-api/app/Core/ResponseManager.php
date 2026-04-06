@@ -304,7 +304,7 @@ class ResponseManager
     public function send(): void
     {
         if ($this->file !== null && !$this->isReadableFile($this->file)) {
-            ErrorManager::getInstance()->log('File stream failed readability check: ' . $this->file);
+            ErrorManager::log('File stream failed readability check: ' . $this->file);
             if (!headers_sent()) {
                 http_response_code(500);
                 header('Content-Type: text/plain; charset=UTF-8', true);
@@ -340,7 +340,7 @@ class ResponseManager
             }
 
             if ($result === false) {
-                ErrorManager::getInstance()->log(
+                ErrorManager::log(
                     'File stream failed during readfile for "' . $this->file . '"'
                     . ($readError !== null ? ': ' . $readError : '')
                 );

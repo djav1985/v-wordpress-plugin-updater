@@ -16,19 +16,18 @@ namespace App\Controllers;
 
 use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
-use App\Core\Controller;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
 use App\Core\ResponseManager;
 
-class ThemesController extends Controller
+class ThemesController
 {
     /**
      * Handles GET requests for theme-related actions.
      */
     public function handleRequest(): ResponseManager
     {
-        $themesTableHtml = self::getThemesTableHtml();
+        $themesTableHtml = $this->getThemesTableHtml();
         return ResponseManager::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
@@ -42,7 +41,7 @@ class ThemesController extends Controller
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
-            ErrorManager::getInstance()->log($error);
+            ErrorManager::log($error);
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
@@ -69,7 +68,7 @@ class ThemesController extends Controller
                 MessageHelper::addMessage('Theme deleted successfully!');
             } else {
                 $error = 'Failed to delete theme file. Please try again.';
-                ErrorManager::getInstance()->log($error);
+                ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
             return ResponseManager::redirect('/thupdate');
@@ -81,7 +80,7 @@ class ThemesController extends Controller
      * Generates an HTML table row for a theme.
      * @param array{slug: string, version: string} $theme
      */
-    private static function generateThemeTableRow(array $theme): string
+    private function generateThemeTableRow(array $theme): string
     {
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
@@ -105,7 +104,7 @@ class ThemesController extends Controller
     /**
      * Generates the HTML for the themes table.
      */
-    private static function getThemesTableHtml(): string
+    private function getThemesTableHtml(): string
     {
         $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {
@@ -123,7 +122,7 @@ class ThemesController extends Controller
                      </thead>
                      <tbody>';
             foreach ($themesColumn1 as $theme) {
-                $themesTableHtml .= self::generateThemeTableRow($theme);
+                $themesTableHtml .= $this->generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div><div class="column"><table>
                  <thead>
@@ -135,7 +134,7 @@ class ThemesController extends Controller
                  </thead>
                  <tbody>';
             foreach ($themesColumn2 as $theme) {
-                $themesTableHtml .= self::generateThemeTableRow($theme);
+                $themesTableHtml .= $this->generateThemeTableRow($theme);
             }
             $themesTableHtml .= '</tbody></table></div></div>';
         } else {

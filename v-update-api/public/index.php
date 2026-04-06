@@ -29,5 +29,5 @@ ErrorManager::handle(function () use ($session): void {
     }
 
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
+    (new Router())->dispatch($_SERVER['REQUEST_METHOD'], $uri);
 });
