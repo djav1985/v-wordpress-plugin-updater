@@ -21,12 +21,17 @@ use FastRoute\FastRoute;
 class Router
 {
     private Dispatcher $dispatcher;
+    private Container $container;
 
     /**
      * Build the FastRoute dispatcher and register all application routes.
+     * 
+     * @param Container $container Service container for dependency injection
      */
-    public function __construct()
+    public function __construct(Container $container)
     {
+        $this->container = $container;
+
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
             $r->addRoute('GET', '/', function (): ResponseManager {
                 return ResponseManager::redirect('/home');
@@ -69,7 +74,7 @@ class Router
                     $isApi = str_starts_with($uri, '/api');
 
                     if ($uri !== '/login' && !$isApi) {
-                        $session = SessionManager::getInstance();
+                        $session = $this->container->get(SessionManager::class);
 
                         if ($session->isBlacklistedRequest()) {
                             $this->sendResponse(new ResponseManager(403));
@@ -82,7 +87,7 @@ class Router
                         }
                     }
 
-                    $result = call_user_func_array([new $class(), $action], $vars);
+                    $result = call_user_func_array([$this->container->make($class), $action], $vars);
                     if ($result instanceof ResponseManager) {
                         $this->sendResponse($result);
                     }

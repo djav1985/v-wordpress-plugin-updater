@@ -27,7 +27,8 @@ The `v-update-api/` application uses patterns shared across similar projects:
 **Database Strategy**: 
 - API uses SQLite via Doctrine DBAL (`storage/updater.sqlite`)
 - Schema: API has `plugins`, `themes`, `hosts`, `logs`, `blacklist` tables
-- Managed by `DatabaseManager::getConnection()` or `DatabaseManager::getInstance()` (singletons)
+- **SessionManager** & **ErrorManager**: True singletons (private constructor + `getInstance()` method, constructor-based initialization)
+- **DatabaseManager**: Static factory pattern (`DatabaseManager::getConnection()` with cached connection)—simpler because no constructor behavior is needed
 - Cron sync (`cron.php`) keeps database in sync with filesystem
 
 **Routing**: FastRoute-based dispatcher in `App\Core\Router` with ResponseManager objects (not direct output). All routes require authentication except `/api` (validates domain+key) and `/login`.
@@ -47,21 +48,23 @@ The `v-update-api/public/index.php` follows this pattern:
 require_once __DIR__ . '/../config.php';              // Absolute __DIR__ paths (not relative ../)
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$session = SessionManager::getInstance();
-$session->start();
-if (!$session->get('csrf_token')) {
-    $session->set('csrf_token', bin2hex(random_bytes(32)));  // CSRF token init (once per session)
-}
+$session = SessionManager::getInstance();  // Initializes session automatically in constructor
 
-ErrorManager::handle(function (): void {
+ErrorManager::handle(function () use ($session): void {
+    if (!$session->get('csrf_token')) {
+        $session->set('csrf_token', bin2hex(random_bytes(32)));  // CSRF token init (once per session)
+    }
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);  // CRITICAL: Parse URL path before routing
     Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
 });
 ```
 **Key Points**:
 - Use absolute paths with `__DIR__` (not relative `../`)
+- `SessionManager::getInstance()` automatically initializes the session (via private constructor)
 - Parse URL path in index.php (`parse_url()` separates query string)
 - Pass only the path to Router (Router assumes path is pre-parsed)
+- CSRF token initialization happens here after session is active
+- Session regeneration only happens after successful login (in LoginController)
 - CSRF token initialization happens in bootstrap (not in SessionManager::start())
 - Session regeneration only happens after successful login (in LoginController)
 
@@ -188,11 +191,7 @@ $r->addRoute('POST', '/newpage', ['\\App\\Controllers\\NewController', 'handleSu
 ### Initialization Flow
 ```php
 // In public/index.php (BOOTSTRAP PHASE)
-$session = SessionManager::getInstance();
-$session->start();
-if (!$session->get('csrf_token')) {
-    $session->set('csrf_token', bin2hex(random_bytes(32)));  // Initialize CSRF token once
-}
+$session = SessionManager::getInstance();  // Session initialized automatically in constructor
 
 // Later in LoginController::handleSubmission() (AFTER AUTHENTICATION)
 SessionManager::getInstance()->regenerate();  // Regenerate session ID for security

@@ -167,8 +167,23 @@ class ValidationHelper
      */
     public static function validateCsrfToken(string $token): bool
     {
-        $sessionToken = SessionManager::getInstance()->get('csrf_token');
+        $session = self::getSession();
+        $sessionToken = $session->get('csrf_token');
         return is_string($sessionToken) && $sessionToken !== '' && hash_equals($sessionToken, $token);
+    }
+
+    /**
+     * Get the session instance (backwards compatibility).
+     *
+     * @return SessionManager
+     */
+    private static function getSession(): SessionManager
+    {
+        static $session = null;
+        if ($session === null) {
+            $session = new SessionManager();
+        }
+        return $session;
     }
 
     /**

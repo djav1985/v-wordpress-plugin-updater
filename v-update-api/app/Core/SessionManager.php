@@ -20,36 +20,11 @@ use App\Core\ErrorManager;
 class SessionManager
 {
     /**
-     * Singleton instance of the SessionManager.
-     */
-    private static ?SessionManager $instance = null;
-
-    /**
-     * Private constructor to prevent direct instantiation.
-     */
-    private function __construct()
-    {
-    }
-
-    /**
-     * Retrieve the singleton instance.
+     * Public constructor to initialize session with secure cookie parameters.
      *
-     * @return SessionManager
+     * Configures secure session settings and starts the session if not already active.
      */
-    public static function getInstance(): SessionManager
-    {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
-     * Start the session with secure cookie parameters.
-     *
-     * @return void
-     */
-    public function start(): void
+    public function __construct()
     {
         $secureFlag = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 
@@ -64,6 +39,18 @@ class SessionManager
             'samesite' => 'Lax',
         ]);
 
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+    }
+
+    /**
+     * Ensure the session is active. Called automatically in the constructor.
+     *
+     * @return void
+     */
+    public function ensureStarted(): void
+    {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
@@ -163,7 +150,8 @@ class SessionManager
             return false;
         }
 
-        if (BlacklistModel::isBlacklisted($ip)) {
+        $blacklistModel = new BlacklistModel((new DatabaseManager())->getConnection());
+        if ($blacklistModel->isBlacklisted($ip)) {
             ErrorManager::log("Blacklisted IP attempted access: $ip", 'error');
             return true;
         }

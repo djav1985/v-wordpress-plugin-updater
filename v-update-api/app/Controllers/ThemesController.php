@@ -19,9 +19,16 @@ use App\Core\ErrorManager;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
 use App\Core\ResponseManager;
+use App\Core\SessionManager;
 
 class ThemesController
 {
+    public function __construct(
+        private SessionManager $session,
+        private ThemeModel $themeModel
+    ) {
+    }
+
     /**
      * Handles GET requests for theme-related actions.
      */
@@ -54,7 +61,7 @@ class ThemesController
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (isset($_FILES['theme_file'])) {
-            $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
+            $messages = $this->themeModel->uploadFiles($_FILES['theme_file'], $isAjax);
             if ($isAjax) {
                 return ResponseManager::text(implode("\n", $messages));
             }
@@ -64,7 +71,7 @@ class ThemesController
             return ResponseManager::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
             $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
-            if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
+            if ($themeName !== null && $this->themeModel->deleteTheme($themeName)) {
                 MessageHelper::addMessage('Theme deleted successfully!');
             } else {
                 $error = 'Failed to delete theme file. Please try again.';
@@ -85,7 +92,7 @@ class ThemesController
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
         $themeFile = $theme['slug'] . '_' . $version . '.zip';
-        $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+        $csrfToken = $this->session->get('csrf_token') ?? '';
         return '<tr>
              <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
              <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
@@ -106,7 +113,7 @@ class ThemesController
      */
     private function getThemesTableHtml(): string
     {
-        $themes = ThemeModel::getThemes();
+        $themes = $this->themeModel->getThemes();
         if (count($themes) > 0) {
             $halfCount = (int) ceil(count($themes) / 2);
             $themesColumn1 = array_slice($themes, 0, $halfCount);

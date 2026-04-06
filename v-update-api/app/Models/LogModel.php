@@ -14,17 +14,19 @@
 
 namespace App\Models;
 
-use App\Core\DatabaseManager;
+use Doctrine\DBAL\Connection;
 
 class LogModel
 {
+    public function __construct(private Connection $connection)
+    {
+    }
     /**
      * Insert one log row.
      */
-    public static function addLog(string $domain, string $type, string $status): void
+    public function addLog(string $domain, string $type, string $status): void
     {
-        $conn = DatabaseManager::getConnection();
-        $conn->executeStatement(
+        $this->connection->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
             [$domain, $type, date('Y-m-d'), $status]
         );
@@ -38,10 +40,9 @@ class LogModel
      *
      * @return string
      */
-    public static function getLogs(string $type): string
+    public function getLogs(string $type): string
     {
-        $conn = DatabaseManager::getConnection();
-        $rows = $conn->fetchAllAssociative(
+        $rows = $this->connection->fetchAllAssociative(
             'SELECT domain, date, status FROM logs WHERE type = ? ORDER BY date DESC',
             [$type]
         );
@@ -93,9 +94,8 @@ class LogModel
      *
      * @return void
      */
-    public static function clearAllLogs(): void
+    public function clearAllLogs(): void
     {
-        $conn = DatabaseManager::getConnection();
-        $conn->executeStatement('DELETE FROM logs');
+        $this->connection->executeStatement('DELETE FROM logs');
     }
 }

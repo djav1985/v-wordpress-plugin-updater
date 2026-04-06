@@ -19,9 +19,16 @@ use App\Core\ErrorManager;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
 use App\Core\ResponseManager;
+use App\Core\SessionManager;
 
 class PluginsController
 {
+    public function __construct(
+        private SessionManager $session,
+        private PluginModel $pluginModel
+    ) {
+    }
+
     /**
      * Handles GET requests for plugin-related actions.
      */
@@ -54,7 +61,7 @@ class PluginsController
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (isset($_FILES['plugin_file'])) {
-            $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
+            $messages = $this->pluginModel->uploadFiles($_FILES['plugin_file'], $isAjax);
             if ($isAjax) {
                 return ResponseManager::text(implode("\n", $messages));
             }
@@ -66,7 +73,7 @@ class PluginsController
             $pluginName = isset($_POST['plugin_name'])
                 ? ValidationHelper::validateSlug($_POST['plugin_name'])
                 : null;
-            if ($pluginName !== null && PluginModel::deletePlugin($pluginName)) {
+            if ($pluginName !== null && $this->pluginModel->deletePlugin($pluginName)) {
                 MessageHelper::addMessage('Plugin deleted successfully!');
             } else {
                 $error = 'Failed to delete plugin file. Please try again.';
@@ -87,7 +94,7 @@ class PluginsController
         $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
         $version = $pluginName['version'];
         $pluginFile = $pluginName['slug'] . '_' . $version . '.zip';
-        $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+        $csrfToken = $this->session->get('csrf_token') ?? '';
         return '<tr>
             <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
             <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
@@ -108,7 +115,7 @@ class PluginsController
      */
     private function getPluginsTableHtml(): string
     {
-        $plugins = PluginModel::getPlugins();
+        $plugins = $this->pluginModel->getPlugins();
         if (count($plugins) > 0) {
             $halfCount = (int) ceil(count($plugins) / 2);
             $pluginsColumn1 = array_slice($plugins, 0, $halfCount);

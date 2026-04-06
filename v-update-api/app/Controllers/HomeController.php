@@ -26,6 +26,12 @@ class HomeController
 {
     private const REVEAL_WINDOW_SECONDS = 30;
 
+    public function __construct(
+        private SessionManager $session,
+        private HostsModel $hostsModel
+    ) {
+    }
+
     /**
      * Handles GET requests for managing hosts.
      */
@@ -53,7 +59,7 @@ class HomeController
         $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
         if (isset($_POST['add_entry'])) {
             $newKey = ValidationHelper::generateKey();
-            if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
+            if ($domain !== null && $this->hostsModel->addEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Entry added successfully.');
             } else {
                 $error = 'Failed to add entry.';
@@ -62,7 +68,7 @@ class HomeController
             }
         } elseif (isset($_POST['regen_entry'])) {
             $newKey = ValidationHelper::generateKey();
-            if ($domain !== null && HostsModel::updateEntry($domain, $newKey)) {
+            if ($domain !== null && $this->hostsModel->updateEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Key regenerated successfully.');
             } else {
                 $error = 'Failed to regenerate key.';
@@ -78,7 +84,7 @@ class HomeController
                 MessageHelper::addMessage($error);
             }
         } elseif (isset($_POST['delete_entry'])) {
-            if ($domain !== null && HostsModel::deleteEntry($domain)) {
+            if ($domain !== null && $this->hostsModel->deleteEntry($domain)) {
                 MessageHelper::addMessage('Entry deleted successfully.');
             } else {
                 $error = 'Failed to delete entry.';
@@ -104,7 +110,7 @@ class HomeController
         return '<tr>
             <form method="post" action="/home">
                 <input type="hidden" name="csrf_token" value="' .
-                    htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
+                    htmlspecialchars($this->session->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '" readonly></td>
@@ -130,7 +136,7 @@ class HomeController
      */
     private function getHostsTableHtml(): string
     {
-        $entries = HostsModel::getEntries();
+        $entries = $this->hostsModel->getEntries();
         $hostsTableHtml = '';
         if (count($entries) > 0) {
             $halfCount = (int) ceil(count($entries) / 2);
@@ -154,7 +160,7 @@ class HomeController
                 $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
-                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+                    $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
                 }
                 $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
             }
@@ -177,7 +183,7 @@ class HomeController
                 $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
-                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+                    $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
                 }
                 $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
             }
@@ -199,8 +205,7 @@ class HomeController
             return false;
         }
 
-        $session = SessionManager::getInstance();
-        $revealed = $session->get('revealed_keys', []);
+        $revealed = $this->session->get('revealed_keys', []);
         if (!is_array($revealed)) {
             $revealed = [];
         }
@@ -208,7 +213,7 @@ class HomeController
             'key' => $decrypted,
             'expires_at' => time() + self::REVEAL_WINDOW_SECONDS,
         ];
-        $session->set('revealed_keys', $revealed);
+        $this->session->set('revealed_keys', $revealed);
         return true;
     }
 
@@ -217,7 +222,7 @@ class HomeController
      */
     private function lookupDecryptedKey(string $domain): ?string
     {
-        foreach (HostsModel::getEntries() as $entry) {
+        foreach ($this->hostsModel->getEntries() as $entry) {
             $entryDomain = $entry['domain'] ?? '';
             if ($entryDomain !== $domain) {
                 continue;
@@ -226,7 +231,7 @@ class HomeController
             $encryptedKey = $entry['key'] ?? '';
             $key = EncryptionHelper::decrypt($encryptedKey);
             if ($key !== null && $key !== '') {
-                HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+                $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
             }
             return $key;
         }
@@ -241,7 +246,7 @@ class HomeController
      */
     private function getRevealedKey(string $domain): ?array
     {
-        $revealed = SessionManager::getInstance()->get('revealed_keys', []);
+        $revealed = $this->session->get('revealed_keys', []);
         if (!is_array($revealed) || !isset($revealed[$domain]) || !is_array($revealed[$domain])) {
             return null;
         }
@@ -264,10 +269,9 @@ class HomeController
      */
     private function pruneExpiredReveals(): void
     {
-        $session = SessionManager::getInstance();
-        $revealed = $session->get('revealed_keys', []);
+        $revealed = $this->session->get('revealed_keys', []);
         if (!is_array($revealed)) {
-            $session->set('revealed_keys', []);
+            $this->session->set('revealed_keys', []);
             return;
         }
 
@@ -284,7 +288,7 @@ class HomeController
             }
             $filtered[$domain] = $entry;
         }
-        $session->set('revealed_keys', $filtered);
+        $this->session->set('revealed_keys', $filtered);
     }
 
     /**

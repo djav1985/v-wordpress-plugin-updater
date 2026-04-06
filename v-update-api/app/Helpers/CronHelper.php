@@ -29,7 +29,7 @@ class CronHelper
         $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2) . '/public';
         require dirname(__DIR__, 2) . '/config.php';
 
-        $conn = DatabaseManager::getConnection();
+        $conn = (new DatabaseManager())->getConnection();
 
         self::syncPluginsDir(PLUGINS_DIR, $conn);
         self::syncThemesDir(THEMES_DIR, $conn);

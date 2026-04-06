@@ -24,6 +24,12 @@ use App\Core\ResponseManager;
 
 class LoginController
 {
+    public function __construct(
+        private SessionManager $session,
+        private BlacklistModel $blacklistModel
+    ) {
+    }
+
     /**
      * Display the login form when the user is not already authenticated.
      *
@@ -31,8 +37,7 @@ class LoginController
      */
     public function handleRequest(): ResponseManager
     {
-        $session = SessionManager::getInstance();
-        if ($session->get('logged_in') === true) {
+        if ($this->session->get('logged_in') === true) {
             return ResponseManager::redirect('/home');
         }
         return ResponseManager::view('login');
@@ -45,15 +50,13 @@ class LoginController
      */
     public function handleSubmission(): ResponseManager
     {
-        $session = SessionManager::getInstance();
-
         // Redirect already-logged-in users away from login form
-        if ($session->get('logged_in') === true && !isset($_POST['logout'])) {
+        if ($this->session->get('logged_in') === true && !isset($_POST['logout'])) {
             return ResponseManager::redirect('/home');
         }
 
         // Handle logout
-        if ($session->get('logged_in') === true && isset($_POST['logout'])) {
+        if ($this->session->get('logged_in') === true && isset($_POST['logout'])) {
             if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
                 MessageHelper::addMessage('Invalid CSRF token. Please try again.');
                 return ResponseManager::redirect('/login');
@@ -75,12 +78,12 @@ class LoginController
 
         // Validate credentials
         if ($this->validateCredentials($username, $password)) {
-            $session->set('logged_in', true);
-            $session->set('username', $username);
-            $session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
-            $session->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
-            $session->set('timeout', time());
-            $session->regenerate();
+            $this->session->set('logged_in', true);
+            $this->session->set('username', $username);
+            $this->session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            $this->session->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
+            $this->session->set('timeout', time());
+            $this->session->regenerate();
             return ResponseManager::redirect('/home');
         }
 
@@ -92,12 +95,12 @@ class LoginController
             MessageHelper::addMessage($error);
             return ResponseManager::view('login');
         }
-        if (BlacklistModel::isBlacklisted($ip)) {
+        if ($this->blacklistModel->isBlacklisted($ip)) {
             $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
         } else {
-            BlacklistModel::updateFailedAttempts($ip);
+            $this->blacklistModel->updateFailedAttempts($ip);
             $error = 'Invalid username or password.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
@@ -130,7 +133,7 @@ class LoginController
      */
     private function logoutUser(): ResponseManager
     {
-        SessionManager::getInstance()->destroy();
+        $this->session->destroy();
         return ResponseManager::redirect('/login');
     }
 }

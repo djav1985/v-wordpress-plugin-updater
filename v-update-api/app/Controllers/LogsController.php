@@ -22,13 +22,17 @@ use App\Core\ResponseManager;
 
 class LogsController
 {
+    public function __construct(private LogModel $logModel)
+    {
+    }
+
     /**
      * Handles GET requests for the logs page.
      */
     public function handleRequest(): ResponseManager
     {
-        $ploutput = LogModel::getLogs('plugin');
-        $thoutput = LogModel::getLogs('theme');
+        $ploutput = $this->logModel->getLogs('plugin');
+        $thoutput = $this->logModel->getLogs('theme');
 
         return ResponseManager::view('logs', [
             'ploutput' => $ploutput,
@@ -50,7 +54,7 @@ class LogsController
         }
 
         if (isset($_POST['clear_logs'])) {
-            LogModel::clearAllLogs();
+            $this->logModel->clearAllLogs();
             MessageHelper::addMessage('Logs cleared successfully.');
         }
         return ResponseManager::redirect('/logs');

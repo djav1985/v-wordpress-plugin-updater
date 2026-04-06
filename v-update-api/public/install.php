@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -40,7 +41,61 @@ try {
     $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__) . '/public';
     include dirname(__DIR__) . '/config.php';
 
-    $conn = DatabaseManager::getConnection();
+    $installCreateDirectory = static function (string $dir): void {
+        if (is_dir($dir)) {
+            return;
+        }
+
+        $error = null;
+        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
+            $error = $message;
+            return true;
+        });
+
+        try {
+            $created = mkdir($dir, 0750, true);
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($created !== true && !is_dir($dir)) {
+            $context = 'install.php failed to create database directory: ' . $dir
+                . ($error !== null ? ' (' . $error . ')' : '');
+            error_log($context);
+            throw new RuntimeException($context);
+        }
+    };
+
+    $installCreateDatabaseFile = static function (string $path): void {
+        if (file_exists($path)) {
+            return;
+        }
+
+        $error = null;
+        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
+            $error = $message;
+            return true;
+        });
+
+        try {
+            $created = touch($path);
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($created !== true || !file_exists($path)) {
+            $context = 'install.php failed to initialize database file: ' . $path
+                . ($error !== null ? ' (' . $error . ')' : '');
+            error_log($context);
+            throw new RuntimeException($context);
+        }
+    };
+
+    $dbDir = dirname(DB_FILE);
+    $installCreateDirectory($dbDir);
+    $installCreateDatabaseFile(DB_FILE);
+
+    $conn = (new DatabaseManager())->getConnection();
     $schema = new Schema();
     $schemaManager = $conn->createSchemaManager();
     $existingTables = array_map('strtolower', $schemaManager->listTableNames());

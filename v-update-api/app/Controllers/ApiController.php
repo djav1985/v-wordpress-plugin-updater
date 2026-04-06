@@ -23,9 +23,20 @@ use App\Models\ThemeModel;
 use App\Models\LogModel;
 use App\Core\ErrorManager;
 use App\Core\ResponseManager;
+use App\Core\SessionManager;
 
 class ApiController
 {
+    public function __construct(
+        private SessionManager $session,
+        private PluginModel $pluginModel,
+        private ThemeModel $themeModel,
+        private HostsModel $hostsModel,
+        private BlacklistModel $blacklistModel,
+        private LogModel $logModel
+    ) {
+    }
+
     /**
      * Handle the incoming update API request.
      *
@@ -49,7 +60,7 @@ class ApiController
             return new ResponseManager(403);
         }
 
-        if (BlacklistModel::isBlacklisted($ip)) {
+        if ($this->blacklistModel->isBlacklisted($ip)) {
             ErrorManager::log('Forbidden: blacklisted IP ' . $ip);
             return new ResponseManager(403);
         }
@@ -101,11 +112,11 @@ class ApiController
 
         $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
 
-        $encryptedHostKey = HostsModel::getEncryptedKeyByDomain($domain);
+        $encryptedHostKey = $this->hostsModel->getEncryptedKeyByDomain($domain);
         if ($encryptedHostKey === null) {
             // Unknown domain is an authentication failure and contributes to lockout budget.
-            BlacklistModel::updateFailedAttempts($ip);
-            LogModel::addLog($domain, $type, 'Failed');
+            $this->blacklistModel->updateFailedAttempts($ip);
+            $this->logModel->addLog($domain, $type, 'Failed');
             ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
             return new ResponseManager(403);
         }
@@ -113,21 +124,21 @@ class ApiController
         $hostKey = EncryptionHelper::decrypt($encryptedHostKey);
         if ($hostKey === null || !hash_equals($hostKey, $key)) {
             // Credential mismatch is an authentication failure and contributes to lockout budget.
-            BlacklistModel::updateFailedAttempts($ip);
-            LogModel::addLog($domain, $type, 'Failed');
+            $this->blacklistModel->updateFailedAttempts($ip);
+            $this->logModel->addLog($domain, $type, 'Failed');
             ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
             return new ResponseManager(403);
         }
 
         // Migrate legacy CBC-encrypted key to AEAD on successful auth.
         if (EncryptionHelper::needsMigration($encryptedHostKey)) {
-            HostsModel::updateEntry($domain, $hostKey);
+            $this->hostsModel->updateEntry($domain, $hostKey);
         }
 
         if ($type === 'theme') {
-            $dbVersion = ThemeModel::getVersionBySlug($slug);
+            $dbVersion = $this->themeModel->getVersionBySlug($slug);
         } else {
-            $dbVersion = PluginModel::getVersionBySlug($slug);
+            $dbVersion = $this->pluginModel->getVersionBySlug($slug);
         }
         if ($dbVersion === null) {
             ErrorManager::log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
@@ -138,7 +149,7 @@ class ApiController
             $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
             $contentLength = @filesize($filePath);
             if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
-                LogModel::addLog($domain, $type, 'Success');
+                $this->logModel->addLog($domain, $type, 'Success');
                 ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
                 return ResponseManager::file($filePath, 'application/octet-stream')
                     ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
@@ -148,7 +159,7 @@ class ApiController
             return new ResponseManager(500);
         }
 
-        LogModel::addLog($domain, $type, 'Success');
+        $this->logModel->addLog($domain, $type, 'Success');
         ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
         return new ResponseManager(204);
     }

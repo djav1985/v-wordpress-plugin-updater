@@ -19,88 +19,25 @@ use Doctrine\DBAL\DriverManager;
 
 class DatabaseManager
 {
-    private static ?Connection $connection = null;
+    private Connection $connection;
 
     /**
-     * Get a Doctrine DBAL connection to the SQLite database.
+     * Initialize the database connection.
      */
-    public static function getConnection(): Connection
+    public function __construct()
     {
-        if (self::$connection === null) {
-            $dir = dirname(DB_FILE);
-            if (!is_dir($dir)) {
-                self::createDirectory($dir);
-            }
-
-            if (!file_exists(DB_FILE)) {
-                self::createDatabaseFile(DB_FILE);
-            }
-
-            $params = [
-                'driver' => 'pdo_sqlite',
-                'path' => DB_FILE,
-            ];
-            self::$connection = DriverManager::getConnection($params);
-        }
-
-        return self::$connection;
+        $params = [
+            'driver' => 'pdo_sqlite',
+            'path' => DB_FILE,
+        ];
+        $this->connection = DriverManager::getConnection($params);
     }
 
     /**
-     * @throws \RuntimeException
+     * Get the Doctrine DBAL connection to the SQLite database.
      */
-    private static function createDirectory(string $dir): void
+    public function getConnection(): Connection
     {
-        if (is_dir($dir)) {
-            return;
-        }
-
-        $error = null;
-        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
-            $error = $message;
-            return true;
-        });
-
-        try {
-            $created = mkdir($dir, 0750, true);
-        } finally {
-            restore_error_handler();
-        }
-
-        if ($created !== true && !is_dir($dir)) {
-            $context = 'DatabaseManager failed to create database directory: ' . $dir
-                . ($error !== null ? ' (' . $error . ')' : '');
-            ErrorManager::log($context);
-            throw new \RuntimeException($context);
-        }
-    }
-
-    /**
-     * @throws \RuntimeException
-     */
-    private static function createDatabaseFile(string $path): void
-    {
-        if (file_exists($path)) {
-            return;
-        }
-
-        $error = null;
-        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
-            $error = $message;
-            return true;
-        });
-
-        try {
-            $created = touch($path);
-        } finally {
-            restore_error_handler();
-        }
-
-        if ($created !== true || !file_exists($path)) {
-            $context = 'DatabaseManager failed to initialize database file: ' . $path
-                . ($error !== null ? ' (' . $error . ')' : '');
-            ErrorManager::log($context);
-            throw new \RuntimeException($context);
-        }
+        return $this->connection;
     }
 }

@@ -26,7 +26,7 @@ class MessageHelper
      */
     public static function addMessage(string $message): void
     {
-        $session = SessionManager::getInstance();
+        $session = self::getSession();
         $messages = $session->get('messages');
         if (!is_array($messages)) {
             $messages = [];
@@ -42,7 +42,7 @@ class MessageHelper
      */
     public static function displayAndClearMessages(): void
     {
-        $session = SessionManager::getInstance();
+        $session = self::getSession();
         $messages = $session->get('messages');
         if (is_array($messages) && !empty($messages)) {
             foreach ($messages as $message) {
@@ -50,5 +50,19 @@ class MessageHelper
             }
             $session->set('messages', []);
         }
+    }
+
+    /**
+     * Get the session instance (backwards compatibility).
+     *
+     * @return SessionManager
+     */
+    private static function getSession(): SessionManager
+    {
+        static $session = null;
+        if ($session === null) {
+            $session = new SessionManager();
+        }
+        return $session;
     }
 }

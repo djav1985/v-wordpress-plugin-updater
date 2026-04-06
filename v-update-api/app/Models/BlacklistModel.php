@@ -14,10 +14,13 @@
 
 namespace App\Models;
 
-use App\Core\DatabaseManager;
+use Doctrine\DBAL\Connection;
 
 class BlacklistModel
 {
+    public function __construct(private Connection $connection)
+    {
+    }
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
@@ -27,14 +30,13 @@ class BlacklistModel
      * @param string $ip The IP address to update.
      * @return void
      */
-    public static function updateFailedAttempts(string $ip): void
+    public function updateFailedAttempts(string $ip): void
     {
-        $conn = DatabaseManager::getConnection();
         $now  = time();
 
         // Single atomic statement: insert on first attempt, or increment the
         // counter and conditionally set blacklisted/timestamp on conflict.
-        $conn->executeStatement(
+        $this->connection->executeStatement(
             'INSERT INTO blacklist (ip, login_attempts, blacklisted, timestamp)
              VALUES (?, 1, 0, ?)
              ON CONFLICT(ip) DO UPDATE SET
@@ -54,14 +56,13 @@ class BlacklistModel
      * @param string $ip The IP address to check.
      * @return bool True if the IP is blacklisted, false otherwise.
      */
-    public static function isBlacklisted(string $ip): bool
+    public function isBlacklisted(string $ip): bool
     {
-        $conn = DatabaseManager::getConnection();
-        $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $record = $this->connection->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
             if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
-                $conn->update('blacklist', [
+                $this->connection->update('blacklist', [
                     'blacklisted'   => 0,
                     'login_attempts' => 0,
                     'timestamp'     => time(),
