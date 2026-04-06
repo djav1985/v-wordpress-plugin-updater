@@ -24,6 +24,7 @@ class ComposerStaticInit3cbd5619e668f1539c401c740818a22e
         ),
         'P' => 
         array (
+            'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
             'Psr\\Cache\\' => 10,
         ),
@@ -54,6 +55,10 @@ class ComposerStaticInit3cbd5619e668f1539c401c740818a22e
         'Respect\\Stringifier\\' => 
         array (
             0 => __DIR__ . '/..' . '/respect/stringifier/src',
+        ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
         'Psr\\Log\\' => 
         array (

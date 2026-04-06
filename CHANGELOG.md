@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+
+## 4.5.0
+- Upgraded `nikic/fast-route` to `2.0.0-beta1` and aligned `Router` with the v2 configuration interface.
+- Raised minimum PHP requirements to match the current dependency set:
+  - `update-api` now declares PHP 8.2+ to align with Doctrine DBAL 4.x.
+  - README now distinguishes the API server PHP 8.2+ requirement from the WordPress plugin PHP 8.0+ requirement.
 - Refactored cron execution flow:
   - Moved cron orchestration into `CronHelper::runCronJob()` and made internal sync/cleanup methods private.
   - Simplified `update-api/cron.php` to CLI-only execution that delegates directly to `CronHelper::runCronJob()`.

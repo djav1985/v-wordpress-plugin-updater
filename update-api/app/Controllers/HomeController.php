@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 4.0.0
+ * Version: 4.5.0
  *
  * File: HomeController.php
  * Description: WordPress Update API

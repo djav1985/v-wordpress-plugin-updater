@@ -465,7 +465,7 @@ This architecture enables centralized control over plugin and theme updates acro
 ## Getting Started
 **System Requirements:**
 
-* **PHP**: version 7.4 or higher
+* **PHP**: version 8.2 or higher for `update-api/`; version 8.0 or higher for `v-wp-updater/`
 * **Web Server**: Apache, Nginx or any server capable of running PHP
 * **Write Permissions**: ensure the web server can write to `/storage`
 
@@ -484,6 +484,7 @@ This architecture enables centralized control over plugin and theme updates acro
    ```
 
 4. Edit `update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
+   The Update API requires PHP 8.2 or higher.
 
 5. Set the `ENCRYPTION_KEY` constant in `update-api/config.php` to secure host keys:
 

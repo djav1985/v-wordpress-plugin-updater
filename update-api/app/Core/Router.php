@@ -6,7 +6,7 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 4.0.0
+ * Version: 4.5.0
  *
  * File: Router.php
  * Description: WordPress Update API
@@ -15,7 +15,7 @@
 namespace App\Core;
 
 use FastRoute\Dispatcher;
-use FastRoute\RouteCollector;
+use FastRoute\ConfigureRoutes;
 use function FastRoute\simpleDispatcher;
 
 class Router
@@ -28,7 +28,7 @@ class Router
      */
     private function __construct()
     {
-        $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
+        $this->dispatcher = simpleDispatcher(function (ConfigureRoutes $r): void {
             $r->addRoute('GET', '/', function (): ResponseManager {
                 return ResponseManager::redirect('/home');
             });

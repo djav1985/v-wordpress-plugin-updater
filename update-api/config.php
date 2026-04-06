@@ -5,14 +5,14 @@
  * Author:  Vontainment <services@vontainment.com>
  * License: https://opensource.org/licenses/MIT MIT License
  * Link:    https://vontainment.com
- * Version: 4.0.0
+ * Version: 4.5.0
  *
  * File: config.php
  * Description: WordPress Update API
  */
 
 define('VALID_USERNAME', 'admin');
-define('VALID_PASSWORD', 'valid password');
+define('VALID_PASSWORD', 'password');
 
 define('ENCRYPTION_KEY', '98aafe518ece74e33d92a2e7c4833dd4632afc208f1a978ed13b2b59d74e9af3');
 
