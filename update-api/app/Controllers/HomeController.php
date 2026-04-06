@@ -131,6 +131,9 @@ class HomeController extends Controller
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
+                if ($key !== '') {
+                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+                }
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 
@@ -152,6 +155,9 @@ class HomeController extends Controller
                 $domain = isset($fields[0]) ? $fields[0] : '';
                 $encryptedKey = $fields[1] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
+                if ($key !== '') {
+                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
+                }
                 $hostsTableHtml .= self::generateHostsTableRow($lineNumber, $domain, $key);
             }
 

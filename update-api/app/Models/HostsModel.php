@@ -72,6 +72,27 @@ class HostsModel
     }
 
     /**
+     * Re-encrypt a host's key with AEAD if it is still stored with the legacy
+     * CBC scheme.  Safe to call on every read; no-ops when the key is already
+     * AEAD-encrypted.
+     *
+     * @param string $domain       The host domain used as the primary key.
+     * @param string $encryptedKey The currently stored (possibly legacy) ciphertext.
+     * @param string $plainKey     The already-decrypted plain-text key.
+     */
+    public static function migrateLegacyKey(string $domain, string $encryptedKey, string $plainKey): void
+    {
+        if (!EncryptionHelper::needsMigration($encryptedKey)) {
+            return;
+        }
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement(
+            'UPDATE hosts SET key = ? WHERE domain = ?',
+            [EncryptionHelper::encrypt($plainKey), $domain]
+        );
+    }
+
+    /**
      * Delete an entry from the hosts table.
      */
     public static function deleteEntry(int $line, string $domain): bool

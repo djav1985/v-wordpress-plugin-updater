@@ -7,25 +7,20 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace PHPUnit\Framework\MockObject\Rule;
+namespace PHPUnit\TextUI\Output\Default\ProgressPrinter;
 
-use PHPUnit\Framework\MockObject\Invocation as BaseInvocation;
+use PHPUnit\Event\TestSuite\Skipped;
+use PHPUnit\Event\TestSuite\SkippedSubscriber;
 
 /**
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final class AnyParameters implements ParametersRule
+final readonly class TestSuiteSkippedSubscriber extends Subscriber implements SkippedSubscriber
 {
-    /**
-     * @throws void
-     */
-    public function apply(BaseInvocation $invocation): void
+    public function notify(Skipped $event): void
     {
-    }
-
-    public function verify(): void
-    {
+        $this->printer()->testSuiteSkipped($event->testSuite()->count());
     }
 }
