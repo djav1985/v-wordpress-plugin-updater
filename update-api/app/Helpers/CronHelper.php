@@ -13,6 +13,7 @@
 
 namespace App\Helpers;
 
+use App\Core\DatabaseManager;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -21,9 +22,26 @@ use Doctrine\DBAL\Connection;
 class CronHelper
 {
     /**
+     * Execute the main cron job: sync plugins/themes directories and clean up the blacklist.
+     */
+    public static function runCronJob(): void
+    {
+        $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2) . '/public';
+        require dirname(__DIR__, 2) . '/config.php';
+
+        $conn = DatabaseManager::getConnection();
+
+        self::syncDir(PLUGINS_DIR, 'plugins', $conn);
+        self::syncDir(THEMES_DIR, 'themes', $conn);
+        self::cleanupBlacklist($conn);
+
+        echo "Cron job completed successfully.\n";
+    }
+
+    /**
      * Sync ZIP artifacts in a directory into the given table, keeping only discovered slugs.
      */
-    public static function syncDir(string $dir, string $table, Connection $conn): void
+    private static function syncDir(string $dir, string $table, Connection $conn): void
     {
         if (!is_dir($dir) || !is_readable($dir)) {
             error_log(sprintf('CronHelper::syncDir cannot read directory "%s" for table "%s".', $dir, $table));
@@ -61,7 +79,7 @@ class CronHelper
     /**
      * Cleanup expired blacklist entries.
      */
-    public static function cleanupBlacklist(Connection $conn): void
+    private static function cleanupBlacklist(Connection $conn): void
     {
         $currentTime = time();
         $sevenDaysAgo = $currentTime - (7 * 24 * 60 * 60);

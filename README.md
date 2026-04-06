@@ -43,7 +43,7 @@ The V-WordPress-Plugin-Updater is a **dual-component system** designed to stream
 
 1. **Update API Server** (`update-api/`): A standalone PHP web application that hosts and serves plugin/theme update packages. Built with a modern MVC architecture using FastRoute for routing, Doctrine DBAL for SQLite database management, and comprehensive security features including encrypted API keys, IP blacklisting, and session management.
 
-2. **WordPress Client Plugin** (`v-wp-updater/`): A WordPress plugin that automatically checks for and installs updates from the API server. It integrates seamlessly with WordPress core update mechanisms, providing automated daily update checks, REST API endpoints for remote management, and comprehensive logging.
+2. **WordPress Client Plugin** (`v-wp-updater/`): A WordPress plugin that automatically checks for and installs updates from the API server. It integrates seamlessly with WordPress core update mechanisms, providing automated daily update checks, a dashboard settings widget for configuration, and comprehensive logging.
 
 This architecture enables centralized control over plugin and theme updates across multiple WordPress installations, reducing manual maintenance overhead while maintaining security and reliability. The system supports both single-site and multisite WordPress installations and provides detailed logging and monitoring capabilities through an intuitive web-based admin interface.
 
@@ -57,7 +57,7 @@ This architecture enables centralized control over plugin and theme updates acro
 | 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>Comprehensive PHPUnit test coverage</li></ul> |
 | 📄 | **Documentation**    | <ul><li>Detailed README with installation and usage instructions</li><li>Inline PHPDoc comments throughout codebase</li></ul> |
 | 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based synchronization between filesystem and database</li></ul> |
-| 🧩 | **Modularity**        | <ul><li>Separate controllers for API, login, hosts, plugins, themes, and logs</li><li>Helper classes for encryption, validation, and message handling</li><li>Model layer for database operations (plugins, themes, hosts, logs, blacklist)</li></ul> |
+| 🧩 | **Modularity**        | <ul><li>Separate controllers for API, login, hosts, plugins, themes, and logs</li><li>Helper classes for cron synchronization, encryption, validation, and message handling</li><li>Model layer for database operations (plugins, themes, hosts, logs, blacklist)</li></ul> |
 | 🧪 | **Testing**           | <ul><li>PHPUnit test suite for both components</li><li>Tests for routing, database, session management, and updater logic</li><li>Namespace-based mocking for isolated unit tests</li></ul> |
 | ⚡️  | **Performance**       | <ul><li>SQLite database for efficient metadata storage</li><li>Asynchronous update processing per plugin/theme</li><li>Daily cron synchronization job for database/file parity</li></ul> |
 | 🛡️ | **Security**          | <ul><li>Encrypted API keys using AES-256</li><li>IP-based blacklisting after failed login attempts</li><li>Session timeout and user agent validation</li><li>CSRF protection on all forms</li><li>Input validation and sanitization</li></ul> |
@@ -98,18 +98,16 @@ This architecture enables centralized control over plugin and theme updates acro
     │   │   │   └── ThemesController.php
     │   │   ├── Core
     │   │   │   ├── Controller.php
-    │   │   │   ├── Csrf.php
     │   │   │   ├── DatabaseManager.php
     │   │   │   ├── ErrorManager.php
     │   │   │   ├── ResponseManager.php
     │   │   │   ├── Router.php
     │   │   │   └── SessionManager.php
-    │   │   ├── Helpers
-    │   │   │   ├── CronWorker.php
-    │   │   │   ├── Encryption.php
+	│   │   ├── Helpers
+	│   │   │   ├── CronHelper.php
+	│   │   │   ├── EncryptionHelper.php
     │   │   │   ├── MessageHelper.php
-    │   │   │   ├── Validation.php
-    │   │   │   └── WorkerHelper.php
+	│   │   │   └── ValidationHelper.php
     │   │   ├── Models
     │   │   │   ├── Blacklist.php
     │   │   │   ├── HostsModel.php
@@ -487,23 +485,24 @@ This architecture enables centralized control over plugin and theme updates acro
 
 4. Edit `update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
 
-5. Set an `ENCRYPTION_KEY` environment variable used to secure host keys:
+5. Set the `ENCRYPTION_KEY` constant in `update-api/config.php` to secure host keys:
 
-   ```sh
-   export ENCRYPTION_KEY="your-32-byte-secret"
+	```sh
+	# In update-api/config.php
+	define('ENCRYPTION_KEY', 'your-32-byte-secret');
    ```
 
 6. Ensure the web server user owns the `update-api/storage/` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `update-api/storage/logs/app.log`).
 
 7. Navigate to `update-api/public/` and run `php install.php` in your browser or via CLI to create the SQLite database and required tables. Ensure `update-api/storage/updater.sqlite` is writable by the web server.
 
-8. Configure a system cron to run once daily:
+8. Configure a system cron to run once daily (the script is CLI-only and takes no arguments):
 
    ```sh
-   0 2 * * * cd /path/to/update-api && php cron.php
+	0 2 * * * cd /path/to/update-api && php cron.php
    ```
 
-   This keeps the database in sync with plugin and theme ZIP files in the storage directories.
+	This keeps the database in sync with plugin and theme ZIP files in the storage directories and also cleans up expired blacklist entries.
 
 #### WordPress Client Plugin Setup
 
@@ -641,10 +640,6 @@ The API uses IP-based blacklisting for rate limiting. After 3 failed authenticat
 - [X] **`Task 1`**: <strike>Convert to MVC framework</strike>
 - [X] **`Task 2`**: <strike>Implement more advanced authorization for site connections</strike>
 - [X] **`Task 3`**: <strike>Implement Database instead of useing filesystem</strike>
-- [ ] **`Task 4`**: Implement ability to remove ips from blacklist
-- [ ] **`Task 5`**: Implement plug-in verification on upload
-- [ ] **`Task 6`**: Implement docker version
-- [ ] **`Task 7`**: Migrate routing dependency from `nikic/fast-route` v1 to stable v2 (`DEP-001`, tracked in `update-api/docs/dependency-tracking.md`)
       
 ---
 

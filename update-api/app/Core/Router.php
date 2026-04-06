@@ -16,6 +16,7 @@ namespace App\Core;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use function FastRoute\simpleDispatcher;
 
 class Router
 {
@@ -27,7 +28,7 @@ class Router
      */
     private function __construct()
     {
-        $this->dispatcher = RouteDispatcherFactory::build(function (RouteCollector $r): void {
+        $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
             $r->addRoute('GET', '/', function (): ResponseManager {
                 return ResponseManager::redirect('/home');
             });

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Refactored cron execution flow:
+  - Moved cron orchestration into `CronHelper::runCronJob()` and made internal sync/cleanup methods private.
+  - Simplified `update-api/cron.php` to CLI-only execution that delegates directly to `CronHelper::runCronJob()`.
+  - Removed obsolete lock/worker helper usage and deleted `WorkerHelper`.
+- Consolidated secure random-byte generation into `EncryptionHelper::bytes()`:
+  - Deleted `SecureRandomHelper` and updated consumers (`EncryptionHelper`, `LoginController`, `public/index.php`) to use the centralized helper.
+- Removed `RouteDispatcherFactory`; `Router` now builds its FastRoute dispatcher directly via `simpleDispatcher`.
 - Strengthened model/controller consistency and failure-safe update flows:
   - `PluginModel` and `ThemeModel` uploads now stage files, perform DB upserts in transactions, and apply rollback/compensation when filesystem or DB steps fail.
   - `deletePlugin`/`deleteTheme` now validate `unlink()` success, skip DB deletion on file-delete failures, and emit structured log entries for invalid path/race/permission cases.

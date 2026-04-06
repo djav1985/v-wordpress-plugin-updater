@@ -41,7 +41,7 @@ class EncryptionHelper
     public static function encrypt(string $plain): string
     {
         $key = hash('sha256', ENCRYPTION_KEY, true);
-        $nonce = random_bytes(self::NONCE_LENGTH);
+        $nonce = self::bytes(self::NONCE_LENGTH);
         $tag = '';
 
         $cipherText = openssl_encrypt(
@@ -96,6 +96,30 @@ class EncryptionHelper
             return false;
         }
         return substr($data, 0, 1) !== self::VERSION_AEAD;
+    }
+
+    /**
+     * Return cryptographically secure random bytes.
+     *
+     * @param int $length Number of bytes to generate.
+     * @return string
+     * @throws \InvalidArgumentException When $length is not positive.
+     * @throws \RuntimeException When secure random bytes cannot be generated.
+     */
+    public static function bytes(int $length): string
+    {
+        if ($length <= 0) {
+            throw new \InvalidArgumentException('Length must be greater than zero.');
+        }
+
+        $isStrong = false;
+        $bytes = openssl_random_pseudo_bytes($length, $isStrong);
+
+        if ($bytes === false || $isStrong !== true || strlen($bytes) !== $length) {
+            throw new \RuntimeException('Unable to generate cryptographically secure random bytes.');
+        }
+
+        return $bytes;
     }
 
     // ------------------------------------------------------------------

@@ -16,6 +16,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Helpers\ValidationHelper;
+use App\Helpers\EncryptionHelper;
 use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
@@ -78,7 +79,7 @@ class LoginController extends Controller
             $session->set('logged_in', true);
             $session->set('username', $username);
             $session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
-            $session->set('csrf_token', \bin2hex(\random_bytes(32)));
+            $session->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
             $session->set('timeout', time());
             $session->regenerate();
             return ResponseManager::redirect('/home');
