@@ -29,10 +29,8 @@ class PluginsController extends Controller
     public function handleRequest(): Response
     {
         $pluginsTableHtml = self::getPluginsTableHtml();
-        $hosts = \App\Models\HostsModel::getHosts();
         return Response::view('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
-            'hosts' => $hosts,
         ]);
     }
 
@@ -77,78 +75,8 @@ class PluginsController extends Controller
                 MessageHelper::addMessage($error);
             }
             return Response::redirect('/plupdate');
-        } elseif (isset($_POST['install_plugin'])) {
-            $pluginName = isset($_POST['plugin_name'])
-                ? ValidationHelper::validateSlug($_POST['plugin_name'])
-                : null;
-            $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
-
-            if ($pluginName === null || $domain === null) {
-                $error = 'Invalid plugin name or domain.';
-                ErrorManager::getInstance()->log($error);
-                MessageHelper::addMessage($error);
-                return Response::redirect('/plupdate');
-            }
-
-            $result = self::installPluginToDomain($pluginName, $domain);
-            MessageHelper::addMessage($result['message']);
-            return Response::redirect('/plupdate');
         }
         return Response::redirect('/plupdate');
-    }
-
-    /**
-     * Install a plugin to a specific domain via REST API.
-     *
-     * @param string $pluginName The plugin slug_version
-     * @param string $domain The target domain
-     * @return array{success: bool, message: string}
-     */
-    private static function installPluginToDomain(string $pluginName, string $domain): array
-    {
-        $pluginPath = PluginModel::$dir . '/' . basename($pluginName);
-        
-        if (!file_exists($pluginPath)) {
-            return ['success' => false, 'message' => 'Plugin file not found.'];
-        }
-        
-        // Get the API key for the domain
-        $conn = \App\Core\DatabaseManager::getConnection();
-        $keyEncrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
-        
-        if (!$keyEncrypted) {
-            return ['success' => false, 'message' => 'Domain not found in hosts table.'];
-        }
-        
-        $key = \App\Helpers\EncryptionHelper::decrypt($keyEncrypted);
-        
-        // Prepare the API request
-        $url = 'https://' . $domain . '/wp-json/vwpd/v1/plugins';
-        
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'X-API-Key: ' . $key,
-            ],
-            CURLOPT_POSTFIELDS => [
-                'package' => new \CURLFile($pluginPath, 'application/zip', basename($pluginName)),
-            ],
-            CURLOPT_TIMEOUT => 300,
-        ]);
-        
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        
-        if ($httpCode === 200) {
-            return ['success' => true, 'message' => 'Plugin installed successfully to ' . $domain];
-        } else {
-            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install plugin');
-            return ['success' => false, 'message' => 'Failed to install plugin to ' . $domain . ': ' . $errorMsg];
-        }
     }
 
     /**
@@ -160,13 +88,18 @@ class PluginsController extends Controller
         $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
         $version = $pluginName['version'];
         $pluginFile = $pluginName['slug'] . '_' . $version . '.zip';
+        $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
         return '<tr>
             <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
             <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
             <td>
-                <button class="pl-submit action-btn" type="button" onclick="openPluginActionModal(\'' .
-                    htmlspecialchars($pluginFile, ENT_QUOTES, 'UTF-8') . '\', \'' .
-                    htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '\')">Action</button>
+                <form method="POST" action="/plupdate" class="inline-action-form">
+                    <input type="hidden" name="csrf_token" value="' .
+                        htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8') . '">
+                    <input type="hidden" name="plugin_name" value="' .
+                        htmlspecialchars($pluginFile, ENT_QUOTES, 'UTF-8') . '">
+                    <button class="pl-submit red-button" type="submit" name="delete_plugin">Delete</button>
+                </form>
             </td>
         </tr>';
     }

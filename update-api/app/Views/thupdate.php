@@ -13,9 +13,6 @@
  */
 
 require_once __DIR__ . '/layouts/header.php';
-
-/** @var array<int, string> $hosts */
-$hosts = $hosts ?? [];
 ?>
 
 <div class="content-box">
@@ -43,37 +40,6 @@ $hosts = $hosts ?? [];
     </div>
   </div>
 </div>
-
-<!-- Action Modal -->
-<div id="actionModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeActionModal()">&times;</span>
-    <h2>Theme Action: <span id="modalThemeName"></span></h2>
-    <form id="actionForm" method="POST" action="/thupdate">
-      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-      <input type="hidden" name="theme_name" id="modalThemeFile">
-      
-      <div class="form-group">
-        <label for="domainSelect">Select Domain:</label>
-        <select name="domain" id="domainSelect" class="domain-select">
-          <option value="">-- Select Domain --</option>
-          <?php foreach ($hosts as $host): ?>
-            <option value="<?php echo htmlspecialchars($host, ENT_QUOTES, 'UTF-8'); ?>">
-              <?php echo htmlspecialchars($host, ENT_QUOTES, 'UTF-8'); ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      
-      <div class="modal-actions">
-        <button type="submit" name="delete_theme" class="red-button">Delete</button>
-        <button type="submit" name="install_theme" class="green-button">Install</button>
-        <button type="button" class="orange-button" onclick="closeActionModal()">Close</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 
 <script>
   Dropzone.autoDiscover = false;
@@ -106,32 +72,5 @@ $hosts = $hosts ?? [];
       }
     });
   });
-
-  /**
-   * Open the theme action modal and populate it with the selected theme's data.
-   *
-   * @param {string} themeFile - The theme directory/file identifier.
-   * @param {string} themeName - The human-readable theme name.
-   */
-  function openThemeActionModal(themeFile, themeName) {
-    document.getElementById('modalThemeFile').value = themeFile;
-    document.getElementById('modalThemeName').textContent = themeName;
-    document.getElementById('actionModal').style.display = 'block';
-  }
-
-  /**
-   * Hide the action modal.
-   */
-  function closeActionModal() {
-    document.getElementById('actionModal').style.display = 'none';
-  }
-
-  // Close modal when clicking outside of it
-  window.onclick = function(event) {
-    var modal = document.getElementById('actionModal');
-    if (event.target == modal) {
-      closeActionModal();
-    }
-  }
 </script>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

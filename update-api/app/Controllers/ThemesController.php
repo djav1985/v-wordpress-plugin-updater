@@ -29,10 +29,8 @@ class ThemesController extends Controller
     public function handleRequest(): Response
     {
         $themesTableHtml = self::getThemesTableHtml();
-        $hosts = \App\Models\HostsModel::getHosts();
         return Response::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
-            'hosts' => $hosts,
         ]);
     }
 
@@ -75,78 +73,8 @@ class ThemesController extends Controller
                 MessageHelper::addMessage($error);
             }
             return Response::redirect('/thupdate');
-        } elseif (isset($_POST['install_theme'])) {
-            $themeName = isset($_POST['theme_name'])
-                ? ValidationHelper::validateSlug($_POST['theme_name'])
-                : null;
-            $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
-
-            if ($themeName === null || $domain === null) {
-                $error = 'Invalid theme name or domain.';
-                ErrorManager::getInstance()->log($error);
-                MessageHelper::addMessage($error);
-                return Response::redirect('/thupdate');
-            }
-
-            $result = self::installThemeToDomain($themeName, $domain);
-            MessageHelper::addMessage($result['message']);
-            return Response::redirect('/thupdate');
         }
         return Response::redirect('/thupdate');
-    }
-
-    /**
-     * Install a theme to a specific domain via REST API.
-     *
-     * @param string $themeName The theme slug_version
-     * @param string $domain The target domain
-     * @return array{success: bool, message: string}
-     */
-    private static function installThemeToDomain(string $themeName, string $domain): array
-    {
-        $themePath = ThemeModel::$dir . '/' . basename($themeName);
-        
-        if (!file_exists($themePath)) {
-            return ['success' => false, 'message' => 'Theme file not found.'];
-        }
-        
-        // Get the API key for the domain
-        $conn = \App\Core\DatabaseManager::getConnection();
-        $keyEncrypted = $conn->fetchOne('SELECT key FROM hosts WHERE domain = ?', [$domain]);
-        
-        if (!$keyEncrypted) {
-            return ['success' => false, 'message' => 'Domain not found in hosts table.'];
-        }
-        
-        $key = \App\Helpers\EncryptionHelper::decrypt($keyEncrypted);
-        
-        // Prepare the API request
-        $url = 'https://' . $domain . '/wp-json/vwpd/v1/themes';
-        
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'X-API-Key: ' . $key,
-            ],
-            CURLOPT_POSTFIELDS => [
-                'package' => new \CURLFile($themePath, 'application/zip', basename($themeName)),
-            ],
-            CURLOPT_TIMEOUT => 300,
-        ]);
-        
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        
-        if ($httpCode === 200) {
-            return ['success' => true, 'message' => 'Theme installed successfully to ' . $domain];
-        } else {
-            $errorMsg = ValidationHelper::sanitizeErrorMessage($response, 'Failed to install theme');
-            return ['success' => false, 'message' => 'Failed to install theme to ' . $domain . ': ' . $errorMsg];
-        }
     }
 
     /**
@@ -158,13 +86,18 @@ class ThemesController extends Controller
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
         $themeFile = $theme['slug'] . '_' . $version . '.zip';
+        $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
         return '<tr>
              <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
              <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
              <td>
-                 <button class="th-submit action-btn" type="button" onclick="openThemeActionModal(\'' .
-                     htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . '\', \'' .
-                     htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '\')">Action</button>
+                 <form method="POST" action="/thupdate" class="inline-action-form">
+                     <input type="hidden" name="csrf_token" value="' .
+                         htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8') . '">
+                     <input type="hidden" name="theme_name" value="' .
+                         htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . '">
+                     <button class="th-submit red-button" type="submit" name="delete_theme">Delete</button>
+                 </form>
              </td>
          </tr>';
     }
