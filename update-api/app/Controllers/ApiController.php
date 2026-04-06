@@ -101,6 +101,13 @@ class ApiController extends Controller
         if ($hostRow) {
             $hostKey = EncryptionHelper::decrypt($hostRow['key']);
             if ($hostKey !== null && $hostKey === $key) {
+                // Migrate legacy CBC-encrypted key to AEAD on successful auth.
+                if (EncryptionHelper::needsMigration($hostRow['key'])) {
+                    $conn->executeStatement(
+                        'UPDATE hosts SET key = ? WHERE domain = ?',
+                        [EncryptionHelper::encrypt($hostKey), $domain]
+                    );
+                }
                 $table = $type === 'theme' ? 'themes' : 'plugins';
                 $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
                 if ($row) {

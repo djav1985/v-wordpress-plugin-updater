@@ -100,9 +100,9 @@ class ThemeModel
 
             if ($fileArray['size'][$i] > $maxUploadSize) {
                 $messages[] = 'Error uploading: '
-                . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
-                . '. File size exceeds the maximum allowed size of '
-                . ($maxUploadSize / (1024 * 1024)) . ' MB.';
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                    . '. File size exceeds the maximum allowed size of '
+                    . ($maxUploadSize / (1024 * 1024)) . ' MB.';
                 continue;
             }
 
@@ -113,6 +113,24 @@ class ThemeModel
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
                     . '. Only .zip files are allowed, and filenames must follow the format: theme-name_1.0.zip';
+                continue;
+            }
+
+            // Validate filename format before touching the filesystem.
+            if (!preg_match('/^(.+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
+                $messages[] = 'Error uploading: '
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                    . '. Only .zip files are allowed, and filenames must follow the format: theme-name_1.0.zip';
+                continue;
+            }
+
+            $slug    = $matches[1];
+            $version = $matches[2];
+
+            if ($current && version_compare($version, $current, '<=')) {
+                $messages[] = 'Error uploading: '
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                    . '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
                 continue;
             }
 
@@ -132,39 +150,42 @@ class ThemeModel
                 continue;
             }
 
-            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
-                $slug = $matches[1];
-                $version = $matches[2];
-                if ($current && version_compare($version, $current, '<=')) {
-                    $messages[] = 'Error uploading: '
-                        . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
-                        . '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
-                    continue;
-                }
-                // Remove old theme files
-                $existingThemes = glob(self::$dir . '/' . $themeSlug . '_*');
+            // Save to a temporary file in the target directory first.
+            $tempPath  = self::$dir . '/' . uniqid('tmp_upload_', true) . '.zip';
+            $finalPath = self::$dir . '/' . $fileName;
+
+            if (!move_uploaded_file($fileTmp, $tempPath)) {
+                $messages[] = 'Error uploading: '
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
+                continue;
+            }
+
+            // Atomic rename into the final filename.
+            if (!rename($tempPath, $finalPath)) {
+                @unlink($tempPath);
+                $messages[] = 'Error uploading: '
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
+                continue;
+            }
+
+            // Only after a successful rename: delete superseded files and upsert DB.
+            $existingThemes = glob(self::$dir . '/' . $themeSlug . '_*');
+            if ($existingThemes !== false) {
                 foreach ($existingThemes as $theme) {
-                    if (is_file($theme)) {
+                    if (is_file($theme) && $theme !== $finalPath) {
                         unlink($theme);
                     }
                 }
             }
 
-            $themePath = self::$dir . '/' . $fileName;
-            if (move_uploaded_file($fileTmp, $themePath)) {
-                if (isset($slug) && isset($version)) {
-                    $conn->executeStatement(
-                        'INSERT INTO themes (slug, version) VALUES (?, ?) '
-                        . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                        [$slug, $version]
-                    );
-                }
-                $messages[] = htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
-                    . ' uploaded successfully.';
-            } else {
-                $messages[] = 'Error uploading: '
-                . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
-            }
+            $conn->executeStatement(
+                'INSERT INTO themes (slug, version) VALUES (?, ?) '
+                . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                [$slug, $version]
+            );
+
+            $messages[] = htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                . ' uploaded successfully.';
         }
 
         return $messages;

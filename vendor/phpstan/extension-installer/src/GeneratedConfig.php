@@ -21,12 +21,16 @@ final class GeneratedConfig
         0 => 'extension.neon',
       ),
     ),
-    'version' => 'v1.3.5',
+    'version' => 'v2.0.3',
+    'phpstanVersionConstraint' => '>=2.0.0.0-dev, <3.0.0.0-dev',
   ),
 );
 
 	public const NOT_INSTALLED = array (
 );
+
+	/** @var string|null */
+	public const PHPSTAN_VERSION_CONSTRAINT = '>=2.0.0.0-dev, <3.0.0.0-dev';
 
 	private function __construct()
 	{

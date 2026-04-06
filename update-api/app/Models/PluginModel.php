@@ -82,7 +82,7 @@ class PluginModel
             $fileName = isset($fileArray['name'][$i]) ? ValidationHelper::validateFilename($fileArray['name'][$i]) : '';
             $fileTmp = isset($fileArray['tmp_name'][$i]) ? $fileArray['tmp_name'][$i] : '';
             $fileError = isset($fileArray['error'][$i]) ? filter_var($fileArray['error'][$i], FILTER_VALIDATE_INT) : UPLOAD_ERR_NO_FILE;
-            
+
             // Use the original filename for error messages if validation failed
             if (isset($fileArray['name'][$i])) {
                 if (is_array($fileArray['name'])) {
@@ -115,6 +115,22 @@ class PluginModel
                 continue;
             }
 
+            // Validate filename format before touching the filesystem.
+            if (!$fileName || !preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
+                    '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
+                continue;
+            }
+
+            $slug    = $matches[1];
+            $version = $matches[2];
+
+            if ($current && version_compare($version, $current, '<=')) {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
+                    '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
+                continue;
+            }
+
             if (class_exists('\\ZipArchive')) {
                 $za = new \ZipArchive();
                 if ($za->open($fileTmp) !== true) {
@@ -129,38 +145,39 @@ class PluginModel
                 continue;
             }
 
-            if ($fileName && preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
-                $slug = $matches[1];
-                $version = $matches[2];
-                if ($current && version_compare($version, $current, '<=')) {
-                    $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
-                        '. Uploaded version (' . $version . ') is not newer than current version (' . $current . ').';
-                    continue;
-                }
-                // Remove old plugin files
-                $existingPlugins = glob(self::$dir . '/' . $pluginSlug . '_*');
+            // Save to a temporary file in the target directory first.
+            $tempPath  = self::$dir . '/' . uniqid('tmp_upload_', true) . '.zip';
+            $finalPath = self::$dir . '/' . $fileName;
+
+            if (!move_uploaded_file($fileTmp, $tempPath)) {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
+                continue;
+            }
+
+            // Atomic rename into the final filename.
+            if (!rename($tempPath, $finalPath)) {
+                @unlink($tempPath);
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
+                continue;
+            }
+
+            // Only after a successful rename: delete superseded files and upsert DB.
+            $existingPlugins = glob(self::$dir . '/' . $pluginSlug . '_*');
+            if ($existingPlugins !== false) {
                 foreach ($existingPlugins as $plugin) {
-                    if (is_file($plugin)) {
+                    if (is_file($plugin) && $plugin !== $finalPath) {
                         unlink($plugin);
                     }
                 }
             }
 
-            if ($fileName) {
-                $pluginPath = self::$dir . '/' . $fileName;
-                if (move_uploaded_file($fileTmp, $pluginPath)) {
-                    if (isset($slug) && isset($version)) {
-                        $conn->executeStatement(
-                            'INSERT INTO plugins (slug, version) VALUES (?, ?) '
-                            . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                            [$slug, $version]
-                        );
-                    }
-                    $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
-                } else {
-                    $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
-                }
-            }
+            $conn->executeStatement(
+                'INSERT INTO plugins (slug, version) VALUES (?, ?) '
+                . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                [$slug, $version]
+            );
+
+            $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
         }
 
         return $messages;

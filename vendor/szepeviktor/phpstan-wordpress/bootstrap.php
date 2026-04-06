@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-// phpcs:disable Squiz.PHP.DiscouragedFunctions,NeutronStandard.Constants.DisallowDefine
+// phpcs:disable Generic.PHP.ForbiddenFunctions.Found
 
 // There are no core functions to read these constants.
-define('ABSPATH', './');
+define('ABSPATH', '/');
+define('WP_CONTENT_DIR', sprintf('%swp-content', ABSPATH));
+define('WP_PLUGIN_DIR', sprintf('%s/plugins', WP_CONTENT_DIR));
+define('WPMU_PLUGIN_DIR', sprintf('%s/mu-plugins', WP_CONTENT_DIR));
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
-define('WP_DEBUG_DISPLAY', true);
-define('WP_PLUGIN_DIR', './');
-define('WPMU_PLUGIN_DIR', './');
-define('EMPTY_TRASH_DAYS', 30 * 86400);
+define('WP_DEBUG_DISPLAY', false);
+define('EMPTY_TRASH_DAYS', 30);
 define('SCRIPT_DEBUG', false);
-define('WP_LANG_DIR', './');
-define('WP_CONTENT_DIR', './');
+define('WP_LANG_DIR', sprintf('%s/languages', WP_CONTENT_DIR));
+define('COOKIE_DOMAIN', '');
 
 // Constants for expressing human-readable intervals.
 define('MINUTE_IN_SECONDS', 60);
@@ -29,6 +30,10 @@ define('KB_IN_BYTES', 1024);
 define('MB_IN_BYTES', 1024 * KB_IN_BYTES);
 define('GB_IN_BYTES', 1024 * MB_IN_BYTES);
 define('TB_IN_BYTES', 1024 * GB_IN_BYTES);
+define('PB_IN_BYTES', 1024 * TB_IN_BYTES);
+define('EB_IN_BYTES', 1024 * PB_IN_BYTES);
+define('ZB_IN_BYTES', 1024 * EB_IN_BYTES);
+define('YB_IN_BYTES', 1024 * ZB_IN_BYTES);
 
 // wpdb method parameters.
 define('OBJECT', 'OBJECT');
@@ -61,8 +66,4 @@ define('EP_ALL_ARCHIVES', EP_DATE | EP_YEAR | EP_MONTH | EP_DAY | EP_CATEGORIES 
 define('EP_ALL', EP_PERMALINK | EP_ATTACHMENT | EP_ROOT | EP_COMMENTS | EP_SEARCH | EP_PAGES | EP_ALL_ARCHIVES);
 
 // Templating-related WordPress constants.
-// phpcs:ignore WordPress.WP.DiscouragedConstants.STYLESHEETPATHDeclarationFound
-define('STYLESHEETPATH', '/app/wp-content/themes/child/');
-// phpcs:ignore WordPress.WP.DiscouragedConstants.TEMPLATEPATHDeclarationFound
-define('TEMPLATEPATH', '/app/wp-content/themes/parent/');
 define('WP_DEFAULT_THEME', 'twentytwentythree');
