@@ -18,12 +18,17 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use App\Core\Router;
 use App\Core\ErrorManager;
 use App\Core\SessionManager;
-use function random_bytes;
 
 $session = SessionManager::getInstance();
 $session->start();
 if (!$session->get('csrf_token')) {
-    $session->set('csrf_token', bin2hex(random_bytes(32)));
+    $isStrong = false;
+    $bytes = openssl_random_pseudo_bytes(32, $isStrong);
+    if ($bytes === false || $isStrong !== true) {
+        throw new RuntimeException('Unable to generate cryptographically secure CSRF token bytes.');
+    }
+
+    $session->set('csrf_token', bin2hex($bytes));
 }
 
 ErrorManager::handle(function (): void {

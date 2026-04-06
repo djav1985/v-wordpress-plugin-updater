@@ -53,7 +53,12 @@ class ValidationHelper
      */
     public static function generateKey(int $length = 32): string
     {
-        $bytes = \random_bytes((int) ceil($length / 2));
+        $isStrong = false;
+        $bytes = openssl_random_pseudo_bytes((int) ceil($length / 2), $isStrong);
+        if ($bytes === false || $isStrong !== true) {
+            throw new \RuntimeException('Unable to generate cryptographically secure key bytes.');
+        }
+
         return substr(bin2hex($bytes), 0, $length);
     }
 

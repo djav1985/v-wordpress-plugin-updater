@@ -45,17 +45,23 @@ try {
     $plugins = $schema->createTable('plugins');
     $plugins->addColumn('slug', 'text');
     $plugins->addColumn('version', 'text');
-    $plugins->setPrimaryKey(['slug']); // @phpstan-ignore-line
+    $plugins->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
+    );
 
     $themes = $schema->createTable('themes');
     $themes->addColumn('slug', 'text');
     $themes->addColumn('version', 'text');
-    $themes->setPrimaryKey(['slug']); // @phpstan-ignore-line
+    $themes->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
+    );
 
     $hosts = $schema->createTable('hosts');
     $hosts->addColumn('domain', 'text');
     $hosts->addColumn('key', 'text');
-    $hosts->setPrimaryKey(['domain']); // @phpstan-ignore-line
+    $hosts->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('domain')->create()
+    );
 
     $logs = $schema->createTable('logs');
     $logs->addColumn('domain', 'text');
@@ -68,7 +74,9 @@ try {
     $blacklist->addColumn('login_attempts', 'integer');
     $blacklist->addColumn('blacklisted', 'integer');
     $blacklist->addColumn('timestamp', 'integer');
-    $blacklist->setPrimaryKey(['ip']); // @phpstan-ignore-line
+    $blacklist->addPrimaryKeyConstraint(
+        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('ip')->create()
+    );
 
     foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
         $conn->executeStatement($sql);

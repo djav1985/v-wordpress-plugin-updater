@@ -394,8 +394,11 @@ class Response
      * @param string $contentType MIME type sent as Content-Type header.
      * @param int    $statusCode  HTTP status code (default 200).
      */
-    public static function file(string $filePath, string $contentType = 'application/octet-stream', int $statusCode = 200): self
-    {
+    public static function file(
+        string $filePath,
+        string $contentType = 'application/octet-stream',
+        int $statusCode = 200
+    ): self {
         return (new self($statusCode, ['Content-Type' => $contentType]))->withFile($filePath);
     }
 
