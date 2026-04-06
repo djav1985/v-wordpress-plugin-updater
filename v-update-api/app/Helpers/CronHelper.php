@@ -31,26 +31,61 @@ class CronHelper
 
         $conn = DatabaseManager::getConnection();
 
-        self::syncDir(PLUGINS_DIR, 'plugins', $conn);
-        self::syncDir(THEMES_DIR, 'themes', $conn);
+        self::syncPluginsDir(PLUGINS_DIR, $conn);
+        self::syncThemesDir(THEMES_DIR, $conn);
         self::cleanupBlacklist($conn);
 
         echo "Cron job completed successfully.\n";
     }
 
     /**
-     * Sync ZIP artifacts in a directory into the given table, keeping only discovered slugs.
+     * Sync ZIP artifacts in plugins directory into plugins table.
      */
-    private static function syncDir(string $dir, string $table, Connection $conn): void
+    private static function syncPluginsDir(string $dir, Connection $conn): void
     {
+        self::syncDir(
+            $dir,
+            $conn,
+            'INSERT INTO plugins (slug, version) VALUES (?, ?) ' .
+            'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+            'SELECT slug FROM plugins',
+            'DELETE FROM plugins WHERE slug = ?'
+        );
+    }
+
+    /**
+     * Sync ZIP artifacts in themes directory into themes table.
+     */
+    private static function syncThemesDir(string $dir, Connection $conn): void
+    {
+        self::syncDir(
+            $dir,
+            $conn,
+            'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
+            'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+            'SELECT slug FROM themes',
+            'DELETE FROM themes WHERE slug = ?'
+        );
+    }
+
+    /**
+     * Shared ZIP directory synchronization logic using explicit SQL statements.
+     */
+    private static function syncDir(
+        string $dir,
+        Connection $conn,
+        string $upsertSql,
+        string $selectSlugsSql,
+        string $deleteSlugSql
+    ): void {
         if (!is_dir($dir) || !is_readable($dir)) {
-            error_log(sprintf('CronHelper::syncDir cannot read directory "%s" for table "%s".', $dir, $table));
+            error_log(sprintf('CronHelper::syncDir cannot read directory "%s".', $dir));
             return;
         }
 
         $files = glob($dir . '/*.zip');
         if ($files === false) {
-            error_log(sprintf('CronHelper::syncDir glob() failed for directory "%s" and table "%s".', $dir, $table));
+            error_log(sprintf('CronHelper::syncDir glob() failed for directory "%s".', $dir));
             return;
         }
 
@@ -61,17 +96,14 @@ class CronHelper
                 $slug = $matches[1];
                 $version = $matches[2];
                 $found[$slug] = true;
-                $conn->executeStatement(
-                    "INSERT INTO $table (slug, version) VALUES (?, ?) " .
-                    "ON CONFLICT(slug) DO UPDATE SET version = excluded.version",
-                    [$slug, $version]
-                );
+                $conn->executeStatement($upsertSql, [$slug, $version]);
             }
         }
-        $rows = $conn->fetchAllAssociative("SELECT slug FROM $table");
+
+        $rows = $conn->fetchAllAssociative($selectSlugsSql);
         foreach ($rows as $row) {
             if (!isset($found[$row['slug']])) {
-                $conn->executeStatement("DELETE FROM $table WHERE slug = ?", [$row['slug']]);
+                $conn->executeStatement($deleteSlugSql, [$row['slug']]);
             }
         }
     }

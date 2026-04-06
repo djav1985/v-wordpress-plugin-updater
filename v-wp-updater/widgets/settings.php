@@ -28,6 +28,12 @@ function vwpu_widget_settings_display(): void {
 			return;
 	}
 
+		$last_update_status = get_transient( 'vwpu_widget_status_message' );
+	if ( is_string( $last_update_status ) && '' !== $last_update_status ) {
+		echo '<div class="notice notice-info"><p>' . esc_html( $last_update_status ) . '</p></div>';
+		delete_transient( 'vwpu_widget_status_message' );
+	}
+
 		$masked_fields = array(
 			'update_key',
 		);

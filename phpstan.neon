@@ -2,13 +2,13 @@ parameters:
   level: 6
   paths:
     - v-wp-updater
-    - update-api
+    - v-update-api
   excludePaths:
-    - update-api/vendor
-    - update-api/vendor/*
+    - v-update-api/vendor
+    - v-update-api/vendor/*
   bootstrapFiles:
     - .github/phpstan-bootstrap.php
-    - update-api/vendor/autoload.php
+    - v-update-api/vendor/autoload.php
 
   # Optional: silence WP globals noise you don’t care about
   ignoreErrors:

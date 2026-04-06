@@ -104,7 +104,7 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 		// this file directly, skipping a second HTTP request for the archive.
 
 		// Validate slug before using it in a file path to prevent traversal.
-		if ( 1 !== preg_match( '/^[a-zA-Z0-9_\-]+$/', $item['slug'] ) ) {
+		if ( 1 !== preg_match( '/^[a-zA-Z0-9._\-]+$/', $item['slug'] ) ) {
 			$this->log_debug( 'Rejected slug with unsafe characters: ' . $item['slug'] );
 			return array( 'status' => 'error' );
 		}

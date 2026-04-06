@@ -27,6 +27,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 abstract class AbstractRemoteUpdater {
 
 	/**
+	 * Transient key used to display last updater status in the dashboard widget.
+	 */
+	private const STATUS_TRANSIENT_KEY = 'vwpu_widget_status_message';
+
+	/**
 	 * Run updates for the configured resource type.
 	 *
 	 * @return void
@@ -65,8 +70,9 @@ abstract class AbstractRemoteUpdater {
 
 		update_option( $this->get_status_option_name(), $update_successful );
 
-		$message = $update_successful ? $this->get_success_message() : $this->get_error_message();
-		set_transient( 'vontmnt_widget_status_message', $message, 30 );
+		$message    = $update_successful ? $this->get_success_message() : $this->get_error_message();
+		$expiration = defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400;
+		set_transient( self::STATUS_TRANSIENT_KEY, $message, $expiration );
 	}
 
 	/**

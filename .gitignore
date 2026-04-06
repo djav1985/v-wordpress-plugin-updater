@@ -1,8 +1,8 @@
 # Ignore files and directories that should not be tracked by Git
 .vscode/
-update-api/storage/BLACKLIST.json
-update-api/storage/logs/
-update-api/storage/*.sqlite
+v-update-api/storage/BLACKLIST.json
+v-update-api/storage/logs/
+v-update-api/storage/*.sqlite
 node_modules/
 .phpunit.result.cache
 .phpunit.cache/

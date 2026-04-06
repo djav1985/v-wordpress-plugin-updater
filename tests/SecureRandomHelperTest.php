@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../update-api/vendor/autoload.php';
-
 use App\Helpers\EncryptionHelper;
 use PHPUnit\Framework\TestCase;
 

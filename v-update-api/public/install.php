@@ -42,49 +42,62 @@ try {
 
     $conn = DatabaseManager::getConnection();
     $schema = new Schema();
+    $schemaManager = $conn->createSchemaManager();
+    $existingTables = array_map('strtolower', $schemaManager->listTableNames());
+    $existingTableMap = array_fill_keys($existingTables, true);
 
     echo "Creating tables...<br>";
     flush();
-    $plugins = $schema->createTable('plugins');
-    $plugins->addColumn('slug', 'text');
-    $plugins->addColumn('version', 'text');
-    $plugins->addPrimaryKeyConstraint(
-        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
-    );
+    if (!isset($existingTableMap['plugins'])) {
+        $plugins = $schema->createTable('plugins');
+        $plugins->addColumn('slug', 'text');
+        $plugins->addColumn('version', 'text');
+        $plugins->addPrimaryKeyConstraint(
+            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
+        );
+    }
 
-    $themes = $schema->createTable('themes');
-    $themes->addColumn('slug', 'text');
-    $themes->addColumn('version', 'text');
-    $themes->addPrimaryKeyConstraint(
-        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
-    );
+    if (!isset($existingTableMap['themes'])) {
+        $themes = $schema->createTable('themes');
+        $themes->addColumn('slug', 'text');
+        $themes->addColumn('version', 'text');
+        $themes->addPrimaryKeyConstraint(
+            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
+        );
+    }
 
-    $hosts = $schema->createTable('hosts');
-    $hosts->addColumn('domain', 'text');
-    $hosts->addColumn('key', 'text');
-    $hosts->addPrimaryKeyConstraint(
-        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('domain')->create()
-    );
+    if (!isset($existingTableMap['hosts'])) {
+        $hosts = $schema->createTable('hosts');
+        $hosts->addColumn('domain', 'text');
+        $hosts->addColumn('key', 'text');
+        $hosts->addPrimaryKeyConstraint(
+            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('domain')->create()
+        );
+    }
 
-    $logs = $schema->createTable('logs');
-    $logs->addColumn('domain', 'text');
-    $logs->addColumn('type', 'text');
-    $logs->addColumn('date', 'text');
-    $logs->addColumn('status', 'text');
+    if (!isset($existingTableMap['logs'])) {
+        $logs = $schema->createTable('logs');
+        $logs->addColumn('domain', 'text');
+        $logs->addColumn('type', 'text');
+        $logs->addColumn('date', 'text');
+        $logs->addColumn('status', 'text');
+    }
 
-    $blacklist = $schema->createTable('blacklist');
-    $blacklist->addColumn('ip', 'text');
-    $blacklist->addColumn('login_attempts', 'integer');
-    $blacklist->addColumn('blacklisted', 'integer');
-    $blacklist->addColumn('timestamp', 'integer');
-    $blacklist->addPrimaryKeyConstraint(
-        PrimaryKeyConstraint::editor()->setUnquotedColumnNames('ip')->create()
-    );
+    if (!isset($existingTableMap['blacklist'])) {
+        $blacklist = $schema->createTable('blacklist');
+        $blacklist->addColumn('ip', 'text');
+        $blacklist->addColumn('login_attempts', 'integer');
+        $blacklist->addColumn('blacklisted', 'integer');
+        $blacklist->addColumn('timestamp', 'integer');
+        $blacklist->addPrimaryKeyConstraint(
+            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('ip')->create()
+        );
+    }
 
     foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
         $conn->executeStatement($sql);
     }
-    echo "<span class='success'>Database tables created.</span><br>";
+    echo "<span class='success'>Database tables ensured.</span><br>";
     flush();
 
     // Import hosts file if it exists
@@ -178,15 +191,28 @@ try {
             echo "Importing $file...<br>";
             flush();
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $importedCount = 0;
+            $malformedCount = 0;
             foreach ($lines as $line) {
-                list($domain, $date, $status) = explode(' ', $line, 3);
+                $parts = explode(' ', trim($line), 3);
+                if (count($parts) !== 3 || $parts[0] === '' || $parts[1] === '' || $parts[2] === '') {
+                    $malformedCount++;
+                    continue;
+                }
+
+                [$domain, $date, $status] = $parts;
                 $conn->executeStatement(
                     'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                     [$domain, $type, $date, $status]
                 );
+                $importedCount++;
             }
             unlink($path);
-            echo "<span class='success'>$file imported.</span><br>";
+            echo "<span class='success'>$file imported (rows: "
+                . $importedCount
+                . ", malformed skipped: "
+                . $malformedCount
+                . ").</span><br>";
             flush();
         }
     }

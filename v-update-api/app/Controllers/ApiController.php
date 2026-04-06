@@ -133,8 +133,11 @@ class ApiController extends Controller
             );
         }
 
-        $table = $type === 'theme' ? 'themes' : 'plugins';
-        $row = $conn->fetchAssociative("SELECT version FROM $table WHERE slug = ?", [$slug]);
+        if ($type === 'theme') {
+            $row = $conn->fetchAssociative('SELECT version FROM themes WHERE slug = ?', [$slug]);
+        } else {
+            $row = $conn->fetchAssociative('SELECT version FROM plugins WHERE slug = ?', [$slug]);
+        }
         if ($row === false) {
             ErrorManager::getInstance()->log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
             return new ResponseManager(404);

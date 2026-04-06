@@ -151,19 +151,31 @@ class SessionManager
      *
      * Returns true when the session is valid and the user is authenticated.
      * Returns false when the session is invalid (caller should redirect to login).
-     * When the remote IP is blacklisted (403), logs the attempt and returns false.
      *
      * @return bool True if authenticated, false otherwise.
      */
     public function requireAuth(): bool
     {
+        return $this->isValid();
+    }
+
+    /**
+     * Determine whether the current request originates from a blacklisted IP.
+     *
+     * @return bool True when remote IP is valid and blacklisted.
+     */
+    public function isBlacklistedRequest(): bool
+    {
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
-        if ($ip && BlacklistModel::isBlacklisted($ip)) {
-            http_response_code(403);
-            ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
+        if (!$ip) {
             return false;
         }
 
-        return $this->isValid();
+        if (BlacklistModel::isBlacklisted($ip)) {
+            ErrorManager::getInstance()->log("Blacklisted IP attempted access: $ip", 'error');
+            return true;
+        }
+
+        return false;
     }
 }

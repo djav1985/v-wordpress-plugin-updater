@@ -77,7 +77,14 @@ class Router
                     $isApi = str_starts_with($uri, '/api');
 
                     if ($uri !== '/login' && !$isApi) {
-                        if (!SessionManager::getInstance()->requireAuth()) {
+                        $session = SessionManager::getInstance();
+
+                        if ($session->isBlacklistedRequest()) {
+                            $this->sendResponse(new ResponseManager(403));
+                            return;
+                        }
+
+                        if (!$session->requireAuth()) {
                             $this->sendResponse(ResponseManager::redirect('/login'));
                             return;
                         }

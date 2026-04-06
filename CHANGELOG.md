@@ -8,11 +8,11 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 ## 4.5.0
 - Upgraded `nikic/fast-route` to `2.0.0-beta1` and aligned `Router` with the v2 configuration interface.
 - Raised minimum PHP requirements to match the current dependency set:
-  - `update-api` now declares PHP 8.2+ to align with Doctrine DBAL 4.x.
+  - `v-update-api` now declares PHP 8.2+ to align with Doctrine DBAL 4.x.
   - README now distinguishes the API server PHP 8.2+ requirement from the WordPress plugin PHP 8.0+ requirement.
 - Refactored cron execution flow:
   - Moved cron orchestration into `CronHelper::runCronJob()` and made internal sync/cleanup methods private.
-  - Simplified `update-api/cron.php` to CLI-only execution that delegates directly to `CronHelper::runCronJob()`.
+  - Simplified `v-update-api/cron.php` to CLI-only execution that delegates directly to `CronHelper::runCronJob()`.
   - Removed obsolete lock/worker helper usage and deleted `WorkerHelper`.
 - Consolidated secure random-byte generation into `EncryptionHelper::bytes()`:
   - Deleted `SecureRandomHelper` and updated consumers (`EncryptionHelper`, `LoginController`, `public/index.php`) to use the centralized helper.
@@ -34,10 +34,10 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
   - `CronHelper::syncDir` now guards unreadable/missing directories and `glob()` failures, logs sync-read failures, and exits safely without deleting existing records when scanning cannot proceed.
   - Added regression tests for upload payload normalization in `PluginModelDbTest`/`ThemeModelDbTest` and sync-read failure behavior in `CronHelperTest`.
 - Hardened host onboarding and key storage paths:
-  - `update-api/public/install.php` now defensively parses `HOSTS` imports, skips/records malformed records, validates domains, normalizes plaintext/legacy keys into the expected encrypted storage format, and logs normalization summaries for traceability.
+  - `v-update-api/public/install.php` now defensively parses `HOSTS` imports, skips/records malformed records, validates domains, normalizes plaintext/legacy keys into the expected encrypted storage format, and logs normalization summaries for traceability.
   - `HostsModel::updateEntry` now uses `UPDATE` instead of `REPLACE INTO` to avoid delete+insert side effects while preserving encrypted key storage behavior.
   - Added `tests/HostsModelTest.php` regression coverage for update-in-place behavior, missing-domain failures, and foreign-key-safe host updates.
-- Removed the unused `Controller::render()` helper from `update-api/app/Core/Controller.php` to reduce view-render attack surface and keep rendering centralized in `Router::sendResponse`.
+- Removed the unused `Controller::render()` helper from `v-update-api/app/Core/Controller.php` to reduce view-render attack surface and keep rendering centralized in `Router::sendResponse`.
 - Refined Update API failure semantics and lockout accounting:
   - `ApiController` now returns `400` for malformed input, `403` only for authentication failures, `204` for no-update responses, and `404` for authenticated unknown slugs.
   - Blacklist increments now occur only for credential/auth failures (e.g., unknown domain or wrong key), not malformed requests or authenticated unknown slugs.
@@ -52,8 +52,8 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 - Unified updater status options to canonical `vwpu_*` keys (`vwpu_plugin_update_status`, `vwpu_theme_update_status`) across updater services, activation defaults, and uninstall cleanup.
 - Added activation-time migration from legacy status keys (`vontmnt-*`, `vwpu-*` hyphen variants) to canonical status keys so existing installs retain prior status data.
 - Hardened deactivation/uninstall execution by validating `uninstall.php` existence, guarding helper calls with `function_exists(...)`, and logging structured errors while safely continuing.
-- Renamed `update-api/app/Core/Response.php` to `update-api/app/Core/ResponseManager.php` and updated all controller/router/test references accordingly.
-- Moved CSRF token initialization into the `ErrorManager::handle(...)` request callback in `update-api/public/index.php` so token generation exceptions are handled through the centralized error pathway.
+- Renamed `v-update-api/app/Core/Response.php` to `v-update-api/app/Core/ResponseManager.php` and updated all controller/router/test references accordingly.
+- Moved CSRF token initialization into the `ErrorManager::handle(...)` request callback in `v-update-api/public/index.php` so token generation exceptions are handled through the centralized error pathway.
 - Hardened database bootstrap in `DatabaseManager` by using least-privilege directory permissions (`0750`), validating `mkdir`/`touch` outcomes, and throwing/logging controlled runtime exceptions with context when file-system setup fails.
 - Updated `/api` routing semantics so `/api` is always treated as an API route (no auth redirect fallback) and returns consistent API status behavior (`400` validation errors, `403` auth failure, `405` method mismatch).
 - Simplified cron execution by removing worker mode (`--worker`/`worker`) and documenting single-run daily cron scheduling.
@@ -68,7 +68,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
   - `Response::send` now suppresses raw `readfile` warnings, logs failures, and follows a controlled `500` fallback path for unreadable files.
 - Dependency follow-up (`nikic/fast-route`):
   - Reviewed upgrade path from `v1.3.0` to `2.0.0-beta1` (composer dry-run succeeds but targets a beta line and introduces `psr/simple-cache`).
-  - Deferred immediate upgrade and added explicit migration tracking in `README.md` and `update-api/docs/dependency-tracking.md` (ticket `DEP-001`).
+  - Deferred immediate upgrade and added explicit migration tracking in `README.md` and `v-update-api/docs/dependency-tracking.md` (ticket `DEP-001`).
   - Constrained FastRoute usage behind `App\Core\RouteDispatcherFactory` to reduce migration surface for the eventual v2 adoption.
 - **Aligned update-check contract (Option A):** Unified the request/response protocol used between
   the WordPress client plugin and the Update API server.
@@ -84,7 +84,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
     branches, WP_Error handling, and a regression test proving a valid request reaches the
     install path.
   - Updated `v-wp-updater/api/API_SCHEMA.md` with the canonical update-check endpoint contract.
-- Updated `update-api/cron.php` to accept the positional `worker` argument, reject unknown CLI options, and propagate non-zero exit codes when cron work fails via `ErrorManager`.
+- Updated `v-update-api/cron.php` to accept the positional `worker` argument, reject unknown CLI options, and propagate non-zero exit codes when cron work fails via `ErrorManager`.
 - Added integration tests covering worker invocation, argument validation, and CLI error handling, plus lightweight mu-plugin fixtures required for the suite.
 - **Updated README.md to match current codebase**: Replaced all references to obsolete `mu-plugin/` directory with `v-wp-updater/`. Updated project structure documentation to reflect dual-component architecture (Update API Server + WordPress Client Plugin). Removed references to non-existent files (HOSTS, autoload.php) and controllers (AccountsController, InfoController, UsersController). Added documentation for SiteLogsController and cron.php with worker mode. Updated installation and usage sections with accurate paths and separate setup procedures for API server and client plugin.
 - Removed legacy key-exchange workflow; clients now use a stored API key.

@@ -3,7 +3,7 @@
 ## Architecture Overview
 
 This is a **dual-component WordPress updater system**:
-1. **Update API Server** (`update-api/`): A standalone PHP web service that hosts and serves plugin/theme updates
+1. **Update API Server** (`v-update-api/`): A standalone PHP web service that hosts and serves plugin/theme updates
 2. **WordPress Client Plugin** (`v-wp-updater/`): WordPress plugin that checks for and installs updates from the API server
 
 Both components are independently deployable—the API runs on a web server, the client installs in WordPress sites.
@@ -13,7 +13,7 @@ Both components are independently deployable—the API runs on a web server, the
 **Separate Namespaces**: `App\` (API server) vs `VWPU\` (WordPress plugin)—never mix them.
 
 **Unified Framework Architecture**:
-The `update-api/` application uses patterns shared across similar projects:
+The `v-update-api/` application uses patterns shared across similar projects:
 - **SessionManager**: Singleton with CSRF management, timeout tracking, IP blacklisting (7 days blocked, 3 days unblocked)
 - **ResponseManager**: Fluent API with static factory methods (`ResponseManager::view()`, `ResponseManager::redirect()`, `ResponseManager::text()`, `ResponseManager::json()`, `ResponseManager::file()`, `ResponseManager::html()`)
 - **Controller**: Base class for inheritance; all handlers return ResponseManager objects (never echo/exit)
@@ -21,7 +21,7 @@ The `update-api/` application uses patterns shared across similar projects:
 - **Router**: Receives pre-parsed path; uses FastRoute dispatcher; enforces authentication except `/login` (and `/api` for public API access)
 
 **Architecture Differences** (intentional, domain-specific):
-- **update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment for serving plugin/theme updates
+- **v-update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment for serving plugin/theme updates
 - **v-wp-updater**: WordPress plugin that consumes the update API; manages scheduled checks and WP upgrader integration
 
 **Database Strategy**: 
@@ -42,7 +42,7 @@ The `update-api/` application uses patterns shared across similar projects:
 ## Entry Point & Routing Design
 
 ### public/index.php - Best Practices
-The `update-api/public/index.php` follows this pattern:
+The `v-update-api/public/index.php` follows this pattern:
 ```php
 require_once __DIR__ . '/../config.php';              // Absolute __DIR__ paths (not relative ../)
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -82,7 +82,7 @@ vendor/bin/phpunit tests/RouterTest.php  # Single test
 
 ### Code Quality Checks
 ```powershell
-vendor/bin/phpcs             # Check all (separate rules: PSR12 for update-api/, WordPress-Core for v-wp-updater/)
+vendor/bin/phpcs             # Check all (separate rules: PSR12 for v-update-api/, WordPress-Core for v-wp-updater/)
 vendor/bin/phpcbf            # Auto-fix formatting
 vendor/bin/phpstan           # Static analysis (level 6)
 ```
@@ -90,14 +90,14 @@ vendor/bin/phpstan           # Static analysis (level 6)
 
 ### Cron Job (Required)
 ```powershell
-php update-api/cron.php      # Manual sync
-php update-api/cron.php --worker  # Background worker mode
+php v-update-api/cron.php      # Manual sync
+php v-update-api/cron.php --worker  # Background worker mode
 ```
 **Purpose**: Syncs plugin/theme ZIPs from filesystem to database, cleans blacklist. Must run regularly (system cron) or database becomes stale.
 
 ### Database Initialization
 ```powershell
-cd update-api/public; php install.php  # Creates schema in storage/updater.sqlite
+cd v-update-api/public; php install.php  # Creates schema in storage/updater.sqlite
 ```
 Run after cloning repo or when adding new tables. File must be writable by web server.
 
@@ -225,13 +225,13 @@ $session->regenerate();
 ## Common Patterns
 
 ### Server Setup
-1. Set `update-api/public/` as web server document root
-2. Configure `update-api/config.php`:
+1. Set `v-update-api/public/` as web server document root
+2. Configure `v-update-api/config.php`:
    - `VALID_USERNAME`, `VALID_PASSWORD_HASH` (use `password_hash()`)
    - `ENCRYPTION_KEY` (32-byte hex, load from env: `getenv('ENCRYPTION_KEY')`)
 3. Ensure `storage/` writable by web server
 4. Run `php install.php` to create database
-5. Add cron: `*/15 * * * * php /path/to/update-api/cron.php --worker`
+5. Add cron: `*/15 * * * * php /path/to/v-update-api/cron.php --worker`
 
 ### WordPress Client Setup
 1. Copy `v-wp-updater/` to `wp-content/plugins/`
@@ -244,7 +244,7 @@ $session->regenerate();
 3. Activate plugin—scheduled checks run automatically (daily via `vwpu_plugin_updater_check_updates` and `vwpu_theme_updater_check_updates` hooks)
 
 ### Adding New Routes
-**Update-API Server:**
+**v-update-api Server:**
 ```php
 // In App\Core\Router::__construct() - inside the RouteCollector factory callback
 $r->addRoute('GET', '/newpage', ['\\App\\Controllers\\NewController', 'handleRequest']);
@@ -269,7 +269,7 @@ Installs via WP upgrader
 // Subprocess pattern from RouterTest.php
 $code = <<<'PHP'
 namespace App\Core { function header($h){ echo $h; } }  // Mock header()
-namespace { require 'update-api/vendor/autoload.php'; /* test code */ }
+namespace { require 'v-update-api/vendor/autoload.php'; /* test code */ }
 PHP;
 exec('php -r ' . escapeshellarg($code), $output);
 ```

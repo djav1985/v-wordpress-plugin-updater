@@ -112,10 +112,18 @@ class EncryptionHelper
             throw new \InvalidArgumentException('Length must be greater than zero.');
         }
 
-        $isStrong = false;
-        $bytes = openssl_random_pseudo_bytes($length, $isStrong);
+        if (!\function_exists('random_bytes')) {
+            throw new \RuntimeException('random_bytes() is unavailable on this PHP runtime.');
+        }
 
-        if ($bytes === false || $isStrong !== true || strlen($bytes) !== $length) {
+        try {
+            /** @var string $bytes */
+            $bytes = \call_user_func('random_bytes', $length);
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Unable to generate cryptographically secure random bytes.');
+        }
+
+        if (strlen($bytes) !== $length) {
             throw new \RuntimeException('Unable to generate cryptographically secure random bytes.');
         }
 

@@ -90,7 +90,7 @@ jobs:
         run: |
           semgrep --config=p/php \
                   --include mu-plugin \
-                  --include update-api \
+                  --include v-update-api \
                   --exclude vendor \
                   --exclude node_modules \
                   --exclude dist \

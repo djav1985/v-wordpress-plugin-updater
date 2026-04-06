@@ -60,9 +60,14 @@ class ValidationHelper
      */
     public static function generateKey(int $length = 32): string
     {
-        $isStrong = false;
-        $bytes = openssl_random_pseudo_bytes((int) ceil($length / 2), $isStrong);
-        if ($bytes === false || $isStrong !== true) {
+        if (!\function_exists('random_bytes')) {
+            throw new \RuntimeException('random_bytes() is unavailable on this PHP runtime.');
+        }
+
+        try {
+            /** @var string $bytes */
+            $bytes = \call_user_func('random_bytes', (int) ceil($length / 2));
+        } catch (\Throwable $e) {
             throw new \RuntimeException('Unable to generate cryptographically secure key bytes.');
         }
 

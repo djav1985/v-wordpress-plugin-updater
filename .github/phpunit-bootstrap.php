@@ -5,6 +5,11 @@ if (file_exists($autoload)) {
     require_once $autoload;
 }
 
+$updateApiAutoload = __DIR__ . '/../v-update-api/vendor/autoload.php';
+if (file_exists($updateApiAutoload)) {
+    require_once $updateApiAutoload;
+}
+
 $local = __DIR__ . '/../tests/bootstrap-local.php';
 if (file_exists($local)) {
     require_once $local;
