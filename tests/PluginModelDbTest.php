@@ -14,6 +14,24 @@ namespace App\Models {
         }
         return \ini_get($varname);
     }
+
+    function rename($from, $to)
+    {
+        global $test_rename_fail_target;
+        if (is_string($test_rename_fail_target) && $test_rename_fail_target !== '' && $to === $test_rename_fail_target) {
+            return false;
+        }
+        return \rename($from, $to);
+    }
+
+    function unlink($filename)
+    {
+        global $test_unlink_fail_paths;
+        if (is_array($test_unlink_fail_paths) && in_array($filename, $test_unlink_fail_paths, true)) {
+            return false;
+        }
+        return \unlink($filename);
+    }
 }
 
 namespace Tests {
@@ -28,6 +46,10 @@ class PluginModelDbTest extends TestCase
 {
     protected function setUp(): void
     {
+        global $test_rename_fail_target, $test_unlink_fail_paths;
+        $test_rename_fail_target = '';
+        $test_unlink_fail_paths = [];
+
         if (!defined('DB_FILE')) {
             define('DB_FILE', sys_get_temp_dir() . '/test.sqlite');
         }
@@ -50,6 +72,10 @@ class PluginModelDbTest extends TestCase
 
     protected function tearDown(): void
     {
+        global $test_rename_fail_target, $test_unlink_fail_paths;
+        $test_rename_fail_target = '';
+        $test_unlink_fail_paths = [];
+
         $conn = DatabaseManager::getConnection();
         $conn->executeStatement('DROP TABLE IF EXISTS plugins');
         if (file_exists(DB_FILE)) {
@@ -158,6 +184,37 @@ class PluginModelDbTest extends TestCase
         $this->assertStringContainsString('Only .zip files are allowed', $messages[0]);
     }
 
+    public function testUploadSingleFileShapeIsAccepted(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'pl');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+
+        $files = [
+            'name' => 'single-shape_1.0.zip',
+            'tmp_name' => $tmp,
+            'error' => UPLOAD_ERR_OK,
+            'size' => filesize($tmp),
+        ];
+
+        $messages = PluginModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+    }
+
+    public function testUploadMalformedPayloadReturnsExplicitError(): void
+    {
+        $files = [
+            'name' => ['broken_1.0.zip'],
+            'tmp_name' => ['/tmp/irrelevant'],
+            'error' => [UPLOAD_ERR_OK],
+        ];
+
+        $messages = PluginModel::uploadFiles($files);
+        $this->assertStringContainsString('malformed upload payload', $messages[0]);
+    }
+
     public function testDeletePluginReturnsFalseForInvalidFile(): void
     {
         $this->assertFalse(PluginModel::deletePlugin('missing.zip'));
@@ -172,6 +229,51 @@ class PluginModelDbTest extends TestCase
         $this->assertFalse(PluginModel::deletePlugin('evil.zip'));
         unlink(PLUGINS_DIR . '/evil.zip');
         unlink($outside);
+    }
+
+    public function testDeletePluginSkipsDatabaseDeleteWhenUnlinkFails(): void
+    {
+        global $test_unlink_fail_paths;
+
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('plugins', ['slug' => 'deny-delete', 'version' => '1.0']);
+        $path = PLUGINS_DIR . '/deny-delete_1.0.zip';
+        file_put_contents($path, 'zip');
+        $test_unlink_fail_paths = [$path];
+
+        $this->assertFalse(PluginModel::deletePlugin('deny-delete_1.0.zip'));
+        $this->assertFileExists($path);
+        $this->assertSame('1.0', $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', ['deny-delete']));
+
+        $test_unlink_fail_paths = [];
+        unlink($path);
+    }
+
+    public function testUploadRollsBackWhenFinalRenameFails(): void
+    {
+        global $test_rename_fail_target;
+
+        $tmp = tempnam(sys_get_temp_dir(), 'pl');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+
+        $targetName = 'rollback-plugin_1.0.zip';
+        $targetPath = PLUGINS_DIR . '/' . $targetName;
+        $test_rename_fail_target = $targetPath;
+
+        $files = [
+            'name' => [$targetName],
+            'tmp_name' => [$tmp],
+            'error' => [UPLOAD_ERR_OK],
+            'size' => [filesize($tmp)],
+        ];
+
+        $messages = PluginModel::uploadFiles($files);
+        $this->assertStringContainsString('Error uploading', $messages[0]);
+        $this->assertFileDoesNotExist($targetPath);
+        $this->assertFalse(DatabaseManager::getConnection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', ['rollback-plugin']));
     }
 
     public function testDeletePluginUsesRegexSlugWithUnderscore(): void

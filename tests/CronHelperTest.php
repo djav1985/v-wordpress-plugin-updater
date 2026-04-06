@@ -12,6 +12,7 @@ class CronHelperTest extends TestCase
 {
     private string $testPluginsDir;
     private string $testThemesDir;
+    private string $errorLogFile;
 
     protected function setUp(): void
     {
@@ -21,6 +22,7 @@ class CronHelperTest extends TestCase
         
         $this->testPluginsDir = sys_get_temp_dir() . '/test-plugins-cron';
         $this->testThemesDir = sys_get_temp_dir() . '/test-themes-cron';
+        $this->errorLogFile = sys_get_temp_dir() . '/test-cronhelper-error.log';
         
         if (!is_dir($this->testPluginsDir)) {
             mkdir($this->testPluginsDir, 0777, true);
@@ -31,6 +33,9 @@ class CronHelperTest extends TestCase
         
         if (file_exists(DB_FILE)) {
             unlink(DB_FILE);
+        }
+        if (file_exists($this->errorLogFile)) {
+            unlink($this->errorLogFile);
         }
         
         $ref = new \ReflectionClass(DatabaseManager::class);
@@ -44,6 +49,9 @@ class CronHelperTest extends TestCase
         $conn->executeStatement(
             'CREATE TABLE blacklist (ip TEXT PRIMARY KEY, login_attempts INTEGER, blacklisted INTEGER, timestamp INTEGER)'
         );
+
+        ini_set('log_errors', '1');
+        ini_set('error_log', $this->errorLogFile);
     }
 
     protected function tearDown(): void
@@ -55,6 +63,9 @@ class CronHelperTest extends TestCase
         
         if (file_exists(DB_FILE)) {
             unlink(DB_FILE);
+        }
+        if (file_exists($this->errorLogFile)) {
+            unlink($this->errorLogFile);
         }
         
         array_map('unlink', glob($this->testPluginsDir . '/*.zip'));
@@ -194,5 +205,20 @@ class CronHelperTest extends TestCase
         $this->assertCount(1, $themes);
         $this->assertSame('my-theme', $themes[0]['slug']);
         $this->assertSame('1.0', $themes[0]['version']);
+    }
+
+    public function testSyncDirMissingDirectoryLogsFailureAndKeepsExistingRows(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('plugins', ['slug' => 'existing-plugin', 'version' => '1.0']);
+
+        $missingDir = $this->testPluginsDir . '-missing';
+        CronHelper::syncDir($missingDir, 'plugins', $conn);
+
+        $plugin = $conn->fetchAssociative('SELECT * FROM plugins WHERE slug = ?', ['existing-plugin']);
+        $this->assertNotFalse($plugin);
+
+        $this->assertFileExists($this->errorLogFile);
+        $this->assertStringContainsString('cannot read directory', (string) file_get_contents($this->errorLogFile));
     }
 }

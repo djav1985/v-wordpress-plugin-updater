@@ -12,8 +12,10 @@
  */
 
 use App\Core\DatabaseManager;
-use Doctrine\DBAL\Schema\Schema;
+use App\Helpers\EncryptionHelper;
+use App\Helpers\ValidationHelper;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
+use Doctrine\DBAL\Schema\Schema;
 
 ?><!DOCTYPE html>
 <html lang="en">
@@ -41,7 +43,8 @@ try {
     $conn = DatabaseManager::getConnection();
     $schema = new Schema();
 
-    echo "Creating tables...<br>"; flush();
+    echo "Creating tables...<br>";
+    flush();
     $plugins = $schema->createTable('plugins');
     $plugins->addColumn('slug', 'text');
     $plugins->addColumn('version', 'text');
@@ -81,23 +84,87 @@ try {
     foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
         $conn->executeStatement($sql);
     }
-    echo "<span class='success'>Database tables created.</span><br>"; flush();
+    echo "<span class='success'>Database tables created.</span><br>";
+    flush();
 
     // Import hosts file if it exists
     $hostsFile = __DIR__ . '/HOSTS';
     if (file_exists($hostsFile)) {
-        echo "Importing HOSTS file...<br>"; flush();
+        echo "Importing HOSTS file...<br>";
+        flush();
+
         $lines = file($hostsFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            list($domain, $key) = explode(' ', $line, 2);
+        $summary = [
+            'total' => 0,
+            'imported' => 0,
+            'already_encrypted' => 0,
+            'normalized_plaintext' => 0,
+            'normalized_legacy' => 0,
+            'malformed' => 0,
+            'invalid_domain' => 0,
+        ];
+        $issues = [];
+
+        foreach ($lines as $lineNumber => $line) {
+            $summary['total']++;
+
+            $parts = preg_split('/\s+/', trim($line), 2);
+            if (!is_array($parts) || count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+                $summary['malformed']++;
+                $issues[] = 'line ' . ($lineNumber + 1) . ': malformed entry';
+                continue;
+            }
+
+            $domain = ValidationHelper::validateDomain($parts[0]);
+            if ($domain === null) {
+                $summary['invalid_domain']++;
+                $issues[] = 'line ' . ($lineNumber + 1) . ': invalid domain "' . $parts[0] . '"';
+                continue;
+            }
+
+            $rawKey = trim($parts[1]);
+            $normalizedKey = $rawKey;
+            $decrypted = EncryptionHelper::decrypt($rawKey);
+
+            if ($decrypted !== null && !EncryptionHelper::needsMigration($rawKey)) {
+                $summary['already_encrypted']++;
+            } elseif ($decrypted !== null && EncryptionHelper::needsMigration($rawKey)) {
+                $normalizedKey = EncryptionHelper::encrypt($decrypted);
+                $summary['normalized_legacy']++;
+            } else {
+                $normalizedKey = EncryptionHelper::encrypt($rawKey);
+                $summary['normalized_plaintext']++;
+            }
+
             $conn->executeStatement(
                 'INSERT INTO hosts (domain, key) VALUES (?, ?) ' .
                 'ON CONFLICT(domain) DO UPDATE SET key = excluded.key',
-                [$domain, $key]
+                [$domain, $normalizedKey]
             );
+            $summary['imported']++;
         }
+
         unlink($hostsFile);
-        echo "<span class='success'>HOSTS imported.</span><br>"; flush();
+
+        $summaryMessage = sprintf(
+            'HOSTS normalization: total=%d imported=%d encrypted=%d ' .
+            'normalized_plaintext=%d normalized_legacy=%d malformed=%d invalid_domain=%d',
+            $summary['total'],
+            $summary['imported'],
+            $summary['already_encrypted'],
+            $summary['normalized_plaintext'],
+            $summary['normalized_legacy'],
+            $summary['malformed'],
+            $summary['invalid_domain']
+        );
+        error_log($summaryMessage);
+
+        if ($issues !== []) {
+            error_log('HOSTS normalization issues: ' . implode('; ', $issues));
+        }
+
+        echo '<span class="success">HOSTS imported. ' . htmlspecialchars($summaryMessage) . '</span><br>';
+        flush();
     }
 
     // Import log files if they exist
@@ -108,7 +175,8 @@ try {
     foreach ($logFiles as $file => $type) {
         $path = defined('LOG_DIR') ? LOG_DIR . '/' . $file : __DIR__ . '/storage/logs/' . $file;
         if (file_exists($path)) {
-            echo "Importing $file...<br>"; flush();
+            echo "Importing $file...<br>";
+            flush();
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
                 list($domain, $date, $status) = explode(' ', $line, 3);
@@ -118,14 +186,16 @@ try {
                 );
             }
             unlink($path);
-            echo "<span class='success'>$file imported.</span><br>"; flush();
+            echo "<span class='success'>$file imported.</span><br>";
+            flush();
         }
     }
 
     // Import plugins from storage/plugins
     $pluginsDir = dirname(__DIR__) . '/storage/plugins';
     if (is_dir($pluginsDir)) {
-        echo "Importing plugins from storage...<br>"; flush();
+        echo "Importing plugins from storage...<br>";
+        flush();
         foreach (glob($pluginsDir . '/*.zip') as $pluginFile) {
             if (preg_match('/([A-Za-z0-9._-]+)_([\d.]+)\.zip$/', basename($pluginFile), $matches)) {
                 $slug = $matches[1];
@@ -137,13 +207,15 @@ try {
                 );
             }
         }
-        echo "<span class='success'>Plugins imported from storage.</span><br>"; flush();
+        echo "<span class='success'>Plugins imported from storage.</span><br>";
+        flush();
     }
 
     // Import themes from storage/themes
     $themesDir = dirname(__DIR__) . '/storage/themes';
     if (is_dir($themesDir)) {
-        echo "Importing themes from storage...<br>"; flush();
+        echo "Importing themes from storage...<br>";
+        flush();
         foreach (glob($themesDir . '/*.zip') as $themeFile) {
             if (preg_match('/([A-Za-z0-9._-]+)_([\d.]+)\.zip$/', basename($themeFile), $matches)) {
                 $slug = $matches[1];
@@ -155,7 +227,8 @@ try {
                 );
             }
         }
-        echo "<span class='success'>Themes imported from storage.</span><br>"; flush();
+        echo "<span class='success'>Themes imported from storage.</span><br>";
+        flush();
     }
 
     echo "<strong class='success'>Installation complete!</strong>";

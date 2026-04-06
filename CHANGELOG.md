@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Strengthened model/controller consistency and failure-safe update flows:
+  - `PluginModel` and `ThemeModel` uploads now stage files, perform DB upserts in transactions, and apply rollback/compensation when filesystem or DB steps fail.
+  - `deletePlugin`/`deleteTheme` now validate `unlink()` success, skip DB deletion on file-delete failures, and emit structured log entries for invalid path/race/permission cases.
+  - `HostsModel::getEntries()` now returns structured `{domain, key}` rows; host update/delete APIs are domain-keyed (removed misleading unused line parameters), and `HomeController` no longer parses concatenated host strings.
+  - `HomeController::handleSubmission()` now reports delete failures with explicit log+message behavior, aligned with add/regenerate flows.
+  - `ApiController` key comparison now uses `hash_equals` after decryption for constant-time credential checks.
+  - Added regression coverage for delete failure handling and upload rollback paths in plugin/theme model tests, and updated host/home tests for structured host rows and domain-keyed mutations.
+- Tightened session, lockout, and key-display security controls:
+  - `SessionManager::destroy` now expires the active session cookie with matching cookie attributes before `session_destroy()`.
+  - `BlacklistModel::updateFailedAttempts` now refreshes `timestamp` on every failed attempt while preserving atomic UPSERT behavior.
+  - `HomeController` host listing now masks keys by default, adds explicit reveal/copy controls, and limits plaintext display to a short-lived (30s) session-backed reveal window; UI toasts/messages never include full keys.
+  - Added regression coverage in `SessionDestroyCookieTest`, `BlacklistModelTest`, and new `HomeControllerTest` for these behaviors.
+- Hardened file-ingest edge cases across upload and cron sync flows:
+  - `PluginModel::uploadFiles` and `ThemeModel::uploadFiles` now normalize both single-file and multi-file upload payload shapes, validate required keys/types before indexing, and emit explicit malformed-entry errors instead of runtime warnings.
+  - `CronHelper::syncDir` now guards unreadable/missing directories and `glob()` failures, logs sync-read failures, and exits safely without deleting existing records when scanning cannot proceed.
+  - Added regression tests for upload payload normalization in `PluginModelDbTest`/`ThemeModelDbTest` and sync-read failure behavior in `CronHelperTest`.
+- Hardened host onboarding and key storage paths:
+  - `update-api/public/install.php` now defensively parses `HOSTS` imports, skips/records malformed records, validates domains, normalizes plaintext/legacy keys into the expected encrypted storage format, and logs normalization summaries for traceability.
+  - `HostsModel::updateEntry` now uses `UPDATE` instead of `REPLACE INTO` to avoid delete+insert side effects while preserving encrypted key storage behavior.
+  - Added `tests/HostsModelTest.php` regression coverage for update-in-place behavior, missing-domain failures, and foreign-key-safe host updates.
+- Removed the unused `Controller::render()` helper from `update-api/app/Core/Controller.php` to reduce view-render attack surface and keep rendering centralized in `Router::sendResponse`.
 - Refined Update API failure semantics and lockout accounting:
   - `ApiController` now returns `400` for malformed input, `403` only for authentication failures, `204` for no-update responses, and `404` for authenticated unknown slugs.
   - Blacklist increments now occur only for credential/auth failures (e.g., unknown domain or wrong key), not malformed requests or authenticated unknown slugs.

@@ -51,10 +51,7 @@ class BlacklistModel
                      WHEN blacklist.login_attempts + 1 >= 3 THEN 1
                      ELSE blacklist.blacklisted
                  END,
-                 timestamp = CASE
-                     WHEN blacklist.login_attempts + 1 >= 3 THEN ?
-                     ELSE blacklist.timestamp
-                 END',
+                 timestamp = ?',
             [$ip, $now, $now]
         );
     }
