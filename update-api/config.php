@@ -24,6 +24,8 @@ define('SESSION_TIMEOUT_LIMIT', 1800);
 define('BASE_DIR', dirname($_SERVER['DOCUMENT_ROOT']));
 define('PLUGINS_DIR', BASE_DIR . '/storage/plugins');
 define('THEMES_DIR', BASE_DIR . '/storage/themes');
+define('DB_FILE', BASE_DIR . '/storage/updater.sqlite');
+
+# Depreciated!
 define('LOG_DIR', BASE_DIR . '/storage/logs');
 define('LOG_FILE', LOG_DIR . '/app.log');
-define('DB_FILE', BASE_DIR . '/storage/updater.sqlite');
