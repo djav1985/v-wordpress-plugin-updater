@@ -1,5 +1,18 @@
 <?php
 
+namespace App\Models {
+    if (!function_exists(__NAMESPACE__ . '\\unlink')) {
+        function unlink($filename)
+        {
+            global $test_unlink_fail_paths;
+            if (is_array($test_unlink_fail_paths) && in_array($filename, $test_unlink_fail_paths, true)) {
+                return false;
+            }
+            return \unlink($filename);
+        }
+    }
+}
+
 namespace Tests {
 
 require_once __DIR__ . '/../update-api/vendor/autoload.php';
@@ -12,6 +25,9 @@ class ThemeModelDbTest extends TestCase
 {
     protected function setUp(): void
     {
+        global $test_unlink_fail_paths;
+        $test_unlink_fail_paths = [];
+
         if (!defined('DB_FILE')) {
             define('DB_FILE', sys_get_temp_dir() . '/test-themes.sqlite');
         }
@@ -34,6 +50,9 @@ class ThemeModelDbTest extends TestCase
 
     protected function tearDown(): void
     {
+        global $test_unlink_fail_paths;
+        $test_unlink_fail_paths = [];
+
         $conn = DatabaseManager::getConnection();
         $conn->executeStatement('DROP TABLE IF EXISTS themes');
         if (file_exists(DB_FILE)) {
@@ -60,6 +79,26 @@ class ThemeModelDbTest extends TestCase
         $conn = DatabaseManager::getConnection();
         $row = $conn->fetchAssociative('SELECT * FROM themes WHERE slug = ?', ['sample-theme']);
         $this->assertSame('1.0', $row['version']);
+    }
+
+    public function testUploadValidZipWithDottedSlugInsertsRecord(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'th');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+        $files = [
+            'name'     => ['sample.theme_1.2.zip'],
+            'tmp_name' => [$tmp],
+            'error'    => [UPLOAD_ERR_OK],
+            'size'     => [filesize($tmp)],
+        ];
+        $messages = ThemeModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+        $conn = DatabaseManager::getConnection();
+        $row = $conn->fetchAssociative('SELECT * FROM themes WHERE slug = ?', ['sample.theme']);
+        $this->assertSame('1.2', $row['version']);
     }
 
     public function testUploadFileTooLargeReturnsError(): void
@@ -96,6 +135,37 @@ class ThemeModelDbTest extends TestCase
         $this->assertStringContainsString('Only .zip files are allowed', $messages[0]);
     }
 
+    public function testUploadSingleFileShapeIsAccepted(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'th');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
+
+        $files = [
+            'name' => 'single-theme_1.1.zip',
+            'tmp_name' => $tmp,
+            'error' => UPLOAD_ERR_OK,
+            'size' => filesize($tmp),
+        ];
+
+        $messages = ThemeModel::uploadFiles($files);
+        $this->assertStringContainsString('uploaded successfully', $messages[0]);
+    }
+
+    public function testUploadMalformedPayloadReturnsExplicitError(): void
+    {
+        $files = [
+            'name' => ['broken-theme_1.0.zip'],
+            'tmp_name' => ['/tmp/irrelevant'],
+            'error' => [UPLOAD_ERR_OK],
+        ];
+
+        $messages = ThemeModel::uploadFiles($files);
+        $this->assertStringContainsString('malformed upload payload', $messages[0]);
+    }
+
     public function testDeleteThemeReturnsFalseForInvalidFile(): void
     {
         $this->assertFalse(ThemeModel::deleteTheme('missing.zip'));
@@ -112,6 +182,23 @@ class ThemeModelDbTest extends TestCase
         unlink($outside);
     }
 
+    public function testDeleteThemeSkipsDatabaseDeleteWhenUnlinkFails(): void
+    {
+        global $test_unlink_fail_paths;
+
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'deny-delete-theme', 'version' => '1.0']);
+        $path = THEMES_DIR . '/deny-delete-theme_1.0.zip';
+        file_put_contents($path, 'zip');
+        $test_unlink_fail_paths = [$path];
+        $this->assertFalse(ThemeModel::deleteTheme('deny-delete-theme_1.0.zip'));
+
+        $this->assertFileExists($path);
+        $this->assertSame('1.0', $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', ['deny-delete-theme']));
+        $test_unlink_fail_paths = [];
+        unlink($path);
+    }
+
     public function testGetThemesReturnsArray(): void
     {
         $conn = DatabaseManager::getConnection();
@@ -122,6 +209,44 @@ class ThemeModelDbTest extends TestCase
         $this->assertCount(2, $themes);
         $this->assertSame('theme1', $themes[0]['slug']);
         $this->assertSame('1.0', $themes[0]['version']);
+    }
+
+    public function testDeleteThemeUsesRegexSlugWithUnderscore(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample_theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample_theme_2.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(ThemeModel::deleteTheme('sample_theme_2.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM themes WHERE slug = ?', ['sample_theme']));
+    }
+
+    public function testDeleteThemeReturnsFalseWhenFilenameDoesNotMatchExpectedPattern(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample_theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample_theme_latest.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertFalse(ThemeModel::deleteTheme('sample_theme_latest.zip'));
+        $this->assertFileExists($path);
+        $this->assertSame('2.0', $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', ['sample_theme']));
+
+        unlink($path);
+    }
+
+    public function testDeleteThemeSupportsDottedSlug(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample.theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample.theme_2.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(ThemeModel::deleteTheme('sample.theme_2.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM themes WHERE slug = ?', ['sample.theme']));
     }
 }
 

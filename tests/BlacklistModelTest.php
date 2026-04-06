@@ -144,4 +144,25 @@ class BlacklistModelTest extends TestCase
         $this->assertSame(1, (int)$record['blacklisted']);
         $this->assertGreaterThan($oldTime, (int)$record['timestamp']);
     }
+
+    public function testUpdateFailedAttemptsRefreshesTimestampBelowThreshold(): void
+    {
+        $ip = '192.168.1.8';
+        $conn = DatabaseManager::getConnection();
+        $oldTime = time() - 500;
+
+        $conn->insert('blacklist', [
+            'ip' => $ip,
+            'login_attempts' => 1,
+            'blacklisted' => 0,
+            'timestamp' => $oldTime,
+        ]);
+
+        BlacklistModel::updateFailedAttempts($ip);
+
+        $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $this->assertSame(2, (int) $record['login_attempts']);
+        $this->assertSame(0, (int) $record['blacklisted']);
+        $this->assertGreaterThan($oldTime, (int) $record['timestamp']);
+    }
 }

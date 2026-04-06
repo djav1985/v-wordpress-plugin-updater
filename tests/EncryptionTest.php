@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Helpers\EncryptionHelper;
 
-class EncryptionHelperTest extends TestCase
+class EncryptionTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -20,7 +20,7 @@ class EncryptionHelperTest extends TestCase
     {
         $plaintext = 'secret message';
         $encrypted = EncryptionHelper::encrypt($plaintext);
-        
+
         $this->assertIsString($encrypted);
         $this->assertNotEmpty($encrypted);
         $this->assertNotSame($plaintext, $encrypted);
@@ -33,7 +33,7 @@ class EncryptionHelperTest extends TestCase
         $plaintext = 'secret message';
         $encrypted = EncryptionHelper::encrypt($plaintext);
         $decrypted = EncryptionHelper::decrypt($encrypted);
-        
+
         $this->assertSame($plaintext, $decrypted);
     }
 
@@ -45,7 +45,7 @@ class EncryptionHelperTest extends TestCase
             'Special chars: @#$%^&*()',
             str_repeat('x', 1000), // Long string
         ];
-        
+
         foreach ($values as $value) {
             $encrypted = EncryptionHelper::encrypt($value);
             $decrypted = EncryptionHelper::decrypt($encrypted);
@@ -61,19 +61,19 @@ class EncryptionHelperTest extends TestCase
 
     public function testDecryptTooShortDataReturnsNull(): void
     {
-        // Create a valid base64 string that's too short
-        $shortData = base64_encode('short');
+        // Create a valid base64 string that's too short (version byte only, no nonce/ciphertext/tag)
+        $shortData = base64_encode("\x01short");
         $result = EncryptionHelper::decrypt($shortData);
         $this->assertNull($result);
     }
 
     public function testEncryptProducesDifferentCiphertexts(): void
     {
-        // Due to random IV, encrypting the same plaintext twice should produce different results
+        // Due to random nonce, encrypting the same plaintext twice should produce different results
         $plaintext = 'same message';
         $encrypted1 = EncryptionHelper::encrypt($plaintext);
         $encrypted2 = EncryptionHelper::encrypt($plaintext);
-        
+
         $this->assertNotSame($encrypted1, $encrypted2);
         // But both should decrypt to the same plaintext
         $this->assertSame($plaintext, EncryptionHelper::decrypt($encrypted1));
@@ -84,12 +84,53 @@ class EncryptionHelperTest extends TestCase
     {
         $plaintext = 'original message';
         $encrypted = EncryptionHelper::encrypt($plaintext);
-        
-        // Tamper with the encrypted data by changing a character
-        $tampered = substr($encrypted, 0, -5) . 'XXXXX';
-        $result = EncryptionHelper::decrypt($tampered);
-        
-        // Decryption should fail and return null or not match original
-        $this->assertNotSame($plaintext, $result);
+
+        // Tamper with the encrypted data: flip last 5 chars (corrupts auth tag)
+        $decoded   = base64_decode($encrypted, true);
+        $tampered  = base64_encode(substr($decoded, 0, -5) . str_repeat("\xff", 5));
+        $result    = EncryptionHelper::decrypt($tampered);
+
+        // GCM authentication should reject tampered ciphertext
+        $this->assertNull($result);
+    }
+
+    // ------------------------------------------------------------------
+    // AEAD-specific tests
+    // ------------------------------------------------------------------
+
+    public function testNewCiphertextsAreNotMarkedAsLegacy(): void
+    {
+        $encrypted = EncryptionHelper::encrypt('test');
+        $this->assertFalse(EncryptionHelper::needsMigration($encrypted));
+    }
+
+    public function testLegacyCbcCiphertextDecryptsCorrectly(): void
+    {
+        // Produce a legacy CBC ciphertext manually (old format: iv || ciphertext).
+        $key      = hash('sha256', ENCRYPTION_KEY, true);
+        $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+        $iv       = random_bytes($ivLength);
+        $cipher   = openssl_encrypt('legacy secret', 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        $legacyCiphertext = base64_encode($iv . $cipher);
+
+        $result = EncryptionHelper::decrypt($legacyCiphertext);
+        $this->assertSame('legacy secret', $result);
+    }
+
+    public function testLegacyCbcCiphertextIsMarkedForMigration(): void
+    {
+        $key      = hash('sha256', ENCRYPTION_KEY, true);
+        $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+        $iv       = random_bytes($ivLength);
+        $cipher   = openssl_encrypt('data', 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        $legacyCiphertext = base64_encode($iv . $cipher);
+
+        $this->assertTrue(EncryptionHelper::needsMigration($legacyCiphertext));
+    }
+
+    public function testNeedsMigrationReturnsFalseForInvalidInput(): void
+    {
+        $this->assertFalse(EncryptionHelper::needsMigration('not-valid-base64!!!'));
+        $this->assertFalse(EncryptionHelper::needsMigration(''));
     }
 }

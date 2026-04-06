@@ -20,43 +20,43 @@ use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
 use App\Core\SessionManager;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class LoginController extends Controller
 {
     /**
      * Display the login form when the user is not already authenticated.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $session = SessionManager::getInstance();
         if ($session->get('logged_in') === true) {
-            return Response::redirect('/home');
+            return ResponseManager::redirect('/home');
         }
-        return Response::view('login');
+        return ResponseManager::view('login');
     }
 
     /**
      * Handle login form submission and logout actions.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $session = SessionManager::getInstance();
 
         // Redirect already-logged-in users away from login form
         if ($session->get('logged_in') === true && !isset($_POST['logout'])) {
-            return Response::redirect('/home');
+            return ResponseManager::redirect('/home');
         }
 
         // Handle logout
         if ($session->get('logged_in') === true && isset($_POST['logout'])) {
             if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
                 MessageHelper::addMessage('Invalid CSRF token. Please try again.');
-                return Response::redirect('/login');
+                return ResponseManager::redirect('/login');
             }
             return self::logoutUser();
         }
@@ -66,7 +66,7 @@ class LoginController extends Controller
             $error = 'Invalid CSRF token. Please try again.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
-            return Response::view('login');
+            return ResponseManager::view('login');
         }
 
         // Trim and validate input
@@ -78,10 +78,10 @@ class LoginController extends Controller
             $session->set('logged_in', true);
             $session->set('username', $username);
             $session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
-            $session->set('csrf_token', \hash('sha256', \uniqid('', true)));
+            $session->set('csrf_token', \bin2hex(\random_bytes(32)));
             $session->set('timeout', time());
             $session->regenerate();
-            return Response::redirect('/home');
+            return ResponseManager::redirect('/home');
         }
 
         // Handle failed login attempt
@@ -97,7 +97,7 @@ class LoginController extends Controller
             MessageHelper::addMessage($error);
         }
 
-        return Response::view('login');
+        return ResponseManager::view('login');
     }
 
     /**
@@ -114,17 +114,17 @@ class LoginController extends Controller
 
         return $validatedUsername === VALID_USERNAME
             && $validatedPassword !== null
-            && password_verify($validatedPassword, VALID_PASSWORD_HASH);
+            && hash_equals(VALID_PASSWORD, $validatedPassword);
     }
 
     /**
      * Destroy the session and redirect to login page.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    private static function logoutUser(): Response
+    private static function logoutUser(): ResponseManager
     {
         SessionManager::getInstance()->destroy();
-        return Response::redirect('/login');
+        return ResponseManager::redirect('/login');
     }
 }

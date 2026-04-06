@@ -66,9 +66,9 @@ class PluginUpdater extends AbstractRemoteUpdater {
 		$api_url = add_query_arg(
 			array(
 				'type'    => 'plugin',
-				'domain'  => rawurlencode( wp_parse_url( site_url(), PHP_URL_HOST ) ),
-				'slug'    => rawurlencode( $item['slug'] ),
-				'version' => rawurlencode( $installed_version ),
+				'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
+				'slug'    => $item['slug'],
+				'version' => $installed_version,
 				'key'     => $update_key,
 			),
 			$update_url
@@ -167,8 +167,11 @@ class PluginUpdater extends AbstractRemoteUpdater {
 		$plugins = get_plugins();
 
 		foreach ( $plugins as $plugin_path => $plugin ) {
+			$dir  = dirname( $plugin_path );
+			$slug = ( '.' === $dir ) ? pathinfo( $plugin_path, PATHINFO_FILENAME ) : $dir;
+
 			yield array(
-				'slug'      => dirname( $plugin_path ),
+				'slug'      => $slug,
 				'version'   => $plugin['Version'],
 				'file_path' => $plugin_path,
 			);
@@ -234,7 +237,7 @@ class PluginUpdater extends AbstractRemoteUpdater {
 	 * {@inheritdoc}
 	 */
 	protected function get_status_option_name(): string {
-		return 'vontmnt-plup';
+		return 'vwpu_plugin_update_status';
 	}
 
 	/**

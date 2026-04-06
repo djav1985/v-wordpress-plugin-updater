@@ -66,9 +66,9 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 		$api_url = add_query_arg(
 			array(
 				'type'    => 'theme',
-				'domain'  => rawurlencode( wp_parse_url( site_url(), PHP_URL_HOST ) ),
-				'slug'    => rawurlencode( $item['slug'] ),
-				'version' => rawurlencode( $installed_version ),
+				'domain'  => wp_parse_url( site_url(), PHP_URL_HOST ),
+				'slug'    => $item['slug'],
+				'version' => $installed_version,
 				'key'     => $update_key,
 			),
 			$update_url
@@ -235,7 +235,7 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	 * {@inheritdoc}
 	 */
 	protected function get_status_option_name(): string {
-		return 'vontmnt-thup';
+		return 'vwpu_theme_update_status';
 	}
 
 	/**

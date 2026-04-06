@@ -16,9 +16,6 @@ namespace App\Core;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use function FastRoute\simpleDispatcher;
-use App\Core\SessionManager;
-use App\Core\Response;
 
 class Router
 {
@@ -30,10 +27,9 @@ class Router
      */
     private function __construct()
     {
-        $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
-            // Redirect the root URL to the home page for convenience
-            $r->addRoute('GET', '/', function (): Response {
-                return Response::redirect('/home');
+        $this->dispatcher = RouteDispatcherFactory::build(function (RouteCollector $r): void {
+            $r->addRoute('GET', '/', function (): ResponseManager {
+                return ResponseManager::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
@@ -45,13 +41,10 @@ class Router
             $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
-                $r->addRoute('GET', '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
+            $r->addRoute(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'], '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
         });
     }
 
-    /**
-     * Returns the shared Router instance.
-     */
     public static function getInstance(): Router
     {
         if (self::$instance === null) {
@@ -61,69 +54,41 @@ class Router
         return self::$instance;
     }
 
-    /**
-     * Dispatches the request to the appropriate controller action.
-     *
-     * The caller (e.g., index.php) is responsible for parsing the URI path
-     * from REQUEST_URI and passing only the path component (no query string).
-     *
-     * If a controller action returns a Response instance the Router emits it
-     * via sendResponse(). Actions that handle output themselves (header/echo/exit)
-     * continue to work unchanged.
-     *
-     * @param string $method HTTP method of the incoming request.
-     * @param string $uri    The requested URI path (query string should be pre-parsed by caller).
-     */
     public function dispatch(string $method, string $uri): void
     {
-        // Router receives already-parsed path; use as-is.
-        $route = $uri;
-
-        $routeInfo = $this->dispatcher->dispatch($method, $route);
+        $routeInfo = $this->dispatcher->dispatch($method, $uri);
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                $this->sendResponse(Response::view('404', [], 404));
+                $this->sendResponse(ResponseManager::view('404', [], 404));
                 break;
 
             case Dispatcher::METHOD_NOT_ALLOWED:
-                $this->sendResponse(new Response(405));
+                $this->sendResponse(new ResponseManager(405));
                 break;
 
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
-                $vars    = $routeInfo[2];
+                $vars = $routeInfo[2];
 
                 if (is_array($handler) && count($handler) === 2) {
                     [$class, $action] = $handler;
+                    $isApi = str_starts_with($uri, '/api');
 
-                    // API routes are publicly accessible if they have all required params;
-                    // everything else requires authentication.
-                    $isApi = str_starts_with($route, '/api');
-                    if ($isApi) {
-                        $required = ['type', 'domain', 'key', 'slug', 'version'];
-                        foreach ($required as $param) {
-                            if (!isset($_GET[$param]) || $_GET[$param] === '') {
-                                $isApi = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if ($route !== '/login' && !$isApi) {
+                    if ($uri !== '/login' && !$isApi) {
                         if (!SessionManager::getInstance()->requireAuth()) {
-                            $this->sendResponse(Response::redirect('/login'));
+                            $this->sendResponse(ResponseManager::redirect('/login'));
                             return;
                         }
                     }
 
                     $result = call_user_func_array([new $class(), $action], $vars);
-                    if ($result instanceof Response) {
+                    if ($result instanceof ResponseManager) {
                         $this->sendResponse($result);
                     }
                 } elseif (is_callable($handler)) {
                     $result = call_user_func($handler);
-                    if ($result instanceof Response) {
+                    if ($result instanceof ResponseManager) {
                         $this->sendResponse($result);
                     }
                 }
@@ -131,17 +96,7 @@ class Router
         }
     }
 
-    /**
-     * Emit a Response to the client.
-     *
-     * Handles three output modes in order of priority:
-     *  1. View  — requires the named view file and extracts view data into scope.
-     *  2. File  — delegates to Response::send() which calls readfile().
-     *  3. Body  — delegates to Response::send() which echoes the body string.
-     *
-     * @param Response $response The response to emit.
-     */
-    private function sendResponse(Response $response): void
+    private function sendResponse(ResponseManager $response): void
     {
         if ($response->getView() !== null) {
             if (!headers_sent()) {
@@ -170,7 +125,15 @@ class Router
             return;
         }
 
-        // File streaming and plain body output are both handled by send().
+        if ($response->getFile() !== null) {
+            $file = $response->getFile();
+            if (!is_string($file) || !is_file($file) || !is_readable($file)) {
+                ErrorManager::getInstance()->log('Router refused unreadable file response: ' . (string) $file);
+                ResponseManager::text('Internal Server Error', 500)->send();
+                return;
+            }
+        }
+
         $response->send();
     }
 }

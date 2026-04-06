@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Controllers\ApiController;
 use App\Core\DatabaseManager;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 /**
  * Tests for ApiController::handleRequest() covering request validation,
@@ -107,23 +107,29 @@ class ApiControllerTest extends TestCase
         ];
     }
 
-    private function dispatch(): Response
+    private function dispatch(): ResponseManager
     {
         $controller = new ApiController();
         return $controller->handleRequest();
+    }
+
+    private function getBlacklistAttempts(string $ip = '127.0.0.1'): int
+    {
+        $attempts = $this->conn->fetchOne('SELECT login_attempts FROM blacklist WHERE ip = ?', [$ip]);
+        return $attempts === false ? 0 : (int) $attempts;
     }
 
     // ------------------------------------------------------------------
     // Non-GET method
     // ------------------------------------------------------------------
 
-    public function testPostMethodReturnsForbidden(): void
+    public function testPostMethodReturnsMethodNotAllowed(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_GET = $this->validGetParams();
 
         $response = $this->dispatch();
-        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame(405, $response->getStatusCode());
     }
 
     // ------------------------------------------------------------------
@@ -193,6 +199,14 @@ class ApiControllerTest extends TestCase
         $this->assertSame(400, $this->dispatch()->getStatusCode());
     }
 
+    public function testMalformedRequestDoesNotConsumeBlacklistBudget(): void
+    {
+        $_GET = array_merge($this->validGetParams(), ['slug' => 'invalid slug']);
+
+        $this->assertSame(400, $this->dispatch()->getStatusCode());
+        $this->assertSame(0, $this->getBlacklistAttempts());
+    }
+
     // ------------------------------------------------------------------
     // Auth failure → 403
     // ------------------------------------------------------------------
@@ -215,6 +229,7 @@ class ApiControllerTest extends TestCase
         $_GET = array_merge($this->validGetParams(), ['key' => 'wrongkey']);
 
         $this->assertSame(403, $this->dispatch()->getStatusCode());
+        $this->assertSame(1, $this->getBlacklistAttempts());
     }
 
     // ------------------------------------------------------------------
@@ -251,6 +266,20 @@ class ApiControllerTest extends TestCase
 
         $_GET = array_merge($this->validGetParams(), ['version' => '1.0.0']); // client is newer
         $this->assertSame(204, $this->dispatch()->getStatusCode());
+    }
+
+    public function testAuthenticatedUnknownSlugReturns404WithoutBlacklistIncrement(): void
+    {
+        $encrypted = \App\Helpers\EncryptionHelper::encrypt('validkey123');
+        $this->conn->executeStatement(
+            'INSERT INTO hosts (domain, key) VALUES (?, ?)',
+            ['example.com', $encrypted]
+        );
+
+        $_GET = array_merge($this->validGetParams(), ['slug' => 'missing-plugin']);
+
+        $this->assertSame(404, $this->dispatch()->getStatusCode());
+        $this->assertSame(0, $this->getBlacklistAttempts());
     }
 
     // ------------------------------------------------------------------
@@ -333,6 +362,22 @@ class ApiControllerTest extends TestCase
         }
 
         $this->assertSame(200, $response->getStatusCode());
+    }
+
+    public function testUpdateAvailableWithMissingFileReturns500(): void
+    {
+        $encrypted = \App\Helpers\EncryptionHelper::encrypt('validkey123');
+        $this->conn->executeStatement(
+            'INSERT INTO hosts (domain, key) VALUES (?, ?)',
+            ['example.com', $encrypted]
+        );
+        $this->conn->executeStatement(
+            'INSERT INTO plugins (slug, version) VALUES (?, ?)',
+            ['my-plugin', '2.0.0']
+        );
+
+        $_GET = $this->validGetParams();
+        $this->assertSame(500, $this->dispatch()->getStatusCode());
     }
 
     // ------------------------------------------------------------------

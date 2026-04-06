@@ -22,17 +22,19 @@ class HostsModel
     /**
      * Return all host entries.
      *
-     * @return array<int, string>
+     * @return array<int, array{domain: string, key: string}>
      */
     public static function getEntries(): array
     {
         $conn = DatabaseManager::getConnection();
         $rows = $conn->fetchAllAssociative('SELECT domain, key FROM hosts ORDER BY domain');
-        $entries = [];
-        foreach ($rows as $row) {
-            $entries[] = $row['domain'] . ' ' . $row['key'];
-        }
-        return $entries;
+        return array_map(
+            static fn (array $row): array => [
+                'domain' => (string) $row['domain'],
+                'key' => (string) $row['key'],
+            ],
+            $rows
+        );
     }
 
     /**
@@ -64,17 +66,38 @@ class HostsModel
     /**
      * Update an entry in the hosts table.
      */
-    public static function updateEntry(int $line, string $domain, string $key): bool
+    public static function updateEntry(string $domain, string $key): bool
     {
         $encrypted = EncryptionHelper::encrypt($key);
         $conn = DatabaseManager::getConnection();
-        return $conn->executeStatement('REPLACE INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
+        return $conn->executeStatement('UPDATE hosts SET key = ? WHERE domain = ?', [$encrypted, $domain]) > 0;
+    }
+
+    /**
+     * Re-encrypt a host's key with AEAD if it is still stored with the legacy
+     * CBC scheme.  Safe to call on every read; no-ops when the key is already
+     * AEAD-encrypted.
+     *
+     * @param string $domain       The host domain used as the primary key.
+     * @param string $encryptedKey The currently stored (possibly legacy) ciphertext.
+     * @param string $plainKey     The already-decrypted plain-text key.
+     */
+    public static function migrateLegacyKey(string $domain, string $encryptedKey, string $plainKey): void
+    {
+        if (!EncryptionHelper::needsMigration($encryptedKey)) {
+            return;
+        }
+        $conn = DatabaseManager::getConnection();
+        $conn->executeStatement(
+            'UPDATE hosts SET key = ? WHERE domain = ?',
+            [EncryptionHelper::encrypt($plainKey), $domain]
+        );
     }
 
     /**
      * Delete an entry from the hosts table.
      */
-    public static function deleteEntry(int $line, string $domain): bool
+    public static function deleteEntry(string $domain): bool
     {
         $conn = DatabaseManager::getConnection();
         $result = $conn->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]) > 0;

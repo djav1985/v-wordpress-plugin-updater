@@ -65,14 +65,14 @@ PHP;
         $this->assertStringContainsString('home', implode('', $out));
     }
 
-    public function testApiRouteMissingParamsRequiresAuth(): void
+    public function testApiRouteMissingParamsBypassesAuth(): void
     {
         $code = <<<'PHP'
 namespace App\Core { class SessionManager { public static int $count = 0; public static function getInstance(){ return new self(); } public function requireAuth(){ self::$count++; return true; } } }
 namespace { require 'tests/DummyControllers.php'; require 'update-api/vendor/autoload.php'; ob_start(); App\Core\Router::getInstance()->dispatch('GET', '/api'); ob_end_clean(); echo App\Core\SessionManager::$count; }
 PHP;
         [$out] = $this->runScript($code);
-        $this->assertGreaterThanOrEqual(1, (int)($out[0] ?? 0));
+        $this->assertSame(0, (int)($out[0] ?? 0));
     }
 
     public function testApiRouteWithParamsBypassesAuth(): void
@@ -86,8 +86,9 @@ namespace App\Core {
     }
 }
 namespace {
-    // Populate all expected query parameters so the router should bypass auth
+    // Populate query parameters; API route bypasses auth regardless of params.
     $_GET = [
+        'type'    => 'plugin',
         'domain'  => 'example.com',
         'key'     => 'test-key',
         'slug'    => 'dummy-plugin',
