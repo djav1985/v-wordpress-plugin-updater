@@ -16,7 +16,7 @@ namespace App\Core;
 
 use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
-use function FastRoute\simpleDispatcher;
+use FastRoute\FastRoute;
 
 class Router
 {
@@ -28,7 +28,7 @@ class Router
      */
     private function __construct()
     {
-        $this->dispatcher = simpleDispatcher(function (ConfigureRoutes $r): void {
+        $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
             $r->addRoute('GET', '/', function (): ResponseManager {
                 return ResponseManager::redirect('/home');
             });
@@ -43,7 +43,9 @@ class Router
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
             $r->addRoute(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'], '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
-        });
+        }, 'app_routes')->disableCache();
+
+        $this->dispatcher = $fastRoute->dispatcher();
     }
 
     public static function getInstance(): Router

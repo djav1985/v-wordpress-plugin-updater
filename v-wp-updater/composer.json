@@ -1,15 +1,15 @@
 {
-    "name": "vontmnt/v-wp-updater-plugin",
-    "description": "Autoloader configuration for the V WordPress Plugin Updater",
-    "type": "wordpress-plugin",
-    "license": "MIT",
-    "require": {
-        "php": ">=8.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "VWPU\\Helpers\\": "helpers/",
-            "VWPU\\Services\\": "services/"
-        }
+  "name": "vontmnt/v-wp-updater-plugin",
+  "description": "Autoloader configuration for the V WordPress Plugin Updater",
+  "type": "wordpress-plugin",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "VWPU\\Helpers\\": "helpers/",
+      "VWPU\\Services\\": "services/"
     }
+  }
 }
