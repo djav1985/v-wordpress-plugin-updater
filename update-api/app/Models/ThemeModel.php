@@ -116,6 +116,22 @@ class ThemeModel
                 continue;
             }
 
+            if (class_exists('\\ZipArchive')) {
+                $za = new \ZipArchive();
+                if ($za->open($fileTmp) !== true) {
+                    $messages[] = 'Error uploading: '
+                        . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                        . '. File is not a valid ZIP archive.';
+                    continue;
+                }
+                $za->close();
+            } else {
+                $messages[] = 'Error uploading: '
+                    . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
+                    . '. ZIP validation unavailable: the PHP zip extension is not installed.';
+                continue;
+            }
+
             if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
                 $slug = $matches[1];
                 $version = $matches[2];

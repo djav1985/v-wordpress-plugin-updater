@@ -11,7 +11,6 @@ class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
         array (
             'VWPU\\Services\\' => 14,
             'VWPU\\Helpers\\' => 13,
-            'VWPU\\Api\\' => 9,
         ),
     );
 
@@ -23,10 +22,6 @@ class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
         'VWPU\\Helpers\\' => 
         array (
             0 => __DIR__ . '/../..' . '/helpers',
-        ),
-        'VWPU\\Api\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/api',
         ),
     );
 

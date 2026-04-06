@@ -29,37 +29,34 @@ class BlacklistModel
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
+     * Uses an atomic UPSERT so concurrent requests cannot race on the
+     * read-modify-write cycle.
+     *
      * @param string $ip The IP address to update.
      * @return void
      */
     public static function updateFailedAttempts(string $ip): void
     {
         $conn = self::getConnection();
-        $record = $conn->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $now  = time();
 
-        if ($record) {
-            $loginAttempts = (int) $record['login_attempts'] + 1;
-            $blacklisted = (int) $record['blacklisted'];
-            $timestamp = (int) $record['timestamp'];
-
-            if ($loginAttempts >= 3) {
-                $blacklisted = 1;
-                $timestamp = time();
-            }
-
-            $conn->update('blacklist', [
-                'login_attempts' => $loginAttempts,
-                'blacklisted'   => $blacklisted,
-                'timestamp'     => $timestamp,
-            ], ['ip' => $ip]);
-        } else {
-            $conn->insert('blacklist', [
-                'ip'             => $ip,
-                'login_attempts' => 1,
-                'blacklisted'    => 0,
-                'timestamp'      => time(),
-            ]);
-        }
+        // Single atomic statement: insert on first attempt, or increment the
+        // counter and conditionally set blacklisted/timestamp on conflict.
+        $conn->executeStatement(
+            'INSERT INTO blacklist (ip, login_attempts, blacklisted, timestamp)
+             VALUES (?, 1, 0, ?)
+             ON CONFLICT(ip) DO UPDATE SET
+                 login_attempts = blacklist.login_attempts + 1,
+                 blacklisted = CASE
+                     WHEN blacklist.login_attempts + 1 >= 3 THEN 1
+                     ELSE blacklist.blacklisted
+                 END,
+                 timestamp = CASE
+                     WHEN blacklist.login_attempts + 1 >= 3 THEN ?
+                     ELSE blacklist.timestamp
+                 END',
+            [$ip, $now, $now]
+        );
     }
 
     /**

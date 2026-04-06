@@ -61,7 +61,10 @@ class PluginModelDbTest extends TestCase
     public function testUploadValidZipInsertsRecord(): void
     {
         $tmp = tempnam(sys_get_temp_dir(), 'pl');
-        file_put_contents($tmp, 'data');
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('readme.txt', 'placeholder');
+        $zip->close();
         $files = [
             'name'     => ['sample1_test_1.0.zip'],
             'tmp_name' => [$tmp],

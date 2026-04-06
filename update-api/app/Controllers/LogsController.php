@@ -28,8 +28,8 @@ class LogsController extends Controller
      */
     public function handleRequest(): Response
     {
-        $ploutput = LogModel::processLogFile('plugin.log');
-        $thoutput = LogModel::processLogFile('theme.log');
+        $ploutput = LogModel::getLogs('plugin');
+        $thoutput = LogModel::getLogs('theme');
 
         return Response::view('logs', [
             'ploutput' => $ploutput,

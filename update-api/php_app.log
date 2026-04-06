@@ -10,3 +10,5 @@
 [2026-03-15 14:52:57] [exception]: Uncaught Exception: boom in /tmp/cron-error-FtcFDk.php on line 6
 [2026-04-05 21:16:04] [exception]: Uncaught Exception: boom in /tmp/cron-error-31O4vs.php on line 6
 [2026-04-05 21:25:48] [exception]: Uncaught Exception: boom in /tmp/cron-error-K45OSj.php on line 6
+[2026-04-05 23:13:51] [exception]: Uncaught Exception: boom in /tmp/cron-error-7DMLrq.php on line 6
+[2026-04-05 23:58:20] [exception]: Uncaught Exception: boom in /tmp/cron-error-K2cZjw.php on line 6

@@ -115,6 +115,20 @@ class PluginModel
                 continue;
             }
 
+            if (class_exists('\\ZipArchive')) {
+                $za = new \ZipArchive();
+                if ($za->open($fileTmp) !== true) {
+                    $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
+                        '. File is not a valid ZIP archive.';
+                    continue;
+                }
+                $za->close();
+            } else {
+                $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
+                    '. ZIP validation unavailable: the PHP zip extension is not installed.';
+                continue;
+            }
+
             if ($fileName && preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
                 $slug = $matches[1];
                 $version = $matches[2];
