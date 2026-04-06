@@ -20,12 +20,16 @@ class ComposerStaticInit3cbd5619e668f1539c401c740818a22e
         'R' => 
         array (
             'Respect\\Validation\\' => 19,
+            'Respect\\Stringifier\\Test\\Unit\\' => 30,
+            'Respect\\Stringifier\\Test\\' => 25,
             'Respect\\Stringifier\\' => 20,
         ),
         'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
+            'Psr\\Http\\Server\\' => 16,
+            'Psr\\Http\\Message\\' => 17,
             'Psr\\Cache\\' => 10,
         ),
         'F' => 
@@ -52,6 +56,14 @@ class ComposerStaticInit3cbd5619e668f1539c401c740818a22e
         array (
             0 => __DIR__ . '/..' . '/respect/validation/library',
         ),
+        'Respect\\Stringifier\\Test\\Unit\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/respect/stringifier/tests/unit',
+        ),
+        'Respect\\Stringifier\\Test\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/respect/stringifier/tests/src',
+        ),
         'Respect\\Stringifier\\' => 
         array (
             0 => __DIR__ . '/..' . '/respect/stringifier/src',
@@ -63,6 +75,15 @@ class ComposerStaticInit3cbd5619e668f1539c401c740818a22e
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
+        ),
+        'Psr\\Http\\Server\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-server-middleware/src',
+            1 => __DIR__ . '/..' . '/psr/http-server-handler/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Cache\\' => 
         array (

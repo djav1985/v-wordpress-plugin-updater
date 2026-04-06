@@ -29,7 +29,7 @@ $hostsTableHtml = $hostsTableHtml ?? '';
         <h2>Add Entry</h2>
         <form class="entry-form" method="post" action="/home">
             <input type="hidden" name="csrf_token"
-                   value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                   value="<?php echo htmlspecialchars(\App\Helpers\SessionHelper::get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <div class="form-group">
                 <label for="domain">Domain:</label>
                 <input type="text" name="domain" id="domain" required>

@@ -5,20 +5,20 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
-- Removed redundant `SessionManager::requireAuth()` wrapper and updated router auth checks to use `SessionManager::isValid()` directly (no behavior change).
+(No unreleased changes at this time.)
 
 ## 4.5.0
 - Upgraded `nikic/fast-route` to `2.0.0-beta1` and aligned `Router` with the v2 configuration interface.
 - Raised minimum PHP requirements to match the current dependency set:
   - `v-update-api` now declares PHP 8.2+ to align with Doctrine DBAL 4.x.
   - README now distinguishes the API server PHP 8.2+ requirement from the WordPress plugin PHP 8.0+ requirement.
-- Refactored cron execution flow:
-  - Moved cron orchestration into `CronHelper::runCronJob()` and made internal sync/cleanup methods private.
-  - Simplified `v-update-api/cron.php` to CLI-only execution that delegates directly to `CronHelper::runCronJob()`.
-  - Removed obsolete lock/worker helper usage and deleted `WorkerHelper`.
+- Refactored cron execution to CLI-only model:
+  - `v-update-api/cron.php` now validates CLI execution via `php_sapi_name()` and delegates to model sync methods.
+  - `PluginModel::syncFromDirectory()` and `ThemeModel::syncFromDirectory()` sync filesystem ZIPs to database metadata.
+  - `BlacklistModel::cleanup()` removes expired blacklist entries on each cron run.
 - Consolidated secure random-byte generation into `EncryptionHelper::bytes()`:
-  - Deleted `SecureRandomHelper` and updated consumers (`EncryptionHelper`, `LoginController`, `public/index.php`) to use the centralized helper.
-- Removed `RouteDispatcherFactory`; `Router` now builds its FastRoute dispatcher directly via `simpleDispatcher`.
+  - Updated consumers (`LoginController`, `public/index.php`) to use the centralized helper method.
+- Removed `RouteDispatcherFactory`; `Router` now builds its FastRoute dispatcher directly via `recommendedSettings()`.
 - Strengthened model/controller consistency and failure-safe update flows:
   - `PluginModel` and `ThemeModel` uploads now stage files, perform DB upserts in transactions, and apply rollback/compensation when filesystem or DB steps fail.
   - `deletePlugin`/`deleteTheme` now validate `unlink()` success, skip DB deletion on file-delete failures, and emit structured log entries for invalid path/race/permission cases.
@@ -27,14 +27,14 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
   - `ApiController` key comparison now uses `hash_equals` after decryption for constant-time credential checks.
   - Added regression coverage for delete failure handling and upload rollback paths in plugin/theme model tests, and updated host/home tests for structured host rows and domain-keyed mutations.
 - Tightened session, lockout, and key-display security controls:
-  - `SessionManager::destroy` now expires the active session cookie with matching cookie attributes before `session_destroy()`.
+  - `SessionHelper::destroy` now expires the active session cookie with matching cookie attributes before `session_destroy()`.
   - `BlacklistModel::updateFailedAttempts` now refreshes `timestamp` on every failed attempt while preserving atomic UPSERT behavior.
   - `HomeController` host listing now masks keys by default, adds explicit reveal/copy controls, and limits plaintext display to a short-lived (30s) session-backed reveal window; UI toasts/messages never include full keys.
   - Added regression coverage in `SessionDestroyCookieTest`, `BlacklistModelTest`, and new `HomeControllerTest` for these behaviors.
 - Hardened file-ingest edge cases across upload and cron sync flows:
   - `PluginModel::uploadFiles` and `ThemeModel::uploadFiles` now normalize both single-file and multi-file upload payload shapes, validate required keys/types before indexing, and emit explicit malformed-entry errors instead of runtime warnings.
-  - `CronHelper::syncDir` now guards unreadable/missing directories and `glob()` failures, logs sync-read failures, and exits safely without deleting existing records when scanning cannot proceed.
-  - Added regression tests for upload payload normalization in `PluginModelDbTest`/`ThemeModelDbTest` and sync-read failure behavior in `CronHelperTest`.
+  - `PluginModel::syncFromDirectory()` and `ThemeModel::syncFromDirectory()` now guard unreadable/missing directories and `glob()` failures, log sync-read failures, and exit safely without deleting existing records when scanning cannot proceed.
+  - Added regression tests for upload payload normalization and model sync behavior.
 - Hardened host onboarding and key storage paths:
   - `v-update-api/public/install.php` now defensively parses `HOSTS` imports, skips/records malformed records, validates domains, normalizes plaintext/legacy keys into the expected encrypted storage format, and logs normalization summaries for traceability.
   - `HostsModel::updateEntry` now uses `UPDATE` instead of `REPLACE INTO` to avoid delete+insert side effects while preserving encrypted key storage behavior.

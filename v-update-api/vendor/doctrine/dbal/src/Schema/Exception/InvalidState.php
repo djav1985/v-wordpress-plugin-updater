@@ -89,4 +89,9 @@ final class InvalidState extends LogicException implements SchemaException
     {
         return new self(sprintf('Table "%s" has invalid primary key constraint.', $tableName));
     }
+
+    public static function tableDiffContainsUnnamedDroppedForeignKeyConstraints(): self
+    {
+        return new self('Table diff contains unnamed dropped foreign key constraints');
+    }
 }

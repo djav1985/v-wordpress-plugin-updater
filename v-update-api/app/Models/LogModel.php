@@ -14,19 +14,22 @@
 
 namespace App\Models;
 
-use Doctrine\DBAL\Connection;
+use App\Core\DatabaseManager;
 
 class LogModel
 {
-    public function __construct(private Connection $connection)
-    {
-    }
     /**
      * Insert one log row.
+     *
+     * @param string $domain Domain name.
+     * @param string $type   Log type (e.g., 'plugin', 'theme').
+     * @param string $status Status (e.g., 'Success', 'Failed').
+     * @return void
      */
-    public function addLog(string $domain, string $type, string $status): void
+    public static function addLog(string $domain, string $type, string $status): void
     {
-        $this->connection->executeStatement(
+        $connection = DatabaseManager::connection();
+        $connection->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
             [$domain, $type, date('Y-m-d'), $status]
         );
@@ -36,13 +39,13 @@ class LogModel
     /**
      * Process log entries from the database and generate grouped HTML output.
      *
-     * @param string $type Log type: 'plugin' or 'theme'.
-     *
-     * @return string
+     * @param string $type Log type (e.g., 'plugin', 'theme').
+     * @return string HTML output of grouped log entries.
      */
-    public function getLogs(string $type): string
+    public static function getLogs(string $type): string
     {
-        $rows = $this->connection->fetchAllAssociative(
+        $connection = DatabaseManager::connection();
+        $rows = $connection->fetchAllAssociative(
             'SELECT domain, date, status FROM logs WHERE type = ? ORDER BY date DESC',
             [$type]
         );
@@ -94,8 +97,11 @@ class LogModel
      *
      * @return void
      */
-    public function clearAllLogs(): void
+    public static function clearAllLogs(): void
     {
-        $this->connection->executeStatement('DELETE FROM logs');
+        DatabaseManager::connection()->executeStatement('DELETE FROM logs');
     }
 }
+
+
+

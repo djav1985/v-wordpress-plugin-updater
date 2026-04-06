@@ -228,22 +228,26 @@ class Comparator
         $newIndexes = $newTable->getIndexes();
 
         // See if all the indexes from the old table exist in the new one
-        foreach ($newIndexes as $newIndexName => $newIndex) {
+        foreach ($newIndexes as $newIndex) {
+            $newIndexName = $newIndex->getName();
+
             if (($newIndex->isPrimary() && $oldTable->getPrimaryKey() !== null) || $oldTable->hasIndex($newIndexName)) {
                 continue;
             }
 
-            $addedIndexes[$newIndexName] = $newIndex;
+            $addedIndexes[] = $newIndex;
         }
 
         // See if there are any removed indexes in the new table
-        foreach ($oldIndexes as $oldIndexName => $oldIndex) {
+        foreach ($oldIndexes as $oldIndex) {
+            $oldIndexName = $oldIndex->getName();
+
             // See if the index is removed in the new table.
             if (
                 ($oldIndex->isPrimary() && $newTable->getPrimaryKey() === null) ||
                 ! $oldIndex->isPrimary() && ! $newTable->hasIndex($oldIndexName)
             ) {
-                $droppedIndexes[$oldIndexName] = $oldIndex;
+                $droppedIndexes[] = $oldIndex;
 
                 continue;
             }
@@ -259,8 +263,8 @@ class Comparator
             if ($shouldReportModifiedIndexes) {
                 $modifiedIndexes[] = $newIndex;
             } else {
-                $droppedIndexes[$oldIndexName] = $oldIndex;
-                $addedIndexes[$oldIndexName]   = $newIndex;
+                $droppedIndexes[] = $oldIndex;
+                $addedIndexes[]   = $newIndex;
             }
         }
 
@@ -359,8 +363,8 @@ class Comparator
      * Try to find indexes that only changed their name, rename operations maybe cheaper than add/drop
      * however ambiguities between different possibilities should not lead to renaming at all.
      *
-     * @param array<string,Index> $addedIndexes
-     * @param array<string,Index> $removedIndexes
+     * @param array<Index> $addedIndexes
+     * @param array<Index> $removedIndexes
      *
      * @return array<string,Index>
      */
@@ -369,13 +373,13 @@ class Comparator
         $candidatesByName = [];
 
         // Gather possible rename candidates by comparing each added and removed index based on semantics.
-        foreach ($addedIndexes as $addedIndexName => $addedIndex) {
-            foreach ($removedIndexes as $removedIndex) {
+        foreach ($addedIndexes as $addedIndexKey => $addedIndex) {
+            foreach ($removedIndexes as $removedIndexKey => $removedIndex) {
                 if ($this->diffIndex($addedIndex, $removedIndex)) {
                     continue;
                 }
 
-                $candidatesByName[$addedIndex->getName()][] = [$removedIndex, $addedIndex, $addedIndexName];
+                $candidatesByName[$addedIndex->getName()][] = [$removedIndexKey, $addedIndexKey];
             }
         }
 
@@ -390,19 +394,21 @@ class Comparator
                 continue;
             }
 
-            [$removedIndex, $addedIndex] = $candidates[0];
+            [$removedIndexKey, $addedIndexKey] = $candidates[0];
 
+            $removedIndex     = $removedIndexes[$removedIndexKey];
             $removedIndexName = strtolower($removedIndex->getName());
-            $addedIndexName   = strtolower($addedIndex->getName());
 
             if (isset($renamedIndexes[$removedIndexName])) {
                 continue;
             }
 
+            $addedIndex = $addedIndexes[$addedIndexKey];
+
             $renamedIndexes[$removedIndexName] = $addedIndex;
             unset(
-                $addedIndexes[$addedIndexName],
-                $removedIndexes[$removedIndexName],
+                $addedIndexes[$addedIndexKey],
+                $removedIndexes[$removedIndexKey],
             );
         }
 

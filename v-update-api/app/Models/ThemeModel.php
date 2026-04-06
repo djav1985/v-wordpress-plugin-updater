@@ -14,23 +14,22 @@
 
 namespace App\Models;
 
+use App\Core\DatabaseManager;
 use App\Helpers\ValidationHelper;
-use Doctrine\DBAL\Connection;
 
 class ThemeModel
 {
     private const DIR = THEMES_DIR;
 
-    public function __construct(private Connection $connection)
-    {
-    }
-
     /**
      * Return theme version by slug, or null when not found.
+     *
+     * @param string $slug Theme slug.
+     * @return string|null Theme version or null if not found.
      */
-    public function getVersionBySlug(string $slug): ?string
+    public static function getVersionBySlug(string $slug): ?string
     {
-        $version = $this->connection->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
+        $version = DatabaseManager::connection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
         if ($version === false || $version === null) {
             return null;
         }
@@ -41,11 +40,11 @@ class ThemeModel
     /**
      * Return array of theme data.
      *
-     * @return array<int, array{slug: string, version: string}>
+     * @return array<int, array{slug: string, version: string}> Array of theme data.
      */
-    public function getThemes(): array
+    public static function getThemes(): array
     {
-        $rows = $this->connection->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
+        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
         $themes = [];
         foreach ($rows as $row) {
             $themes[] = [
@@ -58,8 +57,11 @@ class ThemeModel
 
     /**
      * Delete a theme file.
+     *
+     * @param string $themeName Theme file name to delete.
+     * @return bool True if deleted successfully, false otherwise.
      */
-    public function deleteTheme(string $themeName): bool
+    public static function deleteTheme(string $themeName): bool
     {
         $basename = basename($themeName);
         $parsed = ValidationHelper::parsePackageFilename($basename);
@@ -87,23 +89,23 @@ class ThemeModel
             return false;
         }
 
-        $this->connection->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
+        DatabaseManager::connection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
         return true;
     }
 
     /**
      * Upload theme files.
      *
-     * @param array<string, array<int, mixed>> $fileArray $_FILES['theme_file'] structure
-     * @param bool                              $isAjax    Whether the request was via AJAX
+     * @param array<string, array<int, mixed>> $fileArray $_FILES['theme_file'] structure.
+     * @param bool                              $isAjax    Whether the request was via AJAX.
      *
-     * @return string[] Array of status messages
+     * @return string[] Array of status messages.
      */
-    public function uploadFiles(array $fileArray, bool $isAjax = false): array
+    public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
         $messages = [];
         $allowedExtensions = ['zip'];
-        $normalized = $this->normalizeUploadPayload($fileArray);
+        $normalized = self::normalizeUploadPayload($fileArray);
         foreach ($normalized['errors'] as $errorMessage) {
             $messages[] = $errorMessage;
         }
@@ -117,10 +119,10 @@ class ThemeModel
 
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $themeSlug = $parsedFilename['slug'] ?? '';
-            $current = $this->connection->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
+            $current = DatabaseManager::connection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
             $maxUploadSize = min(
-                $this->parseIniSize(ini_get('upload_max_filesize')),
-                $this->parseIniSize(ini_get('post_max_size'))
+                self::parseIniSize(ini_get('upload_max_filesize')),
+                self::parseIniSize(ini_get('post_max_size'))
             );
 
             if ($entry['size'] > $maxUploadSize) {
@@ -182,7 +184,7 @@ class ThemeModel
                 continue;
             }
 
-            $result = $this->persistUploadedArtifact('themes', $slug, $version, $tempPath, $finalPath);
+            $result = self::persistUploadedArtifact('themes', $slug, $version, $tempPath, $finalPath);
             if (!$result['success']) {
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
@@ -200,9 +202,14 @@ class ThemeModel
     /**
      * Persist upload with transactional DB update and filesystem compensation.
      *
-     * @return array{success: bool, error: string}
+     * @param string $table     Database table name.
+     * @param string $slug      Theme slug.
+     * @param string $version   Theme version.
+     * @param string $tempPath  Temporary file path.
+     * @param string $finalPath Final destination path.
+     * @return array{success: bool, error: string} Result array with success status and error message.
      */
-    private function persistUploadedArtifact(
+    private static function persistUploadedArtifact(
         string $table,
         string $slug,
         string $version,
@@ -213,7 +220,7 @@ class ThemeModel
         $movedToFinal = false;
 
         try {
-            $this->connection->beginTransaction();
+            DatabaseManager::connection()->beginTransaction();
 
             if (!rename($tempPath, $finalPath)) {
                 throw new \RuntimeException('Failed to move staged upload into final path.');
@@ -236,13 +243,13 @@ class ThemeModel
                 $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
             }
 
-            $this->connection->executeStatement(
+            DatabaseManager::connection()->executeStatement(
                 "INSERT INTO $table (slug, version) VALUES (?, ?) "
                 . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                 [$slug, $version]
             );
 
-            $this->connection->commit();
+            DatabaseManager::connection()->commit();
 
             foreach ($deletedBackups as $backup) {
                 @unlink($backup['backup']);
@@ -250,8 +257,8 @@ class ThemeModel
 
             return ['success' => true, 'error' => ''];
         } catch (\Throwable $exception) {
-            if ($this->connection->isTransactionActive()) {
-                $this->connection->rollBack();
+            if (DatabaseManager::connection()->isTransactionActive()) {
+                DatabaseManager::connection()->rollBack();
             }
 
             foreach ($deletedBackups as $backup) {
@@ -277,10 +284,10 @@ class ThemeModel
     /**
      * Normalize upload payload into a predictable list structure.
      *
-     * @param array<string, mixed> $fileArray
-     * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]}
+     * @param array<string, mixed> $fileArray The raw $_FILES upload array.
+     * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]} Normalized upload entries and errors.
      */
-    private function normalizeUploadPayload(array $fileArray): array
+    private static function normalizeUploadPayload(array $fileArray): array
     {
         $requiredKeys = ['name', 'tmp_name', 'error', 'size'];
         foreach ($requiredKeys as $requiredKey) {
@@ -301,7 +308,7 @@ class ThemeModel
         $errors = [];
 
         if (!$isMulti) {
-            $single = $this->buildEntry(
+            $single = self::buildEntry(
                 $fileArray['name'],
                 $fileArray['tmp_name'],
                 $fileArray['error'],
@@ -326,7 +333,7 @@ class ThemeModel
 
         $totalFiles = count($fileArray['name']);
         for ($i = 0; $i < $totalFiles; $i++) {
-            $single = $this->buildEntry(
+            $single = self::buildEntry(
                 $fileArray['name'][$i] ?? null,
                 $fileArray['tmp_name'][$i] ?? null,
                 $fileArray['error'][$i] ?? null,
@@ -347,9 +354,14 @@ class ThemeModel
     /**
      * Build one normalized upload entry, or a descriptive validation error.
      *
-     * @return array{entry: array{name: string, tmp_name: string, error: int, size: int}|null, error: string|null}
+     * @param mixed $name    File name.
+     * @param mixed $tmpName Temporary file name.
+     * @param mixed $error   Upload error code.
+     * @param mixed $size    File size.
+     * @param int   $index   File index in upload array.
+     * @return array{entry: array{name: string, tmp_name: string, error: int, size: int}|null, error: string|null} Entry or error.
      */
-    private function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
+    private static function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
     {
         if (!is_string($name) || !is_string($tmpName)) {
             return [
@@ -380,8 +392,11 @@ class ThemeModel
 
     /**
      * Parse a size string from php.ini into bytes.
+     *
+     * @param string $size Size string (e.g., '10M', '1G').
+     * @return int Size in bytes.
      */
-    private function parseIniSize(string $size): int
+    private static function parseIniSize(string $size): int
     {
         $unit = strtoupper(substr($size, -1));
         $value = (int)$size;
@@ -397,4 +412,49 @@ class ThemeModel
             return $value;
         }
     }
+
+    /**
+     * Sync ZIP files from directory into the themes table.
+     *
+     * @param string $dir Directory path to sync from.
+     * @return void
+     */
+    public static function syncFromDirectory(string $dir): void
+    {
+        if (!is_dir($dir) || !is_readable($dir)) {
+            error_log(sprintf('ThemeModel::syncFromDirectory cannot read directory "%s".', $dir));
+            return;
+        }
+
+        $files = glob($dir . '/*.zip');
+        if ($files === false) {
+            error_log(sprintf('ThemeModel::syncFromDirectory glob() failed for directory "%s".', $dir));
+            return;
+        }
+
+        $found = [];
+        foreach ($files as $file) {
+            $name = basename($file);
+            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $name, $matches)) {
+                $slug = $matches[1];
+                $version = $matches[2];
+                $found[$slug] = true;
+                DatabaseManager::connection()->executeStatement(
+                    'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
+                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                    [$slug, $version]
+                );
+            }
+        }
+
+        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug FROM themes');
+        foreach ($rows as $row) {
+            if (!isset($found[$row['slug']])) {
+                DatabaseManager::connection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$row['slug']]);
+            }
+        }
+    }
 }
+
+
+

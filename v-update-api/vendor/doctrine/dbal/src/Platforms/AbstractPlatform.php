@@ -19,9 +19,11 @@ use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\DefaultExpression;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\Metadata\MetadataProvider;
 use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\Sequence;
@@ -247,6 +249,18 @@ abstract class AbstractPlatform
         $length = count($column['values']) > 1
             ? max(...array_map(mb_strlen(...), $column['values']))
             : mb_strlen($column['values'][key($column['values'])]);
+
+        if (isset($column['length'])) {
+            if ($length > $column['length']) {
+                throw new InvalidArgumentException(sprintf(
+                    'Specified column length (%d) is less than the maximum length of provided values (%d).',
+                    $column['length'],
+                    $length,
+                ));
+            }
+
+            $length = $column['length'];
+        }
 
         return $this->getStringTypeDeclarationSQL(['length' => $length]);
     }
@@ -1530,6 +1544,10 @@ abstract class AbstractPlatform
 
         $default = $column['default'];
 
+        if ($default instanceof DefaultExpression) {
+            return ' DEFAULT ' . $default->toSQL($this);
+        }
+
         if (! isset($column['type'])) {
             return " DEFAULT '" . $default . "'";
         }
@@ -1541,14 +1559,35 @@ abstract class AbstractPlatform
         }
 
         if ($type instanceof Types\PhpDateTimeMappingType && $default === $this->getCurrentTimestampSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentTimestamp instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentTimestampSQL();
         }
 
         if ($type instanceof Types\PhpTimeMappingType && $default === $this->getCurrentTimeSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentTime instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentTimeSQL();
         }
 
         if ($type instanceof Types\PhpDateMappingType && $default === $this->getCurrentDateSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentDate instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentDateSQL();
         }
 
@@ -2428,6 +2467,16 @@ abstract class AbstractPlatform
         }
 
         return $this->unquotedIdentifierFolding;
+    }
+
+    /**
+     * Creates a metadata provider that can be used access the metadata of the underlying database schema.
+     *
+     * @throws Exception
+     */
+    public function createMetadataProvider(Connection $connection): MetadataProvider
+    {
+        throw NotSupported::new(__METHOD__);
     }
 
     /**

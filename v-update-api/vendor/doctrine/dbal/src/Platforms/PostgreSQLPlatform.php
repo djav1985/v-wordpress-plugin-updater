@@ -7,6 +7,7 @@ namespace Doctrine\DBAL\Platforms;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\PostgreSQLKeywords;
+use Doctrine\DBAL\Platforms\PostgreSQL\PostgreSQLMetadataProvider;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
@@ -330,23 +331,23 @@ class PostgreSQLPlatform extends AbstractPlatform
             ' INCREMENT BY ' . $sequence->getAllocationSize() .
             ' MINVALUE ' . $sequence->getInitialValue() .
             ' START ' . $sequence->getInitialValue() .
-            $this->getSequenceCacheSQL($sequence);
+            $this->getSequenceCacheSQL($sequence->getCacheSize());
     }
 
     public function getAlterSequenceSQL(Sequence $sequence): string
     {
         return 'ALTER SEQUENCE ' . $sequence->getQuotedName($this) .
             ' INCREMENT BY ' . $sequence->getAllocationSize() .
-            $this->getSequenceCacheSQL($sequence);
+            $this->getSequenceCacheSQL($sequence->getCacheSize());
     }
 
     /**
      * Cache definition for sequences
      */
-    private function getSequenceCacheSQL(Sequence $sequence): string
+    private function getSequenceCacheSQL(?int $cacheSize): string
     {
-        if ($sequence->getCache() > 1) {
-            return ' CACHE ' . $sequence->getCache();
+        if ($cacheSize > 1) {
+            return ' CACHE ' . $cacheSize;
         }
 
         return '';
@@ -700,6 +701,8 @@ class PostgreSQLPlatform extends AbstractPlatform
 
     /**
      * Get the snippet used to retrieve the default value for a given column
+     *
+     * @internal The method should be only used from within the {@see PostgreSQLSchemaManager} class hierarchy.
      */
     public function getDefaultColumnValueSQLSnippet(): string
     {
@@ -820,6 +823,11 @@ class PostgreSQLPlatform extends AbstractPlatform
     public function getJsonbTypeDeclarationSQL(array $column): string
     {
         return 'JSONB';
+    }
+
+    public function createMetadataProvider(Connection $connection): PostgreSQLMetadataProvider
+    {
+        return new PostgreSQLMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): PostgreSQLSchemaManager

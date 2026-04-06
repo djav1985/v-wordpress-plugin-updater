@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\SQLiteKeywords;
+use Doctrine\DBAL\Platforms\SQLite\SQLiteMetadataProvider;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Exception\ColumnDoesNotExist;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
@@ -294,7 +295,7 @@ class SQLitePlatform extends AbstractPlatform
 
         $tableComment = '';
         if (isset($options['comment'])) {
-            $tableComment = $this->getInlineTableCommentSQL($options['comment']);
+            $tableComment = $this->getInlineCommentSQL($options['comment']);
         }
 
         $query = ['CREATE TABLE ' . $name . ' ' . $tableComment . '(' . $queryFields . ')'];
@@ -428,16 +429,16 @@ class SQLitePlatform extends AbstractPlatform
     /** @internal The method should be only used from within the {@see AbstractPlatform} class hierarchy. */
     public function getInlineColumnCommentSQL(string $comment): string
     {
+        return $this->getInlineCommentSQL($comment);
+    }
+
+    private function getInlineCommentSQL(string $comment): string
+    {
         if ($comment === '') {
             return '';
         }
 
         return '--' . str_replace("\n", "\n--", $comment) . "\n";
-    }
-
-    private function getInlineTableCommentSQL(string $comment): string
-    {
-        return $this->getInlineColumnCommentSQL($comment);
     }
 
     protected function initializeDoctrineTypeMappings(): void
@@ -824,8 +825,9 @@ class SQLitePlatform extends AbstractPlatform
         $nameMap  = $this->getDiffColumnNameMap($diff);
 
         foreach ($indexes as $key => $index) {
+            $indexName = $index->getName();
             foreach ($diff->getRenamedIndexes() as $oldIndexName => $renamedIndex) {
-                if (strtolower($key) !== strtolower($oldIndexName)) {
+                if (strtolower($indexName) !== strtolower($oldIndexName)) {
                     continue;
                 }
 
@@ -966,6 +968,11 @@ class SQLitePlatform extends AbstractPlatform
         }
 
         return $primaryIndex;
+    }
+
+    public function createMetadataProvider(Connection $connection): SQLiteMetadataProvider
+    {
+        return new SQLiteMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): SQLiteSchemaManager

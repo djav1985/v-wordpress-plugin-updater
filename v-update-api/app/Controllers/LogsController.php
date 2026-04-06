@@ -18,23 +18,21 @@ use App\Core\ErrorManager;
 use App\Models\LogModel;
 use App\Helpers\MessageHelper;
 use App\Helpers\ValidationHelper;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class LogsController
 {
-    public function __construct(private LogModel $logModel)
-    {
-    }
-
     /**
      * Handles GET requests for the logs page.
+     *
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
-        $ploutput = $this->logModel->getLogs('plugin');
-        $thoutput = $this->logModel->getLogs('theme');
+        $ploutput = LogModel::getLogs('plugin');
+        $thoutput = LogModel::getLogs('theme');
 
-        return ResponseManager::view('logs', [
+        return Response::view('logs', [
             'ploutput' => $ploutput,
             'thoutput' => $thoutput,
         ]);
@@ -42,21 +40,23 @@ class LogsController
 
     /**
      * Handles POST submissions on the logs page.
+     *
+     * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::redirect('/logs');
+            return Response::redirect('/logs');
         }
 
         if (isset($_POST['clear_logs'])) {
-            $this->logModel->clearAllLogs();
+            LogModel::clearAllLogs();
             MessageHelper::addMessage('Logs cleared successfully.');
         }
-        return ResponseManager::redirect('/logs');
+        return Response::redirect('/logs');
     }
 }

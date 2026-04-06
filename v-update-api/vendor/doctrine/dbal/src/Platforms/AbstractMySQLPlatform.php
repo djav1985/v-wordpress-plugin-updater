@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\InvalidColumnType\ColumnValuesRequired;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\MySQLKeywords;
+use Doctrine\DBAL\Platforms\MySQL\MySQLMetadataProvider;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\MySQLSchemaManager;
@@ -15,6 +16,7 @@ use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\SQL\Builder\DefaultSelectSQLBuilder;
 use Doctrine\DBAL\SQL\Builder\SelectSQLBuilder;
+use Doctrine\DBAL\SQL\Parser;
 use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Deprecations\Deprecation;
@@ -214,7 +216,7 @@ abstract class AbstractMySQLPlatform extends AbstractPlatform
      */
     public function getBooleanTypeDeclarationSQL(array $column): string
     {
-        return 'TINYINT(1)';
+        return 'TINYINT';
     }
 
     /**
@@ -873,6 +875,11 @@ abstract class AbstractMySQLPlatform extends AbstractPlatform
         return true;
     }
 
+    public function createMetadataProvider(Connection $connection): MySQLMetadataProvider
+    {
+        return new MySQLMetadataProvider($connection, $this);
+    }
+
     public function createSchemaManager(Connection $connection): MySQLSchemaManager
     {
         return new MySQLSchemaManager($connection, $this);
@@ -919,5 +926,10 @@ SQL;
         $conditions[] = "t.TABLE_TYPE = 'BASE TABLE'";
 
         return $sql . ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    public function createSQLParser(): Parser
+    {
+        return new Parser(true);
     }
 }

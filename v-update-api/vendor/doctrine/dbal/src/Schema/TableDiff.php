@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Doctrine\DBAL\Schema;
 
+use Doctrine\DBAL\Schema\Exception\InvalidState;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\Deprecations\Deprecation;
 
 use function array_filter;
@@ -54,6 +56,17 @@ class TableDiff
                     . ' indexes via $droppedIndexes and added indexes via $addedIndexes.',
                 __METHOD__,
             );
+        }
+
+        foreach ($droppedForeignKeys as $droppedForeignKey) {
+            if ($droppedForeignKey->getName() === '') {
+                Deprecation::trigger(
+                    'doctrine/dbal',
+                    'https://github.com/doctrine/dbal/pull/7143',
+                    'Dropping a foreign key constraints without specifying its name is deprecated.',
+                );
+                break;
+            }
         }
 
         if (count($modifiedForeignKeys) === 0) {
@@ -224,10 +237,31 @@ class TableDiff
         return $this->modifiedForeignKeys;
     }
 
-    /** @return array<ForeignKeyConstraint> */
+    /**
+     * @deprecated Use {@see getDroppedForeignKeyConstraintNames()}.
+     *
+     * @return array<ForeignKeyConstraint>
+     */
     public function getDroppedForeignKeys(): array
     {
         return $this->droppedForeignKeys;
+    }
+
+    /** @return array<UnqualifiedName> */
+    public function getDroppedForeignKeyConstraintNames(): array
+    {
+        $names = [];
+        foreach ($this->droppedForeignKeys as $constraint) {
+            $name = $constraint->getObjectName();
+
+            if ($name === null) {
+                throw InvalidState::tableDiffContainsUnnamedDroppedForeignKeyConstraints();
+            }
+
+            $names[] = $name;
+        }
+
+        return $names;
     }
 
     /**

@@ -20,8 +20,21 @@ if (php_sapi_name() !== 'cli') {
 require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Core\ErrorManager;
-use App\Helpers\CronHelper;
+use App\Models\PluginModel;
+use App\Models\ThemeModel;
+use App\Models\BlacklistModel;
 
 ErrorManager::handle(function (): void {
-    CronHelper::runCronJob();
+    $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/public';
+    require __DIR__ . '/config.php';
+
+    $pluginModel = new PluginModel();
+    $themeModel = new ThemeModel();
+    $blacklistModel = new BlacklistModel();
+
+    $pluginModel->syncFromDirectory(PLUGINS_DIR);
+    $themeModel->syncFromDirectory(THEMES_DIR);
+    $blacklistModel->cleanup();
+
+    echo "Cron job completed successfully.\n";
 });

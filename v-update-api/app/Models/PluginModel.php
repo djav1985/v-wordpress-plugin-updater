@@ -14,23 +14,19 @@
 
 namespace App\Models;
 
+use App\Core\DatabaseManager;
 use App\Helpers\ValidationHelper;
-use Doctrine\DBAL\Connection;
 
 class PluginModel
 {
     private const DIR = PLUGINS_DIR;
 
-    public function __construct(private Connection $connection)
-    {
-    }
-
     /**
      * Return plugin version by slug, or null when not found.
      */
-    public function getVersionBySlug(string $slug): ?string
+    public static function getVersionBySlug(string $slug): ?string
     {
-        $version = $this->connection->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$slug]);
+        $version = DatabaseManager::connection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$slug]);
         if ($version === false || $version === null) {
             return null;
         }
@@ -43,9 +39,9 @@ class PluginModel
      *
      * @return array<int, array{slug: string, version: string}>
      */
-    public function getPlugins(): array
+    public static function getPlugins(): array
     {
-        $rows = $this->connection->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
+        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
         $plugins = [];
         foreach ($rows as $row) {
             $plugins[] = [
@@ -59,7 +55,7 @@ class PluginModel
     /**
      * Delete a plugin file.
      */
-    public function deletePlugin(string $pluginName): bool
+    public static function deletePlugin(string $pluginName): bool
     {
         $basename = basename($pluginName);
         $parsed = ValidationHelper::parsePackageFilename($basename);
@@ -87,7 +83,7 @@ class PluginModel
             return false;
         }
 
-        $this->connection->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
+        DatabaseManager::connection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
         return true;
     }
 
@@ -99,11 +95,11 @@ class PluginModel
      *
      * @return string[] Array of status messages
      */
-    public function uploadFiles(array $fileArray, bool $isAjax = false): array
+    public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
         $messages = [];
         $allowedExtensions = ['zip'];
-        $normalized = $this->normalizeUploadPayload($fileArray);
+        $normalized = self::normalizeUploadPayload($fileArray);
         foreach ($normalized['errors'] as $errorMessage) {
             $messages[] = $errorMessage;
         }
@@ -116,10 +112,10 @@ class PluginModel
             $fileExtension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : '';
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $pluginSlug = $parsedFilename['slug'] ?? '';
-            $current = $this->connection->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
+            $current = DatabaseManager::connection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
             $maxUploadSize = min(
-                $this->parseIniSize(ini_get('upload_max_filesize')),
-                $this->parseIniSize(ini_get('post_max_size'))
+                self::parseIniSize(ini_get('upload_max_filesize')),
+                self::parseIniSize(ini_get('post_max_size'))
             );
 
             if ($entry['size'] > $maxUploadSize) {
@@ -170,7 +166,7 @@ class PluginModel
                 continue;
             }
 
-            $result = $this->persistUploadedArtifact('plugins', $slug, $version, $tempPath, $finalPath);
+            $result = self::persistUploadedArtifact('plugins', $slug, $version, $tempPath, $finalPath);
             if (!$result['success']) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
                 error_log($result['error']);
@@ -188,7 +184,7 @@ class PluginModel
      *
      * @return array{success: bool, error: string}
      */
-    private function persistUploadedArtifact(
+    private static function persistUploadedArtifact(
         string $table,
         string $slug,
         string $version,
@@ -199,7 +195,7 @@ class PluginModel
         $movedToFinal = false;
 
         try {
-            $this->connection->beginTransaction();
+            DatabaseManager::connection()->beginTransaction();
 
             if (!rename($tempPath, $finalPath)) {
                 throw new \RuntimeException('Failed to move staged upload into final path.');
@@ -222,13 +218,13 @@ class PluginModel
                 $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
             }
 
-            $this->connection->executeStatement(
+            DatabaseManager::connection()->executeStatement(
                 "INSERT INTO $table (slug, version) VALUES (?, ?) "
                 . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                 [$slug, $version]
             );
 
-            $this->connection->commit();
+            DatabaseManager::connection()->commit();
 
             foreach ($deletedBackups as $backup) {
                 @unlink($backup['backup']);
@@ -236,8 +232,8 @@ class PluginModel
 
             return ['success' => true, 'error' => ''];
         } catch (\Throwable $exception) {
-            if ($this->connection->isTransactionActive()) {
-                $this->connection->rollBack();
+            if (DatabaseManager::connection()->isTransactionActive()) {
+                DatabaseManager::connection()->rollBack();
             }
 
             foreach ($deletedBackups as $backup) {
@@ -266,7 +262,7 @@ class PluginModel
      * @param array<string, mixed> $fileArray
      * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]}
      */
-    private function normalizeUploadPayload(array $fileArray): array
+    private static function normalizeUploadPayload(array $fileArray): array
     {
         $requiredKeys = ['name', 'tmp_name', 'error', 'size'];
         foreach ($requiredKeys as $requiredKey) {
@@ -287,7 +283,7 @@ class PluginModel
         $errors = [];
 
         if (!$isMulti) {
-            $single = $this->buildEntry(
+            $single = self::buildEntry(
                 $fileArray['name'],
                 $fileArray['tmp_name'],
                 $fileArray['error'],
@@ -312,7 +308,7 @@ class PluginModel
 
         $totalFiles = count($fileArray['name']);
         for ($i = 0; $i < $totalFiles; $i++) {
-            $single = $this->buildEntry(
+            $single = self::buildEntry(
                 $fileArray['name'][$i] ?? null,
                 $fileArray['tmp_name'][$i] ?? null,
                 $fileArray['error'][$i] ?? null,
@@ -335,7 +331,7 @@ class PluginModel
      *
      * @return array{entry: array{name: string, tmp_name: string, error: int, size: int}|null, error: string|null}
      */
-    private function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
+    private static function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
     {
         if (!is_string($name) || !is_string($tmpName)) {
             return [
@@ -367,7 +363,7 @@ class PluginModel
     /**
      * Parse a size string from php.ini into bytes.
      */
-    private function parseIniSize(string $size): int
+    private static function parseIniSize(string $size): int
     {
         $unit = strtoupper(substr($size, -1));
         $value = (int)$size;
@@ -383,4 +379,46 @@ class PluginModel
             return $value;
         }
     }
+
+    /**
+     * Sync ZIP files from directory into the plugins table.
+     */
+    public static function syncFromDirectory(string $dir): void
+    {
+        if (!is_dir($dir) || !is_readable($dir)) {
+            error_log(sprintf('PluginModel::syncFromDirectory cannot read directory "%s".', $dir));
+            return;
+        }
+
+        $files = glob($dir . '/*.zip');
+        if ($files === false) {
+            error_log(sprintf('PluginModel::syncFromDirectory glob() failed for directory "%s".', $dir));
+            return;
+        }
+
+        $found = [];
+        foreach ($files as $file) {
+            $name = basename($file);
+            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $name, $matches)) {
+                $slug = $matches[1];
+                $version = $matches[2];
+                $found[$slug] = true;
+                DatabaseManager::connection()->executeStatement(
+                    'INSERT INTO plugins (slug, version) VALUES (?, ?) ' .
+                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
+                    [$slug, $version]
+                );
+            }
+        }
+
+        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug FROM plugins');
+        foreach ($rows as $row) {
+            if (!isset($found[$row['slug']])) {
+                DatabaseManager::connection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$row['slug']]);
+            }
+        }
+    }
 }
+
+
+

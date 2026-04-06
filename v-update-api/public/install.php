@@ -95,9 +95,11 @@ try {
     $installCreateDirectory($dbDir);
     $installCreateDatabaseFile(DB_FILE);
 
-    $conn = (new DatabaseManager())->getConnection();
+    $conn = DatabaseManager::connection();
     $schema = new Schema();
     $schemaManager = $conn->createSchemaManager();
+    // phpcs:ignore -- listTableNames is deprecated in Doctrine DBAL but no direct replacement yet
+    /** @phpstan-ignore-next-line */
     $existingTables = array_map('strtolower', $schemaManager->listTableNames());
     $existingTableMap = array_fill_keys($existingTables, true);
 

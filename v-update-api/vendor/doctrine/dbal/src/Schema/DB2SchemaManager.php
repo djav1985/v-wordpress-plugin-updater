@@ -22,7 +22,7 @@ use function substr;
 use const CASE_LOWER;
 
 /**
- * IBM Db2 Schema Manager.
+ * Db2 Schema Manager.
  *
  * @link https://www.ibm.com/docs/en/db2/11.5?topic=sql-catalog-views
  *

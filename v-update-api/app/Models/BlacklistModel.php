@@ -14,13 +14,10 @@
 
 namespace App\Models;
 
-use Doctrine\DBAL\Connection;
+use App\Core\DatabaseManager;
 
 class BlacklistModel
 {
-    public function __construct(private Connection $connection)
-    {
-    }
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
@@ -30,13 +27,13 @@ class BlacklistModel
      * @param string $ip The IP address to update.
      * @return void
      */
-    public function updateFailedAttempts(string $ip): void
+    public static function updateFailedAttempts(string $ip): void
     {
         $now  = time();
 
         // Single atomic statement: insert on first attempt, or increment the
         // counter and conditionally set blacklisted/timestamp on conflict.
-        $this->connection->executeStatement(
+        DatabaseManager::connection()->executeStatement(
             'INSERT INTO blacklist (ip, login_attempts, blacklisted, timestamp)
              VALUES (?, 1, 0, ?)
              ON CONFLICT(ip) DO UPDATE SET
@@ -56,13 +53,13 @@ class BlacklistModel
      * @param string $ip The IP address to check.
      * @return bool True if the IP is blacklisted, false otherwise.
      */
-    public function isBlacklisted(string $ip): bool
+    public static function isBlacklisted(string $ip): bool
     {
-        $record = $this->connection->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $record = DatabaseManager::connection()->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
             if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
-                $this->connection->update('blacklist', [
+                DatabaseManager::connection()->update('blacklist', [
                     'blacklisted'   => 0,
                     'login_attempts' => 0,
                     'timestamp'     => time(),
@@ -73,4 +70,31 @@ class BlacklistModel
         }
         return false;
     }
+
+    /**
+     * Cleanup expired blacklist entries.
+     *
+     * @return void
+     */
+    public static function cleanup(): void
+    {
+        $currentTime = time();
+        $sevenDaysAgo = $currentTime - (7 * 24 * 60 * 60);
+        $threeDaysAgo = $currentTime - (3 * 24 * 60 * 60);
+
+        // Remove IPs that were blocked more than 7 days ago
+        DatabaseManager::connection()->executeStatement(
+            'DELETE FROM blacklist WHERE blacklisted = 1 AND timestamp < ?',
+            [$sevenDaysAgo]
+        );
+
+        // Remove IPs that are not blocked and haven't been updated in 3 days
+        DatabaseManager::connection()->executeStatement(
+            'DELETE FROM blacklist WHERE blacklisted = 0 AND timestamp < ?',
+            [$threeDaysAgo]
+        );
+    }
 }
+
+
+

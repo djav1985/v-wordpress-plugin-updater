@@ -19,12 +19,13 @@ use Doctrine\DBAL\DriverManager;
 
 class DatabaseManager
 {
+    private static ?self $instance = null;
     private Connection $connection;
 
     /**
      * Initialize the database connection.
      */
-    public function __construct()
+    private function __construct()
     {
         $params = [
             'driver' => 'pdo_sqlite',
@@ -35,9 +36,13 @@ class DatabaseManager
 
     /**
      * Get the Doctrine DBAL connection to the SQLite database.
+     * Lazily initializes the singleton on first call.
      */
-    public function getConnection(): Connection
+    public static function connection(): Connection
     {
-        return $this->connection;
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance->connection;
     }
 }

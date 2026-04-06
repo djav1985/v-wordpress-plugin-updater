@@ -36,7 +36,7 @@
     </div>
     <div class="logout-button">
         <form action="/login" method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Helpers\SessionHelper::get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <button class="orange-button" type="submit" name="logout">Logout</button>
         </form>
     </div>

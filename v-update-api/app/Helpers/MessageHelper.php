@@ -14,8 +14,6 @@
 
 namespace App\Helpers;
 
-use App\Core\SessionManager;
-
 class MessageHelper
 {
     /**
@@ -26,13 +24,12 @@ class MessageHelper
      */
     public static function addMessage(string $message): void
     {
-        $session = self::getSession();
-        $messages = $session->get('messages');
+        $messages = SessionHelper::get('messages');
         if (!is_array($messages)) {
             $messages = [];
         }
         $messages[] = $message;
-        $session->set('messages', $messages);
+        SessionHelper::set('messages', $messages);
     }
 
     /**
@@ -42,27 +39,12 @@ class MessageHelper
      */
     public static function displayAndClearMessages(): void
     {
-        $session = self::getSession();
-        $messages = $session->get('messages');
+        $messages = SessionHelper::get('messages');
         if (is_array($messages) && !empty($messages)) {
             foreach ($messages as $message) {
                 echo '<script>showToast(' . json_encode($message) . ');</script>';
             }
-            $session->set('messages', []);
+            SessionHelper::set('messages', []);
         }
-    }
-
-    /**
-     * Get the session instance (backwards compatibility).
-     *
-     * @return SessionManager
-     */
-    private static function getSession(): SessionManager
-    {
-        static $session = null;
-        if ($session === null) {
-            $session = new SessionManager();
-        }
-        return $session;
     }
 }

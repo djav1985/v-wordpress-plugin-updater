@@ -7,18 +7,21 @@
  * Link:    https://vontainment.com
  * Version: 4.5.0
  *
- * File: ResponseManager.php
+ * File: Response.php
  * Description: WordPress Update API
  */
 
 namespace App\Core;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
+
 /**
- * Simple HTTP response representation.
+ * Simple HTTP response representation implementing PSR-7 ResponseInterface.
  *
  * @phpstan-type Headers array<string, list<string>>
  */
-class ResponseManager
+class Response implements ResponseInterface
 {
     /** @var int */
     private int $statusCode;
@@ -162,11 +165,38 @@ class ResponseManager
     }
 
     /**
-     * Return the response body.
+     * Return the protocol version (PSR-7).
      */
-    public function getBody(): string
+    public function getProtocolVersion(): string
+    {
+        return '1.1';
+    }
+
+    /**
+     * Return a new instance with the specified protocol version (PSR-7).
+     */
+    public function withProtocolVersion(string $version): static
+    {
+        return $this;
+    }
+
+    /**
+     * Return the response body as a string.
+     *
+     * Note: This is not PSR-7 compatible (returns string, not StreamInterface).
+     * For PSR-7 compatibility, use this method anyway as it's what we use internally.
+     */
+    public function getBodyAsString(): string
     {
         return $this->body;
+    }
+
+    /**
+     * Return a body (PSR-7 compatibility stub - returns empty stream).
+     */
+    public function getBody(): StreamInterface
+    {
+        throw new \RuntimeException('getBody() not implemented - use getBodyAsString()');
     }
 
     /**
@@ -215,25 +245,29 @@ class ResponseManager
     /**
      * Return a new instance with the specified header value(s) replacing any
      * existing values for that header name.
+     * PSR-7 compatible signature.
      *
-     * @param string|list<string> $value
+     * @param string $value
      */
-    public function withHeader(string $name, string|array $value): self
+    public function withHeader(string $name, $value): static
     {
         $clone = clone $this;
-        $clone->headers[self::normalizeHeaderName($name)] = is_array($value) ? $value : [$value];
+        $clone->headers[self::normalizeHeaderName($name)] = [(string)$value];
         return $clone;
     }
 
     /**
      * Return a new instance with an additional value appended to the header.
+     * PSR-7 compatible signature.
+     *
+     * @param string $value
      */
-    public function withAddedHeader(string $name, string $value): self
+    public function withAddedHeader(string $name, $value): static
     {
         $clone = clone $this;
         $key = self::normalizeHeaderName($name);
         $existing = $clone->headers[$key] ?? [];
-        $existing[] = $value;
+        $existing[] = (string)$value;
         $clone->headers[$key] = $existing;
         return $clone;
     }
@@ -250,11 +284,15 @@ class ResponseManager
 
     /**
      * Return a new instance with the given body.
+     * PSR-7 compatible signature - accepts StreamInterface but we work with strings internally.
+     *
+     * @param StreamInterface|string $body
      */
-    public function withBody(string $body): self
+    public function withBody($body): static
     {
         $clone = clone $this;
-        $clone->body = $body;
+        // Convert StreamInterface to string if needed (for PSR-7 compatibility)
+        $clone->body = is_string($body) ? $body : (string)$body;
         return $clone;
     }
 

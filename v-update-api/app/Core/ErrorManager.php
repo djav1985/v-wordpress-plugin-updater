@@ -15,11 +15,15 @@
 namespace App\Core;
 
 use ErrorException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
+use Stringable;
 use Throwable;
 
 class ErrorManager
 {
     private static ?self $instance = null;
+    private static ?LoggerInterface $psrLogger = null;
 
     /**
      * Register PHP error, exception, and shutdown handlers.
@@ -63,18 +67,220 @@ class ErrorManager
     }
     
     /**
-     * Write a timestamped message to the application log file.
+     * Write a message to the application log.
      *
-     * @param string $message Message to log.
-     * @param string $type    Severity label (e.g. 'error', 'info', 'exception', 'fatal').
+     * @param string               $message Message to log.
+     * @param string               $type    Log level/label (e.g. error, info, exception, fatal).
+     * @param array<string, mixed> $context Optional context data.
      * @return void
      */
-    public static function log(string $message, string $type = 'error'): void
+    public static function log(string $message, string $type = 'error', array $context = []): void
     {
-        $logFile = defined('LOG_FILE') ? LOG_FILE : (__DIR__ . '/../../php_app.log');
         $timestamp = date('Y-m-d H:i:s');
-        $logMessage = "[$timestamp] [$type]: $message\n";
-        error_log($logMessage, 3, $logFile);
+        $line = '[' . $timestamp . '] [' . $type . ']: ' . $message;
+
+        if (!empty($context)) {
+            $encodedContext = json_encode($context);
+            if ($encodedContext !== false) {
+                $line .= ' ' . $encodedContext;
+            }
+        }
+
+        error_log($line . "\n", 3, self::resolveLogFile());
+    }
+
+    /**
+     * Return a PSR-3-compatible logger surface backed by ErrorManager.
+     *
+     * @return LoggerInterface
+     */
+    public static function logger(): LoggerInterface
+    {
+        if (self::$psrLogger === null) {
+            self::$psrLogger = new class () implements LoggerInterface {
+                public function emergency(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::EMERGENCY, $context);
+                }
+
+                public function alert(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::ALERT, $context);
+                }
+
+                public function critical(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::CRITICAL, $context);
+                }
+
+                public function error(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::ERROR, $context);
+                }
+
+                public function warning(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::WARNING, $context);
+                }
+
+                public function notice(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::NOTICE, $context);
+                }
+
+                public function info(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::INFO, $context);
+                }
+
+                public function debug(Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, LogLevel::DEBUG, $context);
+                }
+
+                public function log($level, Stringable|string $message, array $context = []): void
+                {
+                    ErrorManager::log((string) $message, (string) $level, $context);
+                }
+            };
+        }
+
+        return self::$psrLogger;
+    }
+
+    /**
+     * PSR-3 convenience: emergency level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function emergency(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::EMERGENCY, $context);
+    }
+
+    /**
+     * PSR-3 convenience: alert level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function alert(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::ALERT, $context);
+    }
+
+    /**
+     * PSR-3 convenience: critical level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function critical(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::CRITICAL, $context);
+    }
+
+    /**
+     * PSR-3 convenience: warning level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function warning(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::WARNING, $context);
+    }
+
+    /**
+     * PSR-3 convenience: notice level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function notice(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::NOTICE, $context);
+    }
+
+    /**
+     * PSR-3 convenience: info level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function info(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::INFO, $context);
+    }
+
+    /**
+     * PSR-3 convenience: debug level logging.
+     *
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
+     */
+    public static function debug(Stringable|string $message, array $context = []): void
+    {
+        self::log((string) $message, LogLevel::DEBUG, $context);
+    }
+
+    /**
+     * Log an HTTP request.
+     *
+     * @param string $method HTTP method (GET, POST, etc).
+     * @param string $path   Request path.
+     * @param array  $context Optional additional context.
+     * @return void
+     */
+    public static function logRequest(string $method, string $path, array $context = []): void
+    {
+        $defaultContext = [
+            'method' => $method,
+            'path' => $path,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        ];
+        self::log('HTTP Request', 'info', array_merge($defaultContext, $context));
+    }
+
+    /**
+     * Log an HTTP response.
+     *
+     * @param string $method HTTP method.
+     * @param string $path   Request path.
+     * @param int    $status HTTP status code.
+     * @param array  $context Optional additional context.
+     * @return void
+     */
+    public static function logResponse(string $method, string $path, int $status, array $context = []): void
+    {
+        $defaultContext = [
+            'method' => $method,
+            'path' => $path,
+            'status' => $status,
+        ];
+        self::log('HTTP Response', 'info', array_merge($defaultContext, $context));
+    }
+
+    /**
+     * Resolve the log file path.
+     *
+     * @return string
+     */
+    private static function resolveLogFile(): string
+    {
+        if (defined('LOG_FILE') && is_string(LOG_FILE) && LOG_FILE !== '') {
+            return LOG_FILE;
+        }
+
+        return __DIR__ . '/../../storage/app.log';
     }
 
     /**

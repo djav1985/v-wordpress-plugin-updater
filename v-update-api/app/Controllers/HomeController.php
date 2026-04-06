@@ -16,50 +16,48 @@ namespace App\Controllers;
 
 use App\Helpers\ValidationHelper;
 use App\Helpers\EncryptionHelper;
+use App\Helpers\SessionHelper;
 use App\Core\ErrorManager;
 use App\Models\HostsModel;
 use App\Helpers\MessageHelper;
-use App\Core\SessionManager;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class HomeController
 {
     private const REVEAL_WINDOW_SECONDS = 30;
 
-    public function __construct(
-        private SessionManager $session,
-        private HostsModel $hostsModel
-    ) {
-    }
-
     /**
      * Handles GET requests for managing hosts.
+     *
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         $this->pruneExpiredReveals();
-        return ResponseManager::view('home', [
+        return Response::view('home', [
             'hostsTableHtml' => $this->getHostsTableHtml(),
         ]);
     }
 
     /**
      * Handles POST submissions for host actions.
+     *
+     * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::redirect('/home');
+            return Response::redirect('/home');
         }
 
         $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
         if (isset($_POST['add_entry'])) {
             $newKey = ValidationHelper::generateKey();
-            if ($domain !== null && $this->hostsModel->addEntry($domain, $newKey)) {
+            if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Entry added successfully.');
             } else {
                 $error = 'Failed to add entry.';
@@ -68,7 +66,7 @@ class HomeController
             }
         } elseif (isset($_POST['regen_entry'])) {
             $newKey = ValidationHelper::generateKey();
-            if ($domain !== null && $this->hostsModel->updateEntry($domain, $newKey)) {
+            if ($domain !== null && HostsModel::updateEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Key regenerated successfully.');
             } else {
                 $error = 'Failed to regenerate key.';
@@ -84,7 +82,7 @@ class HomeController
                 MessageHelper::addMessage($error);
             }
         } elseif (isset($_POST['delete_entry'])) {
-            if ($domain !== null && $this->hostsModel->deleteEntry($domain)) {
+            if ($domain !== null && HostsModel::deleteEntry($domain)) {
                 MessageHelper::addMessage('Entry deleted successfully.');
             } else {
                 $error = 'Failed to delete entry.';
@@ -92,7 +90,7 @@ class HomeController
                 MessageHelper::addMessage($error);
             }
         }
-        return ResponseManager::redirect('/home');
+        return Response::redirect('/home');
     }
 
     /**
@@ -110,7 +108,7 @@ class HomeController
         return '<tr>
             <form method="post" action="/home">
                 <input type="hidden" name="csrf_token" value="' .
-                    htmlspecialchars($this->session->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
+                    htmlspecialchars(SessionHelper::get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
                 <td><input class="hosts-domain" type="text" name="domain" value="' .
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '" readonly></td>
@@ -133,10 +131,12 @@ class HomeController
 
     /**
      * Generates the hosts table HTML for display.
+     *
+     * @return string HTML table or message.
      */
     private function getHostsTableHtml(): string
     {
-        $entries = $this->hostsModel->getEntries();
+        $entries = HostsModel::getEntries();
         $hostsTableHtml = '';
         if (count($entries) > 0) {
             $halfCount = (int) ceil(count($entries) / 2);
@@ -160,7 +160,7 @@ class HomeController
                 $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
-                    $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
+                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
                 }
                 $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
             }
@@ -183,7 +183,7 @@ class HomeController
                 $encryptedKey = $entry['key'] ?? '';
                 $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
                 if ($key !== '') {
-                    $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
+                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
                 }
                 $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
             }
@@ -205,7 +205,7 @@ class HomeController
             return false;
         }
 
-        $revealed = $this->session->get('revealed_keys', []);
+        $revealed = SessionHelper::get('revealed_keys', []);
         if (!is_array($revealed)) {
             $revealed = [];
         }
@@ -213,16 +213,19 @@ class HomeController
             'key' => $decrypted,
             'expires_at' => time() + self::REVEAL_WINDOW_SECONDS,
         ];
-        $this->session->set('revealed_keys', $revealed);
+        SessionHelper::set('revealed_keys', $revealed);
         return true;
     }
 
     /**
      * Look up and decrypt a host key by domain.
+     *
+     * @param string $domain Domain name.
+     * @return string|null Decrypted key or null if not found.
      */
     private function lookupDecryptedKey(string $domain): ?string
     {
-        foreach ($this->hostsModel->getEntries() as $entry) {
+        foreach (HostsModel::getEntries() as $entry) {
             $entryDomain = $entry['domain'] ?? '';
             if ($entryDomain !== $domain) {
                 continue;
@@ -231,7 +234,7 @@ class HomeController
             $encryptedKey = $entry['key'] ?? '';
             $key = EncryptionHelper::decrypt($encryptedKey);
             if ($key !== null && $key !== '') {
-                $this->hostsModel->migrateLegacyKey($domain, $encryptedKey, $key);
+                HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
             }
             return $key;
         }
@@ -246,7 +249,7 @@ class HomeController
      */
     private function getRevealedKey(string $domain): ?array
     {
-        $revealed = $this->session->get('revealed_keys', []);
+        $revealed = SessionHelper::get('revealed_keys', []);
         if (!is_array($revealed) || !isset($revealed[$domain]) || !is_array($revealed[$domain])) {
             return null;
         }
@@ -269,9 +272,9 @@ class HomeController
      */
     private function pruneExpiredReveals(): void
     {
-        $revealed = $this->session->get('revealed_keys', []);
+        $revealed = SessionHelper::get('revealed_keys', []);
         if (!is_array($revealed)) {
-            $this->session->set('revealed_keys', []);
+            SessionHelper::set('revealed_keys', []);
             return;
         }
 
@@ -288,7 +291,7 @@ class HomeController
             }
             $filtered[$domain] = $entry;
         }
-        $this->session->set('revealed_keys', $filtered);
+        SessionHelper::set('revealed_keys', $filtered);
     }
 
     /**

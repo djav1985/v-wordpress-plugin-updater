@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\InvalidColumnType\ColumnLengthRequired;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\OracleKeywords;
+use Doctrine\DBAL\Platforms\Oracle\OracleMetadataProvider;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
@@ -155,31 +156,27 @@ class OraclePlatform extends AbstractPlatform
                ' START WITH ' . $sequence->getInitialValue() .
                ' MINVALUE ' . $sequence->getInitialValue() .
                ' INCREMENT BY ' . $sequence->getAllocationSize() .
-               $this->getSequenceCacheSQL($sequence);
+               $this->getSequenceCacheSQL($sequence->getCacheSize());
     }
 
     public function getAlterSequenceSQL(Sequence $sequence): string
     {
         return 'ALTER SEQUENCE ' . $sequence->getQuotedName($this) .
                ' INCREMENT BY ' . $sequence->getAllocationSize()
-               . $this->getSequenceCacheSQL($sequence);
+               . $this->getSequenceCacheSQL($sequence->getCacheSize());
     }
 
     /**
      * Cache definition for sequences
      */
-    private function getSequenceCacheSQL(Sequence $sequence): string
+    private function getSequenceCacheSQL(?int $cacheSize): string
     {
-        if ($sequence->getCache() === 0) {
+        if ($cacheSize === 0 || $cacheSize === 1) {
             return ' NOCACHE';
         }
 
-        if ($sequence->getCache() === 1) {
-            return ' NOCACHE';
-        }
-
-        if ($sequence->getCache() > 1) {
-            return ' CACHE ' . $sequence->getCache();
+        if ($cacheSize > 1) {
+            return ' CACHE ' . $cacheSize;
         }
 
         return '';
@@ -856,6 +853,11 @@ SQL,
     public function getBlobTypeDeclarationSQL(array $column): string
     {
         return 'BLOB';
+    }
+
+    public function createMetadataProvider(Connection $connection): OracleMetadataProvider
+    {
+        return new OracleMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): OracleSchemaManager

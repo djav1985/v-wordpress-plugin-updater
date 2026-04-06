@@ -204,6 +204,14 @@ class QueryBuilder
     }
 
     /**
+     * Returns a fresh query builder instance that can be used to build a subquery.
+     */
+    public function sub(): self
+    {
+        return $this->connection->createQueryBuilder();
+    }
+
+    /**
      * Prepares and executes an SQL query and returns the first row of the result
      * as an associative array.
      *
@@ -1437,7 +1445,15 @@ class QueryBuilder
             );
         }
 
-        return $this->connection->getDatabasePlatform()
+        $databasePlatform = $this->connection->getDatabasePlatform();
+        $unionParts       = [];
+        if (count($this->commonTableExpressions) > 0) {
+            $unionParts[] = $databasePlatform
+                ->createWithSQLBuilder()
+                ->buildSQL(...$this->commonTableExpressions);
+        }
+
+        $unionParts[] = $databasePlatform
             ->createUnionSQLBuilder()
             ->buildSQL(
                 new UnionQuery(
@@ -1446,6 +1462,8 @@ class QueryBuilder
                     new Limit($this->maxResults, $this->firstResult),
                 ),
             );
+
+        return implode(' ', $unionParts);
     }
 
     /**

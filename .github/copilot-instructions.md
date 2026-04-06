@@ -2,299 +2,189 @@
 
 ## Architecture Overview
 
-This is a **dual-component WordPress updater system**:
-1. **Update API Server** (`v-update-api/`): A standalone PHP web service that hosts and serves plugin/theme updates
-2. **WordPress Client Plugin** (`v-wp-updater/`): WordPress plugin that checks for and installs updates from the API server
+This repository contains a **dual-component WordPress updater system**:
 
-Both components are independently deployable—the API runs on a web server, the client installs in WordPress sites.
+1. **Update API Server** (`v-update-api/`): standalone PHP web service that hosts and serves plugin/theme ZIP updates.
+2. **WordPress Client Plugin** (`v-wp-updater/`): WordPress plugin that checks the API and installs updates.
 
-### Key Architectural Patterns
+Both components are independently deployable.
 
-**Separate Namespaces**: `App\` (API server) vs `VWPU\` (WordPress plugin)—never mix them.
+### Namespaces (Do Not Mix)
 
-**Unified Framework Architecture**:
-The `v-update-api/` application uses patterns shared across similar projects:
-- **SessionManager**: Singleton with CSRF management, timeout tracking, IP blacklisting (7 days blocked, 3 days unblocked)
-- **ResponseManager**: Fluent API with static factory methods (`ResponseManager::view()`, `ResponseManager::redirect()`, `ResponseManager::text()`, `ResponseManager::json()`, `ResponseManager::file()`, `ResponseManager::html()`)
-- **Controller**: Base class for inheritance; all handlers return ResponseManager objects (never echo/exit)
-- **Entry Point**: Explicit URL parsing in `public/index.php` before routing (`parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)`)
-- **Router**: Receives pre-parsed path; uses FastRoute dispatcher; enforces authentication except `/login` (and `/api` for public API access)
+- API server code uses `App\...`
+- WordPress plugin code uses `VWPU\...`
 
-**Architecture Differences** (intentional, domain-specific):
-- **v-update-api**: Minimal framework, no Service layer, SQLite database, lightweight deployment for serving plugin/theme updates
-- **v-wp-updater**: WordPress plugin that consumes the update API; manages scheduled checks and WP upgrader integration
+## Current API Server Architecture (`v-update-api`)
 
-**Database Strategy**: 
-- API uses SQLite via Doctrine DBAL (`storage/updater.sqlite`)
-- Schema: API has `plugins`, `themes`, `hosts`, `logs`, `blacklist` tables
-- **SessionManager** & **ErrorManager**: True singletons (private constructor + `getInstance()` method, constructor-based initialization)
-- **DatabaseManager**: Static factory pattern (`DatabaseManager::getConnection()` with cached connection)—simpler because no constructor behavior is needed
-- Cron sync (`cron.php`) keeps database in sync with filesystem
+### Core Classes
 
-**Routing**: FastRoute-based dispatcher in `App\Core\Router` with ResponseManager objects (not direct output). All routes require authentication except `/api` (validates domain+key) and `/login`.
+`v-update-api/app/Core/` currently contains:
 
-**Security**: 
-- API keys encrypted with `App\Helpers\EncryptionHelper` using `ENCRYPTION_KEY` env var
-- IP blacklisting auto-expires (7 days blocked, 3 days unblocked)
-- `SessionManager` enforces timeout (1800s) and user agent validation
-- CSRF tokens initialized in bootstrap after session start
-- Session regenerated only after successful login
+- `DatabaseManager.php`
+- `ErrorManager.php`
+- `Request.php`
+- `Response.php`
+- `Router.php`
 
-## Entry Point & Routing Design
+Important: there is **no** `SessionManager`, `ResponseManager`, or `Controller` base class in the current architecture.
 
-### public/index.php - Best Practices
-The `v-update-api/public/index.php` follows this pattern:
-```php
-require_once __DIR__ . '/../config.php';              // Absolute __DIR__ paths (not relative ../)
-require_once __DIR__ . '/../vendor/autoload.php';
+### Request/Response Pattern
 
-$session = SessionManager::getInstance();  // Initializes session automatically in constructor
+- `App\Core\Request::fromGlobals()` parses the URL path and builds a request object.
+- `App\Core\Router::dispatch()` returns an `App\Core\Response`.
+- `public/index.php` sends the returned response via `$response->send()`.
+- Prefer `Response` static factories:
+  - `Response::view()`
+  - `Response::redirect()`
+  - `Response::text()`
+  - `Response::json()`
+  - `Response::file()`
+  - `Response::html()`
 
-ErrorManager::handle(function () use ($session): void {
-    if (!$session->get('csrf_token')) {
-        $session->set('csrf_token', bin2hex(random_bytes(32)));  // CSRF token init (once per session)
-    }
-    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);  // CRITICAL: Parse URL path before routing
-    Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
-});
-```
-**Key Points**:
-- Use absolute paths with `__DIR__` (not relative `../`)
-- `SessionManager::getInstance()` automatically initializes the session (via private constructor)
-- Parse URL path in index.php (`parse_url()` separates query string)
-- Pass only the path to Router (Router assumes path is pre-parsed)
-- CSRF token initialization happens here after session is active
-- Session regeneration only happens after successful login (in LoginController)
-- CSRF token initialization happens in bootstrap (not in SessionManager::start())
-- Session regeneration only happens after successful login (in LoginController)
+### Session and Security Helpers
 
-### Router::dispatch() Contract
-- **Receives**: Pre-parsed path (no query string, e.g., `/home` not `/home?foo=bar`)
-- **Responsibility**: Match path to route using FastRoute, instantiate controller, call handleRequest or handleSubmission
-- **Returns**: Nothing (sends ResponseManager via sendResponse() internally)
-- **Important**: Router does NOT parse URL—caller (index.php) is responsible
+Session/auth logic is implemented through `App\Helpers\SessionHelper` (static helper), not a singleton session manager.
 
-## Critical Developer Workflows
+- Initialize/access session values with `SessionHelper::get()` / `SessionHelper::set()`.
+- Validate auth session with `SessionHelper::isValid()`.
+- Regenerate session after successful login with `SessionHelper::regenerate()`.
+- CSRF token is initialized in `public/index.php` if missing.
 
-### Running Tests
-```powershell
-vendor/bin/phpunit           # All tests
-vendor/bin/phpunit tests/RouterTest.php  # Single test
-```
-**Test Pattern**: Many tests use `runScript()` to execute code in subprocess with namespace mocking (see `RouterTest.php`). Define mock functions in `App\Core` namespace before loading app code.
+### Error Handling
 
-### Code Quality Checks
-```powershell
-vendor/bin/phpcs             # Check all (separate rules: PSR12 for v-update-api/, WordPress-Core for v-wp-updater/)
-vendor/bin/phpcbf            # Auto-fix formatting
-vendor/bin/phpstan           # Static analysis (level 6)
-```
-**IMPORTANT**: Always run full suite before committing (see `AGENTS.md` checklist).
+`App\Core\ErrorManager` is a singleton that registers error/exception/shutdown handlers and provides centralized logging.
 
-### Cron Job (Required)
-```powershell
-php v-update-api/cron.php      # Manual sync
-php v-update-api/cron.php --worker  # Background worker mode
-```
-**Purpose**: Syncs plugin/theme ZIPs from filesystem to database, cleans blacklist. Must run regularly (system cron) or database becomes stale.
+## Routing and Controller Conventions
 
-### Database Initialization
-```powershell
-cd v-update-api/public; php install.php  # Creates schema in storage/updater.sqlite
-```
-Run after cloning repo or when adding new tables. File must be writable by web server.
+### Router Behavior
 
-## Project-Specific Conventions
+`App\Core\Router`:
 
-### File Naming for Updates
-Update packages **must** follow: `{slug}_{version}.zip` (e.g., `my-plugin_1.2.3.zip`)
-- Placed in `storage/plugins/` or `storage/themes/`
-- Cron syncs to database with slug extraction and version parsing
-- API serves newest version (via `version_compare()`) when client requests
+- Uses FastRoute (`FastRoute::recommendedSettings(...)`).
+- Protects all non-login, non-API routes with auth checks.
+- Applies CSRF checks to non-GET/HEAD/OPTIONS requests outside `/api`.
+- Returns `Response` objects from dispatch.
 
-### ResponseManager Pattern - Static Factories (Preferred)
-Controllers return `ResponseManager` objects using static factories for clarity:
-```php
-// ✓ Correct - Use static factories (cleaner, intent-clear)
-return ResponseManager::view('page', ['key' => 'value'], 200);
-return ResponseManager::redirect('/home');
-return ResponseManager::text('Plain text response', 200);
-return ResponseManager::json(['data' => 'value'], 200);
-return ResponseManager::file('/path/to/file', 200);
-return ResponseManager::html('<h1>HTML</h1>', 200);
+### Registered Routes
 
-// ✗ Wrong - Never echo directly
-echo "Hello"; 
-header('Location: /home');
-exit;
-```
-**Key Pattern**: Use static factory methods (`ResponseManager::view()`, `ResponseManager::redirect()`) for all responses. This is the only approach for consistency across the codebase.
+- `/` → redirect to `/home`
+- `/login` (`GET`, `POST`)
+- `/home` (`GET`, `POST`)
+- `/plupdate` (`GET`, `POST`)
+- `/thupdate` (`GET`, `POST`)
+- `/logs` (`GET`, `POST`)
+- `/api` (router accepts multiple methods; `ApiController` enforces `GET`)
 
-### Validation Flow
-All external input goes through `App\Helpers\ValidationHelper`:
-```php
-$domain = ValidationHelper::validateDomain($input);  // Returns null if invalid
-if ($domain === null) { return ResponseManager::html('Invalid domain', 400); }
-```
-Validators available: `validateDomain()`, `validateKey()`, `validateSlug()`, `validateVersion()`, `generateKey()`. Whitelist approach—reject early.
+### Controller Contract
 
-### WordPress Plugin Options
-Client plugin stores config in `vwpu_*` options (managed by `VWPU\Helpers\Options`):
-- `vwpu_api_url`: API server base URL
-- `vwpu_api_key`: Encrypted API key (never stored in plaintext)
+Controllers return `App\Core\Response` instances.
+Do not use raw `echo`, `header()`, or `exit` for normal request flow.
 
-## Controllers & Routes
+## API Contract and Data Model
 
-**Controller Pattern**:
-```php
-namespace App\Controllers;
-use App\Core\Controller;
-use App\Core\ResponseManager;
-use App\Helpers\ValidationHelper;
-use App\Helpers\MessageHelper;
+### Update API (`/api`)
 
-class NewController extends Controller {
-    /**
-     * Display form or view (GET request).
-     * @return ResponseManager
-     */
-    public function handleRequest(): ResponseManager {
-        return ResponseManager::view('newpage', ['data' => 'value']);
-    }
+Expected query parameters:
 
-    /**
-     * Process form submission (POST request).
-     * @return ResponseManager
-     */
-    public function handleSubmission(): ResponseManager {
-        if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
-            MessageHelper::addMessage('Invalid CSRF token.');
-            return ResponseManager::redirect('/newpage');
-        }
-        // Process data
-        MessageHelper::addMessage('Success!');
-        return ResponseManager::redirect('/newpage');
-    }
-}
-```
+- `type` (`plugin` or `theme`)
+- `domain`
+- `key`
+- `slug`
+- `version`
 
-**Route Registration**:
-```php
-// In App\Core\Router::__construct() - inside the RouteCollector callback
-$r->addRoute('GET', '/newpage', ['\\App\\Controllers\\NewController', 'handleRequest']);
-$r->addRoute('POST', '/newpage', ['\\App\\Controllers\\NewController', 'handleSubmission']);
-```
-**Pattern**: GET shows form/view via `handleRequest()`, POST processes via `handleSubmission()`. Both return `ResponseManager`. Controllers inherit from `Controller` base class.
+`ApiController` behavior:
 
-## SessionManager Best Practices
+- `200`: newer ZIP available (streams file)
+- `204`: no update available
+- `400`: missing/invalid params
+- `403`: authentication failure, blacklisted IP, or invalid/missing client IP
+- `404`: authenticated request references unknown slug
+- `405`: non-GET method
+- `500`: update file unavailable/unreadable
 
-### Initialization Flow
-```php
-// In public/index.php (BOOTSTRAP PHASE)
-$session = SessionManager::getInstance();  // Session initialized automatically in constructor
+### Storage and Sync
 
-// Later in LoginController::handleSubmission() (AFTER AUTHENTICATION)
-SessionManager::getInstance()->regenerate();  // Regenerate session ID for security
-$session->set('timeout', time());             // Track session start time
-$session->set('is_admin', $userInfo->admin);  // Store user flags if needed
-```
+- SQLite DB: `v-update-api/storage/updater.sqlite`
+- Key tables: `plugins`, `themes`, `hosts`, `logs`, `blacklist`
+- `cron.php` syncs filesystem ZIP metadata to DB and cleans blacklist records
 
-### Common Session Operations
-```php
-// Get value with default
-$username = $session->get('username', null);
+### Update Package Naming
 
-// Check if session is valid (checks timeout, user agent, not blacklisted)
-if (!$session->isValid()) {
-    // Session expired or compromised
-}
+ZIP filenames must use:
 
-// Check authentication and redirect if needed
-if (!$session->isValid()) {
-    // User not authenticated, redirect to login
-}
+`{slug}_{version}.zip` (example: `my-plugin_1.2.3.zip`)
 
-// Destroy session (logout)
-$session->destroy();
+## Encryption and Auth Notes
 
-// Regenerate session ID (after login)
-$session->regenerate();
-```
+- Host API keys are stored encrypted via `App\Helpers\EncryptionHelper`.
+- Current implementation uses AES-256-GCM with legacy CBC migration support.
+- `ENCRYPTION_KEY` is read from `v-update-api/config.php` constant.
+- Blacklist behavior:
+  - Blacklisted entries expire after 7 days.
+  - Non-blacklisted stale entries are pruned after 3 days.
 
-## Common Patterns
+## WordPress Client Plugin (`v-wp-updater`)
 
-### Server Setup
-1. Set `v-update-api/public/` as web server document root
-2. Configure `v-update-api/config.php`:
-   - `VALID_USERNAME`, `VALID_PASSWORD_HASH` (use `password_hash()`)
-   - `ENCRYPTION_KEY` (32-byte hex, load from env: `getenv('ENCRYPTION_KEY')`)
-3. Ensure `storage/` writable by web server
-4. Run `php install.php` to create database
-5. Add cron: `*/15 * * * * php /path/to/v-update-api/cron.php --worker`
+### Options and Defaults
 
-### WordPress Client Setup
-1. Copy `v-wp-updater/` to `wp-content/plugins/`
-2. Set plugin options (via provisioning or wp-config):
-   ```php
-   // Via wp-cli or provisioning
-   update_option('vwpu_api_url', 'https://updates.example.com');
-   update_option('vwpu_api_key', 'your-encrypted-api-key');
-   ```
-3. Activate plugin—scheduled checks run automatically (daily via `vwpu_plugin_updater_check_updates` and `vwpu_theme_updater_check_updates` hooks)
+Plugin options are managed through `VWPU\Helpers\Options` with `vwpu_` prefix.
 
-### Adding New Routes
-**v-update-api Server:**
-```php
-// In App\Core\Router::__construct() - inside the RouteCollector factory callback
-$r->addRoute('GET', '/newpage', ['\\App\\Controllers\\NewController', 'handleRequest']);
-$r->addRoute('POST', '/newpage', ['\\App\\Controllers\\NewController', 'handleSubmission']);
-```
-**Pattern**: GET shows form/view, POST handles submission. Both methods return `ResponseManager` objects.
+Canonical keys:
 
-### Dual-Component Communication Flow
-```
-WordPress Site                API Server
-    ↓                              ↓
-PluginUpdater.php  →  API request  →  ApiController.php
-(checks version)      (domain+key)      (validates & serves ZIP)
-    ↓                              ↓
-Downloads ZIP                 Logs request in database
-    ↓
-Installs via WP upgrader
-```
+- `update_plugins`
+- `update_themes`
+- `update_key`
+- `update_plugin_url`
+- `update_theme_url`
 
-### Testing Controllers with Mocks
-```php
-// Subprocess pattern from RouterTest.php
-$code = <<<'PHP'
-namespace App\Core { function header($h){ echo $h; } }  // Mock header()
-namespace { require 'v-update-api/vendor/autoload.php'; /* test code */ }
-PHP;
-exec('php -r ' . escapeshellarg($code), $output);
-```
-Why: Allows namespace-level mocking without test framework pollution.
+Stored option names in WP are `vwpu_<key>` (for example, `vwpu_update_key`).
 
-### Encryption Helpers
-```php
-$encrypted = EncryptionHelper::encrypt('plaintext');  // Stores in database
-$plain = EncryptionHelper::decrypt($encrypted);        // Retrieves for comparison
-```
-Uses `ENCRYPTION_KEY` constant—never commit real keys. Located in `App\Helpers\EncryptionHelper`.
+### Scheduled Hooks
 
-### Version Comparison
-```php
-if (version_compare($dbVersion, $clientVersion, '>')) {
-    // Serve update
-}
-```
-PHP's built-in `version_compare` handles semantic versioning correctly.
+- `vwpu_plugin_updater_check_updates`
+- `vwpu_theme_updater_check_updates`
+
+Both are scheduled daily on install; each handler checks enablement flags before running.
+
+### Updater Behavior
+
+`PluginUpdater` and `ThemeUpdater`:
+
+- call the API with `type`, `domain`, `slug`, `version`, `key`
+- handle statuses `200`, `204`, `403`, others as error
+- prefetch ZIP bodies on `200` and reuse local temp file during install to avoid duplicate downloads
+
+## Setup and Operations
+
+### API Server Setup (Current)
+
+1. Set `v-update-api/public/` as web root.
+2. Configure `v-update-api/config.php` constants:
+   - `VALID_USERNAME`
+   - `VALID_PASSWORD`
+   - `ENCRYPTION_KEY`
+   - `SESSION_TIMEOUT_LIMIT`
+3. Ensure `v-update-api/storage/` is writable.
+4. Run `v-update-api/public/install.php` to initialize schema.
+5. Schedule cron to run `php v-update-api/cron.php` (CLI only, no worker flag).
+
+### Test and Quality Commands
+
+From repository root:
+
+- `vendor/bin/phpunit`
+- `vendor/bin/phpcs`
+- `vendor/bin/phpcbf`
+- `vendor/bin/phpstan`
 
 ## Documentation Sync
-When changing functionality, update in order:
-1. Code implementation
-2. Tests (`tests/` directory)
-3. `CHANGELOG.md` (notable changes only)
-4. `README.md` (if user-facing or setup changes)
-5. This file (if architecture/conventions change)
 
-See `AGENTS.md` for full pre-commit checklist.
+When behavior changes, update in this order:
+
+1. Code
+2. Tests (`tests/`)
+3. `CHANGELOG.md` (notable changes)
+4. `README.md` (if setup/usage/API changed)
+5. `.github/copilot-instructions.md` (architecture/conventions changes)
+
+Also follow `AGENTS.md` checklist before submission.

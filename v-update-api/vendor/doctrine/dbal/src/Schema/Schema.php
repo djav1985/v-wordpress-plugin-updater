@@ -52,6 +52,7 @@ use function strtolower;
  * execute them. Only the queries for the currently connected database are
  * executed.
  *
+ * @final
  * @extends AbstractAsset<UnqualifiedName>
  */
 class Schema extends AbstractAsset
@@ -88,6 +89,14 @@ class Schema extends AbstractAsset
         ?SchemaConfig $schemaConfig = null,
         array $namespaces = [],
     ) {
+        if (count($namespaces) > 0) {
+            Deprecation::triggerIfCalledFromOutside(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7186',
+                'Passing the $namespaces argument to the Schema constructor is deprecated.',
+            );
+        }
+
         $schemaConfig ??= new SchemaConfig();
 
         $this->_schemaConfig = $schemaConfig;
@@ -351,10 +360,21 @@ class Schema extends AbstractAsset
     /**
      * Creates a new namespace.
      *
+     * @deprecated The schema automatically derives namespaces from the names of its tables and sequences.
+     *             Creating empty namespaces is deprecated.
+     *
      * @return $this
      */
     public function createNamespace(string $name): self
     {
+        Deprecation::triggerIfCalledFromOutside(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/7186',
+            '%s is deprecated. The schema automatically derives namespaces from the names of its tables and'
+                . ' sequences. Creating empty namespaces is deprecated.',
+            __METHOD__,
+        );
+
         $unquotedName = strtolower($this->getUnquotedAssetName($name));
 
         if (isset($this->namespaces[$unquotedName])) {

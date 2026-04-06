@@ -38,6 +38,7 @@ use function strtolower;
 /**
  * Object Representation of a table.
  *
+ * @final
  * @extends AbstractNamedObject<OptionallyQualifiedName>
  */
 class Table extends AbstractNamedObject
@@ -412,7 +413,7 @@ class Table extends AbstractNamedObject
         if ($oldName === $newName) {
             throw new LogicException(sprintf(
                 'Attempt to rename column "%s.%s" to the same name.',
-                $this->getName(),
+                $this->name->toString(),
                 $oldName,
             ));
         }
@@ -643,10 +644,11 @@ class Table extends AbstractNamedObject
     /**
      * Returns the list of table columns.
      *
-     * @return list<Column>
+     * @return non-empty-list<Column>
      */
     public function getColumns(): array
     {
+        /** @phpstan-ignore return.type */
         return array_values($this->_columns);
     }
 
@@ -936,6 +938,14 @@ class Table extends AbstractNamedObject
             );
 
         $name = $this->normalizeIdentifier($name);
+        if (isset($this->_fkConstraints[$name])) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7125',
+                'Overwriting an existing foreign key constraint ("%s") is deprecated.',
+                $name,
+            );
+        }
 
         $this->_fkConstraints[$name] = $constraint;
 

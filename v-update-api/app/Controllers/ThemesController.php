@@ -18,32 +18,30 @@ use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
-use App\Core\ResponseManager;
-use App\Core\SessionManager;
+use App\Helpers\SessionHelper;
+use App\Core\Response;
 
 class ThemesController
 {
-    public function __construct(
-        private SessionManager $session,
-        private ThemeModel $themeModel
-    ) {
-    }
-
     /**
      * Handles GET requests for theme-related actions.
+     *
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         $themesTableHtml = $this->getThemesTableHtml();
-        return ResponseManager::view('thupdate', [
+        return Response::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
     }
 
     /**
      * Handles POST submissions for theme-related actions.
+     *
+     * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
@@ -52,35 +50,35 @@ class ThemesController
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                return ResponseManager::text($error, 400);
+                return Response::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (isset($_FILES['theme_file'])) {
-            $messages = $this->themeModel->uploadFiles($_FILES['theme_file'], $isAjax);
+            $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
             if ($isAjax) {
-                return ResponseManager::text(implode("\n", $messages));
+                return Response::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
             $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
-            if ($themeName !== null && $this->themeModel->deleteTheme($themeName)) {
+            if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
                 MessageHelper::addMessage('Theme deleted successfully!');
             } else {
                 $error = 'Failed to delete theme file. Please try again.';
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         }
-        return ResponseManager::redirect('/thupdate');
+        return Response::redirect('/thupdate');
     }
 
     /**
@@ -92,7 +90,7 @@ class ThemesController
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
         $themeFile = $theme['slug'] . '_' . $version . '.zip';
-        $csrfToken = $this->session->get('csrf_token') ?? '';
+        $csrfToken = SessionHelper::get('csrf_token') ?? '';
         return '<tr>
              <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
              <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>
@@ -110,10 +108,12 @@ class ThemesController
 
     /**
      * Generates the HTML for the themes table.
+     *
+     * @return string HTML table or message.
      */
     private function getThemesTableHtml(): string
     {
-        $themes = $this->themeModel->getThemes();
+        $themes = ThemeModel::getThemes();
         if (count($themes) > 0) {
             $halfCount = (int) ceil(count($themes) / 2);
             $themesColumn1 = array_slice($themes, 0, $halfCount);

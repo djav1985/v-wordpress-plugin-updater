@@ -14,27 +14,27 @@
 
 namespace App\Core;
 
+use App\Helpers\BlacklistHelper;
+use App\Helpers\SessionHelper;
+use App\Helpers\ValidationHelper;
 use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
 use FastRoute\FastRoute;
+use Psr\Http\Message\ResponseInterface;
 
 class Router
 {
     private Dispatcher $dispatcher;
-    private Container $container;
 
     /**
      * Build the FastRoute dispatcher and register all application routes.
-     * 
-     * @param Container $container Service container for dependency injection
      */
-    public function __construct(Container $container)
+    public function __construct()
     {
-        $this->container = $container;
 
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
-            $r->addRoute('GET', '/', function (): ResponseManager {
-                return ResponseManager::redirect('/home');
+            $r->addRoute('GET', '/', function (): Response {
+                return Response::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
@@ -52,93 +52,75 @@ class Router
         $this->dispatcher = $fastRoute->dispatcher();
     }
 
-    public function dispatch(string $method, string $uri): void
+    public function dispatch(string $method, string $uri): Response
     {
+        ErrorManager::logRequest($method, $uri);
+
+        if ($uri !== '/login' && !str_starts_with($uri, '/api')) {
+            if (BlacklistHelper::isBlacklisted()) {
+                return new Response(403);
+            }
+
+            if (!SessionHelper::isValid()) {
+                return Response::redirect('/login');
+            }
+        }
+
+        if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !str_starts_with($uri, '/api')) {
+            $token = $_POST['csrf_token'] ?? '';
+            if (!ValidationHelper::validateCsrfToken(is_string($token) ? $token : '')) {
+                return Response::redirect($uri);
+            }
+        }
+
         $routeInfo = $this->dispatcher->dispatch($method, $uri);
 
-        switch ($routeInfo[0]) {
-            case Dispatcher::NOT_FOUND:
-                $this->sendResponse(ResponseManager::view('404', [], 404));
-                break;
-
-            case Dispatcher::METHOD_NOT_ALLOWED:
-                $this->sendResponse(new ResponseManager(405));
-                break;
-
-            case Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
-
-                if (is_array($handler) && count($handler) === 2) {
-                    [$class, $action] = $handler;
-                    $isApi = str_starts_with($uri, '/api');
-
-                    if ($uri !== '/login' && !$isApi) {
-                        $session = $this->container->get(SessionManager::class);
-
-                        if ($session->isBlacklistedRequest()) {
-                            $this->sendResponse(new ResponseManager(403));
-                            return;
-                        }
-
-                        if (!$session->isValid()) {
-                            $this->sendResponse(ResponseManager::redirect('/login'));
-                            return;
-                        }
-                    }
-
-                    $result = call_user_func_array([$this->container->make($class), $action], $vars);
-                    if ($result instanceof ResponseManager) {
-                        $this->sendResponse($result);
-                    }
-                } elseif (is_callable($handler)) {
-                    $result = call_user_func($handler);
-                    if ($result instanceof ResponseManager) {
-                        $this->sendResponse($result);
-                    }
-                }
-                break;
-        }
-    }
-
-    private function sendResponse(ResponseManager $response): void
-    {
-        if ($response->getView() !== null) {
-            if (!headers_sent()) {
-                http_response_code($response->getStatusCode());
-
-                foreach ($response->getHeaders() as $name => $values) {
-                    $replace = true;
-                    foreach ($values as $value) {
-                        header($name . ': ' . $value, $replace);
-                        $replace = false;
-                    }
-                }
-            }
-
-            $data = $response->getViewData();
-            if (is_array($data)) {
-                extract($data, EXTR_SKIP);
-            }
-
-            $view = $response->getView();
-            if (!is_string($view) || !preg_match('/^[A-Za-z0-9_\/-]+$/', $view) || str_contains($view, '..')) {
-                throw new \RuntimeException('Invalid view name');
-            }
-
-            require __DIR__ . '/../Views/' . $view . '.php';
-            return;
+        if ($routeInfo[0] === Dispatcher::NOT_FOUND) {
+            $response = Response::view('404', [], 404);
+            ErrorManager::logResponse($method, $uri, 404);
+            return $response;
         }
 
-        if ($response->getFile() !== null) {
-            $file = $response->getFile();
-            if (!is_string($file) || !is_file($file) || !is_readable($file)) {
-                ErrorManager::log('Router refused unreadable file response: ' . (string) $file);
-                ResponseManager::text('Internal Server Error', 500)->send();
-                return;
-            }
+        if ($routeInfo[0] === Dispatcher::METHOD_NOT_ALLOWED) {
+            $response = new Response(405);
+            ErrorManager::logResponse($method, $uri, 405);
+            return $response;
         }
 
-        $response->send();
+        // FOUND
+        $handler = $routeInfo[1];
+        $vars = $routeInfo[2];
+
+        if (is_array($handler) && count($handler) === 2) {
+            [$class, $action] = $handler;
+            $controller = new $class();
+            $response = call_user_func_array([$controller, $action], $vars);
+
+            if (!$response instanceof ResponseInterface) {
+                throw new \RuntimeException('Controller action must return a ResponseInterface');
+            }
+
+            $result = $response instanceof Response
+                ? $response
+                : new Response($response->getStatusCode(), $response->getHeaders());
+            ErrorManager::logResponse($method, $uri, $result->getStatusCode());
+            return $result;
+        }
+
+        if (is_callable($handler)) {
+            $response = call_user_func($handler);
+
+            if (!$response instanceof ResponseInterface) {
+                throw new \RuntimeException('Route callback must return a ResponseInterface');
+            }
+
+            $result = $response instanceof Response
+                ? $response
+                : new Response($response->getStatusCode(), $response->getHeaders());
+            ErrorManager::logResponse($method, $uri, $result->getStatusCode());
+            return $result;
+        }
+
+        throw new \RuntimeException('Invalid route handler');
     }
 }

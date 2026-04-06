@@ -16,50 +16,44 @@ namespace App\Controllers;
 
 use App\Helpers\ValidationHelper;
 use App\Helpers\EncryptionHelper;
+use App\Helpers\SessionHelper;
 use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
-use App\Core\SessionManager;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class LoginController
 {
-    public function __construct(
-        private SessionManager $session,
-        private BlacklistModel $blacklistModel
-    ) {
-    }
-
     /**
      * Display the login form when the user is not already authenticated.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
-        if ($this->session->get('logged_in') === true) {
-            return ResponseManager::redirect('/home');
+        if (SessionHelper::get('logged_in') === true) {
+            return Response::redirect('/home');
         }
-        return ResponseManager::view('login');
+        return Response::view('login');
     }
 
     /**
      * Handle login form submission and logout actions.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         // Redirect already-logged-in users away from login form
-        if ($this->session->get('logged_in') === true && !isset($_POST['logout'])) {
-            return ResponseManager::redirect('/home');
+        if (SessionHelper::get('logged_in') === true && !isset($_POST['logout'])) {
+            return Response::redirect('/home');
         }
 
         // Handle logout
-        if ($this->session->get('logged_in') === true && isset($_POST['logout'])) {
+        if (SessionHelper::get('logged_in') === true && isset($_POST['logout'])) {
             if (!ValidationHelper::validateCsrfToken($_POST['csrf_token'] ?? '')) {
                 MessageHelper::addMessage('Invalid CSRF token. Please try again.');
-                return ResponseManager::redirect('/login');
+                return Response::redirect('/login');
             }
             return $this->logoutUser();
         }
@@ -69,7 +63,7 @@ class LoginController
             $error = 'Invalid CSRF token. Please try again.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::view('login');
+            return Response::view('login');
         }
 
         // Trim and validate input
@@ -78,13 +72,13 @@ class LoginController
 
         // Validate credentials
         if ($this->validateCredentials($username, $password)) {
-            $this->session->set('logged_in', true);
-            $this->session->set('username', $username);
-            $this->session->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
-            $this->session->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
-            $this->session->set('timeout', time());
-            $this->session->regenerate();
-            return ResponseManager::redirect('/home');
+            SessionHelper::set('logged_in', true);
+            SessionHelper::set('username', $username);
+            SessionHelper::set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            SessionHelper::set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
+            SessionHelper::set('timeout', time());
+            SessionHelper::regenerate();
+            return Response::redirect('/home');
         }
 
         // Handle failed login attempt
@@ -93,20 +87,20 @@ class LoginController
             $error = 'Unable to determine client IP.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::view('login');
+            return Response::view('login');
         }
-        if ($this->blacklistModel->isBlacklisted($ip)) {
+        if (BlacklistModel::isBlacklisted($ip)) {
             $error = 'Your IP has been blacklisted due to multiple failed login attempts.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
         } else {
-            $this->blacklistModel->updateFailedAttempts($ip);
+            BlacklistModel::updateFailedAttempts($ip);
             $error = 'Invalid username or password.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
         }
 
-        return ResponseManager::view('login');
+        return Response::view('login');
     }
 
     /**
@@ -129,11 +123,11 @@ class LoginController
     /**
      * Destroy the session and redirect to login page.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    private function logoutUser(): ResponseManager
+    private function logoutUser(): Response
     {
-        $this->session->destroy();
-        return ResponseManager::redirect('/login');
+        SessionHelper::destroy();
+        return Response::redirect('/login');
     }
 }

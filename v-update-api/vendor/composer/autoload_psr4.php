@@ -8,9 +8,13 @@ $baseDir = dirname($vendorDir);
 return array(
     'Symfony\\Polyfill\\Mbstring\\' => array($vendorDir . '/symfony/polyfill-mbstring'),
     'Respect\\Validation\\' => array($vendorDir . '/respect/validation/library'),
+    'Respect\\Stringifier\\Test\\Unit\\' => array($vendorDir . '/respect/stringifier/tests/unit'),
+    'Respect\\Stringifier\\Test\\' => array($vendorDir . '/respect/stringifier/tests/src'),
     'Respect\\Stringifier\\' => array($vendorDir . '/respect/stringifier/src'),
     'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
+    'Psr\\Http\\Server\\' => array($vendorDir . '/psr/http-server-middleware/src', $vendorDir . '/psr/http-server-handler/src'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
     'FastRoute\\' => array($vendorDir . '/nikic/fast-route/src'),
     'Doctrine\\Deprecations\\' => array($vendorDir . '/doctrine/deprecations/src'),

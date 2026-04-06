@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Doctrine\DBAL\Platforms;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\Db2\Db2MetadataProvider;
 use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\DB2Keywords;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
@@ -30,7 +31,7 @@ use function sprintf;
 use function str_contains;
 
 /**
- * Provides the behavior, features and SQL dialect of the IBM DB2 database platform of the oldest supported version.
+ * Provides the behavior, features and SQL dialect of the Db2 database platform of the oldest supported version.
  */
 class DB2Platform extends AbstractPlatform
 {
@@ -567,9 +568,9 @@ class DB2Platform extends AbstractPlatform
     /**
      * {@inheritDoc}
      *
-     * DB2 supports savepoints, but they work semantically different than on other vendor platforms.
+     * Db2 supports savepoints, but they work semantically different than on other vendor platforms.
      *
-     * TODO: We have to investigate how to get DB2 up and running with savepoints.
+     * TODO: We have to investigate how to get Db2 up and running with savepoints.
      */
     public function supportsSavepoints(): bool
     {
@@ -587,6 +588,11 @@ class DB2Platform extends AbstractPlatform
         );
 
         return new DB2Keywords();
+    }
+
+    public function createMetadataProvider(Connection $connection): Db2MetadataProvider
+    {
+        return new Db2MetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): DB2SchemaManager
