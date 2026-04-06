@@ -49,13 +49,18 @@ class ThemeModel
      */
     public static function deleteTheme(string $themeName): bool
     {
-        $themePath = self::$dir . '/' . basename($themeName);
+        $basename = basename($themeName);
+        if (!preg_match('/^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$/', $basename, $matches)) {
+            return false;
+        }
+
+        $slug = $matches[1];
+        $themePath = self::$dir . '/' . $basename;
         if (
             file_exists($themePath) &&
             dirname(realpath($themePath)) === realpath(self::$dir)
         ) {
             unlink($themePath);
-            $slug = explode('_', basename($themeName))[0];
             $conn = DatabaseManager::getConnection();
             $conn->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
             return true;

@@ -9,6 +9,11 @@ use App\Core\Response;
 
 class ResponseTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        \App\Core\ErrorManager::getInstance();
+    }
+
     public function testConstructorSetsDefaultValues(): void
     {
         $response = new Response();
@@ -204,5 +209,31 @@ class ResponseTest extends TestCase
             ->withAddedHeader('Accept', 'application/json');
         
         $this->assertSame('text/html, application/json', $response->getHeaderLine('Accept'));
+    }
+
+    public function testSendWithMissingFileReturnsControlledErrorBody(): void
+    {
+        $response = Response::file('/path/that/does/not/exist.zip');
+
+        ob_start();
+        $response->send();
+        $output = ob_get_clean();
+
+        $this->assertSame('Internal Server Error', $output);
+    }
+
+    public function testSendWithReadableFileStreamsContent(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'response-test');
+        file_put_contents($tmp, 'FILE_CONTENT');
+
+        $response = Response::file($tmp);
+        ob_start();
+        $response->send();
+        $output = ob_get_clean();
+
+        unlink($tmp);
+
+        $this->assertSame('FILE_CONTENT', $output);
     }
 }

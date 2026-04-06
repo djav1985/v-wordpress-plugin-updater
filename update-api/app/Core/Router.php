@@ -16,7 +16,6 @@ namespace App\Core;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use function FastRoute\simpleDispatcher;
 use App\Core\SessionManager;
 use App\Core\Response;
 
@@ -30,7 +29,7 @@ class Router
      */
     private function __construct()
     {
-        $this->dispatcher = simpleDispatcher(function (RouteCollector $r): void {
+        $this->dispatcher = RouteDispatcherFactory::build(function (RouteCollector $r): void {
             // Redirect the root URL to the home page for convenience
             $r->addRoute('GET', '/', function (): Response {
                 return Response::redirect('/home');
@@ -168,6 +167,15 @@ class Router
 
             require __DIR__ . '/../Views/' . $view . '.php';
             return;
+        }
+
+        if ($response->getFile() !== null) {
+            $file = $response->getFile();
+            if (!is_string($file) || !is_file($file) || !is_readable($file)) {
+                ErrorManager::getInstance()->log('Router refused unreadable file response: ' . (string) $file);
+                Response::text('Internal Server Error', 500)->send();
+                return;
+            }
         }
 
         // File streaming and plain body output are both handled by send().

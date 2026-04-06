@@ -643,6 +643,7 @@ The API uses IP-based blacklisting for rate limiting. After 3 failed authenticat
 - [ ] **`Task 4`**: Implement ability to remove ips from blacklist
 - [ ] **`Task 5`**: Implement plug-in verification on upload
 - [ ] **`Task 6`**: Implement docker version
+- [ ] **`Task 7`**: Migrate routing dependency from `nikic/fast-route` v1 to stable v2 (`DEP-001`, tracked in `update-api/docs/dependency-tracking.md`)
       
 ---
 

@@ -114,7 +114,8 @@ class ApiController extends Controller
                     $dbVersion = $row['version'];
                     if (version_compare($dbVersion, $version, '>')) {
                         $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
-                        if (is_file($filePath)) {
+                        $contentLength = @filesize($filePath);
+                        if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
                             $conn->executeStatement(
                                 'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                                 [$domain, $type, date('Y-m-d'), 'Success']
@@ -122,8 +123,10 @@ class ApiController extends Controller
                             ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
                             return Response::file($filePath, 'application/octet-stream')
                                 ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
-                                ->withAddedHeader('Content-Length', (string) filesize($filePath));
+                                ->withAddedHeader('Content-Length', (string) $contentLength);
                         }
+                        ErrorManager::getInstance()->log('Update file unavailable or unreadable: ' . $filePath);
+                        return new Response(500);
                     }
                     $conn->executeStatement(
                         'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',

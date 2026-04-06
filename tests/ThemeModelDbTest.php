@@ -123,6 +123,32 @@ class ThemeModelDbTest extends TestCase
         $this->assertSame('theme1', $themes[0]['slug']);
         $this->assertSame('1.0', $themes[0]['version']);
     }
+
+    public function testDeleteThemeUsesRegexSlugWithUnderscore(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample_theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample_theme_2.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(ThemeModel::deleteTheme('sample_theme_2.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM themes WHERE slug = ?', ['sample_theme']));
+    }
+
+    public function testDeleteThemeReturnsFalseWhenFilenameDoesNotMatchExpectedPattern(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('themes', ['slug' => 'sample_theme', 'version' => '2.0']);
+        $path = THEMES_DIR . '/sample_theme_latest.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertFalse(ThemeModel::deleteTheme('sample_theme_latest.zip'));
+        $this->assertFileExists($path);
+        $this->assertSame('2.0', $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', ['sample_theme']));
+
+        unlink($path);
+    }
 }
 
 }
