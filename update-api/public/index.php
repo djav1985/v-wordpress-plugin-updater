@@ -21,17 +21,18 @@ use App\Core\SessionManager;
 
 $session = SessionManager::getInstance();
 $session->start();
-if (!$session->get('csrf_token')) {
-    $isStrong = false;
-    $bytes = openssl_random_pseudo_bytes(32, $isStrong);
-    if ($bytes === false || $isStrong !== true) {
-        throw new RuntimeException('Unable to generate cryptographically secure CSRF token bytes.');
+
+ErrorManager::handle(function () use ($session): void {
+    if (!$session->get('csrf_token')) {
+        $isStrong = false;
+        $bytes = openssl_random_pseudo_bytes(32, $isStrong);
+        if ($bytes === false || $isStrong !== true) {
+            throw new RuntimeException('Unable to generate cryptographically secure CSRF token bytes.');
+        }
+
+        $session->set('csrf_token', bin2hex($bytes));
     }
 
-    $session->set('csrf_token', bin2hex($bytes));
-}
-
-ErrorManager::handle(function (): void {
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $uri);
 });

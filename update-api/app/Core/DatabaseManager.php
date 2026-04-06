@@ -27,15 +27,13 @@ class DatabaseManager
     public static function getConnection(): Connection
     {
         if (self::$connection === null) {
-            // Ensure directory exists and file is present so tests that assert file
-            // creation will pass.
             $dir = dirname(DB_FILE);
             if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
+                self::createDirectory($dir);
             }
+
             if (!file_exists(DB_FILE)) {
-                // Create an empty SQLite file — Doctrine will initialize schema as needed.
-                touch(DB_FILE);
+                self::createDatabaseFile(DB_FILE);
             }
 
             $params = [
@@ -44,6 +42,65 @@ class DatabaseManager
             ];
             self::$connection = DriverManager::getConnection($params);
         }
+
         return self::$connection;
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    private static function createDirectory(string $dir): void
+    {
+        if (is_dir($dir)) {
+            return;
+        }
+
+        $error = null;
+        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
+            $error = $message;
+            return true;
+        });
+
+        try {
+            $created = mkdir($dir, 0750, true);
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($created !== true && !is_dir($dir)) {
+            $context = 'DatabaseManager failed to create database directory: ' . $dir
+                . ($error !== null ? ' (' . $error . ')' : '');
+            ErrorManager::getInstance()->log($context);
+            throw new \RuntimeException($context);
+        }
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    private static function createDatabaseFile(string $path): void
+    {
+        if (file_exists($path)) {
+            return;
+        }
+
+        $error = null;
+        set_error_handler(static function (int $severity, string $message) use (&$error): bool {
+            $error = $message;
+            return true;
+        });
+
+        try {
+            $created = touch($path);
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($created !== true || !file_exists($path)) {
+            $context = 'DatabaseManager failed to initialize database file: ' . $path
+                . ($error !== null ? ' (' . $error . ')' : '');
+            ErrorManager::getInstance()->log($context);
+            throw new \RuntimeException($context);
+        }
     }
 }

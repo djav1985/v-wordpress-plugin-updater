@@ -59,7 +59,7 @@ This architecture enables centralized control over plugin and theme updates acro
 | 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based synchronization between filesystem and database</li></ul> |
 | 🧩 | **Modularity**        | <ul><li>Separate controllers for API, login, hosts, plugins, themes, and logs</li><li>Helper classes for encryption, validation, and message handling</li><li>Model layer for database operations (plugins, themes, hosts, logs, blacklist)</li></ul> |
 | 🧪 | **Testing**           | <ul><li>PHPUnit test suite for both components</li><li>Tests for routing, database, session management, and updater logic</li><li>Namespace-based mocking for isolated unit tests</li></ul> |
-| ⚡️  | **Performance**       | <ul><li>SQLite database for efficient metadata storage</li><li>Asynchronous update processing per plugin/theme</li><li>Background worker mode for cron synchronization</li></ul> |
+| ⚡️  | **Performance**       | <ul><li>SQLite database for efficient metadata storage</li><li>Asynchronous update processing per plugin/theme</li><li>Daily cron synchronization job for database/file parity</li></ul> |
 | 🛡️ | **Security**          | <ul><li>Encrypted API keys using AES-256</li><li>IP-based blacklisting after failed login attempts</li><li>Session timeout and user agent validation</li><li>CSRF protection on all forms</li><li>Input validation and sanitization</li></ul> |
 | 📦 | **Dependencies**      | <ul><li>PHP 7.4+ with SQLite support</li><li>Composer packages: FastRoute, Doctrine DBAL</li><li>WordPress core functions for client plugin</li><li>Web server with PHP support (Apache/Nginx)</li></ul> |
 
@@ -101,7 +101,7 @@ This architecture enables centralized control over plugin and theme updates acro
     │   │   │   ├── Csrf.php
     │   │   │   ├── DatabaseManager.php
     │   │   │   ├── ErrorManager.php
-    │   │   │   ├── Response.php
+    │   │   │   ├── ResponseManager.php
     │   │   │   ├── Router.php
     │   │   │   └── SessionManager.php
     │   │   ├── Helpers
@@ -199,7 +199,7 @@ This architecture enables centralized control over plugin and theme updates acro
 				</tr>
 				<tr style='border-bottom: 1px solid #eee;'>
 					<td style='padding: 8px;'><b><a href='https://github.com/djav1985/v-wordpress-plugin-updater/blob/master/update-api/cron.php'>cron.php</a></b></td>
-					<td style='padding: 8px;'>- Synchronizes plugin and theme ZIP files from the filesystem to the SQLite database, maintaining metadata for version tracking and updates<br>- Supports background worker mode for scheduled execution, ensuring the database remains current with available update packages<br>- Also manages cleanup of expired IP blacklist entries.</td>
+					<td style='padding: 8px;'>- Synchronizes plugin and theme ZIP files from the filesystem to the SQLite database, maintaining metadata for version tracking and updates<br>- Runs as a regular scheduled cron execution to keep the database current with available update packages<br>- Also manages cleanup of expired IP blacklist entries.</td>
 				</tr>
 				<tr style='border-bottom: 1px solid #eee;'>
 			<!-- public Submodule -->
@@ -485,7 +485,7 @@ This architecture enables centralized control over plugin and theme updates acro
    mkdir -p update-api/storage/logs
    ```
 
-4. Edit `update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD_HASH` (generate with `password_hash()`), `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
+4. Edit `update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
 
 5. Set an `ENCRYPTION_KEY` environment variable used to secure host keys:
 
@@ -497,10 +497,10 @@ This architecture enables centralized control over plugin and theme updates acro
 
 7. Navigate to `update-api/public/` and run `php install.php` in your browser or via CLI to create the SQLite database and required tables. Ensure `update-api/storage/updater.sqlite` is writable by the web server.
 
-8. Configure a system cron to run the sync worker regularly:
+8. Configure a system cron to run once daily:
 
    ```sh
-   */15 * * * * cd /path/to/update-api && php cron.php --worker
+   0 2 * * * cd /path/to/update-api && php cron.php
    ```
 
    This keeps the database in sync with plugin and theme ZIP files in the storage directories.
@@ -541,7 +541,7 @@ This architecture enables centralized control over plugin and theme updates acro
 
 5. **View Logs**: Check `/logs` for plugin and theme update activity logs.
 
-6. The cron worker will automatically sync uploaded files to the database. Ensure the cron job is configured as described in the installation steps.
+6. The daily cron job will automatically sync uploaded files to the database. Ensure the cron job is configured as described in the installation steps.
 
 #### Using the WordPress Client Plugin
 

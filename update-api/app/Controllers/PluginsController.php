@@ -19,17 +19,17 @@ use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class PluginsController extends Controller
 {
     /**
      * Handles GET requests for plugin-related actions.
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $pluginsTableHtml = self::getPluginsTableHtml();
-        return Response::view('plupdate', [
+        return ResponseManager::view('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
         ]);
     }
@@ -37,7 +37,7 @@ class PluginsController extends Controller
     /**
      * Handles POST submissions for plugin-related actions.
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
@@ -46,10 +46,10 @@ class PluginsController extends Controller
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                return Response::text($error, 400);
+                return ResponseManager::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -57,12 +57,12 @@ class PluginsController extends Controller
         if (isset($_FILES['plugin_file'])) {
             $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
             if ($isAjax) {
-                return Response::text(implode("\n", $messages));
+                return ResponseManager::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         } elseif (isset($_POST['delete_plugin'])) {
             $pluginName = isset($_POST['plugin_name'])
                 ? ValidationHelper::validateSlug($_POST['plugin_name'])
@@ -74,9 +74,9 @@ class PluginsController extends Controller
                 ErrorManager::getInstance()->log($error);
                 MessageHelper::addMessage($error);
             }
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         }
-        return Response::redirect('/plupdate');
+        return ResponseManager::redirect('/plupdate');
     }
 
     /**

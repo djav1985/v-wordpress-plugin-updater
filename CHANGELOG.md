@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Renamed `update-api/app/Core/Response.php` to `update-api/app/Core/ResponseManager.php` and updated all controller/router/test references accordingly.
+- Moved CSRF token initialization into the `ErrorManager::handle(...)` request callback in `update-api/public/index.php` so token generation exceptions are handled through the centralized error pathway.
+- Hardened database bootstrap in `DatabaseManager` by using least-privilege directory permissions (`0750`), validating `mkdir`/`touch` outcomes, and throwing/logging controlled runtime exceptions with context when file-system setup fails.
+- Updated `/api` routing semantics so `/api` is always treated as an API route (no auth redirect fallback) and returns consistent API status behavior (`400` validation errors, `403` auth failure, `405` method mismatch).
+- Simplified cron execution by removing worker mode (`--worker`/`worker`) and documenting single-run daily cron scheduling.
+- Switched admin password configuration from hash-based verification to plain-text `VALID_PASSWORD` comparison in `config.php` and `LoginController`.
+
 - Replaced login-session CSRF token regeneration in `LoginController` with cryptographically secure output using `bin2hex(random_bytes(32))` while preserving existing timeout and session ID regeneration flow.
 - Fixed API query argument construction in `PluginUpdater` and `ThemeUpdater` by removing pre-encoding (`rawurlencode`) so `add_query_arg` performs a single RFC3986 encoding pass.
 - Hardened package delete parsing in `PluginModel::deletePlugin` and `ThemeModel::deleteTheme` using strict `^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$` extraction, including regression coverage for underscore-containing slugs and non-matching filenames.
