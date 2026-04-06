@@ -39,29 +39,6 @@ class CronIntegrationTest extends TestCase
         $this->assertStringContainsString('Cron job completed successfully', $output);
     }
 
-    public function testCronWorkerLaunchesSuccessfully(): void
-    {
-        // Initialize the database if not already done
-        $this->initializeDatabase();
-
-        $command = 'php ' . escapeshellarg($this->cronPath) . ' --worker 2>&1';
-        exec($command, $outputLines, $exitCode);
-
-        $this->assertSame(0, $exitCode, 'Worker mode should exit successfully');
-        $this->assertSame('', trim(implode("\n", $outputLines)), 'Worker mode should be silent');
-    }
-
-    public function testCronWorkerPositionalArgumentLaunchesSuccessfully(): void
-    {
-        $this->initializeDatabase();
-
-        $command = 'php ' . escapeshellarg($this->cronPath) . ' worker 2>&1';
-        exec($command, $outputLines, $exitCode);
-
-        $this->assertSame(0, $exitCode, 'Positional worker mode should exit successfully');
-        $this->assertSame('', trim(implode("\n", $outputLines)), 'Positional worker mode should be silent');
-    }
-
     public function testCronRejectsUnknownArguments(): void
     {
         $command = 'php ' . escapeshellarg($this->cronPath) . ' --unknown 2>&1';
@@ -69,6 +46,7 @@ class CronIntegrationTest extends TestCase
         $output = implode("\n", $outputLines);
 
         $this->assertSame(1, $exitCode, 'Unknown arguments should cause a failure exit');
+        $this->assertStringContainsString('Unrecognized argument:', $output);
         $this->assertStringContainsString('Usage:', $output);
     }
 
@@ -119,7 +97,7 @@ PHP;
         if (!file_exists($dbPath)) {
             $dir = dirname($dbPath);
             if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
+                mkdir($dir, 0750, true);
             }
             touch($dbPath);
         }

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../update-api/vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use App\Controllers\ApiController;
 use App\Core\DatabaseManager;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 /**
  * Tests for ApiController::handleRequest() covering request validation,
@@ -107,7 +107,7 @@ class ApiControllerTest extends TestCase
         ];
     }
 
-    private function dispatch(): Response
+    private function dispatch(): ResponseManager
     {
         $controller = new ApiController();
         return $controller->handleRequest();
@@ -117,13 +117,13 @@ class ApiControllerTest extends TestCase
     // Non-GET method
     // ------------------------------------------------------------------
 
-    public function testPostMethodReturnsForbidden(): void
+    public function testPostMethodReturnsMethodNotAllowed(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_GET = $this->validGetParams();
 
         $response = $this->dispatch();
-        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame(405, $response->getStatusCode());
     }
 
     // ------------------------------------------------------------------

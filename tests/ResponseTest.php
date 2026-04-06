@@ -5,7 +5,7 @@ namespace Tests;
 require_once __DIR__ . '/../update-api/vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class ResponseTest extends TestCase
 {
@@ -16,7 +16,7 @@ class ResponseTest extends TestCase
 
     public function testConstructorSetsDefaultValues(): void
     {
-        $response = new Response();
+        $response = new ResponseManager();
         
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame([], $response->getHeaders());
@@ -28,7 +28,7 @@ class ResponseTest extends TestCase
 
     public function testConstructorSetsCustomValues(): void
     {
-        $response = new Response(
+        $response = new ResponseManager(
             statusCode: 404,
             headers: ['Content-Type' => 'text/html'],
             body: 'Not Found',
@@ -42,7 +42,7 @@ class ResponseTest extends TestCase
 
     public function testRedirectCreatesRedirectResponse(): void
     {
-        $response = Response::redirect('/login');
+        $response = ResponseManager::redirect('/login');
         
         $this->assertSame(302, $response->getStatusCode());
         $this->assertSame(['/login'], $response->getHeader('Location'));
@@ -51,7 +51,7 @@ class ResponseTest extends TestCase
 
     public function testRedirectWithCustomStatus(): void
     {
-        $response = Response::redirect('/moved', 301);
+        $response = ResponseManager::redirect('/moved', 301);
         
         $this->assertSame(301, $response->getStatusCode());
         $this->assertSame(['/moved'], $response->getHeader('Location'));
@@ -59,7 +59,7 @@ class ResponseTest extends TestCase
 
     public function testViewCreatesViewResponse(): void
     {
-        $response = Response::view('home', ['title' => 'Welcome']);
+        $response = ResponseManager::view('home', ['title' => 'Welcome']);
         
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('home', $response->getView());
@@ -69,7 +69,7 @@ class ResponseTest extends TestCase
 
     public function testViewWithCustomStatus(): void
     {
-        $response = Response::view('error', ['message' => 'Not Found'], 404);
+        $response = ResponseManager::view('error', ['message' => 'Not Found'], 404);
         
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame('error', $response->getView());
@@ -78,7 +78,7 @@ class ResponseTest extends TestCase
 
     public function testTextCreatesTextResponse(): void
     {
-        $response = Response::text('Hello World');
+        $response = ResponseManager::text('Hello World');
         
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(['text/plain; charset=UTF-8'], $response->getHeader('Content-Type'));
@@ -87,7 +87,7 @@ class ResponseTest extends TestCase
 
     public function testTextWithCustomStatus(): void
     {
-        $response = Response::text('Internal Server Error', 500);
+        $response = ResponseManager::text('Internal Server Error', 500);
         
         $this->assertSame(500, $response->getStatusCode());
         $this->assertSame('Internal Server Error', $response->getBody());
@@ -95,7 +95,7 @@ class ResponseTest extends TestCase
 
     public function testFileCreatesFileResponse(): void
     {
-        $response = Response::file('/path/to/file.zip');
+        $response = ResponseManager::file('/path/to/file.zip');
         
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('/path/to/file.zip', $response->getFile());
@@ -104,7 +104,7 @@ class ResponseTest extends TestCase
 
     public function testFileWithContentType(): void
     {
-        $response = Response::file('/path/to/plugin.zip', 'application/zip');
+        $response = ResponseManager::file('/path/to/plugin.zip', 'application/zip');
         
         $this->assertSame(['application/zip'], $response->getHeader('Content-Type'));
         $this->assertSame('/path/to/plugin.zip', $response->getFile());
@@ -112,7 +112,7 @@ class ResponseTest extends TestCase
 
     public function testFileWithCustomStatus(): void
     {
-        $response = Response::file('/path/to/file', 'application/octet-stream', 206);
+        $response = ResponseManager::file('/path/to/file', 'application/octet-stream', 206);
         
         $this->assertSame(206, $response->getStatusCode());
     }
@@ -120,7 +120,7 @@ class ResponseTest extends TestCase
     public function testJsonCreatesJsonResponse(): void
     {
         $data = ['success' => true, 'message' => 'OK'];
-        $response = Response::json($data);
+        $response = ResponseManager::json($data);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(['application/json; charset=UTF-8'], $response->getHeader('Content-Type'));
@@ -130,7 +130,7 @@ class ResponseTest extends TestCase
 
     public function testJsonWithCustomStatus(): void
     {
-        $response = Response::json(['error' => 'Not found'], 404);
+        $response = ResponseManager::json(['error' => 'Not found'], 404);
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame(json_encode(['error' => 'Not found']), $response->getBody());
@@ -138,22 +138,22 @@ class ResponseTest extends TestCase
 
     public function testWithStatus(): void
     {
-        $response = (new Response(200))->withStatus(404);
+        $response = (new ResponseManager(200))->withStatus(404);
         
         $this->assertSame(404, $response->getStatusCode());
-        $this->assertSame(200, (new Response(200))->getStatusCode());
+        $this->assertSame(200, (new ResponseManager(200))->getStatusCode());
     }
 
     public function testWithHeader(): void
     {
-        $response = (new Response())->withHeader('X-Custom-Header', 'value');
+        $response = (new ResponseManager())->withHeader('X-Custom-Header', 'value');
         
         $this->assertSame(['value'], $response->getHeader('X-Custom-Header'));
     }
 
     public function testWithAddedHeader(): void
     {
-        $response = (new Response())
+        $response = (new ResponseManager())
             ->withHeader('Set-Cookie', 'session=abc')
             ->withAddedHeader('Set-Cookie', 'user=john');
         
@@ -165,14 +165,14 @@ class ResponseTest extends TestCase
 
     public function testWithBody(): void
     {
-        $response = (new Response())->withBody('Hello');
+        $response = (new ResponseManager())->withBody('Hello');
         
         $this->assertSame('Hello', $response->getBody());
     }
 
     public function testWithView(): void
     {
-        $response = (new Response())->withView('home', ['title' => 'Home']);
+        $response = (new ResponseManager())->withView('home', ['title' => 'Home']);
         
         $this->assertSame('home', $response->getView());
         $this->assertSame(['title' => 'Home'], $response->getViewData());
@@ -180,14 +180,14 @@ class ResponseTest extends TestCase
 
     public function testWithFile(): void
     {
-        $response = (new Response())->withFile('/path/to/file.pdf');
+        $response = (new ResponseManager())->withFile('/path/to/file.pdf');
         
         $this->assertSame('/path/to/file.pdf', $response->getFile());
     }
 
     public function testHeaderNormalization(): void
     {
-        $response = (new Response())->withHeader('content-type', 'text/plain');
+        $response = (new ResponseManager())->withHeader('content-type', 'text/plain');
         
         $this->assertSame(['text/plain'], $response->getHeader('Content-Type'));
         $this->assertSame(['text/plain'], $response->getHeader('content-type'));
@@ -195,7 +195,7 @@ class ResponseTest extends TestCase
 
     public function testHasHeader(): void
     {
-        $response = (new Response())->withHeader('X-Custom', 'value');
+        $response = (new ResponseManager())->withHeader('X-Custom', 'value');
         
         $this->assertTrue($response->hasHeader('X-Custom'));
         $this->assertTrue($response->hasHeader('x-custom'));
@@ -204,7 +204,7 @@ class ResponseTest extends TestCase
 
     public function testGetHeaderLine(): void
     {
-        $response = (new Response())
+        $response = (new ResponseManager())
             ->withHeader('Accept', 'text/html')
             ->withAddedHeader('Accept', 'application/json');
         
@@ -213,7 +213,7 @@ class ResponseTest extends TestCase
 
     public function testSendWithMissingFileReturnsControlledErrorBody(): void
     {
-        $response = Response::file('/path/that/does/not/exist.zip');
+        $response = ResponseManager::file('/path/that/does/not/exist.zip');
 
         ob_start();
         $response->send();
@@ -227,7 +227,7 @@ class ResponseTest extends TestCase
         $tmp = tempnam(sys_get_temp_dir(), 'response-test');
         file_put_contents($tmp, 'FILE_CONTENT');
 
-        $response = Response::file($tmp);
+        $response = ResponseManager::file($tmp);
         ob_start();
         $response->send();
         $output = ob_get_clean();

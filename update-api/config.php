@@ -12,7 +12,7 @@
  */
 
 define('VALID_USERNAME', 'admin');
-define('VALID_PASSWORD_HASH', '$2y$10$tYi5dWtBVRNkLqoSwV0yfuzM9Wh6A7O6oDulEGaM1lM3FsIaVvQ9e');
+define('VALID_PASSWORD', 'valid password');
 
 define(
     'ENCRYPTION_KEY',

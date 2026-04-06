@@ -1,32 +1,32 @@
 <?php
 namespace App\Controllers;
 
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class HomeController
 {
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
-        return new Response(200, [], 'home');
+        return new ResponseManager(200, [], 'home');
     }
 }
 
 class ApiController
 {
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
-        return new Response(200, [], 'api');
+        return new ResponseManager(200, [], 'api');
     }
 }
 
 class LoginController
 {
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
-        return new Response(200);
+        return new ResponseManager(200);
     }
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
-        return new Response(200);
+        return new ResponseManager(200);
     }
 }

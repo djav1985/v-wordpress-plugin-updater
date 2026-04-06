@@ -7,7 +7,7 @@
  * Link:    https://vontainment.com
  * Version: 4.0.0
  *
- * File: Response.php
+ * File: ResponseManager.php
  * Description: WordPress Update API
  */
 
@@ -18,7 +18,7 @@ namespace App\Core;
  *
  * @phpstan-type Headers array<string, list<string>>
  */
-class Response
+class ResponseManager
 {
     /** @var int */
     private int $statusCode;

@@ -21,16 +21,16 @@ use App\Core\Controller;
 use App\Models\HostsModel;
 use App\Helpers\MessageHelper;
 use App\Core\SessionManager;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class HomeController extends Controller
 {
     /**
      * Handles GET requests for managing hosts.
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
-        return Response::view('home', [
+        return ResponseManager::view('home', [
             'hostsTableHtml' => self::getHostsTableHtml(),
         ]);
     }
@@ -38,14 +38,14 @@ class HomeController extends Controller
     /**
      * Handles POST submissions for host actions.
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::getInstance()->log($error);
             MessageHelper::addMessage($error);
-            return Response::redirect('/home');
+            return ResponseManager::redirect('/home');
         }
 
         $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
@@ -73,7 +73,7 @@ class HomeController extends Controller
                 MessageHelper::addMessage('Entry deleted successfully.');
             }
         }
-        return Response::redirect('/home');
+        return ResponseManager::redirect('/home');
     }
 
     /**

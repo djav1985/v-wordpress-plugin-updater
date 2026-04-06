@@ -21,7 +21,7 @@ use App\Models\HostsModel;
 use App\Core\ErrorManager;
 use App\Core\Controller;
 use App\Core\DatabaseManager;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class ApiController extends Controller
 {
@@ -32,26 +32,26 @@ class ApiController extends Controller
      * and returns the update ZIP when a newer version is available, 204 when
      * the client is already up-to-date, or 403 on authentication failure.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $ip     = $_SERVER['REMOTE_ADDR'] ?? '';
         $method = $_SERVER['REQUEST_METHOD'] ?? '';
 
         if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
             ErrorManager::getInstance()->log('Forbidden: missing or invalid IP address');
-            return new Response(403);
+            return new ResponseManager(403);
         }
 
         if (BlacklistModel::isBlacklisted($ip)) {
             ErrorManager::getInstance()->log('Forbidden: blacklisted IP ' . $ip);
-            return new Response(403);
+            return new ResponseManager(403);
         }
 
         if ($method !== 'GET') {
-            ErrorManager::getInstance()->log('Forbidden: invalid request method ' . $method . ' from ' . $ip);
-            return new Response(403);
+            ErrorManager::getInstance()->log('Method not allowed for API request: ' . $method . ' from ' . $ip);
+            return new ResponseManager(405);
         }
 
         $params = [
@@ -65,7 +65,7 @@ class ApiController extends Controller
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
                 ErrorManager::getInstance()->log('Bad request missing parameter: ' . $p);
-                return new Response(400);
+                return new ResponseManager(400);
             }
             $values[] = $_GET[$p];
         }
@@ -91,7 +91,7 @@ class ApiController extends Controller
         }
         if (!empty($invalid)) {
             ErrorManager::getInstance()->log('Bad request invalid parameter: ' . implode(', ', $invalid));
-            return new Response(400);
+            return new ResponseManager(400);
         }
 
         $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
@@ -121,19 +121,19 @@ class ApiController extends Controller
                                 [$domain, $type, date('Y-m-d'), 'Success']
                             );
                             ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                            return Response::file($filePath, 'application/octet-stream')
+                            return ResponseManager::file($filePath, 'application/octet-stream')
                                 ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
                                 ->withAddedHeader('Content-Length', (string) $contentLength);
                         }
                         ErrorManager::getInstance()->log('Update file unavailable or unreadable: ' . $filePath);
-                        return new Response(500);
+                        return new ResponseManager(500);
                     }
                     $conn->executeStatement(
                         'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
                         [$domain, $type, date('Y-m-d'), 'Success']
                     );
                     ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                    return new Response(204);
+                    return new ResponseManager(204);
                 }
             }
         }
@@ -146,6 +146,6 @@ class ApiController extends Controller
             [$domain, $type, date('Y-m-d'), 'Failed']
         );
         ErrorManager::getInstance()->log($domain . ' ' . date('Y-m-d') . ' Failed');
-        return new Response(403);
+        return new ResponseManager(403);
     }
 }
