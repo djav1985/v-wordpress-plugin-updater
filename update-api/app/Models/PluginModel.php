@@ -50,11 +50,12 @@ class PluginModel
     public static function deletePlugin(string $pluginName): bool
     {
         $basename = basename($pluginName);
-        if (!preg_match('/^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$/', $basename, $matches)) {
+        $parsed = ValidationHelper::parsePackageFilename($basename);
+        if ($parsed === null) {
             return false;
         }
 
-        $slug = $matches[1];
+        $slug = $parsed['slug'];
         $pluginPath = self::$dir . '/' . $basename;
         if (
             file_exists($pluginPath) &&
@@ -99,8 +100,8 @@ class PluginModel
                 $originalFilename = 'unknown';
             }
             $fileExtension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : '';
-
-            $pluginSlug = $fileName ? explode('_', $fileName)[0] : '';
+            $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
+            $pluginSlug = $parsedFilename['slug'] ?? '';
             $conn = DatabaseManager::getConnection();
             $current = $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
             $maxUploadSize = min(
@@ -121,14 +122,14 @@ class PluginModel
             }
 
             // Validate filename format before touching the filesystem.
-            if (!$fileName || !preg_match('/^([A-Za-z0-9_-]+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
+            if ($fileName === '' || $parsedFilename === null) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .
                     '. Only .zip files are allowed, and filenames must follow the format: plugin-name_1.0.zip';
                 continue;
             }
 
-            $slug    = $matches[1];
-            $version = $matches[2];
+            $slug    = $parsedFilename['slug'];
+            $version = $parsedFilename['version'];
 
             if ($current && version_compare($version, $current, '<=')) {
                 $messages[] = 'Error uploading: ' . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') .

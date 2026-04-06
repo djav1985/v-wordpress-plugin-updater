@@ -50,11 +50,12 @@ class ThemeModel
     public static function deleteTheme(string $themeName): bool
     {
         $basename = basename($themeName);
-        if (!preg_match('/^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$/', $basename, $matches)) {
+        $parsed = ValidationHelper::parsePackageFilename($basename);
+        if ($parsed === null) {
             return false;
         }
 
-        $slug = $matches[1];
+        $slug = $parsed['slug'];
         $themePath = self::$dir . '/' . $basename;
         if (
             file_exists($themePath) &&
@@ -95,7 +96,8 @@ class ThemeModel
                 : UPLOAD_ERR_NO_FILE;
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-            $themeSlug = explode('_', $fileName)[0];
+            $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
+            $themeSlug = $parsedFilename['slug'] ?? '';
             $conn = DatabaseManager::getConnection();
             $current = $conn->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
             $maxUploadSize = min(
@@ -122,15 +124,15 @@ class ThemeModel
             }
 
             // Validate filename format before touching the filesystem.
-            if (!preg_match('/^(.+)_([\d\.]+)\.zip$/', $fileName, $matches)) {
+            if ($fileName === '' || $parsedFilename === null) {
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8')
                     . '. Only .zip files are allowed, and filenames must follow the format: theme-name_1.0.zip';
                 continue;
             }
 
-            $slug    = $matches[1];
-            $version = $matches[2];
+            $slug    = $parsedFilename['slug'];
+            $version = $parsedFilename['version'];
 
             if ($current && version_compare($version, $current, '<=')) {
                 $messages[] = 'Error uploading: '

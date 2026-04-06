@@ -582,8 +582,9 @@ The Update API provides endpoints for checking and retrieving plugin and theme u
 |------|-------------|
 | `200 OK` | Update available, returns update package |
 | `204 No Content` | No update available, current version is up to date |
-| `400 Bad Request` | Missing required parameters |
-| `403 Forbidden` | Invalid authentication, IP blacklisted, or domain not authorized |
+| `400 Bad Request` | Missing/invalid request parameters (does not consume blacklist budget) |
+| `403 Forbidden` | Invalid authentication credentials, unknown domain, or IP blacklisted |
+| `404 Not Found` | Authenticated request references an unknown plugin/theme slug |
 
 ### Example Request
 
@@ -615,16 +616,18 @@ The WordPress client plugin (`v-wp-updater`) implements this contract in
 `PluginUpdater::fetch_package` and `ThemeUpdater::fetch_package`:
 
 - Sends `type=plugin` or `type=theme` (not a separate `plugin`/`theme` parameter).
-- Sends `slug=<directory-slug>` for the resource identifier.
+- Sends `slug=<plugin-or-theme-slug>` for the resource identifier (including single-file plugin slugs).
 - On `200`: uses the authenticated URL as `download_url`; `AbstractRemoteUpdater` streams the ZIP.
 - On `204`: returns `no_update`; no installation is attempted.
 - On `403`: returns `unauthorized`; the failure is logged. (`401` is not returned by this API.)
+- On `404`: returns `error` (authenticated slug not found).
 - On any other code or network error: returns `error`.
 
 ### Security
 
 - All requests are logged with domain, date, and status
-- Failed authentication attempts are tracked per IP address
+- Failed authentication attempts (unknown domain / wrong key) are tracked per IP address
+- Malformed requests (`400`) and authenticated unknown slugs (`404`) do not increment blacklist attempts
 - IPs are automatically blacklisted after 3 failed login attempts
 - Blacklisted IPs are automatically removed after 7 days
 - Non-blacklisted IPs with no activity are removed after 3 days

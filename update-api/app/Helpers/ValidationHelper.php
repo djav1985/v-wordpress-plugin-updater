@@ -20,6 +20,13 @@ use App\Core\SessionManager;
 class ValidationHelper
 {
     /**
+     * Canonical slug pattern used across request validation and package filenames.
+     *
+     * Allows alphanumeric characters, dots, underscores, and hyphens.
+     */
+    private const SLUG_PATTERN = '[A-Za-z0-9._-]+';
+
+    /**
      * Validate and normalise a domain name.
      *
      * @param string $domain Raw domain input.
@@ -71,7 +78,7 @@ class ValidationHelper
     public static function validateSlug(string $slug): ?string
     {
         $slug = basename(trim($slug));
-        $rule = v::regex('/^[A-Za-z0-9._-]+$/');
+        $rule = v::regex('/^' . self::SLUG_PATTERN . '$/');
         return $rule->validate($slug) ? $slug : null;
     }
 
@@ -84,8 +91,29 @@ class ValidationHelper
     public static function validateFilename(string $filename): ?string
     {
         $filename = basename(trim($filename));
-        $rule = v::regex('/^[A-Za-z0-9_-]+_[0-9.]+\.zip$/');
+        $rule = v::regex('/^' . self::SLUG_PATTERN . '_[0-9.]+\.zip$/');
         return $rule->validate($filename) ? $filename : null;
+    }
+
+    /**
+     * Parse update package filename in format `{slug}_{version}.zip`.
+     *
+     * Uses the canonical slug + version rules shared by upload/delete flows.
+     *
+     * @param string $filename Raw filename input.
+     * @return array{slug: string, version: string}|null Parsed components, or null when invalid.
+     */
+    public static function parsePackageFilename(string $filename): ?array
+    {
+        $filename = basename(trim($filename));
+        if (!preg_match('/^(' . self::SLUG_PATTERN . ')_([0-9.]+)\.zip$/', $filename, $matches)) {
+            return null;
+        }
+
+        return [
+            'slug' => $matches[1],
+            'version' => $matches[2],
+        ];
     }
 
     /**
