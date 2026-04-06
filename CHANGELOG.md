@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Replaced remaining obsolete `mu-plugin` test/tooling references with active `v-wp-updater` paths in `ApiKeyHelperTest`, `UpdaterEncodingTest`, and `phpstan.neon`.
+- Unified updater status options to canonical `vwpu_*` keys (`vwpu_plugin_update_status`, `vwpu_theme_update_status`) across updater services, activation defaults, and uninstall cleanup.
+- Added activation-time migration from legacy status keys (`vontmnt-*`, `vwpu-*` hyphen variants) to canonical status keys so existing installs retain prior status data.
+- Hardened deactivation/uninstall execution by validating `uninstall.php` existence, guarding helper calls with `function_exists(...)`, and logging structured errors while safely continuing.
 - Renamed `update-api/app/Core/Response.php` to `update-api/app/Core/ResponseManager.php` and updated all controller/router/test references accordingly.
 - Moved CSRF token initialization into the `ErrorManager::handle(...)` request callback in `update-api/public/index.php` so token generation exceptions are handled through the centralized error pathway.
 - Hardened database bootstrap in `DatabaseManager` by using least-privilege directory permissions (`0750`), validating `mkdir`/`touch` outcomes, and throwing/logging controlled runtime exceptions with context when file-system setup fails.

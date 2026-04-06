@@ -235,7 +235,7 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 	 * {@inheritdoc}
 	 */
 	protected function get_status_option_name(): string {
-		return 'vontmnt-thup';
+		return 'vwpu_theme_update_status';
 	}
 
 	/**

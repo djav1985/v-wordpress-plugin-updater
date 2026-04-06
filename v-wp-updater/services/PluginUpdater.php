@@ -234,7 +234,7 @@ class PluginUpdater extends AbstractRemoteUpdater {
 	 * {@inheritdoc}
 	 */
 	protected function get_status_option_name(): string {
-		return 'vontmnt-plup';
+		return 'vwpu_plugin_update_status';
 	}
 
 	/**

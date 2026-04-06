@@ -32,6 +32,7 @@ namespace {
 
 namespace Tests {
 use PHPUnit\Framework\TestCase;
+use VWPU\Helpers\Options;
 
 class ApiKeyHelperTest extends TestCase
 {
@@ -48,14 +49,14 @@ class ApiKeyHelperTest extends TestCase
 
     public function testOptionPersistence(): void
     {
-        require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
+        require_once __DIR__ . '/../v-wp-updater/helpers/Options.php';
         // No option set -> helper returns empty string
-        $key1 = \vontmnt_get_api_key();
+        $key1 = Options::get('update_key');
         $this->assertSame('', $key1);
         // Set an option and verify helper returns stored value
         global $options;
-        $options['vontmnt_api_key'] = 'stored-key';
-        $key2 = \vontmnt_get_api_key();
+        $options['vwpu_update_key'] = 'stored-key';
+        $key2 = Options::get('update_key');
         $this->assertSame('stored-key', $key2);
     }
 
@@ -63,9 +64,9 @@ class ApiKeyHelperTest extends TestCase
     {
         // Legacy key-exchange feature removed; ensure helper returns stored value only
         global $options;
-        require_once __DIR__ . '/../mu-plugin/v-sys-plugin-updater.php';
-        $options['vontmnt_api_key'] = 'only-key';
-        $this->assertSame('only-key', \vontmnt_get_api_key());
+        require_once __DIR__ . '/../v-wp-updater/helpers/Options.php';
+        $options['vwpu_update_key'] = 'only-key';
+        $this->assertSame('only-key', Options::get('update_key'));
     }
 }
 }
