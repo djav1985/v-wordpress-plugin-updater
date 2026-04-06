@@ -127,6 +127,32 @@ class PluginModelDbTest extends TestCase
         unlink(PLUGINS_DIR . '/evil.zip');
         unlink($outside);
     }
+
+    public function testDeletePluginUsesRegexSlugWithUnderscore(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('plugins', ['slug' => 'sample1_test', 'version' => '1.0']);
+        $path = PLUGINS_DIR . '/sample1_test_1.0.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertTrue(PluginModel::deletePlugin('sample1_test_1.0.zip'));
+        $this->assertFileDoesNotExist($path);
+        $this->assertSame(0, (int) $conn->fetchOne('SELECT COUNT(*) FROM plugins WHERE slug = ?', ['sample1_test']));
+    }
+
+    public function testDeletePluginReturnsFalseWhenFilenameDoesNotMatchExpectedPattern(): void
+    {
+        $conn = DatabaseManager::getConnection();
+        $conn->insert('plugins', ['slug' => 'sample1_test', 'version' => '1.0']);
+        $path = PLUGINS_DIR . '/sample1_test_latest.zip';
+        file_put_contents($path, 'zip');
+
+        $this->assertFalse(PluginModel::deletePlugin('sample1_test_latest.zip'));
+        $this->assertFileExists($path);
+        $this->assertSame('1.0', $conn->fetchOne('SELECT version FROM plugins WHERE slug = ?', ['sample1_test']));
+
+        unlink($path);
+    }
 }
 
 }

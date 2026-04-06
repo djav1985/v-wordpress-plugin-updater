@@ -49,13 +49,18 @@ class PluginModel
      */
     public static function deletePlugin(string $pluginName): bool
     {
-        $pluginPath = self::$dir . '/' . basename($pluginName);
+        $basename = basename($pluginName);
+        if (!preg_match('/^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$/', $basename, $matches)) {
+            return false;
+        }
+
+        $slug = $matches[1];
+        $pluginPath = self::$dir . '/' . $basename;
         if (
             file_exists($pluginPath) &&
             dirname(realpath($pluginPath)) === realpath(self::$dir)
         ) {
             unlink($pluginPath);
-            $slug = explode('_', basename($pluginName))[0];
             $conn = DatabaseManager::getConnection();
             $conn->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
             return true;

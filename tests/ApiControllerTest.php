@@ -335,6 +335,22 @@ class ApiControllerTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
     }
 
+    public function testUpdateAvailableWithMissingFileReturns500(): void
+    {
+        $encrypted = \App\Helpers\EncryptionHelper::encrypt('validkey123');
+        $this->conn->executeStatement(
+            'INSERT INTO hosts (domain, key) VALUES (?, ?)',
+            ['example.com', $encrypted]
+        );
+        $this->conn->executeStatement(
+            'INSERT INTO plugins (slug, version) VALUES (?, ?)',
+            ['my-plugin', '2.0.0']
+        );
+
+        $_GET = $this->validGetParams();
+        $this->assertSame(500, $this->dispatch()->getStatusCode());
+    }
+
     // ------------------------------------------------------------------
     // Blacklisted IP → 403
     // ------------------------------------------------------------------

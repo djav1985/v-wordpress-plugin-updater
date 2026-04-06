@@ -327,6 +327,27 @@ namespace Tests {
             $this->assertSame( 'mykey', $query['key'] );
         }
 
+        public function testPluginFetchPackageEncodesReservedCharactersOnce(): void {
+            $capturedUrl = null;
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
+                $capturedUrl = $url;
+                return [ 'code' => 204, 'body' => '' ];
+            };
+
+            $this->pluginUpdater->exposedFetchPackage(
+                [ 'slug' => 'my plugin+name/test' ],
+                '1.0 +/beta',
+                'mykey',
+                'https://api.example.com'
+            );
+
+            $this->assertIsString( $capturedUrl );
+            $this->assertStringContainsString( 'slug=my%20plugin%2Bname%2Ftest', $capturedUrl );
+            $this->assertStringContainsString( 'version=1.0%20%2B%2Fbeta', $capturedUrl );
+            $this->assertStringNotContainsString( 'my%2520plugin%252Bname%252Ftest', $capturedUrl );
+            $this->assertStringNotContainsString( '1.0%2520%252B%252Fbeta', $capturedUrl );
+        }
+
         public function testThemeFetchPackageSendsTypeAndSlugParams(): void {
             $capturedUrl = null;
             $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
@@ -367,6 +388,27 @@ namespace Tests {
             parse_str( (string) parse_url( $capturedUrl, PHP_URL_QUERY ), $query );
             $this->assertSame( 'ocean-theme', $query['slug'] );
             $this->assertSame( '3.0.0', $query['version'] );
+        }
+
+        public function testThemeFetchPackageEncodesReservedCharactersOnce(): void {
+            $capturedUrl = null;
+            $GLOBALS['_wp_remote_stub'] = static function ( string $url, array $args ) use ( &$capturedUrl ): array {
+                $capturedUrl = $url;
+                return [ 'code' => 204, 'body' => '' ];
+            };
+
+            $this->themeUpdater->exposedFetchPackage(
+                [ 'slug' => 'my theme+name/test' ],
+                '2.0 +/beta',
+                'themekey',
+                'https://api.example.com'
+            );
+
+            $this->assertIsString( $capturedUrl );
+            $this->assertStringContainsString( 'slug=my%20theme%2Bname%2Ftest', $capturedUrl );
+            $this->assertStringContainsString( 'version=2.0%20%2B%2Fbeta', $capturedUrl );
+            $this->assertStringNotContainsString( 'my%2520theme%252Bname%252Ftest', $capturedUrl );
+            $this->assertStringNotContainsString( '2.0%2520%252B%252Fbeta', $capturedUrl );
         }
 
         // -------------------------------------------------------------------

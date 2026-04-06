@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## Unreleased
+- Replaced login-session CSRF token regeneration in `LoginController` with cryptographically secure output using `bin2hex(random_bytes(32))` while preserving existing timeout and session ID regeneration flow.
+- Fixed API query argument construction in `PluginUpdater` and `ThemeUpdater` by removing pre-encoding (`rawurlencode`) so `add_query_arg` performs a single RFC3986 encoding pass.
+- Hardened package delete parsing in `PluginModel::deletePlugin` and `ThemeModel::deleteTheme` using strict `^([A-Za-z0-9_-]+)_([0-9.]+)\.zip$` extraction, including regression coverage for underscore-containing slugs and non-matching filenames.
+- Hardened file response streaming:
+  - `ApiController` now validates update package readability and `filesize()` before building a file response.
+  - `Router` rejects unreadable file responses and emits deterministic `500` text responses.
+  - `Response::send` now suppresses raw `readfile` warnings, logs failures, and follows a controlled `500` fallback path for unreadable files.
+- Dependency follow-up (`nikic/fast-route`):
+  - Reviewed upgrade path from `v1.3.0` to `2.0.0-beta1` (composer dry-run succeeds but targets a beta line and introduces `psr/simple-cache`).
+  - Deferred immediate upgrade and added explicit migration tracking in `README.md` and `update-api/docs/dependency-tracking.md` (ticket `DEP-001`).
+  - Constrained FastRoute usage behind `App\Core\RouteDispatcherFactory` to reduce migration surface for the eventual v2 adoption.
 - **Aligned update-check contract (Option A):** Unified the request/response protocol used between
   the WordPress client plugin and the Update API server.
   - `PluginUpdater::fetch_package` now sends `type=plugin&slug=<slug>` instead of `plugin=<slug>`.

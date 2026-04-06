@@ -303,6 +303,16 @@ class Response
      */
     public function send(): void
     {
+        if ($this->file !== null && !$this->isReadableFile($this->file)) {
+            ErrorManager::getInstance()->log('File stream failed readability check: ' . $this->file);
+            if (!headers_sent()) {
+                http_response_code(500);
+                header('Content-Type: text/plain; charset=UTF-8', true);
+            }
+            echo 'Internal Server Error';
+            return;
+        }
+
         if (!headers_sent()) {
             http_response_code($this->statusCode);
 
@@ -316,7 +326,25 @@ class Response
         }
 
         if ($this->file !== null) {
-            readfile($this->file);
+            $readError = null;
+            set_error_handler(
+                static function (int $severity, string $message) use (&$readError): bool {
+                    $readError = $message;
+                    return true;
+                }
+            );
+            try {
+                $result = readfile($this->file);
+            } finally {
+                restore_error_handler();
+            }
+
+            if ($result === false) {
+                ErrorManager::getInstance()->log(
+                    'File stream failed during readfile for "' . $this->file . '"'
+                    . ($readError !== null ? ': ' . $readError : '')
+                );
+            }
             return;
         }
 
@@ -414,5 +442,13 @@ class Response
     private static function normalizeHeaderName(string $name): string
     {
         return implode('-', array_map('ucfirst', explode('-', strtolower(trim($name)))));
+    }
+
+    /**
+     * Return true when the provided path points to a readable regular file.
+     */
+    private function isReadableFile(string $path): bool
+    {
+        return is_file($path) && is_readable($path);
     }
 }
