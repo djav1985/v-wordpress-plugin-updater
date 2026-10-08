@@ -14,24 +14,24 @@
 
 namespace App\Controllers;
 
+use App\Core\SessionManager;
 use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
-use App\Helpers\SessionHelper;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class PluginsController
 {
     /**
      * Handles GET requests for plugin-related actions.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $pluginsTableHtml = $this->getPluginsTableHtml();
-        return Response::view('plupdate', [
+        return ResponseManager::view('plupdate', [
             'pluginsTableHtml' => $pluginsTableHtml,
         ]);
     }
@@ -39,9 +39,9 @@ class PluginsController
     /**
      * Handles POST submissions for plugin-related actions.
      *
-     * @return Response
+    * @return ResponseManager
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
@@ -50,10 +50,10 @@ class PluginsController
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                return Response::text($error, 400);
+                return ResponseManager::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -61,12 +61,12 @@ class PluginsController
         if (isset($_FILES['plugin_file'])) {
             $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
             if ($isAjax) {
-                return Response::text(implode("\n", $messages));
+                return ResponseManager::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         } elseif (isset($_POST['delete_plugin'])) {
             $pluginName = isset($_POST['plugin_name'])
                 ? ValidationHelper::validateSlug($_POST['plugin_name'])
@@ -78,9 +78,9 @@ class PluginsController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-            return Response::redirect('/plupdate');
+            return ResponseManager::redirect('/plupdate');
         }
-        return Response::redirect('/plupdate');
+        return ResponseManager::redirect('/plupdate');
     }
 
     /**
@@ -92,7 +92,7 @@ class PluginsController
         $name = str_replace(['-', '_'], ' ', $pluginName['slug']);
         $version = $pluginName['version'];
         $pluginFile = $pluginName['slug'] . '_' . $version . '.zip';
-        $csrfToken = SessionHelper::get('csrf_token') ?? '';
+        $csrfToken = SessionManager::getInstance()->get('csrf_token') ?? '';
         return '<tr>
             <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
             <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>

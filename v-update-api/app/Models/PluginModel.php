@@ -26,7 +26,7 @@ class PluginModel
      */
     public static function getVersionBySlug(string $slug): ?string
     {
-        $version = DatabaseManager::connection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$slug]);
+        $version = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$slug]);
         if ($version === false || $version === null) {
             return null;
         }
@@ -41,7 +41,7 @@ class PluginModel
      */
     public static function getPlugins(): array
     {
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug, version FROM plugins ORDER BY slug');
         $plugins = [];
         foreach ($rows as $row) {
             $plugins[] = [
@@ -83,7 +83,7 @@ class PluginModel
             return false;
         }
 
-        DatabaseManager::connection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
+        DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$slug]);
         return true;
     }
 
@@ -112,7 +112,7 @@ class PluginModel
             $fileExtension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : '';
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $pluginSlug = $parsedFilename['slug'] ?? '';
-            $current = DatabaseManager::connection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
+            $current = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM plugins WHERE slug = ?', [$pluginSlug]);
             $maxUploadSize = min(
                 self::parseIniSize(ini_get('upload_max_filesize')),
                 self::parseIniSize(ini_get('post_max_size'))
@@ -195,7 +195,7 @@ class PluginModel
         $movedToFinal = false;
 
         try {
-            DatabaseManager::connection()->beginTransaction();
+            DatabaseManager::getInstance()->getConnection()->beginTransaction();
 
             if (!rename($tempPath, $finalPath)) {
                 throw new \RuntimeException('Failed to move staged upload into final path.');
@@ -218,13 +218,13 @@ class PluginModel
                 $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
             }
 
-            DatabaseManager::connection()->executeStatement(
+            DatabaseManager::getInstance()->getConnection()->executeStatement(
                 "INSERT INTO $table (slug, version) VALUES (?, ?) "
                 . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                 [$slug, $version]
             );
 
-            DatabaseManager::connection()->commit();
+            DatabaseManager::getInstance()->getConnection()->commit();
 
             foreach ($deletedBackups as $backup) {
                 @unlink($backup['backup']);
@@ -232,8 +232,8 @@ class PluginModel
 
             return ['success' => true, 'error' => ''];
         } catch (\Throwable $exception) {
-            if (DatabaseManager::connection()->isTransactionActive()) {
-                DatabaseManager::connection()->rollBack();
+            if (DatabaseManager::getInstance()->getConnection()->isTransactionActive()) {
+                DatabaseManager::getInstance()->getConnection()->rollBack();
             }
 
             foreach ($deletedBackups as $backup) {
@@ -403,7 +403,7 @@ class PluginModel
                 $slug = $matches[1];
                 $version = $matches[2];
                 $found[$slug] = true;
-                DatabaseManager::connection()->executeStatement(
+                DatabaseManager::getInstance()->getConnection()->executeStatement(
                     'INSERT INTO plugins (slug, version) VALUES (?, ?) ' .
                     'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                     [$slug, $version]
@@ -411,10 +411,10 @@ class PluginModel
             }
         }
 
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug FROM plugins');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug FROM plugins');
         foreach ($rows as $row) {
             if (!isset($found[$row['slug']])) {
-                DatabaseManager::connection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$row['slug']]);
+                DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM plugins WHERE slug = ?', [$row['slug']]);
             }
         }
     }

@@ -14,6 +14,7 @@
 
 namespace App\Helpers;
 
+use App\Core\SessionManager;
 use Respect\Validation\Validator as v;
 
 class ValidationHelper
@@ -166,7 +167,7 @@ class ValidationHelper
      */
     public static function validateCsrfToken(string $token): bool
     {
-        $sessionToken = SessionHelper::get('csrf_token');
+        $sessionToken = SessionManager::getInstance()->get('csrf_token');
         return is_string($sessionToken) && $sessionToken !== '' && hash_equals($sessionToken, $token);
     }
 

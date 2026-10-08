@@ -29,7 +29,7 @@ class ThemeModel
      */
     public static function getVersionBySlug(string $slug): ?string
     {
-        $version = DatabaseManager::connection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
+        $version = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
         if ($version === false || $version === null) {
             return null;
         }
@@ -44,7 +44,7 @@ class ThemeModel
      */
     public static function getThemes(): array
     {
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
         $themes = [];
         foreach ($rows as $row) {
             $themes[] = [
@@ -89,7 +89,7 @@ class ThemeModel
             return false;
         }
 
-        DatabaseManager::connection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
+        DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
         return true;
     }
 
@@ -119,7 +119,7 @@ class ThemeModel
 
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $themeSlug = $parsedFilename['slug'] ?? '';
-            $current = DatabaseManager::connection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
+            $current = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
             $maxUploadSize = min(
                 self::parseIniSize(ini_get('upload_max_filesize')),
                 self::parseIniSize(ini_get('post_max_size'))
@@ -220,7 +220,7 @@ class ThemeModel
         $movedToFinal = false;
 
         try {
-            DatabaseManager::connection()->beginTransaction();
+            DatabaseManager::getInstance()->getConnection()->beginTransaction();
 
             if (!rename($tempPath, $finalPath)) {
                 throw new \RuntimeException('Failed to move staged upload into final path.');
@@ -243,13 +243,13 @@ class ThemeModel
                 $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
             }
 
-            DatabaseManager::connection()->executeStatement(
+            DatabaseManager::getInstance()->getConnection()->executeStatement(
                 "INSERT INTO $table (slug, version) VALUES (?, ?) "
                 . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                 [$slug, $version]
             );
 
-            DatabaseManager::connection()->commit();
+            DatabaseManager::getInstance()->getConnection()->commit();
 
             foreach ($deletedBackups as $backup) {
                 @unlink($backup['backup']);
@@ -257,8 +257,8 @@ class ThemeModel
 
             return ['success' => true, 'error' => ''];
         } catch (\Throwable $exception) {
-            if (DatabaseManager::connection()->isTransactionActive()) {
-                DatabaseManager::connection()->rollBack();
+            if (DatabaseManager::getInstance()->getConnection()->isTransactionActive()) {
+                DatabaseManager::getInstance()->getConnection()->rollBack();
             }
 
             foreach ($deletedBackups as $backup) {
@@ -439,7 +439,7 @@ class ThemeModel
                 $slug = $matches[1];
                 $version = $matches[2];
                 $found[$slug] = true;
-                DatabaseManager::connection()->executeStatement(
+                DatabaseManager::getInstance()->getConnection()->executeStatement(
                     'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
                     'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
                     [$slug, $version]
@@ -447,10 +447,10 @@ class ThemeModel
             }
         }
 
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT slug FROM themes');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug FROM themes');
         foreach ($rows as $row) {
             if (!isset($found[$row['slug']])) {
-                DatabaseManager::connection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$row['slug']]);
+                DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$row['slug']]);
             }
         }
     }

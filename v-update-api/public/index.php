@@ -16,23 +16,16 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\ErrorManager;
-use App\Core\Request;
+use App\Core\RequestManager;
 use App\Core\Router;
-use App\Helpers\EncryptionHelper;
-use App\Helpers\SessionHelper;
 
 ErrorManager::handle(function (): void {
-    // Initialize CSRF token if not set
-    if (!SessionHelper::get('csrf_token')) {
-        SessionHelper::set('csrf_token', bin2hex(EncryptionHelper::bytes(32)));
-    }
-
     // Build router
     $router = new Router();
 
     // Dispatch request through router
-    $request = Request::fromGlobals();
-    $response = $router->dispatch($request->getMethod(), $request->getRequestTarget());
+    $request = RequestManager::fromGlobals();
+    $response = $router->dispatch($request);
     $response->send();
 });
 

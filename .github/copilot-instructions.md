@@ -22,33 +22,36 @@ Both components are independently deployable.
 
 - `DatabaseManager.php`
 - `ErrorManager.php`
-- `Request.php`
-- `Response.php`
+- `MiddlewareManager.php`
+- `RequestManager.php`
+- `ResponseManager.php`
 - `Router.php`
+- `SessionManager.php`
 
-Important: there is **no** `SessionManager`, `ResponseManager`, or `Controller` base class in the current architecture.
+Important: there is **no** `Controller` base class in the current architecture.
 
 ### Request/Response Pattern
 
-- `App\Core\Request::fromGlobals()` parses the URL path and builds a request object.
-- `App\Core\Router::dispatch()` returns an `App\Core\Response`.
+- `App\Core\RequestManager::fromGlobals()` parses the URL path and builds a request object.
+- `App\Core\Router::dispatch()` returns an `App\Core\ResponseManager`.
 - `public/index.php` sends the returned response via `$response->send()`.
-- Prefer `Response` static factories:
-  - `Response::view()`
-  - `Response::redirect()`
-  - `Response::text()`
-  - `Response::json()`
-  - `Response::file()`
-  - `Response::html()`
+- Prefer `ResponseManager` static factories:
+  - `ResponseManager::view()`
+  - `ResponseManager::redirect()`
+  - `ResponseManager::text()`
+  - `ResponseManager::json()`
+  - `ResponseManager::file()`
+  - `ResponseManager::html()`
 
 ### Session and Security Helpers
 
-Session/auth logic is implemented through `App\Helpers\SessionHelper` (static helper), not a singleton session manager.
+Session/auth logic is implemented through `App\Core\SessionManager` singleton.
 
-- Initialize/access session values with `SessionHelper::get()` / `SessionHelper::set()`.
-- Validate auth session with `SessionHelper::isValid()`.
-- Regenerate session after successful login with `SessionHelper::regenerate()`.
-- CSRF token is initialized in `public/index.php` if missing.
+- Access the singleton with `SessionManager::getInstance()`.
+- Initialize/access session values with `SessionManager::getInstance()->get()` / `SessionManager::getInstance()->set()`.
+- Validate auth session in `SessionMiddleware`.
+- Regenerate session after successful login with `SessionManager::getInstance()->regenerate()`.
+- CSRF token is initialized in `SessionMiddleware` when missing.
 
 ### Error Handling
 
@@ -77,7 +80,7 @@ Session/auth logic is implemented through `App\Helpers\SessionHelper` (static he
 
 ### Controller Contract
 
-Controllers return `App\Core\Response` instances.
+Controllers return `App\Core\ResponseManager` instances.
 Do not use raw `echo`, `header()`, or `exit` for normal request flow.
 
 ## API Contract and Data Model

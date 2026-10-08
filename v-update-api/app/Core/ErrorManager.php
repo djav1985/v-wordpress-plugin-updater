@@ -42,10 +42,7 @@ class ErrorManager
      */
     public static function getInstance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     /**
@@ -270,20 +267,6 @@ class ErrorManager
     }
 
     /**
-     * Resolve the log file path.
-     *
-     * @return string
-     */
-    private static function resolveLogFile(): string
-    {
-        if (defined('LOG_FILE') && is_string(LOG_FILE) && LOG_FILE !== '') {
-            return LOG_FILE;
-        }
-
-        return __DIR__ . '/../../storage/app.log';
-    }
-
-    /**
      * Convert a PHP error into an ErrorException.
      *
      * Registered as the global error handler in __construct().
@@ -351,5 +334,19 @@ class ErrorManager
             http_response_code(500);
             echo 'A critical error occurred.';
         }
+    }
+
+    /**
+     * Resolve the log file path.
+     *
+     * @return string
+     */
+    private static function resolveLogFile(): string
+    {
+        if (defined('LOG_FILE') && is_string(LOG_FILE) && LOG_FILE !== '') {
+            return LOG_FILE;
+        }
+
+        return __DIR__ . '/../../storage/app.log';
     }
 }

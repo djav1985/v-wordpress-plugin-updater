@@ -35,14 +35,18 @@ class DatabaseManager
     }
 
     /**
-     * Get the Doctrine DBAL connection to the SQLite database.
-     * Lazily initializes the singleton on first call.
+     * Get the singleton database manager instance.
      */
-    public static function connection(): Connection
+    public static function getInstance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance->connection;
+        return self::$instance ??= new self();
+    }
+
+    /**
+     * Get the Doctrine DBAL connection to the SQLite database.
+     */
+    public function getConnection(): Connection
+    {
+        return $this->connection;
     }
 }

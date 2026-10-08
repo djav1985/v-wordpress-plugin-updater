@@ -18,21 +18,21 @@ use App\Core\ErrorManager;
 use App\Models\LogModel;
 use App\Helpers\MessageHelper;
 use App\Helpers\ValidationHelper;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class LogsController
 {
     /**
      * Handles GET requests for the logs page.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $ploutput = LogModel::getLogs('plugin');
         $thoutput = LogModel::getLogs('theme');
 
-        return Response::view('logs', [
+        return ResponseManager::view('logs', [
             'ploutput' => $ploutput,
             'thoutput' => $thoutput,
         ]);
@@ -41,22 +41,22 @@ class LogsController
     /**
      * Handles POST submissions on the logs page.
      *
-     * @return Response
+    * @return ResponseManager
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return Response::redirect('/logs');
+            return ResponseManager::redirect('/logs');
         }
 
         if (isset($_POST['clear_logs'])) {
             LogModel::clearAllLogs();
             MessageHelper::addMessage('Logs cleared successfully.');
         }
-        return Response::redirect('/logs');
+        return ResponseManager::redirect('/logs');
     }
 }

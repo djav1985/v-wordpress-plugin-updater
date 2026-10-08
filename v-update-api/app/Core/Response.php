@@ -7,7 +7,7 @@
  * Link:    https://vontainment.com
  * Version: 4.5.0
  *
- * File: Response.php
+ * File: ResponseManager.php
  * Description: WordPress Update API
  */
 
@@ -21,7 +21,7 @@ use Psr\Http\Message\StreamInterface;
  *
  * @phpstan-type Headers array<string, list<string>>
  */
-class Response implements ResponseInterface
+class ResponseManager implements ResponseInterface
 {
     /** @var int */
     private int $statusCode;

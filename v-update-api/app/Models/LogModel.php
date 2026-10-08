@@ -28,7 +28,7 @@ class LogModel
      */
     public static function addLog(string $domain, string $type, string $status): void
     {
-        $connection = DatabaseManager::connection();
+        $connection = DatabaseManager::getInstance()->getConnection();
         $connection->executeStatement(
             'INSERT INTO logs (domain, type, date, status) VALUES (?, ?, ?, ?)',
             [$domain, $type, date('Y-m-d'), $status]
@@ -44,7 +44,7 @@ class LogModel
      */
     public static function getLogs(string $type): string
     {
-        $connection = DatabaseManager::connection();
+        $connection = DatabaseManager::getInstance()->getConnection();
         $rows = $connection->fetchAllAssociative(
             'SELECT domain, date, status FROM logs WHERE type = ? ORDER BY date DESC',
             [$type]
@@ -99,7 +99,7 @@ class LogModel
      */
     public static function clearAllLogs(): void
     {
-        DatabaseManager::connection()->executeStatement('DELETE FROM logs');
+        DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM logs');
     }
 }
 

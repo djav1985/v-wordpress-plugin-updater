@@ -5,7 +5,14 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
-(No unreleased changes at this time.)
+- Optimized `v-update-api/app/Core/Router.php` for the request hot path:
+  - `Router::dispatch()` now accepts the already-built `RequestManager`, avoiding duplicate request construction from superglobals.
+  - Middleware instances are created once and reused for each dispatch.
+  - Route handler execution now uses a single normalized response path, with response logging consolidated to one place.
+  - Added `tests/RouterTest.php` coverage for callable routes, controller routes, 404, and 405 dispatch behavior.
+- Replaced `v-update-api/app/Helpers/SessionHelper.php` with singleton `v-update-api/app/Core/SessionManager.php`.
+- Migrated API server middleware, controllers, helpers, views, and tests to `SessionManager::getInstance()`.
+- Removed `SessionHelper` compatibility layer entirely (hard-cut migration).
 
 ## 4.5.0
 - Upgraded `nikic/fast-route` to `2.0.0-beta1` and aligned `Router` with the v2 configuration interface.

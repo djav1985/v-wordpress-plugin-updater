@@ -27,7 +27,7 @@ class HostsModel
      */
     public static function getEncryptedKeyByDomain(string $domain): ?string
     {
-        $row = DatabaseManager::connection()->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        $row = DatabaseManager::getInstance()->getConnection()->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         if ($row === false || !isset($row['key'])) {
             return null;
         }
@@ -42,7 +42,7 @@ class HostsModel
      */
     public static function getEntries(): array
     {
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT domain, key FROM hosts ORDER BY domain');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT domain, key FROM hosts ORDER BY domain');
         return array_map(
             fn (array $row): array => [
                 'domain' => (string) $row['domain'],
@@ -59,7 +59,7 @@ class HostsModel
      */
     public static function getHosts(): array
     {
-        $rows = DatabaseManager::connection()->fetchAllAssociative('SELECT domain FROM hosts ORDER BY domain');
+        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT domain FROM hosts ORDER BY domain');
         $hosts = [];
         foreach ($rows as $row) {
             $hosts[] = $row['domain'];
@@ -77,7 +77,7 @@ class HostsModel
     public static function addEntry(string $domain, string $key): bool
     {
         $encrypted = EncryptionHelper::encrypt($key);
-        return DatabaseManager::connection()->executeStatement('INSERT INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
+        return DatabaseManager::getInstance()->getConnection()->executeStatement('INSERT INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
     }
 
     /**
@@ -90,7 +90,7 @@ class HostsModel
     public static function updateEntry(string $domain, string $key): bool
     {
         $encrypted = EncryptionHelper::encrypt($key);
-        return DatabaseManager::connection()->executeStatement('UPDATE hosts SET key = ? WHERE domain = ?', [$encrypted, $domain]) > 0;
+        return DatabaseManager::getInstance()->getConnection()->executeStatement('UPDATE hosts SET key = ? WHERE domain = ?', [$encrypted, $domain]) > 0;
     }
 
     /**
@@ -107,7 +107,7 @@ class HostsModel
         if (!EncryptionHelper::needsMigration($encryptedKey)) {
             return;
         }
-        DatabaseManager::connection()->executeStatement(
+        DatabaseManager::getInstance()->getConnection()->executeStatement(
             'UPDATE hosts SET key = ? WHERE domain = ?',
             [EncryptionHelper::encrypt($plainKey), $domain]
         );
@@ -121,9 +121,9 @@ class HostsModel
      */
     public static function deleteEntry(string $domain): bool
     {
-        $result = DatabaseManager::connection()->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]) > 0;
+        $result = DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]) > 0;
         if ($result) {
-            DatabaseManager::connection()->executeStatement('DELETE FROM logs WHERE domain = ?', [$domain]);
+            DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM logs WHERE domain = ?', [$domain]);
         }
         return $result;
     }

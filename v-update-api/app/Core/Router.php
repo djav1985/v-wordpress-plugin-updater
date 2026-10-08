@@ -14,9 +14,9 @@
 
 namespace App\Core;
 
-use App\Helpers\BlacklistHelper;
-use App\Helpers\SessionHelper;
-use App\Helpers\ValidationHelper;
+use App\Middleware\BlacklistMiddleware;
+use App\Middleware\CsrfMiddleware;
+use App\Middleware\SessionMiddleware;
 use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
 use FastRoute\FastRoute;
@@ -25,16 +25,22 @@ use Psr\Http\Message\ResponseInterface;
 class Router
 {
     private Dispatcher $dispatcher;
+    private BlacklistMiddleware $blacklistMiddleware;
+    private SessionMiddleware $sessionMiddleware;
+    private CsrfMiddleware $csrfMiddleware;
 
     /**
      * Build the FastRoute dispatcher and register all application routes.
      */
     public function __construct()
     {
+        $this->blacklistMiddleware = new BlacklistMiddleware();
+        $this->sessionMiddleware = new SessionMiddleware();
+        $this->csrfMiddleware = new CsrfMiddleware();
 
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
-            $r->addRoute('GET', '/', function (): Response {
-                return Response::redirect('/home');
+            $r->addRoute('GET', '/', function (): ResponseManager {
+                return ResponseManager::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
@@ -52,75 +58,87 @@ class Router
         $this->dispatcher = $fastRoute->dispatcher();
     }
 
-    public function dispatch(string $method, string $uri): Response
+    public function dispatch(RequestManager $request): ResponseManager
     {
-        ErrorManager::logRequest($method, $uri);
+        ErrorManager::logRequest($request->method, $request->path);
 
-        if ($uri !== '/login' && !str_starts_with($uri, '/api')) {
-            if (BlacklistHelper::isBlacklisted()) {
-                return new Response(403);
-            }
+        $middlewareManager = new MiddlewareManager();
+        $middlewareManager
+            ->add($this->blacklistMiddleware)
+            ->add($this->sessionMiddleware)
+            ->add($this->csrfMiddleware);
 
-            if (!SessionHelper::isValid()) {
-                return Response::redirect('/login');
-            }
-        }
+        return $middlewareManager->handle($request, function (RequestManager $request): ResponseManager {
+            return $this->dispatchRoute($request);
+        });
+    }
 
-        if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !str_starts_with($uri, '/api')) {
-            $token = $_POST['csrf_token'] ?? '';
-            if (!ValidationHelper::validateCsrfToken(is_string($token) ? $token : '')) {
-                return Response::redirect($uri);
-            }
-        }
+    private function dispatchRoute(RequestManager $request): ResponseManager
+    {
+        $method = $request->method;
+        $uri = $request->path;
 
         $routeInfo = $this->dispatcher->dispatch($method, $uri);
 
         if ($routeInfo[0] === Dispatcher::NOT_FOUND) {
-            $response = Response::view('404', [], 404);
-            ErrorManager::logResponse($method, $uri, 404);
-            return $response;
+            return $this->logAndReturn($method, $uri, ResponseManager::view('404', [], 404));
         }
 
         if ($routeInfo[0] === Dispatcher::METHOD_NOT_ALLOWED) {
-            $response = new Response(405);
-            ErrorManager::logResponse($method, $uri, 405);
-            return $response;
+            return $this->logAndReturn($method, $uri, new ResponseManager(405));
         }
 
         // FOUND
         $handler = $routeInfo[1];
         $vars = $routeInfo[2];
 
+        $response = $this->invokeHandler($handler, $vars);
+        return $this->logAndReturn($method, $uri, $response);
+    }
+
+    /**
+     * Invoke a FastRoute handler and normalize the response into ResponseManager.
+     *
+     * @param mixed $handler
+     * @param array<string, string> $vars
+     */
+    private function invokeHandler(mixed $handler, array $vars): ResponseManager
+    {
+        $arguments = array_values($vars);
+
         if (is_array($handler) && count($handler) === 2) {
             [$class, $action] = $handler;
             $controller = new $class();
-            $response = call_user_func_array([$controller, $action], $vars);
-
-            if (!$response instanceof ResponseInterface) {
-                throw new \RuntimeException('Controller action must return a ResponseInterface');
-            }
-
-            $result = $response instanceof Response
-                ? $response
-                : new Response($response->getStatusCode(), $response->getHeaders());
-            ErrorManager::logResponse($method, $uri, $result->getStatusCode());
-            return $result;
+            $response = $controller->{$action}(...$arguments);
+            return $this->normalizeResponse($response, 'Controller action must return a ResponseInterface');
         }
 
         if (is_callable($handler)) {
-            $response = call_user_func($handler);
-
-            if (!$response instanceof ResponseInterface) {
-                throw new \RuntimeException('Route callback must return a ResponseInterface');
-            }
-
-            $result = $response instanceof Response
-                ? $response
-                : new Response($response->getStatusCode(), $response->getHeaders());
-            ErrorManager::logResponse($method, $uri, $result->getStatusCode());
-            return $result;
+            $response = $handler(...$arguments);
+            return $this->normalizeResponse($response, 'Route callback must return a ResponseInterface');
         }
 
         throw new \RuntimeException('Invalid route handler');
+    }
+
+    /**
+     * Normalize a PSR response into ResponseManager.
+     */
+    private function normalizeResponse(mixed $response, string $errorMessage): ResponseManager
+    {
+        if (!$response instanceof ResponseInterface) {
+            throw new \RuntimeException($errorMessage);
+        }
+
+        return $response instanceof ResponseManager
+            ? $response
+            : new ResponseManager($response->getStatusCode(), $response->getHeaders());
+    }
+
+    private function logAndReturn(string $method, string $uri, ResponseManager $response): ResponseManager
+    {
+        ErrorManager::logResponse($method, $uri, $response->getStatusCode());
+
+        return $response;
     }
 }

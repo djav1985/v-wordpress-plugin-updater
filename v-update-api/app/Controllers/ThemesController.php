@@ -14,24 +14,24 @@
 
 namespace App\Controllers;
 
+use App\Core\SessionManager;
 use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
-use App\Helpers\SessionHelper;
-use App\Core\Response;
+use App\Core\ResponseManager;
 
 class ThemesController
 {
     /**
      * Handles GET requests for theme-related actions.
      *
-     * @return Response
+     * @return ResponseManager
      */
-    public function handleRequest(): Response
+    public function handleRequest(): ResponseManager
     {
         $themesTableHtml = $this->getThemesTableHtml();
-        return Response::view('thupdate', [
+        return ResponseManager::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
     }
@@ -39,9 +39,9 @@ class ThemesController
     /**
      * Handles POST submissions for theme-related actions.
      *
-     * @return Response
+    * @return ResponseManager
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(): ResponseManager
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
@@ -50,10 +50,10 @@ class ThemesController
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                return Response::text($error, 400);
+                return ResponseManager::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return Response::redirect('/thupdate');
+            return ResponseManager::redirect('/thupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -61,12 +61,12 @@ class ThemesController
         if (isset($_FILES['theme_file'])) {
             $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
             if ($isAjax) {
-                return Response::text(implode("\n", $messages));
+                return ResponseManager::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            return Response::redirect('/thupdate');
+            return ResponseManager::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
             $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
             if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
@@ -76,9 +76,9 @@ class ThemesController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-            return Response::redirect('/thupdate');
+            return ResponseManager::redirect('/thupdate');
         }
-        return Response::redirect('/thupdate');
+        return ResponseManager::redirect('/thupdate');
     }
 
     /**
@@ -90,7 +90,7 @@ class ThemesController
         $name = str_replace(['-', '_'], ' ', $theme['slug']);
         $version = $theme['version'];
         $themeFile = $theme['slug'] . '_' . $version . '.zip';
-        $csrfToken = SessionHelper::get('csrf_token') ?? '';
+        $csrfToken = SessionManager::getInstance()->get('csrf_token') ?? '';
         return '<tr>
              <td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
              <td>' . htmlspecialchars($version, ENT_QUOTES, 'UTF-8') . '</td>

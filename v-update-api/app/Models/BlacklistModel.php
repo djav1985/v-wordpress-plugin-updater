@@ -15,9 +15,30 @@
 namespace App\Models;
 
 use App\Core\DatabaseManager;
+use App\Core\ErrorManager;
 
 class BlacklistModel
 {
+    /**
+     * Determine whether the current request originates from a blacklisted IP.
+     *
+     * @return bool True when remote IP is valid and blacklisted.
+     */
+    public static function isCurrentRequestIpBlacklisted(): bool
+    {
+        $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
+        if (!$ip) {
+            return false;
+        }
+
+        if (self::isBlacklisted($ip)) {
+            ErrorManager::log("Blacklisted IP attempted access: $ip", 'error');
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Update the number of failed login attempts for an IP address and blacklist if necessary.
      *
@@ -33,7 +54,7 @@ class BlacklistModel
 
         // Single atomic statement: insert on first attempt, or increment the
         // counter and conditionally set blacklisted/timestamp on conflict.
-        DatabaseManager::connection()->executeStatement(
+        DatabaseManager::getInstance()->getConnection()->executeStatement(
             'INSERT INTO blacklist (ip, login_attempts, blacklisted, timestamp)
              VALUES (?, 1, 0, ?)
              ON CONFLICT(ip) DO UPDATE SET
@@ -55,11 +76,11 @@ class BlacklistModel
      */
     public static function isBlacklisted(string $ip): bool
     {
-        $record = DatabaseManager::connection()->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $record = DatabaseManager::getInstance()->getConnection()->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
             if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
-                DatabaseManager::connection()->update('blacklist', [
+                DatabaseManager::getInstance()->getConnection()->update('blacklist', [
                     'blacklisted'   => 0,
                     'login_attempts' => 0,
                     'timestamp'     => time(),
@@ -83,13 +104,13 @@ class BlacklistModel
         $threeDaysAgo = $currentTime - (3 * 24 * 60 * 60);
 
         // Remove IPs that were blocked more than 7 days ago
-        DatabaseManager::connection()->executeStatement(
+        DatabaseManager::getInstance()->getConnection()->executeStatement(
             'DELETE FROM blacklist WHERE blacklisted = 1 AND timestamp < ?',
             [$sevenDaysAgo]
         );
 
         // Remove IPs that are not blocked and haven't been updated in 3 days
-        DatabaseManager::connection()->executeStatement(
+        DatabaseManager::getInstance()->getConnection()->executeStatement(
             'DELETE FROM blacklist WHERE blacklisted = 0 AND timestamp < ?',
             [$threeDaysAgo]
         );
