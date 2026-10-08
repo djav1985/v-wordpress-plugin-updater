@@ -58,3 +58,15 @@
 [2026-10-08 20:14:25] [info]: HTTP Response {"method":"GET","path":"\/","status":302}
 [2026-10-08 20:14:25] [info]: HTTP Request {"method":"GET","path":"\/login","ip":"unknown"}
 [2026-10-08 20:14:25] [info]: HTTP Response {"method":"GET","path":"\/login","status":200}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"GET","path":"\/home","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"GET","path":"\/home","status":302}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"POST","path":"\/home","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"POST","path":"\/home","status":302}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"GET","path":"\/api\/missing","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"GET","path":"\/api\/missing","status":404}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"PUT","path":"\/home","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"PUT","path":"\/home","status":405}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"GET","path":"\/","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"GET","path":"\/","status":302}
+[2026-10-08 20:22:49] [info]: HTTP Request {"method":"GET","path":"\/login","ip":"unknown"}
+[2026-10-08 20:22:49] [info]: HTTP Response {"method":"GET","path":"\/login","status":200}

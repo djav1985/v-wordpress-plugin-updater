@@ -59,7 +59,7 @@ try {
         }
 
         if ($created !== true && !is_dir($dir)) {
-            $context = 'install.php failed to create database directory: ' . $dir
+            $context = 'install.php failed to create directory: ' . $dir
                 . ($error !== null ? ' (' . $error . ')' : '');
             error_log($context);
             throw new RuntimeException($context);
@@ -93,6 +93,9 @@ try {
 
     $dbDir = dirname(DB_FILE);
     $installCreateDirectory($dbDir);
+    $installCreateDirectory(PLUGINS_DIR);
+    $installCreateDirectory(THEMES_DIR);
+    $installCreateDirectory(LOG_DIR);
     $installCreateDatabaseFile(DB_FILE);
 
     $conn = DatabaseManager::getInstance()->getConnection();
