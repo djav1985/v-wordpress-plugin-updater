@@ -22,9 +22,8 @@ Both components are independently deployable.
 
 - `DatabaseManager.php`
 - `ErrorManager.php`
-- `MiddlewareManager.php`
-- `RequestManager.php`
-- `ResponseManager.php`
+- `Request.php`
+- `Response.php`
 - `Router.php`
 - `SessionManager.php`
 
@@ -32,16 +31,16 @@ Important: there is **no** `Controller` base class in the current architecture.
 
 ### Request/Response Pattern
 
-- `App\Core\RequestManager::fromGlobals()` parses the URL path and builds a request object.
-- `App\Core\Router::dispatch()` returns an `App\Core\ResponseManager`.
+- `App\Core\Request::fromGlobals()` parses the URL path and builds a request object.
+- `App\Core\Router::dispatch()` returns an `App\Core\Response`.
 - `public/index.php` sends the returned response via `$response->send()`.
-- Prefer `ResponseManager` static factories:
-  - `ResponseManager::view()`
-  - `ResponseManager::redirect()`
-  - `ResponseManager::text()`
-  - `ResponseManager::json()`
-  - `ResponseManager::file()`
-  - `ResponseManager::html()`
+- Prefer `Response` static factories:
+  - `Response::view()`
+  - `Response::redirect()`
+  - `Response::text()`
+  - `Response::json()`
+  - `Response::file()`
+  - `Response::html()`
 
 ### Session and Security Helpers
 
@@ -49,9 +48,9 @@ Session/auth logic is implemented through `App\Core\SessionManager` singleton.
 
 - Access the singleton with `SessionManager::getInstance()`.
 - Initialize/access session values with `SessionManager::getInstance()->get()` / `SessionManager::getInstance()->set()`.
-- Validate auth session in `SessionMiddleware`.
+- Validate auth session via `SessionManager::requireAuth()` (called from `Router`).
 - Regenerate session after successful login with `SessionManager::getInstance()->regenerate()`.
-- CSRF token is initialized in `SessionMiddleware` when missing.
+- CSRF token is initialized by `SessionManager::ensureCsrfToken()` when missing.
 
 ### Error Handling
 
@@ -80,7 +79,7 @@ Session/auth logic is implemented through `App\Core\SessionManager` singleton.
 
 ### Controller Contract
 
-Controllers return `App\Core\ResponseManager` instances.
+Controllers return `App\Core\Response` instances.
 Do not use raw `echo`, `header()`, or `exit` for normal request flow.
 
 ## API Contract and Data Model

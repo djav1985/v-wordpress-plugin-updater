@@ -22,7 +22,7 @@ use App\Models\PluginModel;
 use App\Models\ThemeModel;
 use App\Models\LogModel;
 use App\Core\ErrorManager;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class ApiController
 {
@@ -37,26 +37,26 @@ class ApiController
      * - 403 on authentication failure
      * - 404 when the slug is unknown for an authenticated host
      *
-    * @return ResponseManager
+    * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         $ip     = $_SERVER['REMOTE_ADDR'] ?? '';
         $method = $_SERVER['REQUEST_METHOD'] ?? '';
 
         if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
             ErrorManager::log('Forbidden: missing or invalid IP address');
-            return new ResponseManager(403);
+            return new Response(403);
         }
 
         if (BlacklistModel::isBlacklisted($ip)) {
             ErrorManager::log('Forbidden: blacklisted IP ' . $ip);
-            return new ResponseManager(403);
+            return new Response(403);
         }
 
         if ($method !== 'GET') {
             ErrorManager::log('Method not allowed for API request: ' . $method . ' from ' . $ip);
-            return new ResponseManager(405);
+            return new Response(405);
         }
 
         $params = [
@@ -70,7 +70,7 @@ class ApiController
         foreach ($params as $p) {
             if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
                 ErrorManager::log('Bad request missing parameter: ' . $p);
-                return new ResponseManager(400);
+                return new Response(400);
             }
             $values[] = $_GET[$p];
         }
@@ -96,7 +96,7 @@ class ApiController
         }
         if (!empty($invalid)) {
             ErrorManager::log('Bad request invalid parameter: ' . implode(', ', $invalid));
-            return new ResponseManager(400);
+            return new Response(400);
         }
 
         $dir = $type === 'theme' ? THEMES_DIR : PLUGINS_DIR;
@@ -107,7 +107,7 @@ class ApiController
             BlacklistModel::updateFailedAttempts($ip);
             LogModel::addLog($domain, $type, 'Failed');
             ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
-            return new ResponseManager(403);
+            return new Response(403);
         }
 
         $hostKey = EncryptionHelper::decrypt($encryptedHostKey);
@@ -116,7 +116,7 @@ class ApiController
             BlacklistModel::updateFailedAttempts($ip);
             LogModel::addLog($domain, $type, 'Failed');
             ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Failed');
-            return new ResponseManager(403);
+            return new Response(403);
         }
 
         // Migrate legacy CBC-encrypted key to AEAD on successful auth.
@@ -131,7 +131,7 @@ class ApiController
         }
         if ($dbVersion === null) {
             ErrorManager::log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
-            return new ResponseManager(404);
+            return new Response(404);
         }
 
         if (version_compare($dbVersion, $version, '>')) {
@@ -140,16 +140,16 @@ class ApiController
             if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
                 LogModel::addLog($domain, $type, 'Success');
                 ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-                return ResponseManager::file($filePath, 'application/octet-stream')
+                return Response::file($filePath, 'application/octet-stream')
                     ->withAddedHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
                     ->withAddedHeader('Content-Length', (string) $contentLength);
             }
             ErrorManager::log('Update file unavailable or unreadable: ' . $filePath);
-            return new ResponseManager(500);
+            return new Response(500);
         }
 
         LogModel::addLog($domain, $type, 'Success');
         ErrorManager::log($domain . ' ' . date('Y-m-d') . ' Successful', 'info');
-        return new ResponseManager(204);
+        return new Response(204);
     }
 }

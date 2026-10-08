@@ -98,6 +98,46 @@ class SessionManager
     }
 
     /**
+     * Create the CSRF token when the session has none.
+     */
+    public function ensureCsrfToken(): void
+    {
+        if (!$this->get('csrf_token')) {
+            $this->set('csrf_token', bin2hex(\App\Helpers\EncryptionHelper::bytes(32)));
+        }
+    }
+
+    /**
+     * Check session timeout, user agent and login state; destroys the session when expired.
+     */
+    public function isValid(): bool
+    {
+        $timeoutLimit = defined('SESSION_TIMEOUT_LIMIT') ? SESSION_TIMEOUT_LIMIT : 1800;
+        $timeout = $this->get('timeout');
+        $timeoutExceeded = is_int($timeout) && (time() - $timeout > $timeoutLimit);
+
+        $userAgent = $this->get('user_agent');
+        $userAgentChanged = is_string($userAgent) && $userAgent !== ($_SERVER['HTTP_USER_AGENT'] ?? '');
+
+        if ($timeoutExceeded || $userAgentChanged) {
+            $this->destroy();
+            return false;
+        }
+
+        $this->set('timeout', time());
+
+        return $this->get('logged_in') === true;
+    }
+
+    /**
+     * Whether the current request comes from an authenticated user.
+     */
+    public function requireAuth(): bool
+    {
+        return $this->isValid();
+    }
+
+    /**
      * Initialize PHP session with secure settings.
      *
      * @return void

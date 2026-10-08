@@ -20,33 +20,33 @@ use App\Helpers\EncryptionHelper;
 use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class LoginController
 {
     /**
      * Display the login form when the user is not already authenticated.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         if (SessionManager::getInstance()->get('logged_in') === true) {
-            return ResponseManager::redirect('/home');
+            return Response::redirect('/home');
         }
-        return ResponseManager::view('login');
+        return Response::view('login');
     }
 
     /**
      * Handle login form submission and logout actions.
      *
-    * @return ResponseManager
+    * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         // Redirect already-logged-in users away from login form
         if (SessionManager::getInstance()->get('logged_in') === true && !isset($_POST['logout'])) {
-            return ResponseManager::redirect('/home');
+            return Response::redirect('/home');
         }
 
         // Handle logout
@@ -66,7 +66,7 @@ class LoginController
             SessionManager::getInstance()->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
             SessionManager::getInstance()->set('timeout', time());
             SessionManager::getInstance()->regenerate();
-            return ResponseManager::redirect('/home');
+            return Response::redirect('/home');
         }
 
         // Handle failed login attempt
@@ -75,7 +75,7 @@ class LoginController
             $error = 'Unable to determine client IP.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::view('login');
+            return Response::view('login');
         }
 
         BlacklistModel::updateFailedAttempts($ip);
@@ -83,7 +83,7 @@ class LoginController
         ErrorManager::log($error);
         MessageHelper::addMessage($error);
 
-        return ResponseManager::view('login');
+        return Response::view('login');
     }
 
     /**
@@ -106,11 +106,11 @@ class LoginController
     /**
      * Destroy the session and redirect to login page.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    private function logoutUser(): ResponseManager
+    private function logoutUser(): Response
     {
         SessionManager::getInstance()->destroy();
-        return ResponseManager::redirect('/login');
+        return Response::redirect('/login');
     }
 }

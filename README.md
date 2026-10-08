@@ -43,9 +43,9 @@ The V-WordPress-Plugin-Updater is a **dual-component system** designed to stream
 
 1. **Update API Server** (`v-update-api/`): A standalone PHP web application that hosts and serves plugin/theme update packages. Built with a modern MVC architecture using FastRoute for routing, Doctrine DBAL for SQLite database management, and comprehensive security features including encrypted API keys, IP blacklisting, and session management.
 
-2. **WordPress Client Plugin** (`v-wp-updater/`): A WordPress plugin that automatically checks for and installs updates from the API server. It integrates seamlessly with WordPress core update mechanisms, providing automated daily update checks, a dashboard settings widget for configuration, and comprehensive logging.
+2. **WordPress Client Plugin** (`v-wp-updater/`): A WordPress plugin that automatically checks for and installs updates from the API server. It integrates with WordPress core update mechanisms, providing scheduled daily checks, a dashboard settings widget for configuration, and plugin-side update logging.
 
-This architecture enables centralized control over plugin and theme updates across multiple WordPress installations, reducing manual maintenance overhead while maintaining security and reliability. The system supports both single-site and multisite WordPress installations and provides detailed logging and monitoring capabilities through an intuitive web-based admin interface.
+This architecture enables centralized control over plugin and theme updates across multiple WordPress installations, reducing manual maintenance overhead while maintaining security and reliability. The API server provides a web-based admin interface for managing authorized hosts, packages, and update logs.
 
 ---
 
@@ -54,12 +54,12 @@ This architecture enables centralized control over plugin and theme updates acro
 |      | Component            | Details                                                                                     |
 | :--- | :------------------- | :------------------------------------------------------------------------------------------ |
 | ⚙️  | **Architecture**     | <ul><li>Dual-component system: standalone Update API server + WordPress client plugin</li><li>MVC architecture with FastRoute routing and Doctrine DBAL</li><li>Separate namespaces: `App\` (server) and `VWPU\` (client)</li></ul> |
-| 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>Comprehensive PHPUnit test coverage</li></ul> |
+| 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>PHPUnit tests currently cover router dispatch/guards and secure random-byte generation</li></ul> |
 | 📄 | **Documentation**    | <ul><li>Detailed README with installation and usage instructions</li><li>Inline PHPDoc comments throughout codebase</li></ul> |
 | 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based synchronization between filesystem and database</li></ul> |
-| 🧩 | **Modularity**        | <ul><li>Separate controllers for API, login, hosts, plugins, themes, and logs</li><li>Helper classes for cron synchronization, encryption, validation, and message handling</li><li>Model layer for database operations (plugins, themes, hosts, logs, blacklist)</li></ul> |
-| 🧪 | **Testing**           | <ul><li>PHPUnit test suite for both components</li><li>Tests for routing, database, session management, and updater logic</li><li>Namespace-based mocking for isolated unit tests</li></ul> |
-| ⚡️  | **Performance**       | <ul><li>SQLite database for efficient metadata storage</li><li>Asynchronous update processing per plugin/theme</li><li>Daily cron synchronization job for database/file parity</li></ul> |
+| 🧩 | **Modularity**        | <ul><li>Separate API, login, home/host, plugin, theme, and log controllers</li><li>Helpers provide encryption, validation, and messages; models handle filesystem synchronization and database operations</li><li>Router guards enforce blacklist, session, and CSRF checks</li></ul> |
+| 🧪 | **Testing**           | <ul><li>Checked-in PHPUnit tests cover router dispatch, router guards, and secure random-byte generation</li><li>The current suite does not provide comprehensive test coverage for both components</li></ul> |
+| ⚡️  | **Performance**       | <ul><li>SQLite database for update metadata</li><li>Daily cron synchronization of plugin/theme ZIP metadata and blacklist cleanup</li><li>Client reuses the ZIP body fetched during a successful update check rather than downloading it a second time</li></ul> |
 | 🛡️ | **Security**          | <ul><li>Encrypted API keys using AES-256-GCM (with legacy ciphertext migration)</li><li>IP-based blacklisting for repeated authentication failures</li><li>Session timeout and user agent validation</li><li>CSRF protection on non-API forms</li><li>Input validation and sanitization</li></ul> |
 | 📦 | **Dependencies**      | <ul><li>PHP 8.2+ for `v-update-api` and PHP 8.0+ for `v-wp-updater`</li><li>Composer packages: FastRoute, Doctrine DBAL, Respect/Validation</li><li>WordPress core functions for client plugin</li><li>Web server with PHP support (Apache/Nginx)</li></ul> |
 
@@ -76,24 +76,21 @@ This architecture enables centralized control over plugin and theme updates acro
     ├── tests/
     ├── v-update-api/                         # Update API server
     │   ├── app/
-    │   │   ├── Controllers/
-    │   │   ├── Core/
+    │   │   ├── Controllers/                 # API, login, home/host, plugin, theme, and log routes
+    │   │   ├── Core/                        # Request, Response, Router, session, database, and errors
     │   │   │   ├── DatabaseManager.php
     │   │   │   ├── ErrorManager.php
     │   │   │   ├── Request.php
     │   │   │   ├── Response.php
-    │   │   │   └── Router.php
-    │   │   ├── Helpers/
+    │   │   │   ├── Router.php
+    │   │   │   └── SessionManager.php
+    │   │   ├── Helpers/                     # Encryption, validation, and messages
     │   │   ├── Models/
     │   │   └── Views/
     │   ├── public/
     │   │   ├── index.php
     │   │   └── install.php
-    │   ├── storage/
-    │   │   ├── logs/
-    │   │   ├── plugins/
-    │   │   ├── themes/
-    │   │   └── updater.sqlite
+    │   ├── storage/                         # SQLite database, logs, and package storage
     │   ├── composer.json
     │   ├── config.php
     │   └── cron.php
@@ -113,7 +110,7 @@ This architecture enables centralized control over plugin and theme updates acro
 
 * **PHP**: version 8.2 or higher for `v-update-api/`; version 8.0 or higher for `v-wp-updater/`
 * **Web Server**: Apache, Nginx or any server capable of running PHP
-* **Write Permissions**: ensure the web server can write to `/storage`
+* **Write Permissions**: ensure the web server can write to `v-update-api/storage/`
 
 ### Installation
 
@@ -129,19 +126,20 @@ This architecture enables centralized control over plugin and theme updates acro
    mkdir -p v-update-api/storage/logs
    ```
 
-4. Edit `v-update-api/config.php` and set the login credentials and directory constants. Adjust `VALID_USERNAME`, `VALID_PASSWORD`, `LOG_FILE`, and paths under `BASE_DIR` if the defaults do not match your setup.
+4. Edit `v-update-api/config.php` and replace the default `VALID_USERNAME`, `VALID_PASSWORD`, and `ENCRYPTION_KEY` values with deployment-specific secrets. The admin password is compared as configured (not as a password hash). Keep this file private and adjust `LOG_FILE` or storage paths only when needed.
    The Update API requires PHP 8.2 or higher.
 
-5. Set the `ENCRYPTION_KEY` constant in `v-update-api/config.php` to secure host keys (AES-256-GCM encryption):
+5. Set a private, deployment-specific `ENCRYPTION_KEY` in `v-update-api/config.php`; it is used to encrypt stored host API keys with AES-256-GCM:
 
 	```sh
-	# In v-update-api/config.php
-   define('ENCRYPTION_KEY', 'replace-with-a-long-random-secret');
+   php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
    ```
+
+   Copy the generated value into the `ENCRYPTION_KEY` constant in `v-update-api/config.php`. Keep it backed up securely; existing stored keys cannot be decrypted if this value is lost or changed.
 
 6. Ensure the web server user owns the `v-update-api/storage/` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `v-update-api/storage/logs/app.log`).
 
-7. Navigate to `v-update-api/public/` and run `php install.php` in your browser or via CLI to create the SQLite database and required tables. Ensure `v-update-api/storage/updater.sqlite` is writable by the web server.
+7. Run `php v-update-api/public/install.php` from the repository root, or visit `/install.php` on the API server, to create the SQLite database and required tables. Ensure `v-update-api/storage/` is writable by the web server.
 
 8. Configure a system cron to run once daily (the script is CLI-only and takes no arguments):
 
@@ -149,7 +147,7 @@ This architecture enables centralized control over plugin and theme updates acro
 	0 2 * * * cd /path/to/v-update-api && php cron.php
    ```
 
-	This keeps the database in sync with plugin and theme ZIP files in the storage directories and also cleans up expired blacklist entries.
+	This keeps the database in sync with plugin and theme ZIP files in the storage directories and also cleans up expired blacklist entries. The script is CLI-only and accepts no worker argument.
 
 #### WordPress Client Plugin Setup
 
@@ -167,7 +165,7 @@ This architecture enables centralized control over plugin and theme updates acro
 
 3. Activate the plugin through the WordPress admin panel or WP-CLI.
 
-4. The plugin will automatically schedule daily update checks for plugins and themes.
+4. The plugin schedules daily update checks for plugins and themes. Enable each update type in the dashboard widget before that updater runs; both are disabled by default.
 
 **Note:** When a host entry is created or its key regenerated in the Update API admin panel, update the client installation with the new key using your provisioning process.
 
@@ -191,12 +189,12 @@ This architecture enables centralized control over plugin and theme updates acro
 
 Once activated, the V WordPress Plugin Updater automatically:
 
-- Schedules daily update checks for all installed plugins and themes
+- Runs scheduled daily checks for enabled plugin and theme updates
 - Contacts the Update API server to check for available updates
 - Downloads and installs updates when newer versions are available
-- Logs all update activities for troubleshooting
+- Records update activity through the plugin logger
 
-You can manually trigger update checks or view logs through the plugin's settings page in the WordPress admin panel.
+Configure the plugin through the **V WordPress Updater Settings** dashboard widget. Update activity logs for hosts and API requests are available in the Update API server's `/logs` page.
 
 ---
 
@@ -271,6 +269,7 @@ The WordPress client plugin (`v-wp-updater`) implements this contract in
 
 ### Security
 
+- Serve the API over HTTPS. The client sends the API key as a query parameter, so HTTPS protects it in transit.
 - All requests are logged with domain, date, and status
 - Failed authentication attempts (unknown domain / wrong key) are tracked per IP address
 - Malformed requests (`400`) and authenticated unknown slugs (`404`) do not increment blacklist attempts

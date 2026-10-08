@@ -16,7 +16,7 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\ErrorManager;
-use App\Core\RequestManager;
+use App\Core\Request;
 use App\Core\Router;
 
 ErrorManager::handle(function (): void {
@@ -24,7 +24,7 @@ ErrorManager::handle(function (): void {
     $router = new Router();
 
     // Dispatch request through router
-    $request = RequestManager::fromGlobals();
+    $request = Request::fromGlobals();
     $response = $router->dispatch($request);
     $response->send();
 });

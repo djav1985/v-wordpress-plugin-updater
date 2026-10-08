@@ -8,7 +8,7 @@
  * Link:    https://vontainment.com
  * Version: 4.5.0
  *
- * File: RequestManager.php
+ * File: Request.php
  * Description: HTTP request value object implementing PSR-7 ServerRequestInterface
  */
 
@@ -21,7 +21,7 @@ use Psr\Http\Message\UriInterface;
 /**
  * Represents an HTTP request implementing PSR-7 ServerRequestInterface.
  */
-class RequestManager implements ServerRequestInterface
+class Request implements ServerRequestInterface
 {
     /**
      * @param string $method HTTP method (GET, POST, etc.)
@@ -40,7 +40,7 @@ class RequestManager implements ServerRequestInterface
     }
 
     /**
-     * Create a RequestManager from global variables.
+     * Create a Request from global variables.
      *
      * @return self
      */

@@ -2,14 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Core\RequestManager;
-use App\Core\ResponseManager;
+use App\Core\Request;
+use App\Core\Response;
 use App\Core\SessionManager;
 use App\Core\Router;
 use PHPUnit\Framework\TestCase;
 
 final class RouterTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        unset($_SERVER['REMOTE_ADDR']);
+    }
+
     protected function tearDown(): void
     {
         SessionManager::getInstance()->destroy();
@@ -24,7 +31,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            new RequestManager('GET', '/api/missing', ['type' => 'plugin'], [], ['REMOTE_ADDR' => '127.0.0.1'])
+            new Request('GET', '/api/missing', ['type' => 'plugin'], [], ['REMOTE_ADDR' => '127.0.0.1'])
         );
 
         self::assertSame(404, $response->getStatusCode());
@@ -41,7 +48,7 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'router-test-token');
 
         $router = new Router();
-        $request = new RequestManager(
+        $request = new Request(
             'PUT',
             '/home',
             [],
@@ -63,7 +70,7 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('timeout', time());
 
         $router = new Router();
-        $request = new RequestManager(
+        $request = new Request(
             'GET',
             '/',
             [],
@@ -73,7 +80,7 @@ final class RouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertInstanceOf(ResponseManager::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/home', $response->getHeaderLine('Location'));
     }
@@ -83,10 +90,10 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            new RequestManager('GET', '/login', [], [], ['REMOTE_ADDR' => '127.0.0.1'])
+            new Request('GET', '/login', [], [], ['REMOTE_ADDR' => '127.0.0.1'])
         );
 
-        self::assertInstanceOf(ResponseManager::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('login', $response->getView());
     }

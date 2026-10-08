@@ -19,19 +19,19 @@ use App\Helpers\ValidationHelper;
 use App\Core\ErrorManager;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class ThemesController
 {
     /**
      * Handles GET requests for theme-related actions.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         $themesTableHtml = $this->getThemesTableHtml();
-        return ResponseManager::view('thupdate', [
+        return Response::view('thupdate', [
             'themesTableHtml' => $themesTableHtml,
         ]);
     }
@@ -39,9 +39,9 @@ class ThemesController
     /**
      * Handles POST submissions for theme-related actions.
      *
-    * @return ResponseManager
+    * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
@@ -50,10 +50,10 @@ class ThemesController
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
             if ($isAjax) {
-                return ResponseManager::text($error, 400);
+                return Response::text($error, 400);
             }
             MessageHelper::addMessage($error);
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         }
 
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -61,12 +61,12 @@ class ThemesController
         if (isset($_FILES['theme_file'])) {
             $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
             if ($isAjax) {
-                return ResponseManager::text(implode("\n", $messages));
+                return Response::text(implode("\n", $messages));
             }
             foreach ($messages as $message) {
                 MessageHelper::addMessage($message);
             }
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         } elseif (isset($_POST['delete_theme'])) {
             $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
             if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
@@ -76,9 +76,9 @@ class ThemesController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-            return ResponseManager::redirect('/thupdate');
+            return Response::redirect('/thupdate');
         }
-        return ResponseManager::redirect('/thupdate');
+        return Response::redirect('/thupdate');
     }
 
     /**

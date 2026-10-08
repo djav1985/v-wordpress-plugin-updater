@@ -20,7 +20,7 @@ use App\Helpers\EncryptionHelper;
 use App\Core\ErrorManager;
 use App\Models\HostsModel;
 use App\Helpers\MessageHelper;
-use App\Core\ResponseManager;
+use App\Core\Response;
 
 class HomeController
 {
@@ -29,12 +29,12 @@ class HomeController
     /**
      * Handles GET requests for managing hosts.
      *
-     * @return ResponseManager
+     * @return Response
      */
-    public function handleRequest(): ResponseManager
+    public function handleRequest(): Response
     {
         $this->pruneExpiredReveals();
-        return ResponseManager::view('home', [
+        return Response::view('home', [
             'hostsTableHtml' => $this->getHostsTableHtml(),
         ]);
     }
@@ -42,16 +42,16 @@ class HomeController
     /**
      * Handles POST submissions for host actions.
      *
-    * @return ResponseManager
+    * @return Response
      */
-    public function handleSubmission(): ResponseManager
+    public function handleSubmission(): Response
     {
         $token = $_POST['csrf_token'] ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
             MessageHelper::addMessage($error);
-            return ResponseManager::redirect('/home');
+            return Response::redirect('/home');
         }
 
         $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
@@ -90,7 +90,7 @@ class HomeController
                 MessageHelper::addMessage($error);
             }
         }
-        return ResponseManager::redirect('/home');
+        return Response::redirect('/home');
     }
 
     /**

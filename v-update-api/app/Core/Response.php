@@ -7,7 +7,7 @@
  * Link:    https://vontainment.com
  * Version: 4.5.0
  *
- * File: ResponseManager.php
+ * File: Response.php
  * Description: WordPress Update API
  */
 
@@ -21,7 +21,7 @@ use Psr\Http\Message\StreamInterface;
  *
  * @phpstan-type Headers array<string, list<string>>
  */
-class ResponseManager implements ResponseInterface
+class Response implements ResponseInterface
 {
     /** @var int */
     private int $statusCode;
@@ -333,9 +333,7 @@ class ResponseManager implements ResponseInterface
     /**
      * Send the response: emit the status code, headers, and body (or file) to the client.
      *
-     * Note: view-based responses are handled by Router::sendResponse(), which requires
-     * knowledge of the Views directory path. Calling send() on a view response will
-     * emit the status and headers but output nothing (the body is empty by default).
+     * View responses are rendered from the Views directory after headers are emitted.
      *
      * Should be called only once, and only when no output has already been sent.
      */
@@ -363,6 +361,11 @@ class ResponseManager implements ResponseInterface
             }
         }
 
+        if ($this->view !== null) {
+            self::renderView($this->view, $this->viewData);
+            return;
+        }
+
         if ($this->file !== null) {
             $readError = null;
             set_error_handler(
@@ -387,6 +390,21 @@ class ResponseManager implements ResponseInterface
         }
 
         echo $this->body;
+    }
+
+    /**
+     * Require a view file with the given data extracted into its scope.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function renderView(string $view, array $data): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_\/-]+$/', $view)) {
+            throw new \RuntimeException('Invalid view name');
+        }
+
+        extract($data, EXTR_SKIP);
+        require __DIR__ . '/../Views/' . $view . '.php';
     }
 
     // -------------------------------------------------------------------------

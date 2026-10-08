@@ -2,96 +2,84 @@
 
 declare(strict_types=1);
 
-use App\Core\RequestManager;
-use App\Core\ResponseManager;
+use App\Core\Request;
+use App\Core\Router;
 use App\Core\SessionManager;
-use App\Middleware\CsrfMiddleware;
-use App\Middleware\SessionMiddleware;
 use PHPUnit\Framework\TestCase;
 
-final class MiddlewareBehaviorTest extends TestCase
+final class RouterGuardTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        unset($_SERVER['REMOTE_ADDR']);
+    }
+
     protected function tearDown(): void
     {
         SessionManager::getInstance()->destroy();
         $_POST = [];
-        unset($_SERVER['HTTP_USER_AGENT']);
+        unset($_SERVER['HTTP_USER_AGENT'], $_SERVER['REMOTE_ADDR']);
 
         parent::tearDown();
     }
 
-    public function testSessionMiddlewareRedirectsWhenSessionInvalid(): void
+    private function loginSession(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'phpunit-agent';
+        SessionManager::getInstance()->set('logged_in', true);
+        SessionManager::getInstance()->set('user_agent', 'phpunit-agent');
+        SessionManager::getInstance()->set('timeout', time());
+    }
+
+    public function testRedirectsToLoginWhenSessionInvalid(): void
     {
         SessionManager::getInstance()->destroy();
 
-        $middleware = new SessionMiddleware();
-        $request = new RequestManager('GET', '/home', [], [], []);
-
-        $response = $middleware(
-            $request,
-            static function (RequestManager $request): ResponseManager {
-                return ResponseManager::text('ok');
-            }
+        $response = (new Router())->dispatch(
+            new Request('GET', '/home', [], [], ['REMOTE_ADDR' => '127.0.0.1'])
         );
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/login', $response->getHeaderLine('Location'));
     }
 
-    public function testSessionMiddlewareAllowsValidSession(): void
+    public function testSessionManagerAcceptsValidSession(): void
     {
-        $_SERVER['HTTP_USER_AGENT'] = 'phpunit-agent';
-        SessionManager::getInstance()->set('logged_in', true);
-        SessionManager::getInstance()->set('user_agent', 'phpunit-agent');
-        SessionManager::getInstance()->set('timeout', time());
+        $this->loginSession();
 
-        $middleware = new SessionMiddleware();
-        $request = new RequestManager('GET', '/home', [], [], []);
-
-        $response = $middleware(
-            $request,
-            static function (RequestManager $request): ResponseManager {
-                return ResponseManager::text('ok');
-            }
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('ok', $response->getBodyAsString());
+        self::assertTrue(SessionManager::getInstance()->requireAuth());
     }
 
-    public function testCsrfMiddlewareRedirectsWhenTokenInvalid(): void
+    public function testSessionManagerRejectsChangedUserAgent(): void
     {
+        $this->loginSession();
+        $_SERVER['HTTP_USER_AGENT'] = 'other-agent';
+
+        self::assertFalse(SessionManager::getInstance()->isValid());
+    }
+
+    public function testEnsureCsrfTokenCreatesToken(): void
+    {
+        SessionManager::getInstance()->ensureCsrfToken();
+
+        self::assertMatchesRegularExpression(
+            '/\A[a-f0-9]{64}\z/',
+            SessionManager::getInstance()->get('csrf_token')
+        );
+    }
+
+    public function testRedirectsWhenCsrfTokenInvalid(): void
+    {
+        $this->loginSession();
         SessionManager::getInstance()->set('csrf_token', 'expected-token');
 
-        $middleware = new CsrfMiddleware();
-        $request = new RequestManager('POST', '/home', [], ['csrf_token' => 'wrong-token'], []);
-
-        $response = $middleware(
-            $request,
-            static function (RequestManager $request): ResponseManager {
-                return ResponseManager::text('ok');
-            }
+        $response = (new Router())->dispatch(
+            new Request('POST', '/home', [], ['csrf_token' => 'wrong-token'], ['REMOTE_ADDR' => '127.0.0.1'])
         );
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/home', $response->getHeaderLine('Location'));
-    }
-
-    public function testCsrfMiddlewareAllowsValidToken(): void
-    {
-        SessionManager::getInstance()->set('csrf_token', 'expected-token');
-
-        $middleware = new CsrfMiddleware();
-        $request = new RequestManager('POST', '/home', [], ['csrf_token' => 'expected-token'], []);
-
-        $response = $middleware(
-            $request,
-            static function (RequestManager $request): ResponseManager {
-                return ResponseManager::text('ok');
-            }
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('ok', $response->getBodyAsString());
     }
 }

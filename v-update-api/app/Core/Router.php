@@ -14,9 +14,8 @@
 
 namespace App\Core;
 
-use App\Middleware\BlacklistMiddleware;
-use App\Middleware\CsrfMiddleware;
-use App\Middleware\SessionMiddleware;
+use App\Helpers\ValidationHelper;
+use App\Models\BlacklistModel;
 use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
 use FastRoute\FastRoute;
@@ -25,22 +24,15 @@ use Psr\Http\Message\ResponseInterface;
 class Router
 {
     private Dispatcher $dispatcher;
-    private BlacklistMiddleware $blacklistMiddleware;
-    private SessionMiddleware $sessionMiddleware;
-    private CsrfMiddleware $csrfMiddleware;
 
     /**
      * Build the FastRoute dispatcher and register all application routes.
      */
     public function __construct()
     {
-        $this->blacklistMiddleware = new BlacklistMiddleware();
-        $this->sessionMiddleware = new SessionMiddleware();
-        $this->csrfMiddleware = new CsrfMiddleware();
-
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
-            $r->addRoute('GET', '/', function (): ResponseManager {
-                return ResponseManager::redirect('/home');
+            $r->addRoute('GET', '/', function (): Response {
+                return Response::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
             $r->addRoute('POST', '/login', ['\\App\\Controllers\\LoginController', 'handleSubmission']);
@@ -58,34 +50,31 @@ class Router
         $this->dispatcher = $fastRoute->dispatcher();
     }
 
-    public function dispatch(RequestManager $request): ResponseManager
+    public function dispatch(Request $request): Response
     {
         ErrorManager::logRequest($request->method, $request->path);
 
-        $middlewareManager = new MiddlewareManager();
-        $middlewareManager
-            ->add($this->blacklistMiddleware)
-            ->add($this->sessionMiddleware)
-            ->add($this->csrfMiddleware);
-
-        return $middlewareManager->handle($request, function (RequestManager $request): ResponseManager {
-            return $this->dispatchRoute($request);
-        });
+        return $this->dispatchRoute($request);
     }
 
-    private function dispatchRoute(RequestManager $request): ResponseManager
+    private function dispatchRoute(Request $request): Response
     {
         $method = $request->method;
         $uri = $request->path;
 
+        $guard = $this->guard($request);
+        if ($guard !== null) {
+            return $this->logAndReturn($method, $uri, $guard);
+        }
+
         $routeInfo = $this->dispatcher->dispatch($method, $uri);
 
         if ($routeInfo[0] === Dispatcher::NOT_FOUND) {
-            return $this->logAndReturn($method, $uri, ResponseManager::view('404', [], 404));
+            return $this->logAndReturn($method, $uri, Response::view('404', [], 404));
         }
 
         if ($routeInfo[0] === Dispatcher::METHOD_NOT_ALLOWED) {
-            return $this->logAndReturn($method, $uri, new ResponseManager(405));
+            return $this->logAndReturn($method, $uri, new Response(405));
         }
 
         // FOUND
@@ -97,12 +86,40 @@ class Router
     }
 
     /**
-     * Invoke a FastRoute handler and normalize the response into ResponseManager.
+     * Blacklist, session and CSRF checks; returns a response to short-circuit, or null to continue.
+     */
+    private function guard(Request $request): ?Response
+    {
+        if (BlacklistModel::isCurrentRequestIpBlacklisted()) {
+            return new Response(403);
+        }
+
+        $session = SessionManager::getInstance();
+        $session->ensureCsrfToken();
+
+        $isApi = str_starts_with($request->path, '/api');
+
+        if ($request->path !== '/login' && !$isApi && !$session->requireAuth()) {
+            return Response::redirect('/login');
+        }
+
+        if (!$isApi && !in_array($request->method, ['GET', 'HEAD', 'OPTIONS'], true)) {
+            $token = $request->post['csrf_token'] ?? '';
+            if (!ValidationHelper::validateCsrfToken(is_string($token) ? $token : '')) {
+                return Response::redirect($request->path);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Invoke a FastRoute handler and normalize the response into Response.
      *
      * @param mixed $handler
      * @param array<string, string> $vars
      */
-    private function invokeHandler(mixed $handler, array $vars): ResponseManager
+    private function invokeHandler(mixed $handler, array $vars): Response
     {
         $arguments = array_values($vars);
 
@@ -122,20 +139,20 @@ class Router
     }
 
     /**
-     * Normalize a PSR response into ResponseManager.
+     * Normalize a PSR response into Response.
      */
-    private function normalizeResponse(mixed $response, string $errorMessage): ResponseManager
+    private function normalizeResponse(mixed $response, string $errorMessage): Response
     {
         if (!$response instanceof ResponseInterface) {
             throw new \RuntimeException($errorMessage);
         }
 
-        return $response instanceof ResponseManager
+        return $response instanceof Response
             ? $response
-            : new ResponseManager($response->getStatusCode(), $response->getHeaders());
+            : new Response($response->getStatusCode(), $response->getHeaders());
     }
 
-    private function logAndReturn(string $method, string $uri, ResponseManager $response): ResponseManager
+    private function logAndReturn(string $method, string $uri, Response $response): Response
     {
         ErrorManager::logResponse($method, $uri, $response->getStatusCode());
 
