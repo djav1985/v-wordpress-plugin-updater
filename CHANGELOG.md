@@ -5,6 +5,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Added a root-level `API.MD` reference describing the update API request contract, responses, package naming, and security considerations; README now links to it.
 - Renamed `RequestManager` and `ResponseManager` to `Request` and `Response` in `v-update-api`.
 - Removed `App\Middleware\*` and `MiddlewareManager` from `v-update-api`; blacklist, session, and CSRF guards now run in `Router::guard()`.
 - `Router::dispatch()` accepts the `Request` created by `Request::fromGlobals()` in `public/index.php`; callable and controller handlers share response normalization and centralized response logging.
