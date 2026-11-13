@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -70,15 +69,17 @@ class SessionManager
     public function destroy(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
-            $params = session_get_cookie_params();
-            setcookie(session_name(), '', [
-                'expires' => time() - 42000,
-                'path' => $params['path'],
-                'domain' => $params['domain'],
-                'secure' => $params['secure'],
-                'httponly' => $params['httponly'],
-                'samesite' => $params['samesite'],
-            ]);
+            if (!headers_sent()) {
+                $params = session_get_cookie_params();
+                setcookie(session_name(), '', [
+                    'expires' => time() - 42000,
+                    'path' => $params['path'],
+                    'domain' => $params['domain'],
+                    'secure' => $params['secure'],
+                    'httponly' => $params['httponly'],
+                    'samesite' => $params['samesite'],
+                ]);
+            }
             session_unset();
             session_destroy();
         }
@@ -145,7 +146,7 @@ class SessionManager
      */
     private function initialize(): void
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
+        if (session_status() === PHP_SESSION_ACTIVE || headers_sent()) {
             return;
         }
 

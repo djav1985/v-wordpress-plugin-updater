@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -62,7 +61,7 @@ class ErrorManager
             $manager->handleException($exception);
         }
     }
-    
+
     /**
      * Write a message to the application log.
      *

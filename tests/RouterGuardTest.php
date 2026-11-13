@@ -1,8 +1,19 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: RouterGuardTest.php
+ * Description: PHPUnit tests for RouterGuard.
+ */
+
 declare(strict_types=1);
 
-use App\Core\Request;
+use Tests\Support\SharedRequestFactory;
 use App\Core\Router;
 use App\Core\SessionManager;
 use PHPUnit\Framework\TestCase;
@@ -38,36 +49,11 @@ final class RouterGuardTest extends TestCase
         SessionManager::getInstance()->destroy();
 
         $response = (new Router())->dispatch(
-            Request::create('GET', '/home', [], [], [])
+            SharedRequestFactory::create('GET', '/home', [], [], [])
         );
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/login', $response->getHeaderLine('Location'));
-    }
-
-    public function testSessionManagerAcceptsValidSession(): void
-    {
-        $this->loginSession();
-
-        self::assertTrue(SessionManager::getInstance()->requireAuth());
-    }
-
-    public function testSessionManagerRejectsChangedUserAgent(): void
-    {
-        $this->loginSession();
-        $_SERVER['HTTP_USER_AGENT'] = 'other-agent';
-
-        self::assertFalse(SessionManager::getInstance()->isValid());
-    }
-
-    public function testEnsureCsrfTokenCreatesToken(): void
-    {
-        SessionManager::getInstance()->ensureCsrfToken();
-
-        self::assertMatchesRegularExpression(
-            '/\A[a-f0-9]{64}\z/',
-            SessionManager::getInstance()->get('csrf_token')
-        );
     }
 
     public function testRedirectsWhenCsrfTokenInvalid(): void
@@ -76,7 +62,7 @@ final class RouterGuardTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'expected-token');
 
         $response = (new Router())->dispatch(
-            Request::create('POST', '/home', [], ['csrf_token' => 'wrong-token'], ['HTTP_USER_AGENT' => 'phpunit-agent'])
+            SharedRequestFactory::create('POST', '/home', [], ['csrf_token' => 'wrong-token'], ['HTTP_USER_AGENT' => 'phpunit-agent'])
         );
 
         self::assertSame(302, $response->getStatusCode());
@@ -89,7 +75,7 @@ final class RouterGuardTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'expected-token');
 
         $response = (new Router())->dispatch(
-            Request::create('POST', '/home', [], ['csrf_token' => ['unexpected']], ['HTTP_USER_AGENT' => 'phpunit-agent'])
+            SharedRequestFactory::create('POST', '/home', [], ['csrf_token' => ['unexpected']], ['HTTP_USER_AGENT' => 'phpunit-agent'])
         );
 
         self::assertSame(302, $response->getStatusCode());

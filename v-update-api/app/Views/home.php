@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -21,7 +20,8 @@ $hostsTableHtml = $hostsTableHtml ?? '';
 
 <div class="content-box">
     <h2>Allowed Hosts</h2>
-    <p>Keys are masked by default. Use <strong>Reveal</strong> for a temporary 30-second display, then <strong>Copy</strong>.</p>
+    <p>Keys are masked by default. Use <strong>Reveal</strong> for a temporary 30-second display, then
+        <strong>Copy</strong>.</p>
     <div id="hosts_table">
         <?php echo $hostsTableHtml; ?>
     </div>
@@ -29,7 +29,11 @@ $hostsTableHtml = $hostsTableHtml ?? '';
         <h2>Add Entry</h2>
         <form class="entry-form" method="post" action="/home">
             <input type="hidden" name="csrf_token"
-                   value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                   value="<?php echo htmlspecialchars(
+                       \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '',
+                       ENT_QUOTES,
+                       'UTF-8'
+                   ); ?>">
             <div class="form-group">
                 <label for="domain">Domain:</label>
                 <input type="text" name="domain" id="domain" required>

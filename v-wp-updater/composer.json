@@ -10,6 +10,10 @@
     "psr-4": {
       "VWPU\\Helpers\\": "helpers/",
       "VWPU\\Services\\": "services/"
-    }
+    },
+    "classmap": [
+      "helpers/",
+      "services/"
+    ]
   }
 }

@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -17,8 +16,8 @@ namespace App\Core;
 use App\Helpers\ValidationHelper;
 use App\Helpers\RequestInput;
 use App\Models\BlacklistModel;
-use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
+use FastRoute\Dispatcher;
 use FastRoute\FastRoute;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -46,7 +45,11 @@ class Router
             $r->addRoute('POST', '/thupdate', ['\\App\\Controllers\\ThemesController', 'handleSubmission']);
             $r->addRoute('GET', '/logs', ['\\App\\Controllers\\LogsController', 'handleRequest']);
             $r->addRoute('POST', '/logs', ['\\App\\Controllers\\LogsController', 'handleSubmission']);
-            $r->addRoute(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'], '/api', ['\\App\\Controllers\\ApiController', 'handleRequest']);
+            $r->addRoute(
+                ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+                '/api',
+                ['\\App\\Controllers\\ApiController', 'handleRequest']
+            );
         }, 'app_routes')->disableCache();
 
         $this->dispatcher = $fastRoute->dispatcher();
@@ -108,7 +111,8 @@ class Router
         $path = $request->getUri()->getPath();
         $isApi = str_starts_with($path, '/api');
 
-        if ($path !== '/login' && !$isApi && !$session->requireAuth(RequestInput::string($server, 'HTTP_USER_AGENT') ?? '')) {
+        $userAgent = RequestInput::string($server, 'HTTP_USER_AGENT') ?? '';
+        if ($path !== '/login' && !$isApi && !$session->requireAuth($userAgent)) {
             return Response::redirect('/login');
         }
 
@@ -170,7 +174,6 @@ class Router
     private function logAndReturn(string $method, string $uri, Response $response): Response
     {
         ErrorManager::logResponse($method, $uri, $response->getStatusCode());
-
         return $response;
     }
 }

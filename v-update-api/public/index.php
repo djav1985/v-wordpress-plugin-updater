@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -28,4 +27,3 @@ ErrorManager::handle(function (): void {
     $response = $router->dispatch($request);
     $response->send();
 });
-

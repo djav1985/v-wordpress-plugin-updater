@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -69,7 +68,10 @@ class LoginController
         if ($this->validateCredentials($username, $password)) {
             SessionManager::getInstance()->set('logged_in', true);
             SessionManager::getInstance()->set('username', $username);
-            SessionManager::getInstance()->set('user_agent', RequestInput::string($request->getServerParams(), 'HTTP_USER_AGENT') ?? '');
+            SessionManager::getInstance()->set(
+                'user_agent',
+                RequestInput::string($request->getServerParams(), 'HTTP_USER_AGENT') ?? ''
+            );
             SessionManager::getInstance()->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
             SessionManager::getInstance()->set('timeout', time());
             SessionManager::getInstance()->regenerate();

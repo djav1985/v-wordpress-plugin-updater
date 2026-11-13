@@ -5,6 +5,11 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Reworked the README to use consistent Markdown formatting and aligned package, cron, installation, and development guidance with the current server and client code.
+- Removed redundant file-wide PHPCS ignores from the Update API; its configured PSR12 rules report no PSR1 side-effect violations.
+- Standardized PHP headers, opening-tag spacing, LF line endings, and final newlines across Update API and its tests.
+- Removed request and response test conveniences from production classes; request construction now lives in the test support directory.
+- Aligned session startup and cookie-destruction guards across Update API and Statuses.
 - Updated shared development tools to matching current releases and added working PHPStan, ESLint, and Stylelint commands for both components.
 - Completed the Update API PSR-7 request/response integration, added Guzzle PSR-7 streams and uploaded-file handling, fixed plugin/theme delete filename validation, preserved password whitespace, and rejected malformed request values without type errors.
 - Made host deletion and `HOSTS` imports transactional; rerunning a `HOSTS` import now preserves existing host keys.

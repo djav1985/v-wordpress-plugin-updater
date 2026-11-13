@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -119,10 +118,13 @@ class HomeController
                 htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
             '" readonly></td>
                 <td>
-                    <input id="' . htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '" class="hosts-key" type="text" value="' .
-                    htmlspecialchars($displayKey, ENT_QUOTES, 'UTF-8') .
-                '" data-masked-value="' . htmlspecialchars($this->maskKey($key), ENT_QUOTES, 'UTF-8') . '" data-expires-at="' .
-                    htmlspecialchars((string) $expiresAt, ENT_QUOTES, 'UTF-8') . '" readonly>
+                    <input id="' . htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '"
+                        class="hosts-key" type="text" value="'
+                    . htmlspecialchars($displayKey, ENT_QUOTES, 'UTF-8')
+                    . '" data-masked-value="'
+                    . htmlspecialchars($this->maskKey($key), ENT_QUOTES, 'UTF-8')
+                    . '" data-expires-at="'
+                    . htmlspecialchars((string) $expiresAt, ENT_QUOTES, 'UTF-8') . '" readonly>
                 </td>
                 <td>
                     <input class="hosts-submit" type="submit" name="reveal_entry" value="Reveal">

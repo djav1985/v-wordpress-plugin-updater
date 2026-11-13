@@ -1,4 +1,6 @@
-<?php // phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
+<?php
+
+// phpcs:disable WordPress.Files.FileName.NotHyphenatedLowercase phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
  * Project: UpdateAPI
  * Author:  Vontainment <services@vontainment.com>

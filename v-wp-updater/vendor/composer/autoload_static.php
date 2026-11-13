@@ -7,7 +7,7 @@ namespace Composer\Autoload;
 class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
 {
     public static $prefixLengthsPsr4 = array (
-        'V' => 
+        'V' =>
         array (
             'VWPU\\Services\\' => 14,
             'VWPU\\Helpers\\' => 13,
@@ -15,11 +15,11 @@ class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
     );
 
     public static $prefixDirsPsr4 = array (
-        'VWPU\\Services\\' => 
+        'VWPU\\Services\\' =>
         array (
             0 => __DIR__ . '/../..' . '/services',
         ),
-        'VWPU\\Helpers\\' => 
+        'VWPU\\Helpers\\' =>
         array (
             0 => __DIR__ . '/../..' . '/helpers',
         ),
@@ -27,6 +27,12 @@ class ComposerStaticInit950c0b236062062c4af03838aa1f6e54
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'VWPU\\Helpers\\AbstractRemoteUpdater' => __DIR__ . '/../..' . '/helpers/class-abstractremoteupdater.php',
+        'VWPU\\Helpers\\Logger' => __DIR__ . '/../..' . '/helpers/class-logger.php',
+        'VWPU\\Helpers\\Options' => __DIR__ . '/../..' . '/helpers/class-options.php',
+        'VWPU\\Helpers\\SilentUpgraderSkin' => __DIR__ . '/../..' . '/helpers/class-silentupgraderskin.php',
+        'VWPU\\Services\\PluginUpdater' => __DIR__ . '/../..' . '/services/class-pluginupdater.php',
+        'VWPU\\Services\\ThemeUpdater' => __DIR__ . '/../..' . '/services/class-themeupdater.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

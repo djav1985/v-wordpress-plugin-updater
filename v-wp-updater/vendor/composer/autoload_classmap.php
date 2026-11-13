@@ -7,4 +7,10 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'VWPU\\Helpers\\AbstractRemoteUpdater' => $baseDir . '/helpers/class-abstractremoteupdater.php',
+    'VWPU\\Helpers\\Logger' => $baseDir . '/helpers/class-logger.php',
+    'VWPU\\Helpers\\Options' => $baseDir . '/helpers/class-options.php',
+    'VWPU\\Helpers\\SilentUpgraderSkin' => $baseDir . '/helpers/class-silentupgraderskin.php',
+    'VWPU\\Services\\PluginUpdater' => $baseDir . '/services/class-pluginupdater.php',
+    'VWPU\\Services\\ThemeUpdater' => $baseDir . '/services/class-themeupdater.php',
 );

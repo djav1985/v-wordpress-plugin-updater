@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -76,7 +75,9 @@ class BlacklistModel
      */
     public static function isBlacklisted(string $ip): bool
     {
-        $record = DatabaseManager::getInstance()->getConnection()->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
+        $record = DatabaseManager::getInstance()
+            ->getConnection()
+            ->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
             if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
@@ -123,6 +124,3 @@ class BlacklistModel
         );
     }
 }
-
-
-

@@ -1,12 +1,23 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: PackageFileModelTest.php
+ * Description: PHPUnit tests for PackageFileModel.
+ */
+
 declare(strict_types=1);
 
 use App\Models\PluginModel;
 use App\Models\ThemeModel;
 use App\Models\HostsModel;
 use App\Core\DatabaseManager;
-use App\Core\Request;
+use Tests\Support\SharedRequestFactory;
 use App\Core\SessionManager;
 use App\Controllers\PluginsController;
 use App\Controllers\ThemesController;
@@ -147,7 +158,7 @@ final class PackageFileModelTest extends TestCase
     {
         self::writePackage(self::$pluginDirectory, 'controller-delete_1.0.zip');
         SessionManager::getInstance()->set('csrf_token', 'delete-test-token');
-        $request = Request::create('POST', '/plupdate', [], [
+        $request = SharedRequestFactory::create('POST', '/plupdate', [], [
             'csrf_token' => 'delete-test-token',
             'delete_plugin' => '1',
             'plugin_name' => 'controller-delete_1.0.zip',
@@ -163,7 +174,7 @@ final class PackageFileModelTest extends TestCase
     {
         self::writePackage(self::$themeDirectory, 'controller-delete_1.0.zip');
         SessionManager::getInstance()->set('csrf_token', 'delete-test-token');
-        $request = Request::create('POST', '/thupdate', [], [
+        $request = SharedRequestFactory::create('POST', '/thupdate', [], [
             'csrf_token' => 'delete-test-token',
             'delete_theme' => '1',
             'theme_name' => 'controller-delete_1.0.zip',
@@ -179,7 +190,7 @@ final class PackageFileModelTest extends TestCase
     {
         self::writePackage(self::$pluginDirectory, 'protected-delete_1.0.zip');
         SessionManager::getInstance()->set('csrf_token', 'delete-test-token');
-        $request = Request::create('POST', '/plupdate', [], [
+        $request = SharedRequestFactory::create('POST', '/plupdate', [], [
             'csrf_token' => 'delete-test-token',
             'delete_plugin' => '1',
             'plugin_name' => ['protected-delete_1.0.zip'],
@@ -199,7 +210,7 @@ final class PackageFileModelTest extends TestCase
             UPLOAD_ERR_NO_FILE,
             'plugin_1.0.zip'
         );
-        $request = Request::create('POST', '/plupdate', [], [
+        $request = SharedRequestFactory::create('POST', '/plupdate', [], [
             'csrf_token' => 'upload-test-token',
         ], [], [], ['plugin_file' => $uploadedFile]);
 
@@ -330,7 +341,7 @@ final class PackageFileModelTest extends TestCase
 
     public function testApiRejectsArrayQueryParametersWithBadRequest(): void
     {
-        $request = Request::create('GET', '/api', [
+        $request = SharedRequestFactory::create('GET', '/api', [
             'type' => 'plugin',
             'domain' => ['example.com'],
             'key' => 'fixture-api-key',
@@ -371,7 +382,7 @@ final class PackageFileModelTest extends TestCase
         if (HostsModel::getEncryptedKeyByDomain('example.com') === null) {
             HostsModel::addEntry('example.com', 'fixture-api-key');
         }
-        $request = Request::create('GET', '/api', [
+        $request = SharedRequestFactory::create('GET', '/api', [
             'type' => $type,
             'domain' => 'example.com',
             'key' => 'fixture-api-key',

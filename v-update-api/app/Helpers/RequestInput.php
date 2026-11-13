@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: RequestInput.php
+ * Description: Safely reads scalar values from PSR-7 requests.
+ */
+
 declare(strict_types=1);
 
 namespace App\Helpers;

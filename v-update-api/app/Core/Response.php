@@ -1,14 +1,22 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: Response.php
+ * Description: PSR-7 response with view and file-streaming support.
+ */
+
 declare(strict_types=1);
 
 namespace App\Core;
 
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\Psr7\Response as PsrResponse;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 
 /** PSR-7 response with application view and file-streaming support. */
 class Response extends PsrResponse
@@ -65,11 +73,6 @@ class Response extends PsrResponse
     ): self {
         $response = new self($statusCode, ['Content-Type' => $contentType]);
         return $response->withFile($filePath);
-    }
-
-    public function getBodyAsString(): string
-    {
-        return (string) $this->getBody();
     }
 
     public function getView(): ?string

@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -58,7 +57,10 @@ class PluginModel
                 continue;
             }
             $slug = $package['slug'];
-            if (!isset($pluginsBySlug[$slug]) || version_compare($package['version'], $pluginsBySlug[$slug]['version'], '>')) {
+            if (
+                !isset($pluginsBySlug[$slug])
+                || version_compare($package['version'], $pluginsBySlug[$slug]['version'], '>')
+            ) {
                 $pluginsBySlug[$slug] = $package;
             }
         }
@@ -249,7 +251,6 @@ class PluginModel
             }
 
             $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') . ' uploaded successfully.';
-        
         }
         return $messages;
     }
@@ -327,7 +328,10 @@ class PluginModel
      * Normalize upload payload into a predictable list structure.
      *
      * @param array<string, mixed> $fileArray
-     * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]}
+     * @return array{
+     *     entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>,
+     *     errors: string[]
+     * }
      */
     private static function normalizeUploadPayload(array $fileArray): array
     {
@@ -366,7 +370,12 @@ class PluginModel
             return ['entries' => $entries, 'errors' => $errors];
         }
 
-        if (!is_array($fileArray['name']) || !is_array($fileArray['tmp_name']) || !is_array($fileArray['error']) || !is_array($fileArray['size'])) {
+        if (
+            !is_array($fileArray['name'])
+            || !is_array($fileArray['tmp_name'])
+            || !is_array($fileArray['error'])
+            || !is_array($fileArray['size'])
+        ) {
             return [
                 'entries' => [],
                 'errors' => ['Error uploading: malformed upload payload (mixed single/multi-file format).'],
@@ -403,7 +412,8 @@ class PluginModel
         if (!is_string($name) || !is_string($tmpName)) {
             return [
                 'entry' => null,
-                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (name/tmp_name must be strings).',
+                'error' => 'Error uploading: malformed upload entry at index ' . $index
+                    . ' (name/tmp_name must be strings).',
             ];
         }
 
@@ -412,7 +422,8 @@ class PluginModel
         if ($parsedError === false || $parsedSize === false) {
             return [
                 'entry' => null,
-                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (error/size must be integers).',
+                'error' => 'Error uploading: malformed upload entry at index ' . $index
+                    . ' (error/size must be integers).',
             ];
         }
 
@@ -449,6 +460,3 @@ class PluginModel
     }
 
 }
-
-
-

@@ -1,11 +1,22 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: SharedEncryptionHelperTest.php
+ * Description: Shared PHPUnit tests for EncryptionHelper::bytes().
+ */
+
 declare(strict_types=1);
 
 use App\Helpers\EncryptionHelper;
 use PHPUnit\Framework\TestCase;
 
-final class SecureRandomHelperTest extends TestCase
+final class SharedEncryptionHelperTest extends TestCase
 {
     public function testBytesReturnsRequestedLength(): void
     {

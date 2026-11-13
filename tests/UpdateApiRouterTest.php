@@ -1,14 +1,25 @@
 <?php
 
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: UpdateApiRouterTest.php
+ * Description: Update API-specific PHPUnit tests for Router.
+ */
+
 declare(strict_types=1);
 
-use App\Core\Request;
+use Tests\Support\SharedRequestFactory;
 use App\Core\Response;
 use App\Core\SessionManager;
 use App\Core\Router;
 use PHPUnit\Framework\TestCase;
 
-final class RouterTest extends TestCase
+final class UpdateApiRouterTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -31,7 +42,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            Request::create('GET', '/api/missing', ['type' => 'plugin'])
+            SharedRequestFactory::create('GET', '/api/missing', ['type' => 'plugin'])
         );
 
         self::assertSame(404, $response->getStatusCode());
@@ -48,7 +59,7 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'router-test-token');
 
         $router = new Router();
-        $request = Request::create(
+        $request = SharedRequestFactory::create(
             'PUT',
             '/home',
             [],
@@ -70,7 +81,7 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('timeout', time());
 
         $router = new Router();
-        $request = Request::create(
+        $request = SharedRequestFactory::create(
             'GET',
             '/',
             [],
@@ -90,7 +101,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            Request::create('GET', '/login')
+            SharedRequestFactory::create('GET', '/login')
         );
 
         self::assertInstanceOf(Response::class, $response);

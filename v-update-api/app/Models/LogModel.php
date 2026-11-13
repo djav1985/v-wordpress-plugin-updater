@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -102,6 +101,3 @@ class LogModel
         DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM logs');
     }
 }
-
-
-

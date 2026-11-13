@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -28,7 +27,9 @@ class HostsModel
      */
     public static function getEncryptedKeyByDomain(string $domain): ?string
     {
-        $row = DatabaseManager::getInstance()->getConnection()->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
+        $row = DatabaseManager::getInstance()
+            ->getConnection()
+            ->fetchAssociative('SELECT key FROM hosts WHERE domain = ?', [$domain]);
         if ($row === false || !isset($row['key'])) {
             return null;
         }
@@ -43,7 +44,9 @@ class HostsModel
      */
     public static function getEntries(): array
     {
-        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT domain, key FROM hosts ORDER BY domain');
+        $rows = DatabaseManager::getInstance()
+            ->getConnection()
+            ->fetchAllAssociative('SELECT domain, key FROM hosts ORDER BY domain');
         return array_map(
             fn (array $row): array => [
                 'domain' => (string) $row['domain'],
@@ -60,7 +63,9 @@ class HostsModel
      */
     public static function getHosts(): array
     {
-        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT domain FROM hosts ORDER BY domain');
+        $rows = DatabaseManager::getInstance()
+            ->getConnection()
+            ->fetchAllAssociative('SELECT domain FROM hosts ORDER BY domain');
         $hosts = [];
         foreach ($rows as $row) {
             $hosts[] = $row['domain'];
@@ -78,7 +83,9 @@ class HostsModel
     public static function addEntry(string $domain, string $key): bool
     {
         $encrypted = EncryptionHelper::encrypt($key);
-        return DatabaseManager::getInstance()->getConnection()->executeStatement('INSERT INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
+        return DatabaseManager::getInstance()
+            ->getConnection()
+            ->executeStatement('INSERT INTO hosts (domain, key) VALUES (?, ?)', [$domain, $encrypted]) > 0;
     }
 
     /**
@@ -91,7 +98,9 @@ class HostsModel
     public static function updateEntry(string $domain, string $key): bool
     {
         $encrypted = EncryptionHelper::encrypt($key);
-        return DatabaseManager::getInstance()->getConnection()->executeStatement('UPDATE hosts SET key = ? WHERE domain = ?', [$encrypted, $domain]) > 0;
+        return DatabaseManager::getInstance()
+            ->getConnection()
+            ->executeStatement('UPDATE hosts SET key = ? WHERE domain = ?', [$encrypted, $domain]) > 0;
     }
 
     /**
@@ -135,6 +144,3 @@ class HostsModel
         });
     }
 }
-
-
-

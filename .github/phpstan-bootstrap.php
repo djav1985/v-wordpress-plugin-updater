@@ -1,4 +1,16 @@
 <?php
+
+/**
+ * Project: UpdateAPI
+ * Author:  Vontainment <services@vontainment.com>
+ * License: https://opensource.org/licenses/MIT MIT License
+ * Link:    https://vontainment.com
+ * Version: 4.5.0
+ *
+ * File: phpstan-bootstrap.php
+ * Description: PHPStan bootstrap configuration.
+ */
+
 // Repo root directory
 $rootDir = dirname(__DIR__);
 

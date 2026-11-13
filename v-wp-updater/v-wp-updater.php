@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: V WordPress Plugin Updater
  * Plugin URI:  https://github.com/djav1985/v-wordpress-plugin-updater

@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
 
 /**
  * Project: UpdateAPI
@@ -61,7 +60,10 @@ class ThemeModel
                 continue;
             }
             $slug = $package['slug'];
-            if (!isset($themesBySlug[$slug]) || version_compare($package['version'], $themesBySlug[$slug]['version'], '>')) {
+            if (
+                !isset($themesBySlug[$slug])
+                || version_compare($package['version'], $themesBySlug[$slug]['version'], '>')
+            ) {
                 $themesBySlug[$slug] = $package;
             }
         }
@@ -269,7 +271,6 @@ class ThemeModel
 
             $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8')
                 . ' uploaded successfully.';
-        
         }
         return $messages;
     }
@@ -347,7 +348,10 @@ class ThemeModel
      * Normalize upload payload into a predictable list structure.
      *
      * @param array<string, mixed> $fileArray The raw $_FILES upload array.
-     * @return array{entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>, errors: string[]} Normalized upload entries and errors.
+     * @return array{
+     *     entries: array<int, array{name: string, tmp_name: string, error: int, size: int}>,
+     *     errors: string[]
+     * } Normalized upload entries and errors.
      */
     private static function normalizeUploadPayload(array $fileArray): array
     {
@@ -386,7 +390,12 @@ class ThemeModel
             return ['entries' => $entries, 'errors' => $errors];
         }
 
-        if (!is_array($fileArray['name']) || !is_array($fileArray['tmp_name']) || !is_array($fileArray['error']) || !is_array($fileArray['size'])) {
+        if (
+            !is_array($fileArray['name'])
+            || !is_array($fileArray['tmp_name'])
+            || !is_array($fileArray['error'])
+            || !is_array($fileArray['size'])
+        ) {
             return [
                 'entries' => [],
                 'errors' => ['Error uploading: malformed upload payload (mixed single/multi-file format).'],
@@ -421,14 +430,18 @@ class ThemeModel
      * @param mixed $error   Upload error code.
      * @param mixed $size    File size.
      * @param int   $index   File index in upload array.
-     * @return array{entry: array{name: string, tmp_name: string, error: int, size: int}|null, error: string|null} Entry or error.
+     * @return array{
+     *     entry: array{name: string, tmp_name: string, error: int, size: int}|null,
+     *     error: string|null
+     * } Entry or error.
      */
     private static function buildEntry(mixed $name, mixed $tmpName, mixed $error, mixed $size, int $index): array
     {
         if (!is_string($name) || !is_string($tmpName)) {
             return [
                 'entry' => null,
-                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (name/tmp_name must be strings).',
+                'error' => 'Error uploading: malformed upload entry at index ' . $index
+                    . ' (name/tmp_name must be strings).',
             ];
         }
 
@@ -437,7 +450,8 @@ class ThemeModel
         if ($parsedError === false || $parsedSize === false) {
             return [
                 'entry' => null,
-                'error' => 'Error uploading: malformed upload entry at index ' . $index . ' (error/size must be integers).',
+                'error' => 'Error uploading: malformed upload entry at index ' . $index
+                    . ' (error/size must be integers).',
             ];
         }
 
@@ -477,6 +491,3 @@ class ThemeModel
     }
 
 }
-
-
-
