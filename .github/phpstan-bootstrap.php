@@ -6,6 +6,7 @@ $rootDir = dirname(__DIR__);
 $autoloadFiles = [
     $rootDir . '/vendor/autoload.php',
     $rootDir . '/v-update-api/vendor/autoload.php',
+    $rootDir . '/v-wp-updater/vendor/autoload.php',
 ];
 foreach ($autoloadFiles as $file) {
     if (is_file($file)) {

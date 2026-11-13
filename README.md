@@ -32,8 +32,9 @@
 3. [Features](#features)
 4. [Project Structure](#project-structure)
 5. [Getting Started](#getting-started)
-6. [Roadmap](#roadmap)
-7. [License](#license)
+6. [Development](#development)
+7. [Roadmap](#roadmap)
+8. [License](#license)
 
 ---
 
@@ -198,6 +199,10 @@ Once activated, the V WordPress Plugin Updater automatically:
 Configure the plugin through the **V WordPress Updater Settings** dashboard widget. Update activity logs for hosts and API requests are available in the Update API server's `/logs` page.
 
 ---
+
+## Development
+
+The repository-root Composer and npm manifests manage shared development tools; `v-update-api/composer.json` and `v-wp-updater/composer.json` manage each component's production dependencies. Install development tools with `composer install` and `npm install` from the repository root. Run `composer test`, `composer phpcs`, or `composer phpstan` for PHP checks, and `npm run lint` for JavaScript and CSS checks. Development tooling requires PHP 8.2+ and Node.js 26+.
 
 ## API Specification
 

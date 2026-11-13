@@ -353,21 +353,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function getPhpcsCommand()
     {
-        // Determine the path to the main PHPCS file.
-        $phpcsPath = $this->getPHPCodeSnifferInstallPath();
-        if (file_exists($phpcsPath . '/bin/phpcs') === true) {
-            // PHPCS 3.x.
-            $phpcsExecutable = './bin/phpcs';
-        } else {
-            // PHPCS 2.x.
-            $phpcsExecutable = './scripts/phpcs';
-        }
-
         return vsprintf(
             '%s %s',
             array(
                 'php executable'   => $this->getPhpExecCommand(),
-                'phpcs executable' => $phpcsExecutable,
+                'phpcs executable' => './bin/phpcs',
             )
         );
     }
@@ -415,17 +405,13 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $changes = false;
         foreach ($this->installedPaths as $key => $path) {
-            // This might be a relative path as well
-            $alternativePath = realpath($this->getPHPCodeSnifferInstallPath() . \DIRECTORY_SEPARATOR . $path);
+            // Resolve relative paths to absolute using the PHPCS install path as the base
+            // to avoid potential open_basedir warnings from is_dir() on relative paths.
+            if ($this->filesystem->isAbsolutePath($path) === false) {
+                $path = realpath($this->getPHPCodeSnifferInstallPath() . \DIRECTORY_SEPARATOR . $path);
+            }
 
-            if (
-                (is_dir($path) === false || is_readable($path) === false) &&
-                (
-                    $alternativePath === false ||
-                    is_dir($alternativePath) === false ||
-                    is_readable($alternativePath) === false
-                )
-            ) {
+            if ($path === false || is_dir($path) === false || is_readable($path) === false) {
                 unset($this->installedPaths[$key]);
                 $changes = true;
             }

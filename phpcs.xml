@@ -4,6 +4,7 @@
 
   <!-- Ignore vendor directories -->
   <exclude-pattern>vendor/*</exclude-pattern>
+  <exclude-pattern>v-wp-updater/vendor/*</exclude-pattern>
   <exclude-pattern>v-update-api/vendor/*</exclude-pattern>
 
   <!-- WordPress rules for v-wp-updater -->

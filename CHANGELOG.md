@@ -5,6 +5,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Updated shared development tools to matching current releases and added working PHPStan, ESLint, and Stylelint commands for both components.
 - Completed the Update API PSR-7 request/response integration, added Guzzle PSR-7 streams and uploaded-file handling, fixed plugin/theme delete filename validation, preserved password whitespace, and rejected malformed request values without type errors.
 - Made host deletion and `HOSTS` imports transactional; rerunning a `HOSTS` import now preserves existing host keys.
 - Added seven-calendar-day retention for API activity logs through the daily cleanup job.

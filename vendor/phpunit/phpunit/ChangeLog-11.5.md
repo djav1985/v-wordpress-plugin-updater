@@ -2,6 +2,29 @@
 
 All notable changes of the PHPUnit 11.5 release series are documented in this file using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
+## [11.5.58] - 2026-11-13
+
+### Changed
+
+* Issues whose message refers to an anonymous class could not be ignored using a baseline on PHP 8.6 (as of PHP 8.6, such messages contain the full name of the anonymous class: a NUL byte followed by the file, line, and a counter)
+* Make PHAR build reproducible across filesystems (files are now added to the PHAR sorted by their path instead of in the order in which the filesystem lists them)
+
+### Removed
+
+* The library PHAR (`phpunit-library-X.Y.Z.phar`) is no longer built, it could not be loaded since PHPUnit 9.5.8
+
+## [11.5.57] - 2026-10-05
+
+### Changed
+
+* The Software Bill of Materials (SBOM) embedded in the PHAR now uses CycloneDX 1.7 and provides the NTIA minimum elements as well as the data fields that BSI TR-03183-2 (version 2.1.0) requires for logical and identified components, including component creators, original, distribution and effective licences, source code URIs, and the PHP runtime and its extensions as external components
+
+## [11.5.56] - 2026-07-06
+
+### Changed
+
+* [#6797](https://github.com/sebastianbergmann/phpunit/issues/6797): Adapt code generated for test double of interface with constructor for PHP 8.6
+
 ## [11.5.55] - 2026-02-18
 
 ### Fixed
@@ -454,6 +477,9 @@ All notable changes of the PHPUnit 11.5 release series are documented in this fi
 * [#6055](https://github.com/sebastianbergmann/phpunit/issues/6055): `assertNotContainsOnly()` (use `assertContainsNotOnlyArray()`, `assertContainsNotOnlyBool()`, `assertContainsNotOnlyCallable()`, `assertContainsNotOnlyFloat()`, `assertContainsNotOnlyInt()`, `assertContainsNotOnlyIterable()`, `assertContainsNotOnlyNumeric()`, `assertContainsNotOnlyObject()`, `assertContainsNotOnlyResource()`, `assertContainsNotOnlyClosedResource()`, `assertContainsNotOnlyScalar()`, or `assertContainsNotOnlyString()` instead)
 * [#6059](https://github.com/sebastianbergmann/phpunit/issues/6059): `containsOnly()` (use `containsOnlyArray()`, `containsOnlyBool()`, `containsOnlyCallable()`, `containsOnlyFloat()`, `containsOnlyInt()`, `containsOnlyIterable()`, `containsOnlyNumeric()`, `containsOnlyObject()`, `containsOnlyResource()`, `containsOnlyClosedResource()`, `containsOnlyScalar()`, or `containsOnlyString()` instead)
 
+[11.5.58]: https://github.com/sebastianbergmann/phpunit/compare/11.5.57...11.5.58
+[11.5.57]: https://github.com/sebastianbergmann/phpunit/compare/11.5.56...11.5.57
+[11.5.56]: https://github.com/sebastianbergmann/phpunit/compare/11.5.55...11.5.56
 [11.5.55]: https://github.com/sebastianbergmann/phpunit/compare/11.5.54...11.5.55
 [11.5.54]: https://github.com/sebastianbergmann/phpunit/compare/11.5.53...11.5.54
 [11.5.53]: https://github.com/sebastianbergmann/phpunit/compare/11.5.52...11.5.53

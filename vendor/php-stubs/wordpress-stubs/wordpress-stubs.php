@@ -699,7 +699,6 @@ namespace {
          * Flattens the results of WP_Filesystem_Base::dirlist() for iterating over.
          *
          * @since 4.9.0
-         * @access protected
          *
          * @param array  $nested_files Array of files as returned by WP_Filesystem_Base::dirlist().
          * @param string $path         Relative path to prepend to child nodes. Optional.
@@ -1027,6 +1026,7 @@ namespace {
          *
          * @since 3.0.0
          * @var callable
+         * @phpstan-var ''|callable(): void
          */
         public $admin_header_callback;
         /**
@@ -1034,6 +1034,7 @@ namespace {
          *
          * @since 3.0.0
          * @var callable
+         * @phpstan-var ''|callable(): void
          */
         public $admin_image_div_callback;
         /**
@@ -1045,6 +1046,8 @@ namespace {
          *                                           Default empty string.
          * @param callable $admin_image_div_callback Optional. Custom image div output callback.
          *                                           Default empty string.
+         * @phpstan-param ''|callable(): void $admin_header_callback
+         * @phpstan-param ''|callable(): void $admin_image_div_callback
          */
         public function __construct($admin_header_callback = '', $admin_image_div_callback = '')
         {
@@ -1146,6 +1149,7 @@ namespace {
          *
          * @since 2.1.0
          * @var callable
+         * @phpstan-var ''|callable(): void
          */
         public $admin_header_callback;
         /**
@@ -1153,6 +1157,7 @@ namespace {
          *
          * @since 3.0.0
          * @var callable
+         * @phpstan-var ''|callable(): void
          */
         public $admin_image_div_callback;
         /**
@@ -1170,6 +1175,7 @@ namespace {
          * @param callable $admin_header_callback    Administration header callback.
          * @param callable $admin_image_div_callback Optional. Custom image div output callback.
          *                                           Default empty string.
+         * @phpstan-param ''|callable(): void $admin_image_div_callback
          */
         public function __construct($admin_header_callback, $admin_image_div_callback = '')
         {
@@ -3532,10 +3538,10 @@ namespace {
          */
         protected $modes = array();
         /**
-         * Stores the value returned by ->get_column_info().
+         * Stores the value returned by ::get_column_info().
          *
          * @since 4.1.0
-         * @var array
+         * @var array|null
          */
         protected $_column_headers;
         /**
@@ -4002,7 +4008,6 @@ namespace {
          * should be provided via get_sortable_columns().
          *
          * @since 6.3.0
-         * @access public
          * @phpstan-return void
          */
         public function print_table_description()
@@ -4032,6 +4037,7 @@ namespace {
          * @since 3.1.0
          * @param string $which The location of the navigation: Either 'top' or 'bottom'.
          * @phpstan-param 'top'|'bottom' $which
+         * @phpstan-return void
          */
         protected function display_tablenav($which)
         {
@@ -4844,7 +4850,7 @@ namespace {
          * of the user who triggered the cache refresh, rather than their own.
          *
          * @since 4.8.0
-         * @deprecated 5.6.0 No longer used in core.
+         * @deprecated 5.5.2 No longer used in core.
          *
          * @param array $response_body The response which contains the events.
          * @return array The response with dates and times formatted.
@@ -4965,6 +4971,8 @@ namespace {
          * Intended to supplement the array returned by `WP_Debug_Data::debug_data()`.
          *
          * @since 5.2.0
+         * @deprecated 5.6.0 Use WP_REST_Site_Health_Controller::get_directory_sizes()
+         * @see WP_REST_Site_Health_Controller::get_directory_sizes()
          *
          * @return array The sizes of the directories, also the database size and total installation size.
          */
@@ -5977,7 +5985,7 @@ namespace {
     {
         /**
          * @since 2.5.0
-         * @var resource
+         * @var FTP\Connection|resource|false
          */
         public $link;
         /**
@@ -6296,9 +6304,11 @@ namespace {
         {
         }
         /**
-         * @param string $line
-         * @return array {
-         *     Array of file information.
+         * Parses an individual entry from the FTP LIST command output.
+         *
+         * @param string $line A line from the directory listing.
+         * @return array|string {
+         *     Array of file information. Empty string if the line could not be parsed.
          *
          *     @type string       $name        Name of the file or directory.
          *     @type string       $perms       *nix representation of permissions.
@@ -6315,7 +6325,7 @@ namespace {
          *     @type array|false  $files       If a directory and `$recursive` is true, contains another array of files.
          *                                     False if unable to list directory contents.
          * }
-         * @phpstan-return array{
+         * @phpstan-return string|array{
          *   name: string,
          *   perms: string,
          *   permsn: string,
@@ -8572,7 +8582,6 @@ namespace {
          * installed plugins.
          *
          * @since 4.9.0
-         * @access protected
          *
          * @return array
          */
@@ -9120,7 +9129,6 @@ namespace {
          * Displays a formats drop-down for filtering items.
          *
          * @since 5.2.0
-         * @access protected
          *
          * @param string $post_type Post type slug.
          * @phpstan-return void
@@ -10129,6 +10137,8 @@ namespace {
         {
         }
         /**
+         * @since 3.3.0
+         *
          * @global array $wp_meta_boxes Global meta box state.
          *
          * @return bool
@@ -10729,6 +10739,18 @@ namespace {
         {
         }
         /**
+         * Tests whether search engine indexing is enabled.
+         *
+         * Surfaces as “good” if `blog_public === 1`, or “recommended” if `blog_public === 0`.
+         *
+         * @since 6.9.0
+         *
+         * @return array The test results.
+         */
+        public function get_test_search_engine_visibility()
+        {
+        }
+        /**
          * Returns a set of tests that belong to the site status page.
          *
          * Each site status test is defined here, they may be `direct` tests, that run on page load, or `async` tests
@@ -11012,10 +11034,10 @@ namespace {
          *
          * @see WP_List_Table::__construct() for more information on default arguments.
          *
-         * @global string $post_type Global post type.
-         * @global string $taxonomy  Global taxonomy.
-         * @global string $action
-         * @global object $tax
+         * @global string      $post_type Global post type.
+         * @global string      $taxonomy  Global taxonomy.
+         * @global string      $action
+         * @global WP_Taxonomy $tax       Global taxonomy object.
          *
          * @param array $args An associative array of arguments.
          */
@@ -11877,6 +11899,7 @@ namespace {
         }
         /**
          * @param int|null $variable
+         * @param-out int  $variable
          * @param int      $increment
          *
          * @return bool
@@ -12029,7 +12052,7 @@ namespace {
         {
         }
         /**
-         * @param int $number
+         * @param int|string $number
          *
          * @return string
          */
@@ -12773,7 +12796,7 @@ namespace {
          * @var string
          */
         protected $startup_warning = '';
-        const VERSION = '1.9.23-202310190849';
+        const VERSION = '1.9.24-202509040923';
         const FREAD_BUFFER_SIZE = 32768;
         const ATTACHMENTS_NONE = \false;
         const ATTACHMENTS_INLINE = \true;
@@ -15272,6 +15295,49 @@ namespace {
 }
 namespace PHPMailer\PHPMailer {
     /**
+     * Configure PHPMailer with DSN string.
+     *
+     * @see https://en.wikipedia.org/wiki/Data_source_name
+     *
+     * @author Oleg Voronkovich <oleg-voronkovich@yandex.ru>
+     */
+    class DSNConfigurator
+    {
+        /**
+         * Create new PHPMailer instance configured by DSN.
+         *
+         * @param string $dsn        DSN
+         * @param bool   $exceptions Should we throw external exceptions?
+         *
+         * @return PHPMailer
+         */
+        public static function mailer($dsn, $exceptions = null)
+        {
+        }
+        /**
+         * Configure PHPMailer instance with DSN string.
+         *
+         * @param PHPMailer $mailer PHPMailer instance
+         * @param string    $dsn    DSN
+         *
+         * @return PHPMailer
+         */
+        public function configure(\PHPMailer\PHPMailer\PHPMailer $mailer, $dsn)
+        {
+        }
+        /**
+         * Parse a URL.
+         * Wrapper for the built-in parse_url function to work around a bug in PHP 5.5.
+         *
+         * @param string $url URL
+         *
+         * @return array|false
+         */
+        protected function parseUrl($url)
+        {
+        }
+    }
+    /**
      * PHPMailer exception handler.
      *
      * @author Marcus Bointon <phpmailer@synchromedia.co.uk>
@@ -15284,6 +15350,108 @@ namespace PHPMailer\PHPMailer {
          * @return string
          */
         public function errorMessage()
+        {
+        }
+    }
+    /**
+     * OAuthTokenProvider - OAuth2 token provider interface.
+     * Provides base64 encoded OAuth2 auth strings for SMTP authentication.
+     *
+     * @see     OAuth
+     * @see     SMTP::authenticate()
+     *
+     * @author  Peter Scopes (pdscopes)
+     * @author  Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+     */
+    interface OAuthTokenProvider
+    {
+        /**
+         * Generate a base64-encoded OAuth token ensuring that the access token has not expired.
+         * The string to be base 64 encoded should be in the form:
+         * "user=<user_email_address>\001auth=Bearer <access_token>\001\001"
+         *
+         * @return string
+         */
+        public function getOauth64();
+    }
+    /**
+     * OAuth - OAuth2 authentication wrapper class.
+     * Uses the oauth2-client package from the League of Extraordinary Packages.
+     *
+     * @see     https://oauth2-client.thephpleague.com
+     *
+     * @author  Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+     */
+    class OAuth implements \PHPMailer\PHPMailer\OAuthTokenProvider
+    {
+        /**
+         * An instance of the League OAuth Client Provider.
+         *
+         * @var AbstractProvider
+         */
+        protected $provider;
+        /**
+         * The current OAuth access token.
+         *
+         * @var AccessToken
+         */
+        protected $oauthToken;
+        /**
+         * The user's email address, usually used as the login ID
+         * and also the from address when sending email.
+         *
+         * @var string
+         */
+        protected $oauthUserEmail = '';
+        /**
+         * The client secret, generated in the app definition of the service you're connecting to.
+         *
+         * @var string
+         */
+        protected $oauthClientSecret = '';
+        /**
+         * The client ID, generated in the app definition of the service you're connecting to.
+         *
+         * @var string
+         */
+        protected $oauthClientId = '';
+        /**
+         * The refresh token, used to obtain new AccessTokens.
+         *
+         * @var string
+         */
+        protected $oauthRefreshToken = '';
+        /**
+         * OAuth constructor.
+         *
+         * @param array $options Associative array containing
+         *                       `provider`, `userName`, `clientSecret`, `clientId` and `refreshToken` elements
+         */
+        public function __construct($options)
+        {
+        }
+        /**
+         * Get a new RefreshToken.
+         *
+         * @return RefreshToken
+         */
+        protected function getGrant()
+        {
+        }
+        /**
+         * Get a new AccessToken.
+         *
+         * @return AccessToken
+         */
+        protected function getToken()
+        {
+        }
+        /**
+         * Generate a base64-encoded OAuth token.
+         *
+         * @return string
+         */
+        public function getOauth64()
         {
         }
     }
@@ -15760,9 +15928,9 @@ namespace PHPMailer\PHPMailer {
          *   string  $body          the email body
          *   string  $from          email address of sender
          *   string  $extra         extra information of possible use
-         *                          "smtp_transaction_id' => last smtp transaction id
+         *                          'smtp_transaction_id' => last smtp transaction id
          *
-         * @var string
+         * @var callable|callable-string
          */
         public $action_function = '';
         /**
@@ -15776,6 +15944,10 @@ namespace PHPMailer\PHPMailer {
          * Which validator to use by default when validating email addresses.
          * May be a callable to inject your own validator, but there are several built-in validators.
          * The default validator uses PHP's FILTER_VALIDATE_EMAIL filter_var option.
+         *
+         * If CharSet is UTF8, the validator is left at the default value,
+         * and you send to addresses that use non-ASCII local parts, then
+         * PHPMailer automatically changes to the 'eai' validator.
          *
          * @see PHPMailer::validateAddress()
          *
@@ -15848,6 +16020,13 @@ namespace PHPMailer\PHPMailer {
          */
         protected $ReplyToQueue = [];
         /**
+         * Whether the need for SMTPUTF8 has been detected. Set by
+         * preSend() if necessary.
+         *
+         * @var bool
+         */
+        public $UseSMTPUTF8 = false;
+        /**
          * The array of attachments.
          *
          * @var array
@@ -15882,7 +16061,7 @@ namespace PHPMailer\PHPMailer {
          *
          * @var array
          */
-        protected $language = [];
+        protected static $language = [];
         /**
          * The number of errors encountered.
          *
@@ -15931,7 +16110,7 @@ namespace PHPMailer\PHPMailer {
          *
          * @var string
          */
-        const VERSION = '6.9.3';
+        const VERSION = '7.0.0';
         /**
          * Error severity: message only, continue processing.
          *
@@ -16154,12 +16333,26 @@ namespace PHPMailer\PHPMailer {
          * @see https://www.andrew.cmu.edu/user/agreen1/testing/mrbs/web/Mail/RFC822.php A more careful implementation
          *
          * @param string $addrstr The address list string
-         * @param bool   $useimap Whether to use the IMAP extension to parse the list
+         * @param null   $useimap Deprecated argument since 6.11.0.
          * @param string $charset The charset to use when decoding the address list string.
          *
          * @return array
          */
-        public static function parseAddresses($addrstr, $useimap = true, $charset = self::CHARSET_ISO88591)
+        public static function parseAddresses($addrstr, $useimap = null, $charset = self::CHARSET_ISO88591)
+        {
+        }
+        /**
+         * Parse a string containing one or more RFC822-style comma-separated email addresses
+         * with the form "display name <address>" into an array of name/address pairs.
+         * Uses a simpler parser that does not require the IMAP extension but doesnt support
+         * the full RFC822 spec. For full RFC822 support, use the PHP IMAP extension.
+         *
+         * @param string $addrstr The address list string
+         * @param string $charset The charset to use when decoding the address list string.
+         *
+         * @return array
+         */
+        protected static function parseSimplerAddresses($addrstr, $charset)
         {
         }
         /**
@@ -16195,6 +16388,7 @@ namespace PHPMailer\PHPMailer {
          * * `pcre` Use old PCRE implementation;
          * * `php` Use PHP built-in FILTER_VALIDATE_EMAIL;
          * * `html5` Use the pattern given by the HTML5 spec for 'email' type form input elements.
+         * * `eai` Use a pattern similar to the HTML5 spec for 'email' and to firefox, extended to support EAI (RFC6530).
          * * `noregex` Don't use a regex: super fast, really dumb.
          * Alternatively you may pass in a callable to inject your own validator, for example:
          *
@@ -16424,7 +16618,7 @@ namespace PHPMailer\PHPMailer {
          *
          * @return bool Returns true if the requested language was loaded, false otherwise.
          */
-        public function setLanguage($langcode = 'en', $lang_path = '')
+        public static function setLanguage($langcode = 'en', $lang_path = '')
         {
         }
         /**
@@ -16674,7 +16868,8 @@ namespace PHPMailer\PHPMailer {
         /**
          * Encode a header value (not including its label) optimally.
          * Picks shortest of Q, B, or none. Result includes folding if needed.
-         * See RFC822 definitions for phrase, comment and text positions.
+         * See RFC822 definitions for phrase, comment and text positions,
+         * and RFC2047 for inline encodings.
          *
          * @param string $str      The header value to encode
          * @param string $position What context the string will be used in
@@ -16682,6 +16877,18 @@ namespace PHPMailer\PHPMailer {
          * @return string
          */
         public function encodeHeader($str, $position = 'text')
+        {
+        }
+        /**
+         * Decode an RFC2047-encoded header value
+         * Attempts multiple strategies so it works even when the mbstring extension is disabled.
+         *
+         * @param string $value   The header value to decode
+         * @param string $charset The target charset to convert to, defaults to ISO-8859-1 for BC
+         *
+         * @return string The decoded header value
+         */
+        public static function decodeHeader($value, $charset = self::CHARSET_ISO88591)
         {
         }
         /**
@@ -16966,13 +17173,37 @@ namespace PHPMailer\PHPMailer {
         {
         }
         /**
+         * Check whether the supplied address uses Unicode in the local part.
+         *
+         * @return bool
+         */
+        protected function addressHasUnicodeLocalPart($address)
+        {
+        }
+        /**
+         * Check whether any of the supplied addresses use Unicode in the local part.
+         *
+         * @return bool
+         */
+        protected function anyAddressHasUnicodeLocalPart($addresses)
+        {
+        }
+        /**
+         * Check whether the message requires SMTPUTF8 based on what's known so far.
+         *
+         * @return bool
+         */
+        public function needsSMTPUTF8()
+        {
+        }
+        /**
          * Get an error message in the current language.
          *
          * @param string $key
          *
          * @return string
          */
-        protected function lang($key)
+        protected static function lang($key)
         {
         }
         /**
@@ -17343,6 +17574,249 @@ namespace PHPMailer\PHPMailer {
         }
     }
     /**
+     * PHPMailer POP-Before-SMTP Authentication Class.
+     * Specifically for PHPMailer to use for RFC1939 POP-before-SMTP authentication.
+     * 1) This class does not support APOP authentication.
+     * 2) Opening and closing lots of POP3 connections can be quite slow. If you need
+     *   to send a batch of emails then just perform the authentication once at the start,
+     *   and then loop through your mail sending script. Providing this process doesn't
+     *   take longer than the verification period lasts on your POP3 server, you should be fine.
+     * 3) This is really ancient technology; you should only need to use it to talk to very old systems.
+     * 4) This POP3 class is deliberately lightweight and incomplete, implementing just
+     *   enough to do authentication.
+     *   If you want a more complete class there are other POP3 classes for PHP available.
+     *
+     * @author Richard Davey (original author) <rich@corephp.co.uk>
+     * @author Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+     * @author Jim Jagielski (jimjag) <jimjag@gmail.com>
+     * @author Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
+     */
+    class POP3
+    {
+        /**
+         * The POP3 PHPMailer Version number.
+         *
+         * @var string
+         */
+        const VERSION = '7.0.0';
+        /**
+         * Default POP3 port number.
+         *
+         * @var int
+         */
+        const DEFAULT_PORT = 110;
+        /**
+         * Default timeout in seconds.
+         *
+         * @var int
+         */
+        const DEFAULT_TIMEOUT = 30;
+        /**
+         * POP3 class debug output mode.
+         * Debug output level.
+         * Options:
+         * @see POP3::DEBUG_OFF: No output
+         * @see POP3::DEBUG_SERVER: Server messages, connection/server errors
+         * @see POP3::DEBUG_CLIENT: Client and Server messages, connection/server errors
+         *
+         * @var int
+         */
+        public $do_debug = self::DEBUG_OFF;
+        /**
+         * POP3 mail server hostname.
+         *
+         * @var string
+         */
+        public $host;
+        /**
+         * POP3 port number.
+         *
+         * @var int
+         */
+        public $port;
+        /**
+         * POP3 Timeout Value in seconds.
+         *
+         * @var int
+         */
+        public $tval;
+        /**
+         * POP3 username.
+         *
+         * @var string
+         */
+        public $username;
+        /**
+         * POP3 password.
+         *
+         * @var string
+         */
+        public $password;
+        /**
+         * Resource handle for the POP3 connection socket.
+         *
+         * @var resource
+         */
+        protected $pop_conn;
+        /**
+         * Are we connected?
+         *
+         * @var bool
+         */
+        protected $connected = false;
+        /**
+         * Error container.
+         *
+         * @var array
+         */
+        protected $errors = [];
+        /**
+         * Line break constant.
+         */
+        const LE = "\r\n";
+        /**
+         * Debug level for no output.
+         *
+         * @var int
+         */
+        const DEBUG_OFF = 0;
+        /**
+         * Debug level to show server -> client messages
+         * also shows clients connection errors or errors from server
+         *
+         * @var int
+         */
+        const DEBUG_SERVER = 1;
+        /**
+         * Debug level to show client -> server and server -> client messages.
+         *
+         * @var int
+         */
+        const DEBUG_CLIENT = 2;
+        /**
+         * Simple static wrapper for all-in-one POP before SMTP.
+         *
+         * @param string   $host        The hostname to connect to
+         * @param int|bool $port        The port number to connect to
+         * @param int|bool $timeout     The timeout value
+         * @param string   $username
+         * @param string   $password
+         * @param int      $debug_level
+         *
+         * @return bool
+         */
+        public static function popBeforeSmtp($host, $port = false, $timeout = false, $username = '', $password = '', $debug_level = 0)
+        {
+        }
+        /**
+         * Authenticate with a POP3 server.
+         * A connect, login, disconnect sequence
+         * appropriate for POP-before SMTP authorisation.
+         *
+         * @param string   $host        The hostname to connect to
+         * @param int|bool $port        The port number to connect to
+         * @param int|bool $timeout     The timeout value
+         * @param string   $username
+         * @param string   $password
+         * @param int      $debug_level
+         *
+         * @return bool
+         */
+        public function authorise($host, $port = false, $timeout = false, $username = '', $password = '', $debug_level = 0)
+        {
+        }
+        /**
+         * Connect to a POP3 server.
+         *
+         * @param string   $host
+         * @param int|bool $port
+         * @param int      $tval
+         *
+         * @return bool
+         */
+        public function connect($host, $port = false, $tval = 30)
+        {
+        }
+        /**
+         * Log in to the POP3 server.
+         * Does not support APOP (RFC 2828, 4949).
+         *
+         * @param string $username
+         * @param string $password
+         *
+         * @return bool
+         */
+        public function login($username = '', $password = '')
+        {
+        }
+        /**
+         * Disconnect from the POP3 server.
+         * @phpstan-return void
+         */
+        public function disconnect()
+        {
+        }
+        /**
+         * Get a response from the POP3 server.
+         *
+         * @param int $size The maximum number of bytes to retrieve
+         *
+         * @return string
+         */
+        protected function getResponse($size = 128)
+        {
+        }
+        /**
+         * Send raw data to the POP3 server.
+         *
+         * @param string $string
+         *
+         * @return int
+         */
+        protected function sendString($string)
+        {
+        }
+        /**
+         * Checks the POP3 server response.
+         * Looks for for +OK or -ERR.
+         *
+         * @param string $string
+         *
+         * @return bool
+         */
+        protected function checkResponse($string)
+        {
+        }
+        /**
+         * Add an error to the internal error store.
+         * Also display debug output if it's enabled.
+         *
+         * @param string $error
+         */
+        protected function setError($error)
+        {
+        }
+        /**
+         * Get an array of error messages, if any.
+         *
+         * @return array
+         */
+        public function getErrors()
+        {
+        }
+        /**
+         * POP3 connection error handler.
+         *
+         * @param int    $errno
+         * @param string $errstr
+         * @param string $errfile
+         * @param int    $errline
+         */
+        protected function catchWarning($errno, $errstr, $errfile, $errline)
+        {
+        }
+    }
+    /**
      * PHPMailer RFC821 SMTP email transport class.
      * Implements RFC 821 SMTP commands and provides some utility methods for sending mail to an SMTP server.
      *
@@ -17356,7 +17830,7 @@ namespace PHPMailer\PHPMailer {
          *
          * @var string
          */
-        const VERSION = '6.9.3';
+        const VERSION = '7.0.0';
         /**
          * SMTP line break constant.
          *
@@ -17467,6 +17941,14 @@ namespace PHPMailer\PHPMailer {
          */
         public $do_verp = false;
         /**
+         * Whether to use SMTPUTF8.
+         *
+         * @see https://www.rfc-editor.org/rfc/rfc6531
+         *
+         * @var bool
+         */
+        public $do_smtputf8 = false;
+        /**
          * The timeout value for connection, in seconds.
          * Default of 5 minutes (300sec) is from RFC2821 section 4.5.3.2.
          * This needs to be quite high to function correctly with hosts using greetdelay as an anti-spam measure.
@@ -17490,7 +17972,7 @@ namespace PHPMailer\PHPMailer {
          *
          * @var string[]
          */
-        protected $smtp_transaction_id_patterns = ['exim' => '/[\d]{3} OK id=(.*)/', 'sendmail' => '/[\d]{3} 2\.0\.0 (.*) Message/', 'postfix' => '/[\d]{3} 2\.0\.0 Ok: queued as (.*)/', 'Microsoft_ESMTP' => '/[0-9]{3} 2\.[\d]\.0 (.*)@(?:.*) Queued mail for delivery/', 'Amazon_SES' => '/[\d]{3} Ok (.*)/', 'SendGrid' => '/[\d]{3} Ok: queued as (.*)/', 'CampaignMonitor' => '/[\d]{3} 2\.0\.0 OK:([a-zA-Z\d]{48})/', 'Haraka' => '/[\d]{3} Message Queued \((.*)\)/', 'ZoneMTA' => '/[\d]{3} Message queued as (.*)/', 'Mailjet' => '/[\d]{3} OK queued as (.*)/'];
+        protected $smtp_transaction_id_patterns = ['exim' => '/[\d]{3} OK id=(.*)/', 'sendmail' => '/[\d]{3} 2\.0\.0 (.*) Message/', 'postfix' => '/[\d]{3} 2\.0\.0 Ok: queued as (.*)/', 'Microsoft_ESMTP' => '/[0-9]{3} 2\.[\d]\.0 (.*)@(?:.*) Queued mail for delivery/', 'Amazon_SES' => '/[\d]{3} Ok (.*)/', 'SendGrid' => '/[\d]{3} Ok: queued as (.*)/', 'CampaignMonitor' => '/[\d]{3} 2\.0\.0 OK:([a-zA-Z\d]{48})/', 'Haraka' => '/[\d]{3} Message Queued \((.*)\)/', 'ZoneMTA' => '/[\d]{3} Message queued as (.*)/', 'Mailjet' => '/[\d]{3} OK queued as (.*)/', 'Gsmtp' => '/[\d]{3} 2\.0\.0 OK (.*) - gsmtp/'];
         /**
          * Allowed SMTP XCLIENT attributes.
          * Must be allowed by the SMTP server. EHLO response is not checked.
@@ -17695,7 +18177,15 @@ namespace PHPMailer\PHPMailer {
          * $from. Returns true if successful or false otherwise. If True
          * the mail transaction is started and then one or more recipient
          * commands may be called followed by a data command.
-         * Implements RFC 821: MAIL <SP> FROM:<reverse-path> <CRLF>.
+         * Implements RFC 821: MAIL <SP> FROM:<reverse-path> <CRLF> and
+         * two extensions, namely XVERP and SMTPUTF8.
+         *
+         * The server's EHLO response is not checked. If use of either
+         * extensions is enabled even though the server does not support
+         * that, mail submission will fail.
+         *
+         * XVERP is documented at https://www.postfix.org/VERP_README.html
+         * and SMTPUTF8 is specified in RFC 6531.
          *
          * @param string $from Source address of this message
          *
@@ -17890,6 +18380,22 @@ namespace PHPMailer\PHPMailer {
          * @return bool
          */
         public function getVerp()
+        {
+        }
+        /**
+         * Enable or disable use of SMTPUTF8.
+         *
+         * @param bool $enabled
+         */
+        public function setSMTPUTF8($enabled = false)
+        {
+        }
+        /**
+         * Get SMTPUTF8 use.
+         *
+         * @return bool
+         */
+        public function getSMTPUTF8()
         {
         }
         /**
@@ -21192,9 +21698,6 @@ namespace WpOrg\Requests\Utility {
 namespace {
     /**
      * Autoloader class
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class SimplePie_Autoloader
     {
@@ -21219,9 +21722,6 @@ namespace {
 namespace SimplePie {
     /**
      * SimplePie
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class SimplePie
     {
@@ -21232,7 +21732,7 @@ namespace SimplePie {
         /**
          * SimplePie Version
          */
-        public const VERSION = '1.8.0';
+        public const VERSION = '1.9.0';
         /**
          * SimplePie Website URL
          */
@@ -21506,15 +22006,19 @@ namespace SimplePie {
          */
         public const FILE_SOURCE_FILE_GET_CONTENTS = 16;
         /**
-         * @var array Raw data
+         * @internal Default value of the HTTP Accept header when fetching/locating feeds
+         */
+        public const DEFAULT_HTTP_ACCEPT_HEADER = 'application/atom+xml, application/rss+xml, application/rdf+xml;q=0.9, application/xml;q=0.8, text/xml;q=0.8, text/html;q=0.7, unknown/unknown;q=0.1, application/unknown;q=0.1, */*;q=0.1';
+        /**
+         * @var array<string, mixed> Raw data
          * @access private
          */
         public $data = [];
         /**
-         * @var mixed Error string
+         * @var string|string[]|null Error string (or array when multiple feeds are initialized)
          * @access private
          */
-        public $error;
+        public $error = null;
         /**
          * @var int HTTP status code
          * @see SimplePie::status_code()
@@ -21522,7 +22026,7 @@ namespace SimplePie {
          */
         public $status_code = 0;
         /**
-         * @var object Instance of \SimplePie\Sanitize (or other class)
+         * @var Sanitize instance of Sanitize class
          * @see SimplePie::set_sanitize_class()
          * @access private
          */
@@ -21540,19 +22044,13 @@ namespace SimplePie {
          */
         public $feed_url;
         /**
-         * @var string Original feed URL, or new feed URL iff HTTP 301 Moved Permanently
+         * @var ?string Original feed URL, or new feed URL iff HTTP 301 Moved Permanently
          * @see SimplePie::subscribe_url()
          * @access private
          */
         public $permanent_url = null;
         /**
-         * @var object Instance of \SimplePie\File to use as a feed
-         * @see SimplePie::set_file()
-         * @access private
-         */
-        public $file;
-        /**
-         * @var string Raw feed data
+         * @var string|false Raw feed data
          * @see SimplePie::set_raw_data()
          * @access private
          */
@@ -21564,7 +22062,7 @@ namespace SimplePie {
          */
         public $timeout = 10;
         /**
-         * @var array Custom curl options
+         * @var array<int, mixed> Custom curl options
          * @see SimplePie::set_curl_options()
          * @access private
          */
@@ -21609,7 +22107,7 @@ namespace SimplePie {
          */
         public $cache_location = './cache';
         /**
-         * @var string Function that creates the cache filename
+         * @var string&(callable(string): string) Function that creates the cache filename
          * @see SimplePie::set_cache_name_function()
          * @access private
          */
@@ -21628,7 +22126,7 @@ namespace SimplePie {
          */
         public $input_encoding = false;
         /**
-         * @var int Feed Autodiscovery Level
+         * @var self::LOCATOR_* Feed Autodiscovery Level
          * @see SimplePie::set_autodiscovery_level()
          * @access private
          */
@@ -21636,7 +22134,7 @@ namespace SimplePie {
         /**
          * Class registry object
          *
-         * @var \SimplePie\Registry
+         * @var Registry
          */
         public $registry;
         /**
@@ -21646,7 +22144,7 @@ namespace SimplePie {
          */
         public $max_checked_feeds = 10;
         /**
-         * @var array All the feeds found during the autodiscovery process
+         * @var array<Response>|null All the feeds found during the autodiscovery process
          * @see SimplePie::get_all_discovered_feeds()
          * @access private
          */
@@ -21658,24 +22156,24 @@ namespace SimplePie {
          */
         public $image_handler = '';
         /**
-         * @var array Stores the URLs when multiple feeds are being initialized.
+         * @var array<string> Stores the URLs when multiple feeds are being initialized.
          * @see SimplePie::set_feed_url()
          * @access private
          */
         public $multifeed_url = [];
         /**
-         * @var array Stores SimplePie objects when multiple feeds initialized.
+         * @var array<int, static> Stores SimplePie objects when multiple feeds initialized.
          * @access private
          */
         public $multifeed_objects = [];
         /**
-         * @var array Stores the get_object_vars() array for use with multifeeds.
+         * @var array<mixed> Stores the get_object_vars() array for use with multifeeds.
          * @see SimplePie::set_feed_url()
          * @access private
          */
         public $config_settings = null;
         /**
-         * @var integer Stores the number of items to return per-feed with multifeeds.
+         * @var int Stores the number of items to return per-feed with multifeeds.
          * @see SimplePie::set_item_limit()
          * @access private
          */
@@ -21686,25 +22184,25 @@ namespace SimplePie {
          */
         public $check_modified = false;
         /**
-         * @var array Stores the default attributes to be stripped by strip_attributes().
+         * @var array<string> Stores the default attributes to be stripped by strip_attributes().
          * @see SimplePie::strip_attributes()
          * @access private
          */
         public $strip_attributes = ['bgsound', 'class', 'expr', 'id', 'style', 'onclick', 'onerror', 'onfinish', 'onmouseover', 'onmouseout', 'onfocus', 'onblur', 'lowsrc', 'dynsrc'];
         /**
-         * @var array Stores the default attributes to add to different tags by add_attributes().
+         * @var array<string, array<string, string>> Stores the default attributes to add to different tags by add_attributes().
          * @see SimplePie::add_attributes()
          * @access private
          */
         public $add_attributes = ['audio' => ['preload' => 'none'], 'iframe' => ['sandbox' => 'allow-scripts allow-same-origin'], 'video' => ['preload' => 'none']];
         /**
-         * @var array Stores the default tags to be stripped by strip_htmltags().
+         * @var array<string> Stores the default tags to be stripped by strip_htmltags().
          * @see SimplePie::strip_htmltags()
          * @access private
          */
         public $strip_htmltags = ['base', 'blink', 'body', 'doctype', 'embed', 'font', 'form', 'frame', 'frameset', 'html', 'iframe', 'input', 'marquee', 'meta', 'noscript', 'object', 'param', 'script', 'style'];
         /**
-         * @var array Stores the default attributes to be renamed by rename_attributes().
+         * @var string[]|string Stores the default attributes to be renamed by rename_attributes().
          * @see SimplePie::rename_attributes()
          * @access private
          */
@@ -21733,12 +22231,14 @@ namespace SimplePie {
         }
         /**
          * Used for converting object to a string
+         * @return string
          */
         public function __toString()
         {
         }
         /**
          * Remove items that link back to this before destroying this object
+         * @return void
          */
         public function __destruct()
         {
@@ -21751,8 +22251,9 @@ namespace SimplePie {
          *
          * @since 1.1
          * @param bool $enable Force the given data/URL to be treated as a feed
+         * @return void
          */
-        public function force_feed($enable = false)
+        public function force_feed(bool $enable = false)
         {
         }
         /**
@@ -21762,24 +22263,27 @@ namespace SimplePie {
          * website you want to try to use auto-discovery on. This takes priority
          * over any set raw data.
          *
-         * You can set multiple feeds to mash together by passing an array instead
+         * Deprecated since 1.9.0: You can set multiple feeds to mash together by passing an array instead
          * of a string for the $url. Remember that with each additional feed comes
          * additional processing and resources.
          *
          * @since 1.0 Preview Release
          * @see set_raw_data()
-         * @param string|array $url This is the URL (or array of URLs) that you want to parse.
+         * @param string|string[] $url This is the URL (or (deprecated) array of URLs) that you want to parse.
+         * @return void
          */
         public function set_feed_url($url)
         {
         }
         /**
-         * Set an instance of {@see \SimplePie\File} to use as a feed
+         * Set an instance of {@see File} to use as a feed
          *
-         * @param \SimplePie\File &$file
+         * @deprecated since SimplePie 1.9.0, use \SimplePie\SimplePie::set_http_client() or \SimplePie\SimplePie::set_raw_data() instead.
+         *
+         * @param File &$file
          * @return bool True on success, false on failure
          */
-        public function set_file(&$file)
+        public function set_file(\SimplePie\File &$file)
         {
         }
         /**
@@ -21794,8 +22298,18 @@ namespace SimplePie {
          * @since 1.0 Beta 3
          * @param string $data RSS or Atom data as a string.
          * @see set_feed_url()
+         * @return void
          */
-        public function set_raw_data($data)
+        public function set_raw_data(string $data)
+        {
+        }
+        /**
+         * Set a PSR-18 client and PSR-17 factories
+         *
+         * Allows you to use your own HTTP client implementations.
+         * This will become required with SimplePie 2.0.0.
+         */
+        final public function set_http_client(\Psr\Http\Client\ClientInterface $http_client, \Psr\Http\Message\RequestFactoryInterface $request_factory, \Psr\Http\Message\UriFactoryInterface $uri_factory): void
         {
         }
         /**
@@ -21806,8 +22320,9 @@ namespace SimplePie {
          *
          * @since 1.0 Beta 3
          * @param int $timeout The maximum number of seconds to spend waiting to retrieve a feed.
+         * @return void
          */
-        public function set_timeout($timeout = 10)
+        public function set_timeout(int $timeout = 10)
         {
         }
         /**
@@ -21816,7 +22331,8 @@ namespace SimplePie {
          * This allows you to change default curl options
          *
          * @since 1.0 Beta 3
-         * @param array $curl_options Curl options to add to default settings
+         * @param array<int, mixed> $curl_options Curl options to add to default settings
+         * @return void
          */
         public function set_curl_options(array $curl_options = [])
         {
@@ -21826,8 +22342,9 @@ namespace SimplePie {
          *
          * @since 1.0 Beta 3
          * @param bool $enable Force fsockopen() to be used
+         * @return void
          */
-        public function force_fsockopen($enable = false)
+        public function force_fsockopen(bool $enable = false)
         {
         }
         /**
@@ -21838,14 +22355,15 @@ namespace SimplePie {
          *
          * @since 1.0 Preview Release
          * @param bool $enable Enable caching
+         * @return void
          */
-        public function enable_cache($enable = true)
+        public function enable_cache(bool $enable = true)
         {
         }
         /**
          * Set a PSR-16 implementation as cache
          *
-         * @param CacheInterface $psr16cache The PSR-16 cache implementation
+         * @param CacheInterface $cache The PSR-16 cache implementation
          *
          * @return void
          */
@@ -21863,8 +22381,9 @@ namespace SimplePie {
          * @deprecated since SimplePie 1.8.0, expired cache will not be used anymore.
          *
          * @param bool $enable Force use of cache on fail.
+         * @return void
          */
-        public function force_cache_fallback($enable = false)
+        public function force_cache_fallback(bool $enable = false)
         {
         }
         /**
@@ -21872,8 +22391,9 @@ namespace SimplePie {
          * cached
          *
          * @param int $seconds The feed content cache duration
+         * @return void
          */
-        public function set_cache_duration($seconds = 3600)
+        public function set_cache_duration(int $seconds = 3600)
         {
         }
         /**
@@ -21881,18 +22401,20 @@ namespace SimplePie {
          * be cached
          *
          * @param int $seconds The autodiscovered feed URL cache duration.
+         * @return void
          */
-        public function set_autodiscovery_cache_duration($seconds = 604800)
+        public function set_autodiscovery_cache_duration(int $seconds = 604800)
         {
         }
         /**
          * Set the file system location where the cached files should be stored
          *
-         * @deprecated since SimplePie 1.8.0, use \SimplePie\SimplePie::set_cache() instead.
+         * @deprecated since SimplePie 1.8.0, use SimplePie::set_cache() instead.
          *
          * @param string $location The file system location.
+         * @return void
          */
-        public function set_cache_location($location = './cache')
+        public function set_cache_location(string $location = './cache')
         {
         }
         /**
@@ -21901,15 +22423,16 @@ namespace SimplePie {
          * @param string $url The URL of the feed to be cached.
          * @return string A filename (i.e. hash, without path and without extension).
          */
-        public function get_cache_filename($url)
+        public function get_cache_filename(string $url)
         {
         }
         /**
          * Set whether feed items should be sorted into reverse chronological order
          *
          * @param bool $enable Sort as reverse chronological order.
+         * @return void
          */
-        public function enable_order_by_date($enable = true)
+        public function enable_order_by_date(bool $enable = true)
         {
         }
         /**
@@ -21918,7 +22441,8 @@ namespace SimplePie {
          * This overrides the encoding reported by the feed, however it will fall
          * back to the normal encoding detection if the override fails
          *
-         * @param string $encoding Character encoding
+         * @param string|false $encoding Character encoding
+         * @return void
          */
         public function set_input_encoding($encoding = false)
         {
@@ -21926,23 +22450,23 @@ namespace SimplePie {
         /**
          * Set how much feed autodiscovery to do
          *
-         * @see \SimplePie\SimplePie::LOCATOR_NONE
-         * @see \SimplePie\SimplePie::LOCATOR_AUTODISCOVERY
-         * @see \SimplePie\SimplePie::LOCATOR_LOCAL_EXTENSION
-         * @see \SimplePie\SimplePie::LOCATOR_LOCAL_BODY
-         * @see \SimplePie\SimplePie::LOCATOR_REMOTE_EXTENSION
-         * @see \SimplePie\SimplePie::LOCATOR_REMOTE_BODY
-         * @see \SimplePie\SimplePie::LOCATOR_ALL
-         * @param int $level Feed Autodiscovery Level (level can be a combination of the above constants, see bitwise OR operator)
+         * @see self::LOCATOR_NONE
+         * @see self::LOCATOR_AUTODISCOVERY
+         * @see self::LOCATOR_LOCAL_EXTENSION
+         * @see self::LOCATOR_LOCAL_BODY
+         * @see self::LOCATOR_REMOTE_EXTENSION
+         * @see self::LOCATOR_REMOTE_BODY
+         * @see self::LOCATOR_ALL
+         * @param self::LOCATOR_* $level Feed Autodiscovery Level (level can be a combination of the above constants, see bitwise OR operator)
+         * @return void
          */
-        public function set_autodiscovery_level($level = self::LOCATOR_ALL)
+        public function set_autodiscovery_level(int $level = self::LOCATOR_ALL)
         {
         }
         /**
          * Get the class registry
          *
          * Use this to override SimplePie's default classes
-         * @see \SimplePie\Registry
          *
          * @return Registry
          */
@@ -21954,11 +22478,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see set_cache()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Cache> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_cache_class($class = \SimplePie\Cache::class)
+        public function set_cache_class(string $class = \SimplePie\Cache::class)
         {
         }
         /**
@@ -21966,11 +22490,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Locator> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_locator_class($class = \SimplePie\Locator::class)
+        public function set_locator_class(string $class = \SimplePie\Locator::class)
         {
         }
         /**
@@ -21978,11 +22502,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Parser> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_parser_class($class = \SimplePie\Parser::class)
+        public function set_parser_class(string $class = \SimplePie\Parser::class)
         {
         }
         /**
@@ -21990,11 +22514,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<File> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_file_class($class = \SimplePie\File::class)
+        public function set_file_class(string $class = \SimplePie\File::class)
         {
         }
         /**
@@ -22002,11 +22526,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Sanitize> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_sanitize_class($class = \SimplePie\Sanitize::class)
+        public function set_sanitize_class(string $class = \SimplePie\Sanitize::class)
         {
         }
         /**
@@ -22014,11 +22538,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Item> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_item_class($class = \SimplePie\Item::class)
+        public function set_item_class(string $class = \SimplePie\Item::class)
         {
         }
         /**
@@ -22026,11 +22550,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Author> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_author_class($class = \SimplePie\Author::class)
+        public function set_author_class(string $class = \SimplePie\Author::class)
         {
         }
         /**
@@ -22038,11 +22562,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Category> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_category_class($class = \SimplePie\Category::class)
+        public function set_category_class(string $class = \SimplePie\Category::class)
         {
         }
         /**
@@ -22050,11 +22574,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Enclosure> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_enclosure_class($class = \SimplePie\Enclosure::class)
+        public function set_enclosure_class(string $class = \SimplePie\Enclosure::class)
         {
         }
         /**
@@ -22062,11 +22586,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Caption> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_caption_class($class = \SimplePie\Caption::class)
+        public function set_caption_class(string $class = \SimplePie\Caption::class)
         {
         }
         /**
@@ -22074,11 +22598,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Copyright> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_copyright_class($class = \SimplePie\Copyright::class)
+        public function set_copyright_class(string $class = \SimplePie\Copyright::class)
         {
         }
         /**
@@ -22086,11 +22610,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Credit> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_credit_class($class = \SimplePie\Credit::class)
+        public function set_credit_class(string $class = \SimplePie\Credit::class)
         {
         }
         /**
@@ -22098,11 +22622,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Rating> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_rating_class($class = \SimplePie\Rating::class)
+        public function set_rating_class(string $class = \SimplePie\Rating::class)
         {
         }
         /**
@@ -22110,11 +22634,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Restriction> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_restriction_class($class = \SimplePie\Restriction::class)
+        public function set_restriction_class(string $class = \SimplePie\Restriction::class)
         {
         }
         /**
@@ -22122,11 +22646,11 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Sniffer> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_content_type_sniffer_class($class = \SimplePie\Content\Type\Sniffer::class)
+        public function set_content_type_sniffer_class(string $class = \SimplePie\Content\Type\Sniffer::class)
         {
         }
         /**
@@ -22134,19 +22658,20 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.3, use {@see get_registry()} instead
          *
-         * @param string $class Name of custom class
+         * @param class-string<Source> $class Name of custom class
          *
-         * @return boolean True on success, false otherwise
+         * @return bool True on success, false otherwise
          */
-        public function set_source_class($class = \SimplePie\Source::class)
+        public function set_source_class(string $class = \SimplePie\Source::class)
         {
         }
         /**
          * Set the user agent string
          *
          * @param string $ua New user agent string.
+         * @return void
          */
-        public function set_useragent($ua = null)
+        public function set_useragent(?string $ua = null)
         {
         }
         /**
@@ -22164,9 +22689,10 @@ namespace SimplePie {
          *
          * @deprecated since SimplePie 1.8.0, use {@see set_cache_namefilter()} instead
          *
-         * @param mixed $function Callback function
+         * @param (string&(callable(string): string))|null $function Callback function
+         * @return void
          */
-        public function set_cache_name_function($function = 'md5')
+        public function set_cache_name_function(?string $function = null)
         {
         }
         /**
@@ -22176,33 +22702,57 @@ namespace SimplePie {
          * turns SimplePie into a dumb parser of feeds.
          *
          * @param bool $set Whether to set them or not
+         * @return void
          */
-        public function set_stupidly_fast($set = false)
+        public function set_stupidly_fast(bool $set = false)
         {
         }
         /**
          * Set maximum number of feeds to check with autodiscovery
          *
          * @param int $max Maximum number of feeds to check
+         * @return void
          */
-        public function set_max_checked_feeds($max = 10)
+        public function set_max_checked_feeds(int $max = 10)
         {
         }
-        public function remove_div($enable = true)
+        /**
+         * @return void
+         */
+        public function remove_div(bool $enable = true)
         {
         }
-        public function strip_htmltags($tags = '', $encode = null)
+        /**
+         * @param string[]|string|false $tags Set a list of tags to strip, or set empty string to use default tags, or false to strip nothing.
+         * @return void
+         */
+        public function strip_htmltags($tags = '', ?bool $encode = null)
         {
         }
-        public function encode_instead_of_strip($enable = true)
+        /**
+         * @return void
+         */
+        public function encode_instead_of_strip(bool $enable = true)
         {
         }
+        /**
+         * @param string[]|string $attribs
+         * @return void
+         */
         public function rename_attributes($attribs = '')
         {
         }
+        /**
+         * @param string[]|string $attribs
+         * @return void
+         */
         public function strip_attributes($attribs = '')
         {
         }
+        /**
+         * @param array<string, array<string, string>>|'' $attribs
+         * @return void
+         */
         public function add_attributes($attribs = '')
         {
         }
@@ -22227,11 +22777,15 @@ namespace SimplePie {
          * more information.
          *
          * @param string $encoding
+         * @return void
          */
-        public function set_output_encoding($encoding = 'UTF-8')
+        public function set_output_encoding(string $encoding = 'UTF-8')
         {
         }
-        public function strip_comments($strip = false)
+        /**
+         * @return void
+         */
+        public function strip_comments(bool $strip = false)
         {
         }
         /**
@@ -22243,42 +22797,47 @@ namespace SimplePie {
          * |q|@cite
          *
          * @since 1.0
-         * @param array|null $element_attribute Element/attribute key/value pairs, null for default
+         * @param array<string, string|string[]>|null $element_attribute Element/attribute key/value pairs, null for default
+         * @return void
          */
-        public function set_url_replacements($element_attribute = null)
+        public function set_url_replacements(?array $element_attribute = null)
         {
         }
         /**
          * Set the list of domains for which to force HTTPS.
-         * @see \SimplePie\Sanitize::set_https_domains()
-         * @param array List of HTTPS domains. Example array('biz', 'example.com', 'example.org', 'www.example.net').
+         * @see Sanitize::set_https_domains()
+         * @param array<string> $domains List of HTTPS domains. Example array('biz', 'example.com', 'example.org', 'www.example.net').
+         * @return void
          */
-        public function set_https_domains($domains = [])
+        public function set_https_domains(array $domains = [])
         {
         }
         /**
          * Set the handler to enable the display of cached images.
          *
-         * @param string $page Web-accessible path to the handler_image.php file.
+         * @param string|false $page Web-accessible path to the handler_image.php file.
          * @param string $qs The query string that the value should be passed to.
+         * @return void
          */
-        public function set_image_handler($page = false, $qs = 'i')
+        public function set_image_handler($page = false, string $qs = 'i')
         {
         }
         /**
          * Set the limit for items returned per-feed with multifeeds
          *
-         * @param integer $limit The maximum number of items to return.
+         * @param int $limit The maximum number of items to return.
+         * @return void
          */
-        public function set_item_limit($limit = 0)
+        public function set_item_limit(int $limit = 0)
         {
         }
         /**
          * Enable throwing exceptions
          *
-         * @param boolean $enable Should we throw exceptions, or use the old-style error property?
+         * @param bool $enable Should we throw exceptions, or use the old-style error property?
+         * @return void
          */
-        public function enable_exceptions($enable = true)
+        public function enable_exceptions(bool $enable = true)
         {
         }
         /**
@@ -22288,17 +22847,18 @@ namespace SimplePie {
          * configuration options get processed, feeds are fetched, cached, and
          * parsed, and all of that other good stuff.
          *
-         * @return boolean True if successful, false otherwise
+         * @return bool True if successful, false otherwise
          */
         public function init()
         {
         }
         /**
-         * Fetch the data via \SimplePie\File
+         * Fetch the data
          *
          * If the data is already cached, attempt to fetch it from there instead
+         *
          * @param Base|DataCache|false $cache Cache handler, or false to not load from the cache
-         * @return array|true Returns true if the data was loaded from the cache, or an array of HTTP headers and sniffed type
+         * @return array{array<string, string>, string}|bool Returns true if the data was loaded from the cache, or an array of HTTP headers and sniffed type
          */
         protected function fetch_data(&$cache)
         {
@@ -22306,7 +22866,7 @@ namespace SimplePie {
         /**
          * Get the error message for the occurred error
          *
-         * @return string|array Error message, or array of messages for multifeeds
+         * @return string|string[]|null Error message, or array of messages for multifeeds
          */
         public function error()
         {
@@ -22325,7 +22885,7 @@ namespace SimplePie {
          * This is the same as the old `$feed->enable_xml_dump(true)`, but returns
          * the data instead of printing it.
          *
-         * @return string|boolean Raw XML data, false if the cache is used
+         * @return string|false Raw XML data, false if the cache is used
          */
         public function get_raw_data()
         {
@@ -22357,35 +22917,36 @@ namespace SimplePie {
          * top).
          *
          * @param string $mime MIME type to serve the page as
+         * @return void
          */
-        public function handle_content_type($mime = 'text/html')
+        public function handle_content_type(string $mime = 'text/html')
         {
         }
         /**
          * Get the type of the feed
          *
-         * This returns a \SimplePie\SimplePie::TYPE_* constant, which can be tested against
+         * This returns a self::TYPE_* constant, which can be tested against
          * using {@link http://php.net/language.operators.bitwise bitwise operators}
          *
          * @since 0.8 (usage changed to using constants in 1.0)
-         * @see \SimplePie\SimplePie::TYPE_NONE Unknown.
-         * @see \SimplePie\SimplePie::TYPE_RSS_090 RSS 0.90.
-         * @see \SimplePie\SimplePie::TYPE_RSS_091_NETSCAPE RSS 0.91 (Netscape).
-         * @see \SimplePie\SimplePie::TYPE_RSS_091_USERLAND RSS 0.91 (Userland).
-         * @see \SimplePie\SimplePie::TYPE_RSS_091 RSS 0.91.
-         * @see \SimplePie\SimplePie::TYPE_RSS_092 RSS 0.92.
-         * @see \SimplePie\SimplePie::TYPE_RSS_093 RSS 0.93.
-         * @see \SimplePie\SimplePie::TYPE_RSS_094 RSS 0.94.
-         * @see \SimplePie\SimplePie::TYPE_RSS_10 RSS 1.0.
-         * @see \SimplePie\SimplePie::TYPE_RSS_20 RSS 2.0.x.
-         * @see \SimplePie\SimplePie::TYPE_RSS_RDF RDF-based RSS.
-         * @see \SimplePie\SimplePie::TYPE_RSS_SYNDICATION Non-RDF-based RSS (truly intended as syndication format).
-         * @see \SimplePie\SimplePie::TYPE_RSS_ALL Any version of RSS.
-         * @see \SimplePie\SimplePie::TYPE_ATOM_03 Atom 0.3.
-         * @see \SimplePie\SimplePie::TYPE_ATOM_10 Atom 1.0.
-         * @see \SimplePie\SimplePie::TYPE_ATOM_ALL Any version of Atom.
-         * @see \SimplePie\SimplePie::TYPE_ALL Any known/supported feed type.
-         * @return int \SimplePie\SimplePie::TYPE_* constant
+         * @see self::TYPE_NONE Unknown.
+         * @see self::TYPE_RSS_090 RSS 0.90.
+         * @see self::TYPE_RSS_091_NETSCAPE RSS 0.91 (Netscape).
+         * @see self::TYPE_RSS_091_USERLAND RSS 0.91 (Userland).
+         * @see self::TYPE_RSS_091 RSS 0.91.
+         * @see self::TYPE_RSS_092 RSS 0.92.
+         * @see self::TYPE_RSS_093 RSS 0.93.
+         * @see self::TYPE_RSS_094 RSS 0.94.
+         * @see self::TYPE_RSS_10 RSS 1.0.
+         * @see self::TYPE_RSS_20 RSS 2.0.x.
+         * @see self::TYPE_RSS_RDF RDF-based RSS.
+         * @see self::TYPE_RSS_SYNDICATION Non-RDF-based RSS (truly intended as syndication format).
+         * @see self::TYPE_RSS_ALL Any version of RSS.
+         * @see self::TYPE_ATOM_03 Atom 0.3.
+         * @see self::TYPE_ATOM_10 Atom 1.0.
+         * @see self::TYPE_ATOM_ALL Any version of Atom.
+         * @see self::TYPE_ALL Any known/supported feed type.
+         * @return int-mask-of<self::TYPE_*> constant
          */
         public function get_type()
         {
@@ -22409,7 +22970,7 @@ namespace SimplePie {
          * iff it is a 301 redirection
          * @return string|null
          */
-        public function subscribe_url($permanent = false)
+        public function subscribe_url(bool $permanent = false)
         {
         }
         /**
@@ -22441,9 +23002,9 @@ namespace SimplePie {
          * @see http://simplepie.org/wiki/faq/supported_xml_namespaces
          * @param string $namespace The URL of the XML namespace of the elements you're trying to access
          * @param string $tag Tag name
-         * @return array
+         * @return array<array<string, mixed>>|null
          */
-        public function get_feed_tags($namespace, $tag)
+        public function get_feed_tags(string $namespace, string $tag)
         {
         }
         /**
@@ -22458,9 +23019,9 @@ namespace SimplePie {
          * @see http://simplepie.org/wiki/faq/supported_xml_namespaces
          * @param string $namespace The URL of the XML namespace of the elements you're trying to access
          * @param string $tag Tag name
-         * @return array
+         * @return array<array<string, mixed>>|null
          */
-        public function get_channel_tags($namespace, $tag)
+        public function get_channel_tags(string $namespace, string $tag)
         {
         }
         /**
@@ -22475,37 +23036,38 @@ namespace SimplePie {
          * @see http://simplepie.org/wiki/faq/supported_xml_namespaces
          * @param string $namespace The URL of the XML namespace of the elements you're trying to access
          * @param string $tag Tag name
-         * @return array
+         * @return array<array<string, mixed>>|null
          */
-        public function get_image_tags($namespace, $tag)
+        public function get_image_tags(string $namespace, string $tag)
         {
         }
         /**
          * Get the base URL value from the feed
          *
-         * Uses `<xml:base>` if available, otherwise uses the first link in the
-         * feed, or failing that, the URL of the feed itself.
+         * Uses `<xml:base>` if available,
+         * otherwise uses the first 'self' link or the first 'alternate' link of the feed,
+         * or failing that, the URL of the feed itself.
          *
          * @see get_link
          * @see subscribe_url
          *
-         * @param array $element
+         * @param array<string, mixed> $element
          * @return string
          */
-        public function get_base($element = [])
+        public function get_base(array $element = [])
         {
         }
         /**
          * Sanitize feed data
          *
          * @access private
-         * @see \SimplePie\Sanitize::sanitize()
+         * @see Sanitize::sanitize()
          * @param string $data Data to sanitize
-         * @param int $type One of the \SimplePie\SimplePie::CONSTRUCT_* constants
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
          * @param string $base Base URL to resolve URLs against
          * @return string Sanitized data
          */
-        public function sanitize($data, $type, $base = '')
+        public function sanitize(string $data, int $type, string $base = '')
         {
         }
         /**
@@ -22524,9 +23086,9 @@ namespace SimplePie {
          *
          * @since Unknown
          * @param int $key The category that you want to return. Remember that arrays begin with 0, not 1
-         * @return \SimplePie\Category|null
+         * @return Category|null
          */
-        public function get_category($key = 0)
+        public function get_category(int $key = 0)
         {
         }
         /**
@@ -22535,7 +23097,7 @@ namespace SimplePie {
          * Uses `<atom:category>`, `<category>` or `<dc:subject>`
          *
          * @since Unknown
-         * @return array|null List of {@see \SimplePie\Category} objects
+         * @return array<Category>|null List of {@see Category} objects
          */
         public function get_categories()
         {
@@ -22545,9 +23107,9 @@ namespace SimplePie {
          *
          * @since 1.1
          * @param int $key The author that you want to return. Remember that arrays begin with 0, not 1
-         * @return \SimplePie\Author|null
+         * @return Author|null
          */
-        public function get_author($key = 0)
+        public function get_author(int $key = 0)
         {
         }
         /**
@@ -22556,7 +23118,7 @@ namespace SimplePie {
          * Uses `<atom:author>`, `<author>`, `<dc:creator>` or `<itunes:author>`
          *
          * @since 1.1
-         * @return array|null List of {@see \SimplePie\Author} objects
+         * @return array<Author>|null List of {@see Author} objects
          */
         public function get_authors()
         {
@@ -22566,9 +23128,9 @@ namespace SimplePie {
          *
          * @since 1.1
          * @param int $key The contrbutor that you want to return. Remember that arrays begin with 0, not 1
-         * @return \SimplePie\Author|null
+         * @return Author|null
          */
-        public function get_contributor($key = 0)
+        public function get_contributor(int $key = 0)
         {
         }
         /**
@@ -22577,7 +23139,7 @@ namespace SimplePie {
          * Uses `<atom:contributor>`
          *
          * @since 1.1
-         * @return array|null List of {@see \SimplePie\Author} objects
+         * @return array<Author>|null List of {@see Author} objects
          */
         public function get_contributors()
         {
@@ -22590,7 +23152,7 @@ namespace SimplePie {
          * @param string $rel The relationship of the link to return
          * @return string|null Link URL
          */
-        public function get_link($key = 0, $rel = 'alternate')
+        public function get_link(int $key = 0, string $rel = 'alternate')
         {
         }
         /**
@@ -22614,11 +23176,14 @@ namespace SimplePie {
          *
          * @since Beta 2
          * @param string $rel The relationship of links to return
-         * @return array|null Links found for the feed (strings)
+         * @return array<string>|null Links found for the feed (strings)
          */
-        public function get_links($rel = 'alternate')
+        public function get_links(string $rel = 'alternate')
         {
         }
+        /**
+         * @return ?array<Response>
+         */
         public function get_all_discovered_feeds()
         {
         }
@@ -22666,7 +23231,7 @@ namespace SimplePie {
          * @since 1.0
          * @link http://www.w3.org/2003/01/geo/ W3C WGS84 Basic Geo
          * @link http://www.georss.org/ GeoRSS
-         * @return string|null
+         * @return float|null
          */
         public function get_latitude()
         {
@@ -22681,7 +23246,7 @@ namespace SimplePie {
          * @since 1.0
          * @link http://www.w3.org/2003/01/geo/ W3C WGS84 Basic Geo
          * @link http://www.georss.org/ GeoRSS
-         * @return string|null
+         * @return float|null
          */
         public function get_longitude()
         {
@@ -22761,7 +23326,7 @@ namespace SimplePie {
          * @param int $max Maximum value to return. 0 for no limit
          * @return int Number of items in the feed
          */
-        public function get_item_quantity($max = 0)
+        public function get_item_quantity(int $max = 0)
         {
         }
         /**
@@ -22774,9 +23339,9 @@ namespace SimplePie {
          * @see get_item_quantity()
          * @since Beta 2
          * @param int $key The item that you want to return. Remember that arrays begin with 0, not 1
-         * @return \SimplePie\Item|null
+         * @return Item|null
          */
-        public function get_item($key = 0)
+        public function get_item(int $key = 0)
         {
         }
         /**
@@ -22790,23 +23355,26 @@ namespace SimplePie {
          * @since Beta 2
          * @param int $start Index to start at
          * @param int $end Number of items to return. 0 for all items after `$start`
-         * @return \SimplePie\Item[]|null List of {@see \SimplePie\Item} objects
+         * @return Item[] List of {@see Item} objects
          */
-        public function get_items($start = 0, $end = 0)
+        public function get_items(int $start = 0, int $end = 0)
         {
         }
         /**
          * Set the favicon handler
          *
          * @deprecated Use your own favicon handling instead
+         * @param string|false $page
+         * @return bool
          */
-        public function set_favicon_handler($page = false, $qs = 'i')
+        public function set_favicon_handler($page = false, string $qs = 'i')
         {
         }
         /**
          * Get the favicon for the current feed
          *
          * @deprecated Use your own favicon handling instead
+         * @return string|bool
          */
         public function get_favicon()
         {
@@ -22815,21 +23383,21 @@ namespace SimplePie {
          * Magic method handler
          *
          * @param string $method Method name
-         * @param array $args Arguments to the method
+         * @param array<mixed> $args Arguments to the method
          * @return mixed
          */
-        public function __call($method, $args)
+        public function __call(string $method, array $args)
         {
         }
         /**
          * Sorting callback for items
          *
          * @access private
-         * @param SimplePie $a
-         * @param SimplePie $b
-         * @return boolean
+         * @param Item $a
+         * @param Item $b
+         * @return -1|0|1
          */
-        public static function sort_items($a, $b)
+        public static function sort_items(\SimplePie\Item $a, \SimplePie\Item $b)
         {
         }
         /**
@@ -22839,13 +23407,13 @@ namespace SimplePie {
          * for the items or else SimplePie will refuse to sort them.
          *
          * @link http://simplepie.org/wiki/tutorial/sort_multiple_feeds_by_time_and_date#if_feeds_require_separate_per-feed_settings
-         * @param array $urls List of SimplePie feed objects to merge
+         * @param array<SimplePie> $urls List of SimplePie feed objects to merge
          * @param int $start Starting item
          * @param int $end Number of items to return
          * @param int $limit Maximum number of items per feed
-         * @return array
+         * @return array<Item>
          */
-        public static function merge_items($urls, $start = 0, $end = 0, $limit = 0)
+        public static function merge_items(array $urls, int $start = 0, int $end = 0, int $limit = 0)
         {
         }
     }
@@ -22863,41 +23431,34 @@ namespace SimplePie {
      * Used by {@see Item::get_author()} and {@see SimplePie::get_authors()}
      *
      * This class can be overloaded with {@see SimplePie::set_author_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Author
     {
         /**
          * Author's name
          *
-         * @var string
+         * @var ?string
          * @see get_name()
          */
         public $name;
         /**
          * Author's link
          *
-         * @var string
+         * @var ?string
          * @see get_link()
          */
         public $link;
         /**
          * Author's email address
          *
-         * @var string
+         * @var ?string
          * @see get_email()
          */
         public $email;
         /**
          * Constructor, used to input the data
-         *
-         * @param string $name
-         * @param string $link
-         * @param string $email
          */
-        public function __construct($name = null, $link = null, $email = null)
+        public function __construct(?string $name = null, ?string $link = null, ?string $email = null)
         {
         }
         /**
@@ -22948,8 +23509,6 @@ namespace SimplePie {
      * although the preferred way is to create your own handler
      * via {@see register()}
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @deprecated since SimplePie 1.8.0, use "SimplePie\SimplePie::set_cache()" instead
      */
     class Cache
@@ -22959,9 +23518,9 @@ namespace SimplePie {
          *
          * These receive 3 parameters to their constructor, as documented in
          * {@see register()}
-         * @var array
+         * @var array<string, class-string<Base>>
          */
-        protected static $handlers = ['mysql' => 'SimplePie\Cache\MySQL', 'memcache' => 'SimplePie\Cache\Memcache', 'memcached' => 'SimplePie\Cache\Memcached', 'redis' => 'SimplePie\Cache\Redis'];
+        protected static $handlers = ['mysql' => \SimplePie\Cache\MySQL::class, 'memcache' => \SimplePie\Cache\Memcache::class, 'memcached' => \SimplePie\Cache\Memcached::class, 'redis' => \SimplePie\Cache\Redis::class];
         /**
          * Create a new SimplePie\Cache object
          *
@@ -22970,15 +23529,19 @@ namespace SimplePie {
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $extension 'spi' or 'spc'
          * @return Base Type of object depends on scheme of `$location`
          */
-        public static function get_handler($location, $filename, $extension)
+        public static function get_handler(string $location, string $filename, $extension)
         {
         }
         /**
          * Create a new SimplePie\Cache object
          *
          * @deprecated since SimplePie 1.3.1, use {@see get_handler()} instead
+         * @param string $location
+         * @param string $filename
+         * @param Base::TYPE_FEED|Base::TYPE_IMAGE $extension
+         * @return Base
          */
-        public function create($location, $filename, $extension)
+        public function create(string $location, string $filename, $extension)
         {
         }
         /**
@@ -22986,17 +23549,18 @@ namespace SimplePie {
          *
          * @param string $type DSN type to register for
          * @param class-string<Base> $class Name of handler class. Must implement Base
+         * @return void
          */
-        public static function register($type, $class)
+        public static function register(string $type, $class)
         {
         }
         /**
          * Parse a URL into an array
          *
          * @param string $url
-         * @return array
+         * @return array<string, mixed>
          */
-        public static function parse_URL($url)
+        public static function parse_URL(string $url)
         {
         }
     }
@@ -23014,8 +23578,6 @@ namespace SimplePie\Cache {
      * Classes to be used with {@see \SimplePie\Cache::register()} are expected
      * to implement this interface.
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @deprecated since SimplePie 1.8.0, use "Psr\SimpleCache\CacheInterface" instead
      */
     interface Base
@@ -23039,18 +23601,18 @@ namespace SimplePie\Cache {
          * @param string $name Unique ID for the cache
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
          */
-        public function __construct($location, $name, $type);
+        public function __construct(string $location, string $name, $type);
         /**
          * Save data to the cache
          *
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<mixed>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data);
         /**
          * Retrieve the data saved to the cache
          *
-         * @return array Data for SimplePie::$data
+         * @return array<mixed> Data for SimplePie::$data
          */
         public function load();
         /**
@@ -23083,8 +23645,6 @@ namespace SimplePie\Cache {
     /**
      * Base class for database-based caches
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
     abstract class DB implements \SimplePie\Cache\Base
@@ -23095,9 +23655,9 @@ namespace SimplePie\Cache {
          * Converts a given {@see SimplePie} object into data to be stored
          *
          * @param \SimplePie\SimplePie $data
-         * @return array First item is the serialized data for storage, second item is the unique ID for this item
+         * @return array{string, array<string, Item>} First item is the serialized data for storage, second item is the unique ID for this item
          */
-        protected static function prepare_simplepie_object_for_cache($data)
+        protected static function prepare_simplepie_object_for_cache(\SimplePie\SimplePie $data)
         {
         }
     }
@@ -23112,8 +23672,6 @@ namespace SimplePie\Cache {
     /**
      * Caches data to the filesystem
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
     class File implements \SimplePie\Cache\Base
@@ -23149,14 +23707,15 @@ namespace SimplePie\Cache {
          * @param string $location Location string (from SimplePie::$cache_location)
          * @param string $name Unique ID for the cache
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
+         * @phpstan-return void
          */
-        public function __construct($location, $name, $type)
+        public function __construct(string $location, string $name, $type)
         {
         }
         /**
          * Save data to the cache
          *
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<mixed>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data)
@@ -23165,7 +23724,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the data saved to the cache
          *
-         * @return array Data for SimplePie::$data
+         * @return array<mixed>|false Data for SimplePie::$data
          */
         public function load()
         {
@@ -23173,7 +23732,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the last modified time for the cache
          *
-         * @return int Timestamp
+         * @return int|false Timestamp
          */
         public function mtime()
         {
@@ -23212,8 +23771,6 @@ namespace SimplePie\Cache {
      * connect to memcache on `localhost` on port 11211. All tables will be
      * prefixed with `sp_` and data will expire after 3600 seconds
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @uses Memcache
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
@@ -23222,13 +23779,13 @@ namespace SimplePie\Cache {
         /**
          * Memcache instance
          *
-         * @var Memcache
+         * @var NativeMemcache
          */
         protected $cache;
         /**
          * Options
          *
-         * @var array
+         * @var array<string, mixed>
          */
         protected $options;
         /**
@@ -23244,13 +23801,13 @@ namespace SimplePie\Cache {
          * @param string $name Unique ID for the cache
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
          */
-        public function __construct($location, $name, $type)
+        public function __construct(string $location, string $name, $type)
         {
         }
         /**
          * Save data to the cache
          *
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<mixed>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data)
@@ -23259,7 +23816,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the data saved to the cache
          *
-         * @return array Data for SimplePie::$data
+         * @return array<mixed>|false Data for SimplePie::$data
          */
         public function load()
         {
@@ -23267,7 +23824,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the last modified time for the cache
          *
-         * @return int Timestamp
+         * @return int|false Timestamp
          */
         public function mtime()
         {
@@ -23306,9 +23863,6 @@ namespace SimplePie\Cache {
      * connect to memcached on `localhost` on port 11211. All tables will be
      * prefixed with `sp_` and data will expire after 3600 seconds
      *
-     * @package    SimplePie
-     * @subpackage Caching
-     * @author     Paul L. McNeely
      * @uses       Memcached
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
@@ -23321,7 +23875,7 @@ namespace SimplePie\Cache {
         protected $cache;
         /**
          * Options
-         * @var array
+         * @var array<string, mixed>
          */
         protected $options;
         /**
@@ -23335,12 +23889,12 @@ namespace SimplePie\Cache {
          * @param string $name Unique ID for the cache
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
          */
-        public function __construct($location, $name, $type)
+        public function __construct(string $location, string $name, $type)
         {
         }
         /**
          * Save data to the cache
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<mixed>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data)
@@ -23348,7 +23902,7 @@ namespace SimplePie\Cache {
         }
         /**
          * Retrieve the data saved to the cache
-         * @return array Data for SimplePie::$data
+         * @return array<mixed>|false Data for SimplePie::$data
          */
         public function load()
         {
@@ -23392,8 +23946,6 @@ namespace SimplePie\Cache {
      * connect to the `mydb` database on `localhost` on port 3306, with the user
      * `root` and the password `password`. All tables will be prefixed with `sp_`
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
     class MySQL extends \SimplePie\Cache\DB
@@ -23401,13 +23953,13 @@ namespace SimplePie\Cache {
         /**
          * PDO instance
          *
-         * @var \PDO
+         * @var \PDO|null
          */
         protected $mysql;
         /**
          * Options
          *
-         * @var array
+         * @var array<string, mixed>
          */
         protected $options;
         /**
@@ -23424,13 +23976,13 @@ namespace SimplePie\Cache {
          * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
          * @phpstan-return void
          */
-        public function __construct($location, $name, $type)
+        public function __construct(string $location, string $name, $type)
         {
         }
         /**
          * Save data to the cache
          *
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<string>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data)
@@ -23439,7 +23991,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the data saved to the cache
          *
-         * @return array Data for SimplePie::$data
+         * @return array<string>|false Data for SimplePie::$data
          */
         public function load()
         {
@@ -23447,7 +23999,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the last modified time for the cache
          *
-         * @return int Timestamp
+         * @return int|false Timestamp
          */
         public function mtime()
         {
@@ -23486,8 +24038,6 @@ namespace SimplePie\Cache {
      * connect to redis on `localhost` on port 6379. All tables will be
      * prefixed with `simple_primary-` and data will expire after 3600 seconds
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @uses Redis
      * @deprecated since SimplePie 1.8.0, use implementation of "Psr\SimpleCache\CacheInterface" instead
      */
@@ -23502,7 +24052,7 @@ namespace SimplePie\Cache {
         /**
          * Options
          *
-         * @var array
+         * @var array<string, mixed>
          */
         protected $options;
         /**
@@ -23516,13 +24066,14 @@ namespace SimplePie\Cache {
          *
          * @param string $location Location string (from SimplePie::$cache_location)
          * @param string $name Unique ID for the cache
-         * @param Base::TYPE_FEED|Base::TYPE_IMAGE $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
+         * @param Base::TYPE_FEED|Base::TYPE_IMAGE|array<string, mixed>|null $options Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
          */
-        public function __construct($location, $name, $options = null)
+        public function __construct(string $location, string $name, $options = null)
         {
         }
         /**
          * @param NativeRedis $cache
+         * @return void
          */
         public function setRedisClient(\Redis $cache)
         {
@@ -23530,7 +24081,7 @@ namespace SimplePie\Cache {
         /**
          * Save data to the cache
          *
-         * @param array|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
+         * @param array<mixed>|\SimplePie\SimplePie $data Data to store in the cache. If passed a SimplePie object, only cache the $data property
          * @return bool Successfulness
          */
         public function save($data)
@@ -23539,7 +24090,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the data saved to the cache
          *
-         * @return array Data for SimplePie::$data
+         * @return array<mixed>|false Data for SimplePie::$data
          */
         public function load()
         {
@@ -23547,7 +24098,7 @@ namespace SimplePie\Cache {
         /**
          * Retrieve the last modified time for the cache
          *
-         * @return int Timestamp
+         * @return int|false Timestamp
          */
         public function mtime()
         {
@@ -23583,44 +24134,41 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Enclosure::get_caption()} and {@see \SimplePie\Enclosure::get_captions()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_caption_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Caption
     {
         /**
          * Content type
          *
-         * @var string
+         * @var ?string
          * @see get_type()
          */
         public $type;
         /**
          * Language
          *
-         * @var string
+         * @var ?string
          * @see get_language()
          */
         public $lang;
         /**
          * Start time
          *
-         * @var string
+         * @var ?string
          * @see get_starttime()
          */
         public $startTime;
         /**
          * End time
          *
-         * @var string
+         * @var ?string
          * @see get_endtime()
          */
         public $endTime;
         /**
          * Caption text
          *
-         * @var string
+         * @var ?string
          * @see get_text()
          */
         public $text;
@@ -23630,7 +24178,7 @@ namespace SimplePie {
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
          */
-        public function __construct($type = null, $lang = null, $startTime = null, $endTime = null, $text = null)
+        public function __construct(?string $type = null, ?string $lang = null, ?string $startTime = null, ?string $endTime = null, ?string $text = null)
         {
         }
         /**
@@ -23697,9 +24245,6 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Item::get_category()} and {@see \SimplePie\Item::get_categories()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_category_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Category
     {
@@ -23742,7 +24287,7 @@ namespace SimplePie {
          * @param string|null $label
          * @param string|null $type
          */
-        public function __construct($term = null, $scheme = null, $label = null, $type = null)
+        public function __construct(?string $term = null, ?string $scheme = null, ?string $label = null, ?string $type = null)
         {
         }
         /**
@@ -23775,7 +24320,7 @@ namespace SimplePie {
          * @param bool $strict
          * @return string|null
          */
-        public function get_label($strict = false)
+        public function get_label(bool $strict = false)
         {
         }
         /**
@@ -23805,24 +24350,24 @@ namespace SimplePie\Content\Type {
      *
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_content_type_sniffer_class()}
-     *
-     * @package SimplePie
-     * @subpackage HTTP
      */
     class Sniffer
     {
         /**
          * File object
          *
-         * @var \SimplePie\File
+         * @var File|Response
          */
         public $file;
         /**
          * Create an instance of the class with the input file
          *
-         * @param Sniffer $file Input file
+         * @param File|Response $file Input file
          */
-        public function __construct($file)
+        public function __construct(
+            /* File */
+            $file
+        )
         {
         }
         /**
@@ -23852,7 +24397,7 @@ namespace SimplePie\Content\Type {
         /**
          * Sniff images
          *
-         * @return string Actual Content-Type
+         * @return string|false Actual Content-Type
          */
         public function image()
         {
@@ -23880,23 +24425,20 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Enclosure::get_copyright()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_copyright_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Copyright
     {
         /**
          * Copyright URL
          *
-         * @var string
+         * @var ?string
          * @see get_url()
          */
         public $url;
         /**
          * Attribution
          *
-         * @var string
+         * @var ?string
          * @see get_attribution()
          */
         public $label;
@@ -23906,7 +24448,7 @@ namespace SimplePie {
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
          */
-        public function __construct($url = null, $label = null)
+        public function __construct(?string $url = null, ?string $label = null)
         {
         }
         /**
@@ -23946,8 +24488,6 @@ namespace {
      * Class for backward compatibility.
      *
      * @deprecated Use {@see SimplePie} directly
-     * @package SimplePie
-     * @subpackage API
      */
     class SimplePie_Core extends \SimplePie
     {
@@ -23960,30 +24500,27 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Enclosure::get_credit()} and {@see \SimplePie\Enclosure::get_credits()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_credit_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Credit
     {
         /**
          * Credited role
          *
-         * @var string
+         * @var ?string
          * @see get_role()
          */
         public $role;
         /**
          * Organizational scheme
          *
-         * @var string
+         * @var ?string
          * @see get_scheme()
          */
         public $scheme;
         /**
          * Credited name
          *
-         * @var string
+         * @var ?string
          * @see get_name()
          */
         public $name;
@@ -23993,7 +24530,7 @@ namespace SimplePie {
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
          */
-        public function __construct($role = null, $scheme = null, $name = null)
+        public function __construct(?string $role = null, ?string $scheme = null, ?string $name = null)
         {
         }
         /**
@@ -24041,7 +24578,6 @@ namespace {
      * This implements HTML5 as of revision 967 (2007-06-28)
      *
      * @deprecated Use DOMDocument instead!
-     * @package SimplePie
      */
     class SimplePie_Decode_HTML_Entities
     {
@@ -24072,7 +24608,7 @@ namespace {
          * @access public
          * @param string $data Input data
          */
-        public function __construct($data)
+        public function __construct(string $data)
         {
         }
         /**
@@ -24088,7 +24624,7 @@ namespace {
          * Consume the next byte
          *
          * @access private
-         * @return mixed The next byte, or false, if there is no more data
+         * @return string|false The next byte, or false, if there is no more data
          */
         public function consume()
         {
@@ -24098,15 +24634,16 @@ namespace {
          *
          * @access private
          * @param string $chars Characters to consume
-         * @return mixed A series of characters that match the range, or false
+         * @return string|false A series of characters that match the range, or false
          */
-        public function consume_range($chars)
+        public function consume_range(string $chars)
         {
         }
         /**
          * Unconsume one byte
          *
          * @access private
+         * @return void
          */
         public function unconsume()
         {
@@ -24115,6 +24652,7 @@ namespace {
          * Decode an entity
          *
          * @access private
+         * @return void
          */
         public function entity()
         {
@@ -24128,74 +24666,71 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Item::get_enclosure()} and {@see \SimplePie\Item::get_enclosures()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_enclosure_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Enclosure
     {
         /**
-         * @var string
+         * @var ?string
          * @see get_bitrate()
          */
         public $bitrate;
         /**
-         * @var array
+         * @var Caption[]|null
          * @see get_captions()
          */
         public $captions;
         /**
-         * @var array
+         * @var Category[]|null
          * @see get_categories()
          */
         public $categories;
         /**
-         * @var int
+         * @var ?int
          * @see get_channels()
          */
         public $channels;
         /**
-         * @var \SimplePie\Copyright
+         * @var ?Copyright
          * @see get_copyright()
          */
         public $copyright;
         /**
-         * @var array
+         * @var Credit[]|null
          * @see get_credits()
          */
         public $credits;
         /**
-         * @var string
+         * @var ?string
          * @see get_description()
          */
         public $description;
         /**
-         * @var int
+         * @var ?int
          * @see get_duration()
          */
         public $duration;
         /**
-         * @var string
+         * @var ?string
          * @see get_expression()
          */
         public $expression;
         /**
-         * @var string
+         * @var ?string
          * @see get_framerate()
          */
         public $framerate;
         /**
-         * @var string
+         * @var ?string
          * @see get_handler()
          */
         public $handler;
         /**
-         * @var array
+         * @var string[]|null
          * @see get_hashes()
          */
         public $hashes;
         /**
-         * @var string
+         * @var ?string
          * @see get_height()
          */
         public $height;
@@ -24205,67 +24740,67 @@ namespace SimplePie {
          */
         public $javascript;
         /**
-         * @var array
+         * @var string[]|null
          * @see get_keywords()
          */
         public $keywords;
         /**
-         * @var string
+         * @var ?string
          * @see get_language()
          */
         public $lang;
         /**
-         * @var string
+         * @var ?int
          * @see get_length()
          */
         public $length;
         /**
-         * @var string
+         * @var ?string
          * @see get_link()
          */
         public $link;
         /**
-         * @var string
+         * @var ?string
          * @see get_medium()
          */
         public $medium;
         /**
-         * @var string
+         * @var ?string
          * @see get_player()
          */
         public $player;
         /**
-         * @var array
+         * @var Rating[]|null
          * @see get_ratings()
          */
         public $ratings;
         /**
-         * @var array
+         * @var ?Restriction[]
          * @see get_restrictions()
          */
         public $restrictions;
         /**
-         * @var string
+         * @var ?string
          * @see get_sampling_rate()
          */
         public $samplingrate;
         /**
-         * @var array
+         * @var string[]|null
          * @see get_thumbnails()
          */
         public $thumbnails;
         /**
-         * @var string
+         * @var ?string
          * @see get_title()
          */
         public $title;
         /**
-         * @var string
+         * @var ?string
          * @see get_type()
          */
         public $type;
         /**
-         * @var string
+         * @var ?string
          * @see get_width()
          */
         public $width;
@@ -24275,9 +24810,19 @@ namespace SimplePie {
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
          *
-         * @uses idna_convert If available, this will convert an IDN
+         * @uses idn_to_ascii If available, this will convert an IDN
+         *
+         * @param null $javascript
+         * @param Caption[]|null $captions
+         * @param Category[]|null $categories
+         * @param Credit[]|null $credits
+         * @param string[]|null $hashes
+         * @param string[]|null $keywords
+         * @param Rating[]|null $ratings
+         * @param Restriction[]|null $restrictions
+         * @param string[]|null $thumbnails
          */
-        public function __construct($link = null, $type = null, $length = null, $javascript = null, $bitrate = null, $captions = null, $categories = null, $channels = null, $copyright = null, $credits = null, $description = null, $duration = null, $expression = null, $framerate = null, $hashes = null, $height = null, $keywords = null, $lang = null, $medium = null, $player = null, $ratings = null, $restrictions = null, $samplingrate = null, $thumbnails = null, $title = null, $width = null)
+        public function __construct(?string $link = null, ?string $type = null, ?int $length = null, $javascript = null, ?string $bitrate = null, ?array $captions = null, ?array $categories = null, ?int $channels = null, ?\SimplePie\Copyright $copyright = null, ?array $credits = null, ?string $description = null, ?int $duration = null, ?string $expression = null, ?string $framerate = null, ?array $hashes = null, ?string $height = null, ?array $keywords = null, ?string $lang = null, ?string $medium = null, ?string $player = null, ?array $ratings = null, ?array $restrictions = null, ?string $samplingrate = null, ?array $thumbnails = null, ?string $title = null, ?string $width = null)
         {
         }
         /**
@@ -24302,13 +24847,13 @@ namespace SimplePie {
          * @param int $key
          * @return \SimplePie\Caption|null
          */
-        public function get_caption($key = 0)
+        public function get_caption(int $key = 0)
         {
         }
         /**
          * Get all captions
          *
-         * @return array|null Array of {@see \SimplePie\Caption} objects
+         * @return Caption[]|null
          */
         public function get_captions()
         {
@@ -24319,13 +24864,13 @@ namespace SimplePie {
          * @param int $key
          * @return \SimplePie\Category|null
          */
-        public function get_category($key = 0)
+        public function get_category(int $key = 0)
         {
         }
         /**
          * Get all categories
          *
-         * @return array|null Array of {@see \SimplePie\Category} objects
+         * @return \SimplePie\Category[]|null
          */
         public function get_categories()
         {
@@ -24352,13 +24897,13 @@ namespace SimplePie {
          * @param int $key
          * @return \SimplePie\Credit|null
          */
-        public function get_credit($key = 0)
+        public function get_credit(int $key = 0)
         {
         }
         /**
          * Get all credits
          *
-         * @return array|null Array of {@see \SimplePie\Credit} objects
+         * @return Credit[]|null
          */
         public function get_credits()
         {
@@ -24377,7 +24922,7 @@ namespace SimplePie {
          * @param bool $convert Convert seconds into hh:mm:ss
          * @return string|int|null 'hh:mm:ss' string if `$convert` was specified, otherwise integer (or null if none found)
          */
-        public function get_duration($convert = false)
+        public function get_duration(bool $convert = false)
         {
         }
         /**
@@ -24419,13 +24964,13 @@ namespace SimplePie {
          * @param int $key
          * @return string|null Hash as per `media:hash`, prefixed with "$algo:"
          */
-        public function get_hash($key = 0)
+        public function get_hash(int $key = 0)
         {
         }
         /**
          * Get all credits
          *
-         * @return array|null Array of strings, see {@see get_hash()}
+         * @return string[]|null Array of strings, see {@see get_hash()}
          */
         public function get_hashes()
         {
@@ -24453,13 +24998,13 @@ namespace SimplePie {
          * @param int $key
          * @return string|null
          */
-        public function get_keyword($key = 0)
+        public function get_keyword(int $key = 0)
         {
         }
         /**
          * Get all keywords
          *
-         * @return array|null Array of strings
+         * @return string[]|null
          */
         public function get_keywords()
         {
@@ -24467,7 +25012,7 @@ namespace SimplePie {
         /**
          * Get length
          *
-         * @return float Length in bytes
+         * @return ?int Length in bytes
          */
         public function get_length()
         {
@@ -24504,13 +25049,13 @@ namespace SimplePie {
          * @param int $key
          * @return \SimplePie\Rating|null
          */
-        public function get_rating($key = 0)
+        public function get_rating(int $key = 0)
         {
         }
         /**
          * Get all ratings
          *
-         * @return array|null Array of {@see \SimplePie\Rating} objects
+         * @return Rating[]|null
          */
         public function get_ratings()
         {
@@ -24521,13 +25066,13 @@ namespace SimplePie {
          * @param int $key
          * @return \SimplePie\Restriction|null
          */
-        public function get_restriction($key = 0)
+        public function get_restriction(int $key = 0)
         {
         }
         /**
          * Get all restrictions
          *
-         * @return array|null Array of {@see \SimplePie\Restriction} objects
+         * @return Restriction[]|null
          */
         public function get_restrictions()
         {
@@ -24554,13 +25099,13 @@ namespace SimplePie {
          * @param int $key
          * @return string|null Thumbnail URL
          */
-        public function get_thumbnail($key = 0)
+        public function get_thumbnail(int $key = 0)
         {
         }
         /**
          * Get all thumbnails
          *
-         * @return array|null Array of thumbnail URLs
+         * @return string[]|null Array of thumbnail URLs
          */
         public function get_thumbnails()
         {
@@ -24595,7 +25140,7 @@ namespace SimplePie {
          *
          * @deprecated Use the second parameter to {@see embed} instead
          *
-         * @param array|string $options See first parameter to {@see embed}
+         * @param array<string, mixed>|string $options See first parameter to {@see embed}
          * @return string HTML string to output
          */
         public function native_embed($options = '')
@@ -24642,11 +25187,11 @@ namespace SimplePie {
          * `width` and `height` set to `auto` will default to 480x270 video resolution.
          *
          * @todo If the dimensions for media:content are defined, use them when width/height are set to 'auto'.
-         * @param array|string $options Comma-separated key:value list, or array
+         * @param array<string, mixed>|string $options Comma-separated key:value list, or array
          * @param bool $native Use `<embed>`
          * @return string HTML string to output
          */
-        public function embed($options = '', $native = false)
+        public function embed($options = '', bool $native = false)
         {
         }
         /**
@@ -24658,9 +25203,9 @@ namespace SimplePie {
          *
          * @see get_type()
          * @param bool $find_handler Internal use only, use {@see get_handler()} instead
-         * @return string MIME type
+         * @return string|null MIME type
          */
-        public function get_real_type($find_handler = false)
+        public function get_real_type(bool $find_handler = false)
         {
         }
     }
@@ -24674,8 +25219,6 @@ namespace {
 namespace SimplePie {
     /**
      * General SimplePie exception class
-     *
-     * @package SimplePie
      */
     class Exception extends \Exception
     {
@@ -24687,6 +25230,161 @@ namespace {
     {
     }
 }
+namespace SimplePie\HTTP {
+    /**
+     * HTTP Response interface
+     *
+     * This interface must be interoperable with Psr\Http\Message\ResponseInterface
+     * @see https://www.php-fig.org/psr/psr-7/#33-psrhttpmessageresponseinterface
+     *
+     * @internal
+     */
+    interface Response
+    {
+        /**
+         * Return the string representation of the permanent URI of the requested resource
+         * (the first location after a prefix of (only) permanent redirects).
+         *
+         * Depending on which components of the URI are present, the resulting
+         * string is either a full URI or relative reference according to RFC 3986,
+         * Section 4.1. The method concatenates the various components of the URI,
+         * using the appropriate delimiters:
+         *
+         * - If a scheme is present, it MUST be suffixed by ":".
+         * - If an authority is present, it MUST be prefixed by "//".
+         * - The path can be concatenated without delimiters. But there are two
+         *   cases where the path has to be adjusted to make the URI reference
+         *   valid as PHP does not allow to throw an exception in __toString():
+         *     - If the path is rootless and an authority is present, the path MUST
+         *       be prefixed by "/".
+         *     - If the path is starting with more than one "/" and no authority is
+         *       present, the starting slashes MUST be reduced to one.
+         * - If a query is present, it MUST be prefixed by "?".
+         * - If a fragment is present, it MUST be prefixed by "#".
+         *
+         * @see http://tools.ietf.org/html/rfc3986#section-4.1
+         */
+        public function get_permanent_uri(): string;
+        /**
+         * Return the string representation of the final requested URL after following all redirects.
+         *
+         * Depending on which components of the URI are present, the resulting
+         * string is either a full URI or relative reference according to RFC 3986,
+         * Section 4.1. The method concatenates the various components of the URI,
+         * using the appropriate delimiters:
+         *
+         * - If a scheme is present, it MUST be suffixed by ":".
+         * - If an authority is present, it MUST be prefixed by "//".
+         * - The path can be concatenated without delimiters. But there are two
+         *   cases where the path has to be adjusted to make the URI reference
+         *   valid as PHP does not allow to throw an exception in __toString():
+         *     - If the path is rootless and an authority is present, the path MUST
+         *       be prefixed by "/".
+         *     - If the path is starting with more than one "/" and no authority is
+         *       present, the starting slashes MUST be reduced to one.
+         * - If a query is present, it MUST be prefixed by "?".
+         * - If a fragment is present, it MUST be prefixed by "#".
+         *
+         * @see http://tools.ietf.org/html/rfc3986#section-4.1
+         */
+        public function get_final_requested_uri(): string;
+        /**
+         * Gets the response status code.
+         *
+         * The status code is a 3-digit integer result code of the server's attempt
+         * to understand and satisfy the request.
+         *
+         * @return int Status code.
+         */
+        public function get_status_code(): int;
+        /**
+         * Retrieves all message header values.
+         *
+         * The keys represent the header name as it will be sent over the wire, and
+         * each value is an array of strings associated with the header.
+         *
+         *     // Represent the headers as a string
+         *     foreach ($message->get_headers() as $name => $values) {
+         *         echo $name . ': ' . implode(', ', $values);
+         *     }
+         *
+         *     // Emit headers iteratively:
+         *     foreach ($message->get_headers() as $name => $values) {
+         *         foreach ($values as $value) {
+         *             header(sprintf('%s: %s', $name, $value), false);
+         *         }
+         *     }
+         *
+         * @return array<non-empty-array<string>> Returns an associative array of the message's headers.
+         *     Each key MUST be a header name, and each value MUST be an array of
+         *     strings for that header.
+         */
+        public function get_headers(): array;
+        /**
+         * Checks if a header exists by the given case-insensitive name.
+         *
+         * @param string $name Case-insensitive header field name.
+         * @return bool Returns true if any header names match the given header
+         *     name using a case-insensitive string comparison. Returns false if
+         *     no matching header name is found in the message.
+         */
+        public function has_header(string $name): bool;
+        /**
+         * Retrieves a message header value by the given case-insensitive name.
+         *
+         * This method returns an array of all the header values of the given
+         * case-insensitive header name.
+         *
+         * If the header does not appear in the message, this method MUST return an
+         * empty array.
+         *
+         * @param string $name Case-insensitive header field name.
+         * @return string[] An array of string values as provided for the given
+         *    header. If the header does not appear in the message, this method MUST
+         *    return an empty array.
+         */
+        public function get_header(string $name): array;
+        /**
+         * Return an instance with the provided value replacing the specified header.
+         *
+         * This method MUST be implemented in such a way as to retain the
+         * immutability of the message, and MUST return an instance that has the
+         * new and/or updated header and value.
+         *
+         * @param string $name Case-insensitive header field name.
+         * @param string|non-empty-array<string> $value Header value(s).
+         * @return static
+         * @throws \InvalidArgumentException for invalid header names or values.
+         */
+        public function with_header(string $name, $value);
+        /**
+         * Retrieves a comma-separated string of the values for a single header.
+         *
+         * This method returns all of the header values of the given
+         * case-insensitive header name as a string concatenated together using
+         * a comma.
+         *
+         * NOTE: Not all header values may be appropriately represented using
+         * comma concatenation. For such headers, use getHeader() instead
+         * and supply your own delimiter when concatenating.
+         *
+         * If the header does not appear in the message, this method MUST return
+         * an empty string.
+         *
+         * @param string $name Case-insensitive header field name.
+         * @return string A string of values as provided for the given header
+         *    concatenated together using a comma. If the header does not appear in
+         *    the message, this method MUST return an empty string.
+         */
+        public function get_header_line(string $name): string;
+        /**
+         * get the body as string
+         *
+         * @return string
+         */
+        public function get_body_content(): string;
+    }
+}
 namespace SimplePie {
     /**
      * Used for fetching remote files and reading local files
@@ -24695,23 +25393,101 @@ namespace SimplePie {
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_file_class()}
      *
-     * @package SimplePie
-     * @subpackage HTTP
      * @todo Move to properly supporting RFC2616 (HTTP/1.1)
      */
-    class File
+    class File implements \SimplePie\HTTP\Response
     {
+        /**
+         * @var string The final URL after following all redirects
+         * @deprecated Use `get_final_requested_uri()` method.
+         */
         public $url;
+        /**
+         * @var ?string User agent to use in requests
+         * @deprecated Set the user agent in constructor.
+         */
         public $useragent;
+        /** @var bool */
         public $success = true;
+        /**
+         * @var array<string, string> Headers as string for BC
+         * @deprecated Use `get_headers()` method.
+         */
         public $headers = [];
+        /**
+         * @var ?string Body of the HTTP response
+         * @deprecated Use `get_body_content()` method.
+         */
         public $body;
+        /**
+         * @var int Status code of the HTTP response
+         * @deprecated Use `get_status_code()` method.
+         */
         public $status_code = 0;
+        /** @var non-negative-int Number of redirect that were already performed during this request sequence. */
         public $redirects = 0;
+        /** @var ?string */
         public $error;
+        /**
+         * @var int-mask-of<SimplePie::FILE_SOURCE_*> Bit mask representing the method used to fetch the file and whether it is a local file or remote file obtained over HTTP.
+         * @deprecated Backend is implementation detail which you should not care about; to see if the file was retrieved over HTTP, check if `get_final_requested_uri()` with `Misc::is_remote_uri()`.
+         */
         public $method = \SimplePie\SimplePie::FILE_SOURCE_NONE;
+        /**
+         * @var string The permanent URL or the resource (first URL after the prefix of (only) permanent redirects)
+         * @deprecated Use `get_permanent_uri()` method.
+         */
         public $permanent_url;
-        public function __construct($url, $timeout = 10, $redirects = 5, $headers = null, $useragent = null, $force_fsockopen = false, $curl_options = [])
+        /**
+         * @param string $url
+         * @param int $timeout
+         * @param int $redirects
+         * @param ?array<string, string> $headers
+         * @param ?string $useragent
+         * @param bool $force_fsockopen
+         * @param array<int, mixed> $curl_options
+         * @phpstan-return void
+         */
+        public function __construct(string $url, int $timeout = 10, int $redirects = 5, ?array $headers = null, ?string $useragent = null, bool $force_fsockopen = false, array $curl_options = [])
+        {
+        }
+        public function get_permanent_uri(): string
+        {
+        }
+        public function get_final_requested_uri(): string
+        {
+        }
+        public function get_status_code(): int
+        {
+        }
+        public function get_headers(): array
+        {
+        }
+        public function has_header(string $name): bool
+        {
+        }
+        public function get_header(string $name): array
+        {
+        }
+        public function with_header(string $name, $value)
+        {
+        }
+        public function get_header_line(string $name): string
+        {
+        }
+        public function get_body_content(): string
+        {
+        }
+        /**
+         * Create a File instance from another Response
+         *
+         * For BC reasons in some places there MUST be a `File` instance
+         * instead of a `Response` implementation
+         *
+         * @see Locator::__construct()
+         * @internal
+         */
+        final public static function fromResponse(\SimplePie\HTTP\Response $response): self
         {
         }
     }
@@ -24725,9 +25501,7 @@ namespace {
 namespace SimplePie\HTTP {
     /**
      * HTTP Response Parser
-     *
-     * @package SimplePie
-     * @subpackage HTTP
+     * @template Psr7Compatible of bool
      */
     class Parser
     {
@@ -24752,7 +25526,7 @@ namespace SimplePie\HTTP {
         /**
          * Key/value pairs of the headers
          *
-         * @var array
+         * @var (Psr7Compatible is true ? array<string, non-empty-array<string>> : array<string, string>)
          */
         public $headers = [];
         /**
@@ -24786,13 +25560,13 @@ namespace SimplePie\HTTP {
          */
         protected $position = 0;
         /**
-         * Name of the hedaer currently being parsed
+         * Name of the header currently being parsed
          *
          * @var string
          */
         protected $name = '';
         /**
-         * Value of the hedaer currently being parsed
+         * Value of the header currently being parsed
          *
          * @var string
          */
@@ -24801,8 +25575,9 @@ namespace SimplePie\HTTP {
          * Create an instance of the class with the input data
          *
          * @param string $data Input data
+         * @param Psr7Compatible $psr7Compatible Whether the data types are in format compatible with PSR-7.
          */
-        public function __construct($data)
+        public function __construct(string $data, bool $psr7Compatible = false)
         {
         }
         /**
@@ -24831,78 +25606,91 @@ namespace SimplePie\HTTP {
         }
         /**
          * Parse the HTTP version
+         * @return void
          */
         protected function http_version()
         {
         }
         /**
          * Parse the status code
+         * @return void
          */
         protected function status()
         {
         }
         /**
          * Parse the reason phrase
+         * @return void
          */
         protected function reason()
         {
         }
         /**
          * Deal with a new line, shifting data around as needed
+         * @return void
          */
         protected function new_line()
         {
         }
         /**
          * Parse a header name
+         * @return void
          */
         protected function name()
         {
         }
         /**
          * Parse LWS, replacing consecutive LWS characters with a single space
+         * @return void
          */
         protected function linear_whitespace()
         {
         }
         /**
          * See what state to move to while within non-quoted header values
+         * @return void
          */
         protected function value()
         {
         }
         /**
          * Parse a header value while outside quotes
+         * @return void
          */
         protected function value_char()
         {
         }
         /**
          * See what state to move to while within quoted header values
+         * @return void
          */
         protected function quote()
         {
         }
         /**
          * Parse a header value while within quotes
+         * @return void
          */
         protected function quote_char()
         {
         }
         /**
          * Parse an escaped character within quotes
+         * @return void
          */
         protected function quote_escaped()
         {
         }
         /**
          * Parse the body
+         * @return void
          */
         protected function body()
         {
         }
         /**
          * Parsed a "Transfer-Encoding: chunked" body
+         * @return void
          * @phpstan-return void
          */
         protected function chunked()
@@ -24912,17 +25700,21 @@ namespace SimplePie\HTTP {
          * Prepare headers (take care of proxies headers)
          *
          * @param string  $headers Raw headers
-         * @param integer $count   Redirection count. Default to 1.
+         * @param non-negative-int $count Redirection count. Default to 1.
          *
          * @return string
          */
-        public static function prepareHeaders($headers, $count = 1)
+        public static function prepareHeaders(string $headers, int $count = 1)
         {
         }
     }
 }
 namespace {
-    /** @deprecated since SimplePie 1.7.0, use "SimplePie\HTTP\Parser" instead */
+    /**
+     * @deprecated since SimplePie 1.7.0, use "SimplePie\HTTP\Parser" instead
+     * @template Psr7Compatible of bool
+     * @extends Parser<Psr7Compatible>
+     */
     class SimplePie_HTTP_Parser extends \SimplePie\HTTP\Parser
     {
     }
@@ -24931,38 +25723,40 @@ namespace SimplePie {
     /**
      * IRI parser/serialiser/normaliser
      *
-     * @package SimplePie
-     * @subpackage HTTP
-     * @author Sam Sneddon
-     * @author Steve Minutillo
-     * @author Ryan McCue
-     * @copyright 2007-2012 Sam Sneddon, Steve Minutillo, Ryan McCue
-     * @license http://www.opensource.org/licenses/bsd-license.php
+     * @property ?string $scheme
+     * @property ?string $userinfo
+     * @property ?string $host
+     * @property ?int $port
+     * @property-write int|string|null $port
+     * @property ?string $authority
+     * @property string $path
+     * @property ?string $query
+     * @property ?string $fragment
      */
     class IRI
     {
         /**
          * Scheme
          *
-         * @var string
+         * @var ?string
          */
         protected $scheme = null;
         /**
          * User Information
          *
-         * @var string
+         * @var ?string
          */
         protected $iuserinfo = null;
         /**
          * ihost
          *
-         * @var string
+         * @var ?string
          */
         protected $ihost = null;
         /**
          * Port
          *
-         * @var string
+         * @var ?int
          */
         protected $port = null;
         /**
@@ -24974,13 +25768,13 @@ namespace SimplePie {
         /**
          * iquery
          *
-         * @var string
+         * @var ?string
          */
         protected $iquery = null;
         /**
          * ifragment
          *
-         * @var string
+         * @var ?string
          */
         protected $ifragment = null;
         /**
@@ -24988,6 +25782,8 @@ namespace SimplePie {
          *
          * Each key is the scheme, each value is an array with each key as the IRI
          * part and value as the default value for that part.
+         *
+         * @var array<string, array<string, mixed>>
          */
         protected $normalization = ['acap' => ['port' => 674], 'dict' => ['port' => 2628], 'file' => ['ihost' => 'localhost'], 'http' => ['port' => 80, 'ipath' => '/'], 'https' => ['port' => 443, 'ipath' => '/']];
         /**
@@ -25003,8 +25799,9 @@ namespace SimplePie {
          *
          * @param string $name Property name
          * @param mixed $value Property value
+         * @return void
          */
-        public function __set($name, $value)
+        public function __set(string $name, $value)
         {
         }
         /**
@@ -25013,7 +25810,7 @@ namespace SimplePie {
          * @param string $name Property name
          * @return mixed
          */
-        public function __get($name)
+        public function __get(string $name)
         {
         }
         /**
@@ -25022,27 +25819,29 @@ namespace SimplePie {
          * @param string $name Property name
          * @return bool
          */
-        public function __isset($name)
+        public function __isset(string $name)
         {
         }
         /**
          * Overload __unset() to provide access via properties
          *
          * @param string $name Property name
+         * @return void
          */
-        public function __unset($name)
+        public function __unset(string $name)
         {
         }
         /**
          * Create a new IRI object, from a specified string
          *
-         * @param string $iri
+         * @param string|null $iri
          */
-        public function __construct($iri = null)
+        public function __construct(?string $iri = null)
         {
         }
         /**
          * Clean up
+         * @return void
          */
         public function __destruct()
         {
@@ -25063,9 +25862,15 @@ namespace SimplePie {
          * Parse an IRI into scheme/authority/path/query/fragment segments
          *
          * @param string $iri
-         * @return array
+         * @return array{
+         *   scheme: string|null,
+         *   authority: string|null,
+         *   path: string,
+         *   query: string|null,
+         *   fragment: string|null,
+         * }|false
          */
-        protected function parse_iri($iri)
+        protected function parse_iri(string $iri)
         {
         }
         /**
@@ -25074,7 +25879,7 @@ namespace SimplePie {
          * @param string $input
          * @return string
          */
-        protected function remove_dot_segments($input)
+        protected function remove_dot_segments(string $input)
         {
         }
         /**
@@ -25086,7 +25891,7 @@ namespace SimplePie {
          * @param bool $iprivate Allow iprivate
          * @return string
          */
-        protected function replace_invalid_with_pct_encoding($string, $extra_chars, $iprivate = false)
+        protected function replace_invalid_with_pct_encoding(string $string, string $extra_chars, bool $iprivate = false)
         {
         }
         /**
@@ -25095,12 +25900,16 @@ namespace SimplePie {
          * Removes sequences of percent encoded bytes that represent UTF-8
          * encoded characters in iunreserved
          *
-         * @param array $match PCRE match
+         * @param array{string} $match PCRE match, a capture group #0 consisting of a sequence of valid percent-encoded bytes
          * @return string Replacement
          */
-        protected function remove_iunreserved_percent_encoded($match)
+        protected function remove_iunreserved_percent_encoded(array $match)
         {
         }
+        /**
+         * @return void
+         * @phpstan-return void
+         */
         protected function scheme_normalization()
         {
         }
@@ -25117,56 +25926,56 @@ namespace SimplePie {
          * Set the entire IRI. Returns true on success, false on failure (if there
          * are any invalid characters).
          *
-         * @param string $iri
+         * @param string|null $iri
          * @return bool
          */
-        public function set_iri($iri, $clear_cache = false)
+        public function set_iri(?string $iri, bool $clear_cache = false)
         {
         }
         /**
          * Set the scheme. Returns true on success, false on failure (if there are
          * any invalid characters).
          *
-         * @param string $scheme
+         * @param string|null $scheme
          * @return bool
          */
-        public function set_scheme($scheme)
+        public function set_scheme(?string $scheme)
         {
         }
         /**
          * Set the authority. Returns true on success, false on failure (if there are
          * any invalid characters).
          *
-         * @param string $authority
+         * @param string|null $authority
          * @return bool
          */
-        public function set_authority($authority, $clear_cache = false)
+        public function set_authority(?string $authority, bool $clear_cache = false)
         {
         }
         /**
          * Set the iuserinfo.
          *
-         * @param string $iuserinfo
+         * @param string|null $iuserinfo
          * @return bool
          */
-        public function set_userinfo($iuserinfo)
+        public function set_userinfo(?string $iuserinfo)
         {
         }
         /**
          * Set the ihost. Returns true on success, false on failure (if there are
          * any invalid characters).
          *
-         * @param string $ihost
+         * @param string|null $ihost
          * @return bool
          */
-        public function set_host($ihost)
+        public function set_host(?string $ihost)
         {
         }
         /**
          * Set the port. Returns true on success, false on failure (if there are
          * any invalid characters).
          *
-         * @param string $port
+         * @param string|int|null $port
          * @return bool
          */
         public function set_port($port)
@@ -25175,42 +25984,43 @@ namespace SimplePie {
         /**
          * Set the ipath.
          *
-         * @param string $ipath
+         * @param string|null $ipath
          * @return bool
          */
-        public function set_path($ipath, $clear_cache = false)
+        public function set_path(?string $ipath, bool $clear_cache = false)
         {
         }
         /**
          * Set the iquery.
          *
-         * @param string $iquery
+         * @param string|null $iquery
          * @return bool
          */
-        public function set_query($iquery)
+        public function set_query(?string $iquery)
         {
         }
         /**
          * Set the ifragment.
          *
-         * @param string $ifragment
+         * @param string|null $ifragment
          * @return bool
          */
-        public function set_fragment($ifragment)
+        public function set_fragment(?string $ifragment)
         {
         }
         /**
          * Convert an IRI to a URI (or parts thereof)
          *
+         * @param string $string
          * @return string
          */
-        public function to_uri($string)
+        public function to_uri(string $string)
         {
         }
         /**
          * Get the complete IRI
          *
-         * @return string
+         * @return string|false
          */
         public function get_iri()
         {
@@ -25226,7 +26036,7 @@ namespace SimplePie {
         /**
          * Get the complete iauthority
          *
-         * @return string
+         * @return ?string
          */
         protected function get_iauthority()
         {
@@ -25234,7 +26044,7 @@ namespace SimplePie {
         /**
          * Get the complete authority
          *
-         * @return string
+         * @return ?string
          */
         protected function get_authority()
         {
@@ -25252,15 +26062,11 @@ namespace SimplePie {
      * Handles the injection of Registry into other class
      *
      * {@see \SimplePie\SimplePie::get_registry()}
-     *
-     * @package SimplePie
      */
     interface RegistryAware
     {
         /**
          * Set the Registry into the class
-         *
-         * @param Registry $registry
          *
          * @return void
          */
@@ -25272,9 +26078,6 @@ namespace SimplePie {
      * Used by {@see \SimplePie\SimplePie::get_item()} and {@see \SimplePie\SimplePie::get_items()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_item_class()}
-     *
-     * @package \SimplePie\SimplePie
-     * @subpackage API
      */
     class Item implements \SimplePie\RegistryAware
     {
@@ -25289,7 +26092,7 @@ namespace SimplePie {
          * Raw data
          *
          * @access private
-         * @var array
+         * @var array<string, mixed>
          */
         public $data = [];
         /**
@@ -25306,9 +26109,9 @@ namespace SimplePie {
          * {@see \SimplePie\SimplePie::get_item}. Avoid creating this manually.
          *
          * @param \SimplePie\SimplePie $feed Parent feed
-         * @param array $data Raw data
+         * @param array<string, mixed> $data Raw data
          */
-        public function __construct($feed, $data)
+        public function __construct(\SimplePie\SimplePie $feed, array $data)
         {
         }
         /**
@@ -25318,6 +26121,7 @@ namespace SimplePie {
          *
          * @since 1.3
          * @param \SimplePie\Registry $registry
+         * @return void
          */
         public function set_registry(\SimplePie\Registry $registry)
         {
@@ -25348,19 +26152,19 @@ namespace SimplePie {
          * @see http://simplepie.org/wiki/faq/supported_xml_namespaces
          * @param string $namespace The URL of the XML namespace of the elements you're trying to access
          * @param string $tag Tag name
-         * @return array
+         * @return array<array<string, mixed>>|null
          */
-        public function get_item_tags($namespace, $tag)
+        public function get_item_tags(string $namespace, string $tag)
         {
         }
         /**
          * Get the base URL value.
-         * Uses `<xml:base>`, or item link, or feed base URL.
+         * Uses `<xml:base>`, or item link, or enclosure link, or feed base URL.
          *
-         * @param array $element
+         * @param array<string, mixed> $element
          * @return string
          */
-        public function get_base($element = [])
+        public function get_base(array $element = [])
         {
         }
         /**
@@ -25369,11 +26173,11 @@ namespace SimplePie {
          * @access private
          * @see \SimplePie\SimplePie::sanitize()
          * @param string $data Data to sanitize
-         * @param int $type One of the \SimplePie\SimplePie::CONSTRUCT_* constants
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
          * @param string $base Base URL to resolve URLs against
          * @return string Sanitized data
          */
-        public function sanitize($data, $type, $base = '')
+        public function sanitize(string $data, int $type, string $base = '')
         {
         }
         /**
@@ -25398,11 +26202,11 @@ namespace SimplePie {
          * MD5 hash based on the permalink, title and content.
          *
          * @since Beta 2
-         * @param boolean $hash Should we force using a hash instead of the supplied ID?
+         * @param bool $hash Should we force using a hash instead of the supplied ID?
          * @param string|false $fn User-supplied function to generate an hash
          * @return string|null
          */
-        public function get_id($hash = false, $fn = 'md5')
+        public function get_id(bool $hash = false, $fn = 'md5')
         {
         }
         /**
@@ -25428,10 +26232,10 @@ namespace SimplePie {
          * `<itunes:subtitle>`
          *
          * @since 0.8
-         * @param boolean $description_only Should we avoid falling back to the content?
+         * @param bool $description_only Should we avoid falling back to the content?
          * @return string|null
          */
-        public function get_description($description_only = false)
+        public function get_description(bool $description_only = false)
         {
         }
         /**
@@ -25445,10 +26249,10 @@ namespace SimplePie {
          * Uses `<atom:content>` or `<content:encoded>` (RSS 1.0 Content Module)
          *
          * @since 1.0
-         * @param boolean $content_only Should we avoid falling back to the description?
+         * @param bool $content_only Should we avoid falling back to the description?
          * @return string|null
          */
-        public function get_content($content_only = false)
+        public function get_content(bool $content_only = false)
         {
         }
         /**
@@ -25457,7 +26261,7 @@ namespace SimplePie {
          * Uses `<media:thumbnail>`
          *
          *
-         * @return array|null
+         * @return array{url: string, height?: string, width?: string, time?: string}|null
          */
         public function get_thumbnail()
         {
@@ -25469,7 +26273,7 @@ namespace SimplePie {
          * @param int $key The category that you want to return.  Remember that arrays begin with 0, not 1
          * @return \SimplePie\Category|null
          */
-        public function get_category($key = 0)
+        public function get_category(int $key = 0)
         {
         }
         /**
@@ -25490,7 +26294,7 @@ namespace SimplePie {
          * @param int $key The author that you want to return.  Remember that arrays begin with 0, not 1
          * @return \SimplePie\Author|null
          */
-        public function get_author($key = 0)
+        public function get_author(int $key = 0)
         {
         }
         /**
@@ -25500,7 +26304,7 @@ namespace SimplePie {
          * @param int $key The contrbutor that you want to return.  Remember that arrays begin with 0, not 1
          * @return \SimplePie\Author|null
          */
-        public function get_contributor($key = 0)
+        public function get_contributor(int $key = 0)
         {
         }
         /**
@@ -25531,7 +26335,7 @@ namespace SimplePie {
          * Uses `<atom:rights>` or `<dc:rights>`
          *
          * @since 1.1
-         * @return string
+         * @return string|null
          */
         public function get_copyright()
         {
@@ -25548,9 +26352,9 @@ namespace SimplePie {
          * @since Beta 2 (previously called `get_item_date` since 0.8)
          *
          * @param string $date_format Supports any PHP date format from {@see http://php.net/date} (empty for the raw data)
-         * @return int|string|null
+         * @return ($date_format is 'U' ? ?int : ?string)
          */
-        public function get_date($date_format = 'j F Y, g:i a')
+        public function get_date(string $date_format = 'j F Y, g:i a')
         {
         }
         /**
@@ -25562,9 +26366,9 @@ namespace SimplePie {
          * {@see get_gmdate}
          *
          * @param string $date_format Supports any PHP date format from {@see http://php.net/date} (empty for the raw data)
-         * @return int|string|null
+         * @return ($date_format is 'U' ? ?int : ?string)
          */
-        public function get_updated_date($date_format = 'j F Y, g:i a')
+        public function get_updated_date(string $date_format = 'j F Y, g:i a')
         {
         }
         /**
@@ -25578,9 +26382,9 @@ namespace SimplePie {
          * @since 1.0
          *
          * @param string $date_format Supports any PHP date format from {@see http://php.net/strftime} (empty for the raw data)
-         * @return int|string|null
+         * @return string|null|false see `strftime` for when this can return `false`
          */
-        public function get_local_date($date_format = '%c')
+        public function get_local_date(string $date_format = '%c')
         {
         }
         /**
@@ -25588,9 +26392,9 @@ namespace SimplePie {
          *
          * @see get_date
          * @param string $date_format Supports any PHP date format from {@see http://php.net/date}
-         * @return int|string|null
+         * @return string|null
          */
-        public function get_gmdate($date_format = 'j F Y, g:i a')
+        public function get_gmdate(string $date_format = 'j F Y, g:i a')
         {
         }
         /**
@@ -25598,9 +26402,9 @@ namespace SimplePie {
          *
          * @see get_updated_date
          * @param string $date_format Supports any PHP date format from {@see http://php.net/date}
-         * @return int|string|null
+         * @return string|null
          */
-        public function get_updated_gmdate($date_format = 'j F Y, g:i a')
+        public function get_updated_gmdate(string $date_format = 'j F Y, g:i a')
         {
         }
         /**
@@ -25624,7 +26428,7 @@ namespace SimplePie {
          * @param string $rel The relationship of the link to return
          * @return string|null Link URL
          */
-        public function get_link($key = 0, $rel = 'alternate')
+        public function get_link(int $key = 0, string $rel = 'alternate')
         {
         }
         /**
@@ -25634,9 +26438,9 @@ namespace SimplePie {
          *
          * @since Beta 2
          * @param string $rel The relationship of links to return
-         * @return array|null Links found for the item (strings)
+         * @return array<string>|null Links found for the item (strings)
          */
-        public function get_links($rel = 'alternate')
+        public function get_links(string $rel = 'alternate')
         {
         }
         /**
@@ -25649,7 +26453,7 @@ namespace SimplePie {
          * @param int $key The enclosure that you want to return.  Remember that arrays begin with 0, not 1
          * @return \SimplePie\Enclosure|null
          */
-        public function get_enclosure($key = 0, $prefer = null)
+        public function get_enclosure(int $key = 0)
         {
         }
         /**
@@ -25679,7 +26483,7 @@ namespace SimplePie {
          * @since 1.0
          * @link http://www.w3.org/2003/01/geo/ W3C WGS84 Basic Geo
          * @link http://www.georss.org/ GeoRSS
-         * @return string|null
+         * @return float|null
          */
         public function get_latitude()
         {
@@ -25694,7 +26498,7 @@ namespace SimplePie {
          * @since 1.0
          * @link http://www.w3.org/2003/01/geo/ W3C WGS84 Basic Geo
          * @link http://www.georss.org/ GeoRSS
-         * @return string|null
+         * @return float|null
          */
         public function get_longitude()
         {
@@ -25706,6 +26510,12 @@ namespace SimplePie {
          * @return \SimplePie\Source|null
          */
         public function get_source()
+        {
+        }
+        public function set_sanitize(\SimplePie\Sanitize $sanitize): void
+        {
+        }
+        protected function get_sanitize(): \SimplePie\Sanitize
         {
         }
     }
@@ -25722,57 +26532,119 @@ namespace SimplePie {
      *
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_locator_class()}
-     *
-     * @package SimplePie
      */
     class Locator implements \SimplePie\RegistryAware
     {
-        public $useragent;
-        public $timeout;
+        /** @var ?string */
+        public $useragent = null;
+        /** @var int */
+        public $timeout = 10;
+        /** @var File */
         public $file;
+        /** @var string[] */
         public $local = [];
+        /** @var string[] */
         public $elsewhere = [];
+        /** @var array<mixed> */
         public $cached_entities = [];
+        /** @var string */
         public $http_base;
+        /** @var string */
         public $base;
+        /** @var int */
         public $base_location = 0;
+        /** @var int */
         public $checked_feeds = 0;
+        /** @var int */
         public $max_checked_feeds = 10;
+        /** @var bool */
         public $force_fsockopen = false;
+        /** @var array<int, mixed> */
         public $curl_options = [];
+        /** @var ?\DomDocument */
         public $dom;
+        /** @var ?Registry */
         protected $registry;
-        public function __construct(\SimplePie\File $file, $timeout = 10, $useragent = null, $max_checked_feeds = 10, $force_fsockopen = false, $curl_options = [])
+        /**
+         * @param array<int, mixed> $curl_options
+         */
+        public function __construct(\SimplePie\File $file, int $timeout = 10, ?string $useragent = null, int $max_checked_feeds = 10, bool $force_fsockopen = false, array $curl_options = [])
         {
         }
+        /**
+         * Set a PSR-18 client and PSR-17 factories
+         *
+         * Allows you to use your own HTTP client implementations.
+         */
+        final public function set_http_client(\Psr\Http\Client\ClientInterface $http_client, \Psr\Http\Message\RequestFactoryInterface $request_factory, \Psr\Http\Message\UriFactoryInterface $uri_factory): void
+        {
+        }
+        /**
+         * @return void
+         */
         public function set_registry(\SimplePie\Registry $registry)
         {
         }
-        public function find($type = \SimplePie\SimplePie::LOCATOR_ALL, &$working = null)
+        /**
+         * @param SimplePie::LOCATOR_* $type
+         * @param array<Response>|null $working
+         * @return Response|null
+         */
+        public function find(int $type = \SimplePie\SimplePie::LOCATOR_ALL, ?array &$working = null)
         {
         }
-        public function is_feed($file, $check_html = false)
+        /**
+         * @return bool
+         */
+        public function is_feed(\SimplePie\HTTP\Response $file, bool $check_html = false)
         {
         }
+        /**
+         * @return void
+         */
         public function get_base()
         {
         }
+        /**
+         * @return array<Response>|null
+         */
         public function autodiscovery()
         {
         }
-        protected function search_elements_by_tag($name, &$done, $feeds)
+        /**
+         * @param string[] $done
+         * @param array<string, Response> $feeds
+         * @return array<string, Response>
+         */
+        protected function search_elements_by_tag(string $name, array &$done, array $feeds)
         {
         }
+        /**
+         * @return true|null
+         */
         public function get_links()
         {
         }
-        public function get_rel_link($rel)
+        /**
+         * Extracts first `link` element with given `rel` attribute inside the `head` element.
+         *
+         * @return string|null
+         */
+        public function get_rel_link(string $rel)
         {
         }
-        public function extension(&$array)
+        /**
+         * @param string[] $array
+         * @return array<Response>|null
+         */
+        public function extension(array &$array)
         {
         }
-        public function body(&$array)
+        /**
+         * @param string[] $array
+         * @return array<Response>|null
+         */
+        public function body(array &$array)
         {
         }
     }
@@ -25786,15 +26658,25 @@ namespace {
 namespace SimplePie {
     /**
      * Miscellaneous utilities
-     *
-     * @package SimplePie
      */
     class Misc
     {
-        public static function time_hms($seconds)
+        /**
+         * @return string
+         */
+        public static function time_hms(int $seconds)
         {
         }
-        public static function absolutize_url($relative, $base)
+        /**
+         * @return string|false
+         */
+        public static function absolutize_url(string $relative, string $base)
+        {
+        }
+        /**
+         * @internal
+         */
+        public static function is_remote_uri(string $uri): bool
         {
         }
         /**
@@ -25803,36 +26685,68 @@ namespace SimplePie {
          * @deprecated since SimplePie 1.3, use DOMDocument instead (parsing HTML with regex is bad!)
          * @param string $realname Element name (including namespace prefix if applicable)
          * @param string $string HTML document
-         * @return array
+         * @return array<array{tag: string, self_closing: bool, attribs: array<string, array{data: string}>, content?: string}>
          */
-        public static function get_element($realname, $string)
+        public static function get_element(string $realname, string $string)
         {
         }
-        public static function element_implode($element)
+        /**
+         * @deprecated since SimplePie 1.9.0. If you need it, you can copy the function to your codebase. But you should consider using `DOMDocument` for any DOM wrangling.
+         * @param array{tag: string, self_closing: bool, attribs: array<string, array{data: string}>, content: string} $element
+         * @return string
+         */
+        public static function element_implode(array $element)
         {
         }
-        public static function error($message, $level, $file, $line)
+        /**
+         * @param string $message
+         * @param int $level
+         * @param string $file
+         * @param int $line
+         * @return string
+         */
+        public static function error(string $message, int $level, string $file, int $line)
         {
         }
-        public static function fix_protocol($url, $http = 1)
+        /**
+         * @return string
+         */
+        public static function fix_protocol(string $url, int $http = 1)
         {
         }
         /**
          * @deprecated since SimplePie 1.8.0, use PHP native array_replace_recursive() instead.
+         * @param array<mixed> $array1
+         * @param array<mixed> $array2
+         * @return array<mixed>
          */
-        public static function array_merge_recursive($array1, $array2)
+        public static function array_merge_recursive(array $array1, array $array2)
         {
         }
-        public static function parse_url($url)
+        /**
+         * @return array<string, string>
+         */
+        public static function parse_url(string $url)
         {
         }
-        public static function compress_parse_url($scheme = '', $authority = '', $path = '', $query = '', $fragment = '')
+        /**
+         * @return string
+         */
+        public static function compress_parse_url(string $scheme = '', string $authority = '', string $path = '', string $query = '', ?string $fragment = '')
         {
         }
-        public static function normalize_url($url)
+        /**
+         * @return string
+         */
+        public static function normalize_url(string $url)
         {
         }
-        public static function percent_encoding_normalization($match)
+        /**
+         * @deprecated since SimplePie 1.9.0. This functionality is part of `IRI` – if you need it standalone, consider copying the function to your codebase.
+         * @param array<int, string> $match
+         * @return string
+         */
+        public static function percent_encoding_normalization(array $match)
         {
         }
         /**
@@ -25842,7 +26756,7 @@ namespace SimplePie {
          * @param string $string Windows-1252 encoded string
          * @return string UTF-8 encoded string
          */
-        public static function windows_1252_to_utf8($string)
+        public static function windows_1252_to_utf8(string $string)
         {
         }
         /**
@@ -25851,24 +26765,27 @@ namespace SimplePie {
          * @param string $data Raw data in $input encoding
          * @param string $input Encoding of $data
          * @param string $output Encoding you want
-         * @return string|boolean False if we can't convert it
+         * @return string|false False if we can't convert it
          */
-        public static function change_encoding($data, $input, $output)
-        {
-        }
-        protected static function change_encoding_mbstring($data, $input, $output)
-        {
-        }
-        protected static function change_encoding_iconv($data, $input, $output)
+        public static function change_encoding(string $data, string $input, string $output)
         {
         }
         /**
-         * @param string $data
-         * @param string $input
-         * @param string $output
          * @return string|false
          */
-        protected static function change_encoding_uconverter($data, $input, $output)
+        protected static function change_encoding_mbstring(string $data, string $input, string $output)
+        {
+        }
+        /**
+         * @return string|false
+         */
+        protected static function change_encoding_iconv(string $data, string $input, string $output)
+        {
+        }
+        /**
+         * @return string|false
+         */
+        protected static function change_encoding_uconverter(string $data, string $input, string $output)
         {
         }
         /**
@@ -25882,22 +26799,29 @@ namespace SimplePie {
          * @param string $charset Character set to standardise
          * @return string Standardised name
          */
-        public static function encoding($charset)
+        public static function encoding(string $charset)
         {
         }
+        /**
+         * @return string
+         */
         public static function get_curl_version()
         {
         }
         /**
          * Strip HTML comments
          *
+         * @deprecated since SimplePie 1.9.0. If you need it, you can copy the function to your codebase. But you should consider using `DOMDocument` for any DOM wrangling.
          * @param string $data Data to strip comments from
          * @return string Comment stripped string
          */
-        public static function strip_comments($data)
+        public static function strip_comments(string $data)
         {
         }
-        public static function parse_date($dt)
+        /**
+         * @return int|false
+         */
+        public static function parse_date(string $dt)
         {
         }
         /**
@@ -25907,34 +26831,56 @@ namespace SimplePie {
          * @param string $data Input data
          * @return string Output data
          */
-        public static function entities_decode($data)
+        public static function entities_decode(string $data)
         {
         }
         /**
          * Remove RFC822 comments
          *
-         * @param string $data Data to strip comments from
+         * @deprecated since SimplePie 1.9.0. If you need it, consider copying the function to your codebase.
+         * @param string $string Data to strip comments from
          * @return string Comment stripped string
          */
-        public static function uncomment_rfc822($string)
+        public static function uncomment_rfc822(string $string)
         {
         }
-        public static function parse_mime($mime)
+        /**
+         * @return string
+         */
+        public static function parse_mime(string $mime)
         {
         }
-        public static function atom_03_construct_type($attribs)
+        /**
+         * @param array<string, array<string, string>> $attribs
+         * @return int-mask-of<SimplePie::CONSTRUCT_*>
+         */
+        public static function atom_03_construct_type(array $attribs)
         {
         }
-        public static function atom_10_construct_type($attribs)
+        /**
+         * @param array<string, array<string, string>> $attribs
+         * @return int-mask-of<SimplePie::CONSTRUCT_*>
+         */
+        public static function atom_10_construct_type(array $attribs)
         {
         }
-        public static function atom_10_content_construct_type($attribs)
+        /**
+         * @param array<string, array<string, string>> $attribs
+         * @return int-mask-of<SimplePie::CONSTRUCT_*>
+         */
+        public static function atom_10_content_construct_type(array $attribs)
         {
         }
-        public static function is_isegment_nz_nc($string)
+        /**
+         * @return bool
+         */
+        public static function is_isegment_nz_nc(string $string)
         {
         }
-        public static function space_separated_tokens($string)
+        /**
+         * @return string[]
+         */
+        public static function space_separated_tokens(string $string)
         {
         }
         /**
@@ -25942,9 +26888,9 @@ namespace SimplePie {
          *
          * @static
          * @param int $codepoint Unicode codepoint
-         * @return string UTF-8 character
+         * @return string|false UTF-8 character
          */
-        public static function codepoint_to_utf8($codepoint)
+        public static function codepoint_to_utf8(int $codepoint)
         {
         }
         /**
@@ -25953,11 +26899,12 @@ namespace SimplePie {
          * Returns an associative array of name/value pairs, where the value is an
          * array of values that have used the same name
          *
+         * @deprecated since SimplePie 1.9.0. If you need it, consider copying the function to your codebase.
          * @static
          * @param string $str The input string.
-         * @return array
+         * @return array<string, array<string|null>>
          */
-        public static function parse_str($str)
+        public static function parse_str(string $str)
         {
         }
         /**
@@ -25966,11 +26913,14 @@ namespace SimplePie {
          * @todo Add support for EBCDIC
          * @param string $data XML data
          * @param \SimplePie\Registry $registry Class registry
-         * @return array Possible encodings
+         * @return array<string> Possible encodings
          */
-        public static function xml_encoding($data, $registry)
+        public static function xml_encoding(string $data, \SimplePie\Registry $registry)
         {
         }
+        /**
+         * @return void
+         */
         public static function output_javascript()
         {
         }
@@ -25979,6 +26929,8 @@ namespace SimplePie {
          *
          * Uses the git index if it exists, otherwise uses the modification time
          * of the newest file.
+         *
+         * @return int
          */
         public static function get_build()
         {
@@ -25993,11 +26945,16 @@ namespace SimplePie {
         }
         /**
          * Format debugging information
+         *
+         * @return string
          */
-        public static function debug(&$sp)
+        public static function debug(\SimplePie\SimplePie &$sp)
         {
         }
-        public static function silence_errors($num, $str)
+        /**
+         * @return bool
+         */
+        public static function silence_errors(int $num, string $str)
         {
         }
         /**
@@ -26005,7 +26962,7 @@ namespace SimplePie {
          * @param string $url the URL to sanitize.
          * @return string the same URL without HTTP credentials.
          */
-        public static function url_remove_credentials($url)
+        public static function url_remove_credentials(string $url)
         {
         }
     }
@@ -26020,8 +26977,6 @@ namespace SimplePie\Net {
     /**
      * Class to validate and to work with IPv6 addresses.
      *
-     * @package SimplePie
-     * @subpackage HTTP
      * @copyright 2003-2005 The PHP Group
      * @license http://www.opensource.org/licenses/bsd-license.php
      * @link http://pear.php.net/package/Net_IPv6
@@ -26035,7 +26990,7 @@ namespace SimplePie\Net {
         /**
          * Uncompresses an IPv6 address
          *
-         * RFC 4291 allows you to compress concecutive zero pieces in an address to
+         * RFC 4291 allows you to compress consecutive zero pieces in an address to
          * '::'. This method expects a valid IPv6 address and expands the '::' to
          * the required number of zero pieces.
          *
@@ -26050,13 +27005,13 @@ namespace SimplePie\Net {
          * @param string $ip An IPv6 address
          * @return string The uncompressed IPv6 address
          */
-        public static function uncompress($ip)
+        public static function uncompress(string $ip)
         {
         }
         /**
          * Compresses an IPv6 address
          *
-         * RFC 4291 allows you to compress concecutive zero pieces in an address to
+         * RFC 4291 allows you to compress consecutive zero pieces in an address to
          * '::'. This method expects a valid IPv6 address and compresses consecutive
          * zero pieces to '::'.
          *
@@ -26067,7 +27022,7 @@ namespace SimplePie\Net {
          * @param string $ip An IPv6 address
          * @return string The compressed IPv6 address
          */
-        public static function compress($ip)
+        public static function compress(string $ip)
         {
         }
         /**
@@ -26078,7 +27033,7 @@ namespace SimplePie\Net {
          * @param string $ip An IPv6 address
          * @return bool true if $ip is a valid IPv6 address
          */
-        public static function check_ipv6($ip)
+        public static function check_ipv6(string $ip)
         {
         }
         /**
@@ -26090,7 +27045,7 @@ namespace SimplePie\Net {
          * @param string $ip An IPv6 address
          * @return bool true if $ip is a valid IPv6 address
          */
-        public static function checkIPv6($ip)
+        public static function checkIPv6(string $ip)
         {
         }
     }
@@ -26104,9 +27059,6 @@ namespace {
 namespace SimplePie\Parse {
     /**
      * Date Parser
-     *
-     * @package SimplePie
-     * @subpackage Parsing
      */
     class Date
     {
@@ -26121,7 +27073,7 @@ namespace SimplePie\Parse {
          * List of days, calendar day name => ordinal day number in the week
          *
          * @access protected
-         * @var array
+         * @var array<string, int<1,7>>
          */
         public $day = [
             // English
@@ -26225,7 +27177,7 @@ namespace SimplePie\Parse {
          * List of months, calendar month name => calendar month number
          *
          * @access protected
-         * @var array
+         * @var array<string, int<1,12>>
          */
         public $month = [
             // English
@@ -26257,15 +27209,15 @@ namespace SimplePie\Parse {
             'januari' => 1,
             'februari' => 2,
             'maart' => 3,
-            'april' => 4,
+            // 'april' => 4,
             'mei' => 5,
             'juni' => 6,
             'juli' => 7,
             'augustus' => 8,
-            'september' => 9,
+            // 'september' => 9,
             'oktober' => 10,
-            'november' => 11,
-            'december' => 12,
+            // 'november' => 11,
+            // 'december' => 12,
             // French
             'janvier' => 1,
             'février' => 2,
@@ -26281,27 +27233,26 @@ namespace SimplePie\Parse {
             'décembre' => 12,
             // German
             'januar' => 1,
-            'jan' => 1,
+            // 'jan' => 1,
             'februar' => 2,
-            'feb' => 2,
+            // 'feb' => 2,
             'märz' => 3,
             'mär' => 3,
-            'april' => 4,
-            'apr' => 4,
-            'mai' => 5,
-            // no short form for may
-            'juni' => 6,
-            'jun' => 6,
-            'juli' => 7,
-            'jul' => 7,
-            'august' => 8,
-            'aug' => 8,
-            'september' => 9,
-            'sep' => 9,
-            'oktober' => 10,
+            // 'april' => 4,
+            // 'apr' => 4,
+            // 'mai' => 5, // no short form for may
+            // 'juni' => 6,
+            // 'jun' => 6,
+            // 'juli' => 7,
+            // 'jul' => 7,
+            // 'august' => 8,
+            // 'aug' => 8,
+            // 'september' => 9,
+            // 'sep' => 9,
+            // 'oktober' => 10,
             'okt' => 10,
-            'november' => 11,
-            'nov' => 11,
+            // 'november' => 11,
+            // 'nov' => 11,
             'dezember' => 12,
             'dez' => 12,
             // Italian
@@ -26315,17 +27266,17 @@ namespace SimplePie\Parse {
             'agosto' => 8,
             'settembre' => 9,
             'ottobre' => 10,
-            'novembre' => 11,
+            // 'novembre' => 11,
             'dicembre' => 12,
             // Spanish
             'enero' => 1,
             'febrero' => 2,
-            'marzo' => 3,
+            // 'marzo' => 3,
             'abril' => 4,
             'mayo' => 5,
             'junio' => 6,
             'julio' => 7,
-            'agosto' => 8,
+            // 'agosto' => 8,
             'septiembre' => 9,
             'setiembre' => 9,
             'octubre' => 10,
@@ -26355,8 +27306,8 @@ namespace SimplePie\Parse {
             'augusztus' => 8,
             'szeptember' => 9,
             'október' => 10,
-            'november' => 11,
-            'december' => 12,
+            // 'november' => 11,
+            // 'december' => 12,
             // Greek
             'Ιαν' => 1,
             'Φεβ' => 2,
@@ -26406,9 +27357,210 @@ namespace SimplePie\Parse {
          * List of timezones, abbreviation => offset from UTC
          *
          * @access protected
-         * @var array
+         * @var array<string, int>
          */
-        public $timezone = ['ACDT' => 37800, 'ACIT' => 28800, 'ACST' => 34200, 'ACT' => -18000, 'ACWDT' => 35100, 'ACWST' => 31500, 'AEDT' => 39600, 'AEST' => 36000, 'AFT' => 16200, 'AKDT' => -28800, 'AKST' => -32400, 'AMDT' => 18000, 'AMT' => -14400, 'ANAST' => 46800, 'ANAT' => 43200, 'ART' => -10800, 'AZOST' => -3600, 'AZST' => 18000, 'AZT' => 14400, 'BIOT' => 21600, 'BIT' => -43200, 'BOT' => -14400, 'BRST' => -7200, 'BRT' => -10800, 'BST' => 3600, 'BTT' => 21600, 'CAST' => 18000, 'CAT' => 7200, 'CCT' => 23400, 'CDT' => -18000, 'CEDT' => 7200, 'CEST' => 7200, 'CET' => 3600, 'CGST' => -7200, 'CGT' => -10800, 'CHADT' => 49500, 'CHAST' => 45900, 'CIST' => -28800, 'CKT' => -36000, 'CLDT' => -10800, 'CLST' => -14400, 'COT' => -18000, 'CST' => -21600, 'CVT' => -3600, 'CXT' => 25200, 'DAVT' => 25200, 'DTAT' => 36000, 'EADT' => -18000, 'EAST' => -21600, 'EAT' => 10800, 'ECT' => -18000, 'EDT' => -14400, 'EEST' => 10800, 'EET' => 7200, 'EGT' => -3600, 'EKST' => 21600, 'EST' => -18000, 'FJT' => 43200, 'FKDT' => -10800, 'FKST' => -14400, 'FNT' => -7200, 'GALT' => -21600, 'GEDT' => 14400, 'GEST' => 10800, 'GFT' => -10800, 'GILT' => 43200, 'GIT' => -32400, 'GST' => 14400, 'GST' => -7200, 'GYT' => -14400, 'HAA' => -10800, 'HAC' => -18000, 'HADT' => -32400, 'HAE' => -14400, 'HAP' => -25200, 'HAR' => -21600, 'HAST' => -36000, 'HAT' => -9000, 'HAY' => -28800, 'HKST' => 28800, 'HMT' => 18000, 'HNA' => -14400, 'HNC' => -21600, 'HNE' => -18000, 'HNP' => -28800, 'HNR' => -25200, 'HNT' => -12600, 'HNY' => -32400, 'IRDT' => 16200, 'IRKST' => 32400, 'IRKT' => 28800, 'IRST' => 12600, 'JFDT' => -10800, 'JFST' => -14400, 'JST' => 32400, 'KGST' => 21600, 'KGT' => 18000, 'KOST' => 39600, 'KOVST' => 28800, 'KOVT' => 25200, 'KRAST' => 28800, 'KRAT' => 25200, 'KST' => 32400, 'LHDT' => 39600, 'LHST' => 37800, 'LINT' => 50400, 'LKT' => 21600, 'MAGST' => 43200, 'MAGT' => 39600, 'MAWT' => 21600, 'MDT' => -21600, 'MESZ' => 7200, 'MEZ' => 3600, 'MHT' => 43200, 'MIT' => -34200, 'MNST' => 32400, 'MSDT' => 14400, 'MSST' => 10800, 'MST' => -25200, 'MUT' => 14400, 'MVT' => 18000, 'MYT' => 28800, 'NCT' => 39600, 'NDT' => -9000, 'NFT' => 41400, 'NMIT' => 36000, 'NOVST' => 25200, 'NOVT' => 21600, 'NPT' => 20700, 'NRT' => 43200, 'NST' => -12600, 'NUT' => -39600, 'NZDT' => 46800, 'NZST' => 43200, 'OMSST' => 25200, 'OMST' => 21600, 'PDT' => -25200, 'PET' => -18000, 'PETST' => 46800, 'PETT' => 43200, 'PGT' => 36000, 'PHOT' => 46800, 'PHT' => 28800, 'PKT' => 18000, 'PMDT' => -7200, 'PMST' => -10800, 'PONT' => 39600, 'PST' => -28800, 'PWT' => 32400, 'PYST' => -10800, 'PYT' => -14400, 'RET' => 14400, 'ROTT' => -10800, 'SAMST' => 18000, 'SAMT' => 14400, 'SAST' => 7200, 'SBT' => 39600, 'SCDT' => 46800, 'SCST' => 43200, 'SCT' => 14400, 'SEST' => 3600, 'SGT' => 28800, 'SIT' => 28800, 'SRT' => -10800, 'SST' => -39600, 'SYST' => 10800, 'SYT' => 7200, 'TFT' => 18000, 'THAT' => -36000, 'TJT' => 18000, 'TKT' => -36000, 'TMT' => 18000, 'TOT' => 46800, 'TPT' => 32400, 'TRUT' => 36000, 'TVT' => 43200, 'TWT' => 28800, 'UYST' => -7200, 'UYT' => -10800, 'UZT' => 18000, 'VET' => -14400, 'VLAST' => 39600, 'VLAT' => 36000, 'VOST' => 21600, 'VUT' => 39600, 'WAST' => 7200, 'WAT' => 3600, 'WDT' => 32400, 'WEST' => 3600, 'WFT' => 43200, 'WIB' => 25200, 'WIT' => 32400, 'WITA' => 28800, 'WKST' => 18000, 'WST' => 28800, 'YAKST' => 36000, 'YAKT' => 32400, 'YAPT' => 36000, 'YEKST' => 21600, 'YEKT' => 18000];
+        public $timezone = [
+            'ACDT' => 37800,
+            'ACIT' => 28800,
+            'ACST' => 34200,
+            'ACT' => -18000,
+            'ACWDT' => 35100,
+            'ACWST' => 31500,
+            'AEDT' => 39600,
+            'AEST' => 36000,
+            'AFT' => 16200,
+            'AKDT' => -28800,
+            'AKST' => -32400,
+            'AMDT' => 18000,
+            'AMT' => -14400,
+            'ANAST' => 46800,
+            'ANAT' => 43200,
+            'ART' => -10800,
+            'AZOST' => -3600,
+            'AZST' => 18000,
+            'AZT' => 14400,
+            'BIOT' => 21600,
+            'BIT' => -43200,
+            'BOT' => -14400,
+            'BRST' => -7200,
+            'BRT' => -10800,
+            'BST' => 3600,
+            'BTT' => 21600,
+            'CAST' => 18000,
+            'CAT' => 7200,
+            'CCT' => 23400,
+            'CDT' => -18000,
+            'CEDT' => 7200,
+            'CEST' => 7200,
+            'CET' => 3600,
+            'CGST' => -7200,
+            'CGT' => -10800,
+            'CHADT' => 49500,
+            'CHAST' => 45900,
+            'CIST' => -28800,
+            'CKT' => -36000,
+            'CLDT' => -10800,
+            'CLST' => -14400,
+            'COT' => -18000,
+            'CST' => -21600,
+            'CVT' => -3600,
+            'CXT' => 25200,
+            'DAVT' => 25200,
+            'DTAT' => 36000,
+            'EADT' => -18000,
+            'EAST' => -21600,
+            'EAT' => 10800,
+            'ECT' => -18000,
+            'EDT' => -14400,
+            'EEST' => 10800,
+            'EET' => 7200,
+            'EGT' => -3600,
+            'EKST' => 21600,
+            'EST' => -18000,
+            'FJT' => 43200,
+            'FKDT' => -10800,
+            'FKST' => -14400,
+            'FNT' => -7200,
+            'GALT' => -21600,
+            'GEDT' => 14400,
+            'GEST' => 10800,
+            'GFT' => -10800,
+            'GILT' => 43200,
+            'GIT' => -32400,
+            'GST' => 14400,
+            // 'GST' => -7200,
+            'GYT' => -14400,
+            'HAA' => -10800,
+            'HAC' => -18000,
+            'HADT' => -32400,
+            'HAE' => -14400,
+            'HAP' => -25200,
+            'HAR' => -21600,
+            'HAST' => -36000,
+            'HAT' => -9000,
+            'HAY' => -28800,
+            'HKST' => 28800,
+            'HMT' => 18000,
+            'HNA' => -14400,
+            'HNC' => -21600,
+            'HNE' => -18000,
+            'HNP' => -28800,
+            'HNR' => -25200,
+            'HNT' => -12600,
+            'HNY' => -32400,
+            'IRDT' => 16200,
+            'IRKST' => 32400,
+            'IRKT' => 28800,
+            'IRST' => 12600,
+            'JFDT' => -10800,
+            'JFST' => -14400,
+            'JST' => 32400,
+            'KGST' => 21600,
+            'KGT' => 18000,
+            'KOST' => 39600,
+            'KOVST' => 28800,
+            'KOVT' => 25200,
+            'KRAST' => 28800,
+            'KRAT' => 25200,
+            'KST' => 32400,
+            'LHDT' => 39600,
+            'LHST' => 37800,
+            'LINT' => 50400,
+            'LKT' => 21600,
+            'MAGST' => 43200,
+            'MAGT' => 39600,
+            'MAWT' => 21600,
+            'MDT' => -21600,
+            'MESZ' => 7200,
+            'MEZ' => 3600,
+            'MHT' => 43200,
+            'MIT' => -34200,
+            'MNST' => 32400,
+            'MSDT' => 14400,
+            'MSST' => 10800,
+            'MST' => -25200,
+            'MUT' => 14400,
+            'MVT' => 18000,
+            'MYT' => 28800,
+            'NCT' => 39600,
+            'NDT' => -9000,
+            'NFT' => 41400,
+            'NMIT' => 36000,
+            'NOVST' => 25200,
+            'NOVT' => 21600,
+            'NPT' => 20700,
+            'NRT' => 43200,
+            'NST' => -12600,
+            'NUT' => -39600,
+            'NZDT' => 46800,
+            'NZST' => 43200,
+            'OMSST' => 25200,
+            'OMST' => 21600,
+            'PDT' => -25200,
+            'PET' => -18000,
+            'PETST' => 46800,
+            'PETT' => 43200,
+            'PGT' => 36000,
+            'PHOT' => 46800,
+            'PHT' => 28800,
+            'PKT' => 18000,
+            'PMDT' => -7200,
+            'PMST' => -10800,
+            'PONT' => 39600,
+            'PST' => -28800,
+            'PWT' => 32400,
+            'PYST' => -10800,
+            'PYT' => -14400,
+            'RET' => 14400,
+            'ROTT' => -10800,
+            'SAMST' => 18000,
+            'SAMT' => 14400,
+            'SAST' => 7200,
+            'SBT' => 39600,
+            'SCDT' => 46800,
+            'SCST' => 43200,
+            'SCT' => 14400,
+            'SEST' => 3600,
+            'SGT' => 28800,
+            'SIT' => 28800,
+            'SRT' => -10800,
+            'SST' => -39600,
+            'SYST' => 10800,
+            'SYT' => 7200,
+            'TFT' => 18000,
+            'THAT' => -36000,
+            'TJT' => 18000,
+            'TKT' => -36000,
+            'TMT' => 18000,
+            'TOT' => 46800,
+            'TPT' => 32400,
+            'TRUT' => 36000,
+            'TVT' => 43200,
+            'TWT' => 28800,
+            'UYST' => -7200,
+            'UYT' => -10800,
+            'UZT' => 18000,
+            'VET' => -14400,
+            'VLAST' => 39600,
+            'VLAT' => 36000,
+            'VOST' => 21600,
+            'VUT' => 39600,
+            'WAST' => 7200,
+            'WAT' => 3600,
+            'WDT' => 32400,
+            'WEST' => 3600,
+            'WFT' => 43200,
+            'WIB' => 25200,
+            'WIT' => 32400,
+            'WITA' => 28800,
+            'WKST' => 18000,
+            'WST' => 28800,
+            'YAKST' => 36000,
+            'YAKT' => 32400,
+            'YAPT' => 36000,
+            'YEKST' => 21600,
+            'YEKT' => 18000,
+        ];
         /**
          * Cached PCRE for Date::$day
          *
@@ -26427,14 +27579,14 @@ namespace SimplePie\Parse {
          * Array of user-added callback methods
          *
          * @access private
-         * @var array
+         * @var array<string>
          */
         public $built_in = [];
         /**
          * Array of user-added callback methods
          *
          * @access private
-         * @var array
+         * @var array<callable(string): (int|false)>
          */
         public $user = [];
         /**
@@ -26450,6 +27602,7 @@ namespace SimplePie\Parse {
          * Get the object
          *
          * @access public
+         * @return Date
          */
         public static function get()
         {
@@ -26460,9 +27613,9 @@ namespace SimplePie\Parse {
          * @final
          * @access public
          * @param string $date Date to parse
-         * @return int Timestamp corresponding to date string, or false on failure
+         * @return int|false Timestamp corresponding to date string, or false on failure
          */
-        public function parse($date)
+        public function parse(string $date)
         {
         }
         /**
@@ -26471,8 +27624,9 @@ namespace SimplePie\Parse {
          * @final
          * @access public
          * @param callable $callback
+         * @return void
          */
-        public function add_callback($callback)
+        public function add_callback(callable $callback)
         {
         }
         /**
@@ -26481,55 +27635,60 @@ namespace SimplePie\Parse {
          * spaces to be used as the time separator (including more than one))
          *
          * @access protected
-         * @return int Timestamp
+         * @param string $date
+         * @return int|false Timestamp
          */
-        public function date_w3cdtf($date)
+        public function date_w3cdtf(string $date)
         {
         }
         /**
          * Remove RFC822 comments
          *
          * @access protected
-         * @param string $data Data to strip comments from
+         * @param string $string Data to strip comments from
          * @return string Comment stripped string
          */
-        public function remove_rfc2822_comments($string)
+        public function remove_rfc2822_comments(string $string)
         {
         }
         /**
          * Parse RFC2822's date format
          *
          * @access protected
-         * @return int Timestamp
+         * @param string $date
+         * @return int|false Timestamp
          */
-        public function date_rfc2822($date)
+        public function date_rfc2822(string $date)
         {
         }
         /**
          * Parse RFC850's date format
          *
          * @access protected
-         * @return int Timestamp
+         * @param string $date
+         * @return int|false Timestamp
          */
-        public function date_rfc850($date)
+        public function date_rfc850(string $date)
         {
         }
         /**
          * Parse C99's asctime()'s date format
          *
          * @access protected
-         * @return int Timestamp
+         * @param string $date
+         * @return int|false Timestamp
          */
-        public function date_asctime($date)
+        public function date_asctime(string $date)
         {
         }
         /**
          * Parse dates using strtotime()
          *
          * @access protected
-         * @return int Timestamp
+         * @param string $date
+         * @return int|false Timestamp
          */
-        public function date_strtotime($date)
+        public function date_strtotime(string $date)
         {
         }
     }
@@ -26546,62 +27705,115 @@ namespace SimplePie {
      *
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_parser_class()}
-     *
-     * @package SimplePie
-     * @subpackage Parsing
      */
     class Parser implements \SimplePie\RegistryAware
     {
+        /** @var int */
         public $error_code;
+        /** @var string */
         public $error_string;
+        /** @var int */
         public $current_line;
+        /** @var int */
         public $current_column;
+        /** @var int */
         public $current_byte;
+        /** @var string */
         public $separator = ' ';
+        /** @var string[] */
         public $namespace = [''];
+        /** @var string[] */
         public $element = [''];
+        /** @var string[] */
         public $xml_base = [''];
+        /** @var bool[] */
         public $xml_base_explicit = [false];
+        /** @var string[] */
         public $xml_lang = [''];
+        /** @var array<string, mixed> */
         public $data = [];
+        /** @var array<array<string, mixed>> */
         public $datas = [[]];
+        /** @var int */
         public $current_xhtml_construct = -1;
+        /** @var string */
         public $encoding;
+        /** @var Registry */
         protected $registry;
+        /**
+         * @return void
+         */
         public function set_registry(\SimplePie\Registry $registry)
         {
         }
-        public function parse(&$data, $encoding, $url = '')
+        /**
+         * @return bool
+         */
+        public function parse(string &$data, string $encoding, string $url = '')
         {
         }
+        /**
+         * @return int
+         */
         public function get_error_code()
         {
         }
+        /**
+         * @return string
+         */
         public function get_error_string()
         {
         }
+        /**
+         * @return int
+         */
         public function get_current_line()
         {
         }
+        /**
+         * @return int
+         */
         public function get_current_column()
         {
         }
+        /**
+         * @return int
+         */
         public function get_current_byte()
         {
         }
+        /**
+         * @return array<string, mixed>
+         */
         public function get_data()
         {
         }
-        public function tag_open($parser, $tag, $attributes)
+        /**
+         * @param XMLParser|resource|null $parser
+         * @param array<string, string> $attributes
+         * @return void
+         */
+        public function tag_open($parser, string $tag, array $attributes)
         {
         }
-        public function cdata($parser, $cdata)
+        /**
+         * @param XMLParser|resource|null $parser
+         * @return void
+         */
+        public function cdata($parser, string $cdata)
         {
         }
-        public function tag_close($parser, $tag)
+        /**
+         * @param XMLParser|resource|null $parser
+         * @return void
+         */
+        public function tag_close($parser, string $tag)
         {
         }
-        public function split_ns($string)
+        /**
+         * @return array{string, string}
+         */
+        public function split_ns(string $string)
         {
         }
     }
@@ -26619,23 +27831,20 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Enclosure::get_rating()} and {@see \SimplePie\Enclosure::get_ratings()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_rating_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Rating
     {
         /**
          * Rating scheme
          *
-         * @var string
+         * @var ?string
          * @see get_scheme()
          */
         public $scheme;
         /**
          * Rating value
          *
-         * @var string
+         * @var ?string
          * @see get_value()
          */
         public $value;
@@ -26645,7 +27854,7 @@ namespace SimplePie {
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
          */
-        public function __construct($scheme = null, $value = null)
+        public function __construct(?string $scheme = null, ?string $value = null)
         {
         }
         /**
@@ -26685,8 +27894,6 @@ namespace SimplePie {
      * Handles creating objects and calling methods
      *
      * Access this via {@see \SimplePie\SimplePie::get_registry()}
-     *
-     * @package SimplePie
      */
     class Registry
     {
@@ -26702,7 +27909,7 @@ namespace SimplePie {
          * Class mapping
          *
          * @see register()
-         * @var array
+         * @var array<string, class-string>
          */
         protected $classes = [];
         /**
@@ -26728,7 +27935,7 @@ namespace SimplePie {
          * @param bool $legacy Whether to enable legacy support for this class
          * @return bool Successfulness
          */
-        public function register($type, $class, $legacy = false)
+        public function register(string $type, $class, bool $legacy = false)
         {
         }
         /**
@@ -26748,10 +27955,10 @@ namespace SimplePie {
          *
          * @template T class-string $type
          * @param class-string<T> $type
-         * @param array $parameters Parameters to pass to the constructor
+         * @param array<mixed> $parameters Parameters to pass to the constructor
          * @return T Instance of class
          */
-        public function &create($type, $parameters = [])
+        public function &create($type, array $parameters = [])
         {
         }
         /**
@@ -26759,10 +27966,10 @@ namespace SimplePie {
          *
          * @param class-string $type
          * @param string $method
-         * @param array $parameters
+         * @param array<mixed> $parameters
          * @return mixed
          */
-        public function &call($type, $method, $parameters = [])
+        public function &call($type, string $method, array $parameters = [])
         {
         }
     }
@@ -26780,30 +27987,29 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Enclosure::get_restriction()} and {@see \SimplePie\Enclosure::get_restrictions()}
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_restriction_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Restriction
     {
+        public const RELATIONSHIP_ALLOW = 'allow';
+        public const RELATIONSHIP_DENY = 'deny';
         /**
          * Relationship ('allow'/'deny')
          *
-         * @var string
+         * @var self::RELATIONSHIP_*|null
          * @see get_relationship()
          */
         public $relationship;
         /**
          * Type of restriction
          *
-         * @var string
+         * @var string|null
          * @see get_type()
          */
         public $type;
         /**
          * Restricted values
          *
-         * @var string
+         * @var string|null
          * @see get_value()
          */
         public $value;
@@ -26812,8 +28018,10 @@ namespace SimplePie {
          *
          * For documentation on all the parameters, see the corresponding
          * properties and their accessors
+         *
+         * @param ?self::RELATIONSHIP_* $relationship
          */
-        public function __construct($relationship = null, $type = null, $value = null)
+        public function __construct(?string $relationship = null, ?string $type = null, ?string $value = null)
         {
         }
         /**
@@ -26827,7 +28035,7 @@ namespace SimplePie {
         /**
          * Get the relationship
          *
-         * @return string|null Either 'allow' or 'deny'
+         * @return ?self::RELATIONSHIP_*
          */
         public function get_relationship()
         {
@@ -26863,73 +28071,145 @@ namespace SimplePie {
      *
      * This class can be overloaded with {@see \SimplePie\SimplePie::set_sanitize_class()}
      *
-     * @package SimplePie
      * @todo Move to using an actual HTML parser (this will allow tags to be properly stripped, and to switch between HTML and XHTML), this will also make it easier to shorten a string while preserving HTML tags
      */
     class Sanitize implements \SimplePie\RegistryAware
     {
-        public $base;
+        /** @var string */
+        public $base = '';
+        /** @var bool */
         public $remove_div = true;
+        /** @var string */
         public $image_handler = '';
+        /** @var string[] */
         public $strip_htmltags = ['base', 'blink', 'body', 'doctype', 'embed', 'font', 'form', 'frame', 'frameset', 'html', 'iframe', 'input', 'marquee', 'meta', 'noscript', 'object', 'param', 'script', 'style'];
+        /** @var bool */
         public $encode_instead_of_strip = false;
+        /** @var string[] */
         public $strip_attributes = ['bgsound', 'expr', 'id', 'style', 'onclick', 'onerror', 'onfinish', 'onmouseover', 'onmouseout', 'onfocus', 'onblur', 'lowsrc', 'dynsrc'];
+        /** @var string[] */
         public $rename_attributes = [];
+        /** @var array<string, array<string, string>> */
         public $add_attributes = ['audio' => ['preload' => 'none'], 'iframe' => ['sandbox' => 'allow-scripts allow-same-origin'], 'video' => ['preload' => 'none']];
+        /** @var bool */
         public $strip_comments = false;
+        /** @var string */
         public $output_encoding = 'UTF-8';
+        /** @var bool */
         public $enable_cache = true;
+        /** @var string */
         public $cache_location = './cache';
+        /** @var string&(callable(string): string) */
         public $cache_name_function = 'md5';
+        /** @var int */
         public $timeout = 10;
+        /** @var string */
         public $useragent = '';
+        /** @var bool */
         public $force_fsockopen = false;
-        public $replace_url_attributes = null;
+        /** @var array<string, string|string[]> */
+        public $replace_url_attributes = [];
+        /** @var Registry */
         public $registry;
         /**
          * List of domains for which to force HTTPS.
          * @see \SimplePie\Sanitize::set_https_domains()
          * Array is a tree split at DNS levels. Example:
          * array('biz' => true, 'com' => array('example' => true), 'net' => array('example' => array('www' => true)))
+         * @var true|array<string, true|array<string, true|array<string, array<string, true|array<string, true|array<string, true>>>>>>
          */
         public $https_domains = [];
         public function __construct()
         {
         }
-        public function remove_div($enable = true)
+        /**
+         * @return void
+         */
+        public function remove_div(bool $enable = true)
         {
         }
+        /**
+         * @param string|false $page
+         * @return void
+         */
         public function set_image_handler($page = false)
         {
         }
+        /**
+         * @return void
+         */
         public function set_registry(\SimplePie\Registry $registry)
         {
         }
-        public function pass_cache_data($enable_cache = true, $cache_location = './cache', $cache_name_function = 'md5', $cache_class = 'SimplePie\Cache', ?\SimplePie\Cache\DataCache $cache = null)
+        /**
+         * @param (string&(callable(string): string))|NameFilter $cache_name_function
+         * @param class-string<Cache> $cache_class
+         * @return void
+         */
+        public function pass_cache_data(bool $enable_cache = true, string $cache_location = './cache', $cache_name_function = 'md5', string $cache_class = \SimplePie\Cache::class, ?\SimplePie\Cache\DataCache $cache = null)
         {
         }
-        public function pass_file_data($file_class = 'SimplePie\File', $timeout = 10, $useragent = '', $force_fsockopen = false)
+        /**
+         * Set a PSR-18 client and PSR-17 factories
+         *
+         * Allows you to use your own HTTP client implementations.
+         */
+        final public function set_http_client(\Psr\Http\Client\ClientInterface $http_client, \Psr\Http\Message\RequestFactoryInterface $request_factory, \Psr\Http\Message\UriFactoryInterface $uri_factory): void
         {
         }
+        /**
+         * @deprecated since SimplePie 1.9.0, use \SimplePie\Sanitize::set_http_client() instead.
+         * @param class-string<File> $file_class
+         * @param array<int, mixed> $curl_options
+         * @return void
+         */
+        public function pass_file_data(string $file_class = \SimplePie\File::class, int $timeout = 10, string $useragent = '', bool $force_fsockopen = false, array $curl_options = [])
+        {
+        }
+        /**
+         * @param string[]|string|false $tags Set a list of tags to strip, or set empty string to use default tags, or false to strip nothing.
+         * @return void
+         */
         public function strip_htmltags($tags = ['base', 'blink', 'body', 'doctype', 'embed', 'font', 'form', 'frame', 'frameset', 'html', 'iframe', 'input', 'marquee', 'meta', 'noscript', 'object', 'param', 'script', 'style'])
         {
         }
-        public function encode_instead_of_strip($encode = false)
+        /**
+         * @return void
+         */
+        public function encode_instead_of_strip(bool $encode = false)
         {
         }
+        /**
+         * @param string[]|string $attribs
+         * @return void
+         */
         public function rename_attributes($attribs = [])
         {
         }
+        /**
+         * @param string[]|string $attribs
+         * @return void
+         */
         public function strip_attributes($attribs = ['bgsound', 'expr', 'id', 'style', 'onclick', 'onerror', 'onfinish', 'onmouseover', 'onmouseout', 'onfocus', 'onblur', 'lowsrc', 'dynsrc'])
         {
         }
-        public function add_attributes($attribs = ['audio' => ['preload' => 'none'], 'iframe' => ['sandbox' => 'allow-scripts allow-same-origin'], 'video' => ['preload' => 'none']])
+        /**
+         * @param array<string, array<string, string>> $attribs
+         * @return void
+         */
+        public function add_attributes(array $attribs = ['audio' => ['preload' => 'none'], 'iframe' => ['sandbox' => 'allow-scripts allow-same-origin'], 'video' => ['preload' => 'none']])
         {
         }
-        public function strip_comments($strip = false)
+        /**
+         * @return void
+         */
+        public function strip_comments(bool $strip = false)
         {
         }
-        public function set_output_encoding($encoding = 'UTF-8')
+        /**
+         * @return void
+         */
+        public function set_output_encoding(string $encoding = 'UTF-8')
         {
         }
         /**
@@ -26941,53 +28221,94 @@ namespace SimplePie {
          * |ins|@cite, |q|@cite, |source|@src, |video|@src
          *
          * @since 1.0
-         * @param array|null $element_attribute Element/attribute key/value pairs, null for default
+         * @param array<string, string|string[]>|null $element_attribute Element/attribute key/value pairs, null for default
+         * @return void
          */
-        public function set_url_replacements($element_attribute = null)
+        public function set_url_replacements(?array $element_attribute = null)
         {
         }
         /**
          * Set the list of domains for which to force HTTPS.
          * @see \SimplePie\Misc::https_url()
          * Example array('biz', 'example.com', 'example.org', 'www.example.net');
+         *
+         * @param string[] $domains list of domain names ['biz', 'example.com', 'example.org', 'www.example.net']
+         *
+         * @return void
          */
-        public function set_https_domains($domains)
+        public function set_https_domains(array $domains)
         {
         }
         /**
          * Check if the domain is in the list of forced HTTPS.
+         *
+         * @return bool
          */
-        protected function is_https_domain($domain)
+        protected function is_https_domain(string $domain)
         {
         }
         /**
          * Force HTTPS for selected Web sites.
+         *
+         * @return string
          */
-        public function https_url($url)
+        public function https_url(string $url)
         {
         }
-        public function sanitize($data, $type, $base = '')
+        /**
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
+         * @param string $base
+         * @return string Sanitized data; false if output encoding is changed to something other than UTF-8 and conversion fails
+         */
+        public function sanitize(string $data, int $type, string $base = '')
         {
         }
-        protected function preprocess($html, $type)
+        /**
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
+         * @return string
+         */
+        protected function preprocess(string $html, int $type)
         {
         }
-        public function replace_urls($document, $tag, $attributes)
+        /**
+         * @param array<string>|string $attributes
+         * @return void
+         */
+        public function replace_urls(\DOMDocument $document, string $tag, $attributes)
         {
         }
-        public function do_strip_htmltags($match)
+        /**
+         * @param array<int, string> $match
+         * @return string
+         */
+        public function do_strip_htmltags(array $match)
         {
         }
-        protected function strip_tag($tag, $document, $xpath, $type)
+        /**
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
+         * @return void
+         * @phpstan-return void
+         */
+        protected function strip_tag(string $tag, \DOMDocument $document, \DOMXPath $xpath, int $type)
         {
         }
-        protected function strip_attr($attrib, $xpath)
+        /**
+         * @return void
+         */
+        protected function strip_attr(string $attrib, \DOMXPath $xpath)
         {
         }
-        protected function rename_attr($attrib, $xpath)
+        /**
+         * @return void
+         */
+        protected function rename_attr(string $attrib, \DOMXPath $xpath)
         {
         }
-        protected function add_attr($tag, $valuePairs, $document)
+        /**
+         * @param array<string, string> $valuePairs
+         * @return void
+         */
+        protected function add_attr(string $tag, array $valuePairs, \DOMDocument $document)
         {
         }
     }
@@ -27005,84 +28326,164 @@ namespace SimplePie {
      * Used by {@see \SimplePie\Item::get_source()}
      *
      * This class can be overloaded with {@see \SimplePie::set_source_class()}
-     *
-     * @package SimplePie
-     * @subpackage API
      */
     class Source implements \SimplePie\RegistryAware
     {
+        /** @var Item */
         public $item;
+        /** @var array<string, mixed> */
         public $data = [];
+        /** @var Registry */
         protected $registry;
-        public function __construct($item, $data)
+        /**
+         * @param array<string, mixed> $data
+         */
+        public function __construct(\SimplePie\Item $item, array $data)
         {
         }
+        /**
+         * @return void
+         */
         public function set_registry(\SimplePie\Registry $registry)
         {
         }
+        /**
+         * @return string
+         */
         public function __toString()
         {
         }
-        public function get_source_tags($namespace, $tag)
+        /**
+         * @param string $namespace
+         * @param string $tag
+         * @return array<array<string, mixed>>|null
+         */
+        public function get_source_tags(string $namespace, string $tag)
         {
         }
-        public function get_base($element = [])
+        /**
+         * @param array<string, mixed> $element
+         * @return string
+         */
+        public function get_base(array $element = [])
         {
         }
-        public function sanitize($data, $type, $base = '')
+        /**
+         * @param string $data
+         * @param int-mask-of<SimplePie::CONSTRUCT_*> $type
+         * @param string $base
+         * @return string
+         */
+        public function sanitize(string $data, $type, string $base = '')
         {
         }
+        /**
+         * @return Item
+         */
         public function get_item()
         {
         }
+        /**
+         * @return string|null
+         */
         public function get_title()
         {
         }
-        public function get_category($key = 0)
+        /**
+         * @param int $key
+         * @return Category|null
+         */
+        public function get_category(int $key = 0)
         {
         }
+        /**
+         * @return array<Category>|null
+         */
         public function get_categories()
         {
         }
-        public function get_author($key = 0)
+        /**
+         * @param int $key
+         * @return Author|null
+         */
+        public function get_author(int $key = 0)
         {
         }
+        /**
+         * @return array<Author>|null
+         */
         public function get_authors()
         {
         }
-        public function get_contributor($key = 0)
+        /**
+         * @param int $key
+         * @return Author|null
+         */
+        public function get_contributor(int $key = 0)
         {
         }
+        /**
+         * @return array<Author>|null
+         */
         public function get_contributors()
         {
         }
-        public function get_link($key = 0, $rel = 'alternate')
+        /**
+         * @param int $key
+         * @param string $rel
+         * @return string|null
+         */
+        public function get_link(int $key = 0, string $rel = 'alternate')
         {
         }
         /**
          * Added for parity between the parent-level and the item/entry-level.
+         *
+         * @return string|null
          */
         public function get_permalink()
         {
         }
-        public function get_links($rel = 'alternate')
+        /**
+         * @param string $rel
+         * @return array<string>|null
+         */
+        public function get_links(string $rel = 'alternate')
         {
         }
+        /**
+         * @return string|null
+         */
         public function get_description()
         {
         }
+        /**
+         * @return string|null
+         */
         public function get_copyright()
         {
         }
+        /**
+         * @return string|null
+         */
         public function get_language()
         {
         }
+        /**
+         * @return float|null
+         */
         public function get_latitude()
         {
         }
+        /**
+         * @return float|null
+         */
         public function get_longitude()
         {
         }
+        /**
+         * @return string|null
+         */
         public function get_image_url()
         {
         }
@@ -27097,9 +28498,6 @@ namespace {
 namespace SimplePie\XML\Declaration {
     /**
      * Parses the XML Declaration
-     *
-     * @package SimplePie
-     * @subpackage Parsing
      */
     class Parser
     {
@@ -27158,7 +28556,7 @@ namespace SimplePie\XML\Declaration {
          * @access public
          * @param string $data Input data
          */
-        public function __construct($data)
+        public function __construct(string $data)
         {
         }
         /**
@@ -27167,7 +28565,7 @@ namespace SimplePie\XML\Declaration {
          * @access public
          * @return bool true on success, false on failure
          */
-        public function parse()
+        public function parse(): bool
         {
         }
         /**
@@ -27176,7 +28574,7 @@ namespace SimplePie\XML\Declaration {
          * @access private
          * @return bool true if there is further data, false if not
          */
-        public function has_data()
+        public function has_data(): bool
         {
         }
         /**
@@ -27189,38 +28587,40 @@ namespace SimplePie\XML\Declaration {
         }
         /**
          * Read value
+         *
+         * @return string|false
          */
         public function get_value()
         {
         }
-        public function before_version_name()
+        public function before_version_name(): void
         {
         }
-        public function version_name()
+        public function version_name(): void
         {
         }
-        public function version_equals()
+        public function version_equals(): void
         {
         }
-        public function version_value()
+        public function version_value(): void
         {
         }
-        public function encoding_name()
+        public function encoding_name(): void
         {
         }
-        public function encoding_equals()
+        public function encoding_equals(): void
         {
         }
-        public function encoding_value()
+        public function encoding_value(): void
         {
         }
-        public function standalone_name()
+        public function standalone_name(): void
         {
         }
-        public function standalone_equals()
+        public function standalone_equals(): void
         {
         }
-        public function standalone_value()
+        public function standalone_value(): void
         {
         }
     }
@@ -27235,9 +28635,9 @@ namespace SimplePie {
     /**
      * Decode 'gzip' encoded HTTP data
      *
-     * @package SimplePie
-     * @subpackage HTTP
      * @link http://www.gzip.org/format.txt
+     * @link https://www.php.net/manual/en/function.gzdecode.php
+     * @deprecated since SimplePie 1.9.0, use `gzdecode` function instead.
      */
     class Gzdecode
     {
@@ -27353,7 +28753,7 @@ namespace SimplePie {
          * @param string $name
          * @param mixed $value
          */
-        public function __set($name, $value)
+        public function __set(string $name, $value)
         {
         }
         /**
@@ -27361,7 +28761,7 @@ namespace SimplePie {
          *
          * @param string $data
          */
-        public function __construct($data)
+        public function __construct(string $data)
         {
         }
         /**
@@ -27390,8 +28790,6 @@ namespace SimplePie\Cache {
      * The methods names must be different, but should be compatible to the
      * methods of \Psr\SimpleCache\CacheInterface.
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @internal
      */
     interface DataCache
@@ -27422,7 +28820,7 @@ namespace SimplePie\Cache {
          * </code>
          *
          * @param string   $key   The key of the item to store.
-         * @param array    $value The value of the item to store, must be serializable.
+         * @param array<mixed> $value The value of the item to store, must be serializable.
          * @param null|int $ttl   Optional. The TTL value of this item. If no value is sent and
          *                                      the driver supports TTL then the library may set a default value
          *                                      for it or let the driver take care of that.
@@ -27453,8 +28851,6 @@ namespace SimplePie\Cache {
     /**
      * Adapter for deprecated \SimplePie\Cache\Base implementations
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @internal
      */
     final class BaseDataCache implements \SimplePie\Cache\DataCache
@@ -27490,7 +28886,7 @@ namespace SimplePie\Cache {
          * </code>
          *
          * @param string   $key   The key of the item to store.
-         * @param array    $value The value of the item to store, must be serializable.
+         * @param array<mixed> $value The value of the item to store, must be serializable.
          * @param null|int $ttl   Optional. The TTL value of this item. If no value is sent and
          *                                      the driver supports TTL then the library may set a default value
          *                                      for it or let the driver take care of that.
@@ -27524,9 +28920,6 @@ namespace SimplePie\Cache {
     }
     /**
      * Interface for creating a cache filename
-     *
-     * @package SimplePie
-     * @subpackage Caching
      */
     interface NameFilter
     {
@@ -27547,7 +28940,7 @@ namespace SimplePie\Cache {
          * and encodings or longer lengths, but MUST support at least that
          * minimum.
          *
-         * @param string $name The name for the cache will be most likly an url with query string
+         * @param string $name The name for the cache will be most likely an url with query string
          *
          * @return string the new cache name
          */
@@ -27555,12 +28948,12 @@ namespace SimplePie\Cache {
     }
     /**
      * Creating a cache filename with callables
-     *
-     * @package SimplePie
-     * @subpackage Caching
      */
     final class CallableNameFilter implements \SimplePie\Cache\NameFilter
     {
+        /**
+         * @param callable(string): string $callable
+         */
         public function __construct(callable $callable)
         {
         }
@@ -27581,7 +28974,7 @@ namespace SimplePie\Cache {
          * and encodings or longer lengths, but MUST support at least that
          * minimum.
          *
-         * @param string $name The name for the cache will be most likly an url with query string
+         * @param string $name The name for the cache will be most likely an url with query string
          *
          * @return string the new cache name
          */
@@ -27592,8 +28985,6 @@ namespace SimplePie\Cache {
     /**
      * Caches data into a PSR-16 cache implementation
      *
-     * @package SimplePie
-     * @subpackage Caching
      * @internal
      */
     final class Psr16 implements \SimplePie\Cache\DataCache
@@ -27619,7 +29010,7 @@ namespace SimplePie\Cache {
          *
          * @return array|mixed The value of the item from the cache, or $default in case of cache miss.
          *
-         * @throws InvalidArgumentException
+         * @throws InvalidArgumentException&Throwable
          *   MUST be thrown if the $key string is not a legal value.
          */
         public function get_data(string $key, $default = null)
@@ -27634,14 +29025,14 @@ namespace SimplePie\Cache {
          * </code>
          *
          * @param string   $key   The key of the item to store.
-         * @param array    $value The value of the item to store, must be serializable.
+         * @param array<mixed> $value The value of the item to store, must be serializable.
          * @param null|int $ttl   Optional. The TTL value of this item. If no value is sent and
          *                                      the driver supports TTL then the library may set a default value
          *                                      for it or let the driver take care of that.
          *
          * @return bool True on success and false on failure.
          *
-         * @throws InvalidArgumentException
+         * @throws InvalidArgumentException&Throwable
          *   MUST be thrown if the $key string is not a legal value.
          */
         public function set_data(string $key, array $value, ?int $ttl = null): bool
@@ -27659,10 +29050,177 @@ namespace SimplePie\Cache {
          *
          * @return bool True if the item was successfully removed. False if there was an error.
          *
-         * @throws InvalidArgumentException
+         * @throws InvalidArgumentException&Throwable
          *   MUST be thrown if the $key string is not a legal value.
          */
         public function delete_data(string $key): bool
+        {
+        }
+    }
+}
+namespace SimplePie\HTTP {
+    /**
+     * HTTP Client interface
+     *
+     * @internal
+     */
+    interface Client
+    {
+        public const METHOD_GET = 'GET';
+        /**
+         * send a request and return the response
+         *
+         * @param Client::METHOD_* $method
+         * @param array<string, string> $headers
+         *
+         * @throws ClientException if anything goes wrong requesting the data
+         */
+        public function request(string $method, string $url, array $headers = []): \SimplePie\HTTP\Response;
+    }
+    /**
+     * Client exception class
+     *
+     * @internal
+     */
+    final class ClientException extends \SimplePie\Exception
+    {
+    }
+    /**
+     * HTTP Client based on \SimplePie\File
+     *
+     * @internal
+     */
+    final class FileClient implements \SimplePie\HTTP\Client
+    {
+        /**
+         * @param array{timeout?: int, redirects?: int, useragent?: string, force_fsockopen?: bool, curl_options?: array<mixed>} $options
+         */
+        public function __construct(\SimplePie\Registry $registry, array $options = [])
+        {
+        }
+        /**
+         * send a request and return the response
+         *
+         * @param Client::METHOD_* $method
+         * @param array<string, string> $headers
+         *
+         * @throws ClientException if anything goes wrong requesting the data
+         */
+        public function request(string $method, string $url, array $headers = []): \SimplePie\HTTP\Response
+        {
+        }
+    }
+    /**
+     * HTTP Client based on PSR-18 and PSR-17 implementations
+     *
+     * @internal
+     */
+    final class Psr18Client implements \SimplePie\HTTP\Client
+    {
+        public function __construct(\Psr\Http\Client\ClientInterface $httpClient, \Psr\Http\Message\RequestFactoryInterface $requestFactory, \Psr\Http\Message\UriFactoryInterface $uriFactory)
+        {
+        }
+        public function getHttpClient(): \Psr\Http\Client\ClientInterface
+        {
+        }
+        public function getRequestFactory(): \Psr\Http\Message\RequestFactoryInterface
+        {
+        }
+        public function getUriFactory(): \Psr\Http\Message\UriFactoryInterface
+        {
+        }
+        /**
+         * send a request and return the response
+         *
+         * @param Client::METHOD_* $method
+         * @param string $url
+         * @param array<string,string|string[]> $headers
+         *
+         * @throws ClientException if anything goes wrong requesting the data
+         */
+        public function request(string $method, string $url, array $headers = []): \SimplePie\HTTP\Response
+        {
+        }
+    }
+    /**
+     * HTTP Response based on a PSR-7 response
+     *
+     * This interface must be interoperable with Psr\Http\Message\ResponseInterface
+     * @see https://www.php-fig.org/psr/psr-7/#33-psrhttpmessageresponseinterface
+     *
+     * @internal
+     */
+    final class Psr7Response implements \SimplePie\HTTP\Response
+    {
+        public function __construct(\Psr\Http\Message\ResponseInterface $response, string $permanent_url, string $requested_url)
+        {
+        }
+        public function get_permanent_uri(): string
+        {
+        }
+        public function get_final_requested_uri(): string
+        {
+        }
+        public function get_status_code(): int
+        {
+        }
+        public function get_headers(): array
+        {
+        }
+        public function has_header(string $name): bool
+        {
+        }
+        public function with_header(string $name, $value)
+        {
+        }
+        public function get_header(string $name): array
+        {
+        }
+        public function get_header_line(string $name): string
+        {
+        }
+        public function get_body_content(): string
+        {
+        }
+    }
+    /**
+     * HTTP Response for rax text
+     *
+     * This interface must be interoperable with Psr\Http\Message\ResponseInterface
+     * @see https://www.php-fig.org/psr/psr-7/#33-psrhttpmessageresponseinterface
+     *
+     * @internal
+     */
+    final class RawTextResponse implements \SimplePie\HTTP\Response
+    {
+        public function __construct(string $raw_text, string $filepath)
+        {
+        }
+        public function get_permanent_uri(): string
+        {
+        }
+        public function get_final_requested_uri(): string
+        {
+        }
+        public function get_status_code(): int
+        {
+        }
+        public function get_headers(): array
+        {
+        }
+        public function has_header(string $name): bool
+        {
+        }
+        public function get_header(string $name): array
+        {
+        }
+        public function with_header(string $name, $value)
+        {
+        }
+        public function get_header_line(string $name): string
+        {
+        }
+        public function get_body_content(): string
         {
         }
     }
@@ -27807,7 +29365,6 @@ namespace {
          * @access protected
          *
          * @return string  A directory name which can be used for temp files.
-         *                 Returns false if one could not be found.
          */
         static function _getTempDir()
         {
@@ -28387,6 +29944,776 @@ namespace {
      */
     class Text_Exception extends \Exception
     {
+    }
+    /**
+     * Manages the registration and lookup of abilities.
+     *
+     * @since 6.9.0
+     * @access private
+     */
+    final class WP_Abilities_Registry
+    {
+        /**
+         * Registers a new ability.
+         *
+         * Do not use this method directly. Instead, use the `wp_register_ability()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_register_ability()
+         *
+         * @param string               $name The name of the ability. The name must be a string containing a namespace
+         *                                   prefix, i.e. `my-plugin/my-ability`. It can only contain lowercase
+         *                                   alphanumeric characters, dashes and the forward slash.
+         * @param array<string, mixed> $args {
+         *     An associative array of arguments for the ability.
+         *
+         *     @type string               $label                 The human-readable label for the ability.
+         *     @type string               $description           A detailed description of what the ability does.
+         *     @type string               $category              The ability category slug this ability belongs to.
+         *     @type callable             $execute_callback      A callback function to execute when the ability is invoked.
+         *                                                       Receives optional mixed input and returns mixed result or WP_Error.
+         *     @type callable             $permission_callback   A callback function to check permissions before execution.
+         *                                                       Receives optional mixed input and returns bool or WP_Error.
+         *     @type array<string, mixed> $input_schema          Optional. JSON Schema definition for the ability's input.
+         *     @type array<string, mixed> $output_schema         Optional. JSON Schema definition for the ability's output.
+         *     @type array<string, mixed> $meta                  {
+         *         Optional. Additional metadata for the ability.
+         *
+         *         @type array<string, bool|null> $annotations  {
+         *             Optional. Semantic annotations describing the ability's behavioral characteristics.
+         *             These annotations are hints for tooling and documentation.
+         *
+         *             @type bool|null $readonly    Optional. If true, the ability does not modify its environment.
+         *             @type bool|null $destructive Optional. If true, the ability may perform destructive updates to its environment.
+         *                                          If false, the ability performs only additive updates.
+         *             @type bool|null $idempotent  Optional. If true, calling the ability repeatedly with the same arguments
+         *                                          will have no additional effect on its environment.
+         *         }
+         *         @type bool                     $show_in_rest Optional. Whether to expose this ability in the REST API. Default false.
+         *     }
+         *     @type string               $ability_class         Optional. Custom class to instantiate instead of WP_Ability.
+         * }
+         * @return WP_Ability|null The registered ability instance on success, null on failure.
+         */
+        public function register(string $name, array $args): ?\WP_Ability
+        {
+        }
+        /**
+         * Unregisters an ability.
+         *
+         * Do not use this method directly. Instead, use the `wp_unregister_ability()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_unregister_ability()
+         *
+         * @param string $name The name of the registered ability, with its namespace.
+         * @return WP_Ability|null The unregistered ability instance on success, null on failure.
+         */
+        public function unregister(string $name): ?\WP_Ability
+        {
+        }
+        /**
+         * Retrieves the list of all registered abilities.
+         *
+         * Do not use this method directly. Instead, use the `wp_get_abilities()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_get_abilities()
+         *
+         * @return WP_Ability[] The array of registered abilities.
+         */
+        public function get_all_registered(): array
+        {
+        }
+        /**
+         * Checks if an ability is registered.
+         *
+         * Do not use this method directly. Instead, use the `wp_has_ability()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_has_ability()
+         *
+         * @param string $name The name of the registered ability, with its namespace.
+         * @return bool True if the ability is registered, false otherwise.
+         */
+        public function is_registered(string $name): bool
+        {
+        }
+        /**
+         * Retrieves a registered ability.
+         *
+         * Do not use this method directly. Instead, use the `wp_get_ability()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_get_ability()
+         *
+         * @param string $name The name of the registered ability, with its namespace.
+         * @return WP_Ability|null The registered ability instance, or null if it is not registered.
+         */
+        public function get_registered(string $name): ?\WP_Ability
+        {
+        }
+        /**
+         * Utility method to retrieve the main instance of the registry class.
+         *
+         * The instance will be created if it does not exist yet.
+         *
+         * @since 6.9.0
+         *
+         * @return WP_Abilities_Registry|null The main registry instance, or null when `init` action has not fired.
+         */
+        public static function get_instance(): ?self
+        {
+        }
+        /**
+         * Wakeup magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the registry object is unserialized.
+         *                        This is a security hardening measure to prevent unserialization of the registry.
+         */
+        public function __wakeup(): void
+        {
+        }
+        /**
+         * Sleep magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the registry object is serialized.
+         *                        This is a security hardening measure to prevent serialization of the registry.
+         */
+        public function __sleep(): array
+        {
+        }
+    }
+    /**
+     * Manages the registration and lookup of ability categories.
+     *
+     * @since 6.9.0
+     * @access private
+     */
+    final class WP_Ability_Categories_Registry
+    {
+        /**
+         * Registers a new ability category.
+         *
+         * Do not use this method directly. Instead, use the `wp_register_ability_category()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_register_ability_category()
+         *
+         * @param string               $slug The unique slug for the ability category. Must contain only lowercase
+         *                                   alphanumeric characters and dashes.
+         * @param array<string, mixed> $args {
+         *     An associative array of arguments for the ability category.
+         *
+         *     @type string               $label       The human-readable label for the ability category.
+         *     @type string               $description A description of the ability category.
+         *     @type array<string, mixed> $meta        Optional. Additional metadata for the ability category.
+         * }
+         * @return WP_Ability_Category|null The registered ability category instance on success, null on failure.
+         */
+        public function register(string $slug, array $args): ?\WP_Ability_Category
+        {
+        }
+        /**
+         * Unregisters an ability category.
+         *
+         * Do not use this method directly. Instead, use the `wp_unregister_ability_category()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_unregister_ability_category()
+         *
+         * @param string $slug The slug of the registered ability category.
+         * @return WP_Ability_Category|null The unregistered ability category instance on success, null on failure.
+         */
+        public function unregister(string $slug): ?\WP_Ability_Category
+        {
+        }
+        /**
+         * Retrieves the list of all registered ability categories.
+         *
+         * Do not use this method directly. Instead, use the `wp_get_ability_categories()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_get_ability_categories()
+         *
+         * @return array<string, WP_Ability_Category> The array of registered ability categories.
+         */
+        public function get_all_registered(): array
+        {
+        }
+        /**
+         * Checks if an ability category is registered.
+         *
+         * Do not use this method directly. Instead, use the `wp_has_ability_category()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_has_ability_category()
+         *
+         * @param string $slug The slug of the ability category.
+         * @return bool True if the ability category is registered, false otherwise.
+         */
+        public function is_registered(string $slug): bool
+        {
+        }
+        /**
+         * Retrieves a registered ability category.
+         *
+         * Do not use this method directly. Instead, use the `wp_get_ability_category()` function.
+         *
+         * @since 6.9.0
+         *
+         * @see wp_get_ability_category()
+         *
+         * @param string $slug The slug of the registered ability category.
+         * @return WP_Ability_Category|null The registered ability category instance, or null if it is not registered.
+         */
+        public function get_registered(string $slug): ?\WP_Ability_Category
+        {
+        }
+        /**
+         * Utility method to retrieve the main instance of the registry class.
+         *
+         * The instance will be created if it does not exist yet.
+         *
+         * @since 6.9.0
+         *
+         * @return WP_Ability_Categories_Registry|null The main registry instance, or null when `init` action has not fired.
+         */
+        public static function get_instance(): ?self
+        {
+        }
+        /**
+         * Wakeup magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the registry object is unserialized.
+         *                        This is a security hardening measure to prevent unserialization of the registry.
+         */
+        public function __wakeup(): void
+        {
+        }
+        /**
+         * Sleep magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the registry object is serialized.
+         *                        This is a security hardening measure to prevent serialization of the registry.
+         */
+        public function __sleep(): array
+        {
+        }
+    }
+    /**
+     * Encapsulates the properties and methods related to a specific ability category.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry
+     */
+    final class WP_Ability_Category
+    {
+        /**
+         * Constructor.
+         *
+         * Do not use this constructor directly. Instead, use the `wp_register_ability_category()` function.
+         *
+         * @access private
+         *
+         * @since 6.9.0
+         *
+         * @see wp_register_ability_category()
+         *
+         * @param string               $slug The unique slug for the ability category.
+         * @param array<string, mixed> $args {
+         *     An associative array of arguments for the ability category.
+         *
+         *     @type string               $label       The human-readable label for the ability category.
+         *     @type string               $description A description of the ability category.
+         *     @type array<string, mixed> $meta        Optional. Additional metadata for the ability category.
+         * }
+         */
+        public function __construct(string $slug, array $args)
+        {
+        }
+        /**
+         * Retrieves the slug of the ability category.
+         *
+         * @since 6.9.0
+         *
+         * @return string The ability category slug.
+         */
+        public function get_slug(): string
+        {
+        }
+        /**
+         * Retrieves the human-readable label for the ability category.
+         *
+         * @since 6.9.0
+         *
+         * @return string The human-readable ability category label.
+         */
+        public function get_label(): string
+        {
+        }
+        /**
+         * Retrieves the detailed description for the ability category.
+         *
+         * @since 6.9.0
+         *
+         * @return string The detailed description for the ability category.
+         */
+        public function get_description(): string
+        {
+        }
+        /**
+         * Retrieves the metadata for the ability category.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string,mixed> The metadata for the ability category.
+         */
+        public function get_meta(): array
+        {
+        }
+        /**
+         * Wakeup magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the ability category object is unserialized.
+         *                        This is a security hardening measure to prevent unserialization of the ability category.
+         */
+        public function __wakeup(): void
+        {
+        }
+        /**
+         * Sleep magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the ability category object is serialized.
+         *                        This is a security hardening measure to prevent serialization of the ability category.
+         */
+        public function __sleep(): array
+        {
+        }
+    }
+    /**
+     * Encapsulates the properties and methods related to a specific ability in the registry.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry
+     */
+    class WP_Ability
+    {
+        /**
+         * The default value for the `show_in_rest` meta.
+         *
+         * @since 6.9.0
+         * @var bool
+         */
+        protected const DEFAULT_SHOW_IN_REST = \false;
+        /**
+         * The default ability annotations.
+         * They are not guaranteed to provide a faithful description of ability behavior.
+         *
+         * @since 6.9.0
+         * @var array<string, bool|null>
+         */
+        protected static $default_annotations = array(
+            // If true, the ability does not modify its environment.
+            'readonly' => \null,
+            /*
+             * If true, the ability may perform destructive updates to its environment.
+             * If false, the ability performs only additive updates.
+             */
+            'destructive' => \null,
+            /*
+             * If true, calling the ability repeatedly with the same arguments will have no additional effect
+             * on its environment.
+             */
+            'idempotent' => \null,
+        );
+        /**
+         * The name of the ability, with its namespace.
+         * Example: `my-plugin/my-ability`.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $name;
+        /**
+         * The human-readable ability label.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $label;
+        /**
+         * The detailed ability description.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $description;
+        /**
+         * The ability category.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $category;
+        /**
+         * The optional ability input schema.
+         *
+         * @since 6.9.0
+         * @var array<string, mixed>
+         */
+        protected $input_schema = array();
+        /**
+         * The optional ability output schema.
+         *
+         * @since 6.9.0
+         * @var array<string, mixed>
+         */
+        protected $output_schema = array();
+        /**
+         * The ability execute callback.
+         *
+         * @since 6.9.0
+         * @var callable(mixed=): (mixed|WP_Error)
+         */
+        protected $execute_callback;
+        /**
+         * The optional ability permission callback.
+         *
+         * @since 6.9.0
+         * @var callable(mixed=): (bool|WP_Error)
+         */
+        protected $permission_callback;
+        /**
+         * The optional ability metadata.
+         *
+         * @since 6.9.0
+         * @var array<string, mixed>
+         */
+        protected $meta;
+        /**
+         * Constructor.
+         *
+         * Do not use this constructor directly. Instead, use the `wp_register_ability()` function.
+         *
+         * @access private
+         *
+         * @since 6.9.0
+         *
+         * @see wp_register_ability()
+         *
+         * @param string               $name The name of the ability, with its namespace.
+         * @param array<string, mixed> $args {
+         *     An associative array of arguments for the ability.
+         *
+         *     @type string               $label                 The human-readable label for the ability.
+         *     @type string               $description           A detailed description of what the ability does.
+         *     @type string               $category              The ability category slug this ability belongs to.
+         *     @type callable             $execute_callback      A callback function to execute when the ability is invoked.
+         *                                                       Receives optional mixed input and returns mixed result or WP_Error.
+         *     @type callable             $permission_callback   A callback function to check permissions before execution.
+         *                                                       Receives optional mixed input and returns bool or WP_Error.
+         *     @type array<string, mixed> $input_schema          Optional. JSON Schema definition for the ability's input.
+         *     @type array<string, mixed> $output_schema         Optional. JSON Schema definition for the ability's output.
+         *     @type array<string, mixed> $meta                  {
+         *         Optional. Additional metadata for the ability.
+         *
+         *         @type array<string, bool|null> $annotations  {
+         *             Optional. Semantic annotations describing the ability's behavioral characteristics.
+         *             These annotations are hints for tooling and documentation.
+         *
+         *             @type bool|null $readonly    Optional. If true, the ability does not modify its environment.
+         *             @type bool|null $destructive Optional. If true, the ability may perform destructive updates to its environment.
+         *                                          If false, the ability performs only additive updates.
+         *             @type bool|null $idempotent  Optional. If true, calling the ability repeatedly with the same arguments
+         *                                          will have no additional effect on its environment.
+         *         }
+         *         @type bool                     $show_in_rest Optional. Whether to expose this ability in the REST API. Default false.
+         *     }
+         * }
+         */
+        public function __construct(string $name, array $args)
+        {
+        }
+        /**
+         * Prepares and validates the properties used to instantiate the ability.
+         *
+         * Errors are thrown as exceptions instead of WP_Errors to allow for simpler handling and overloading. They are then
+         * caught and converted to a WP_Error when by WP_Abilities_Registry::register().
+         *
+         * @since 6.9.0
+         *
+         * @see WP_Abilities_Registry::register()
+         *
+         * @param array<string, mixed> $args {
+         *     An associative array of arguments used to instantiate the ability class.
+         *
+         *     @type string               $label                 The human-readable label for the ability.
+         *     @type string               $description           A detailed description of what the ability does.
+         *     @type string               $category              The ability category slug this ability belongs to.
+         *     @type callable             $execute_callback      A callback function to execute when the ability is invoked.
+         *                                                       Receives optional mixed input and returns mixed result or WP_Error.
+         *     @type callable             $permission_callback   A callback function to check permissions before execution.
+         *                                                       Receives optional mixed input and returns bool or WP_Error.
+         *     @type array<string, mixed> $input_schema          Optional. JSON Schema definition for the ability's input. Required if ability accepts an input.
+         *     @type array<string, mixed> $output_schema         Optional. JSON Schema definition for the ability's output.
+         *     @type array<string, mixed> $meta                  {
+         *         Optional. Additional metadata for the ability.
+         *
+         *         @type array<string, bool|null> $annotations  {
+         *             Optional. Semantic annotations describing the ability's behavioral characteristics.
+         *             These annotations are hints for tooling and documentation.
+         *
+         *             @type bool|null $readonly    Optional. If true, the ability does not modify its environment.
+         *             @type bool|null $destructive Optional. If true, the ability may perform destructive updates to its environment.
+         *                                          If false, the ability performs only additive updates.
+         *             @type bool|null $idempotent  Optional. If true, calling the ability repeatedly with the same arguments
+         *                                          will have no additional effect on its environment.
+         *         }
+         *         @type bool                     $show_in_rest Optional. Whether to expose this ability in the REST API. Default false.
+         *     }
+         * }
+         * @return array<string, mixed> {
+         *     An associative array of arguments with validated and prepared properties for the ability class.
+         *
+         *     @type string               $label                 The human-readable label for the ability.
+         *     @type string               $description           A detailed description of what the ability does.
+         *     @type string               $category              The ability category slug this ability belongs to.
+         *     @type callable             $execute_callback      A callback function to execute when the ability is invoked.
+         *                                                       Receives optional mixed input and returns mixed result or WP_Error.
+         *     @type callable             $permission_callback   A callback function to check permissions before execution.
+         *                                                       Receives optional mixed input and returns bool or WP_Error.
+         *     @type array<string, mixed> $input_schema          Optional. JSON Schema definition for the ability's input.
+         *     @type array<string, mixed> $output_schema         Optional. JSON Schema definition for the ability's output.
+         *     @type array<string, mixed> $meta                  {
+         *         Additional metadata for the ability.
+         *
+         *         @type array<string, bool|null> $annotations  {
+         *             Semantic annotations describing the ability's behavioral characteristics.
+         *             These annotations are hints for tooling and documentation.
+         *
+         *             @type bool|null $readonly    If true, the ability does not modify its environment.
+         *             @type bool|null $destructive If true, the ability may perform destructive updates to its environment.
+         *                                          If false, the ability performs only additive updates.
+         *             @type bool|null $idempotent  If true, calling the ability repeatedly with the same arguments
+         *                                          will have no additional effect on its environment.
+         *         }
+         *         @type bool                     $show_in_rest Whether to expose this ability in the REST API. Default false.
+         *     }
+         * }
+         * @throws InvalidArgumentException if an argument is invalid.
+         */
+        protected function prepare_properties(array $args): array
+        {
+        }
+        /**
+         * Retrieves the name of the ability, with its namespace.
+         * Example: `my-plugin/my-ability`.
+         *
+         * @since 6.9.0
+         *
+         * @return string The ability name, with its namespace.
+         */
+        public function get_name(): string
+        {
+        }
+        /**
+         * Retrieves the human-readable label for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return string The human-readable ability label.
+         */
+        public function get_label(): string
+        {
+        }
+        /**
+         * Retrieves the detailed description for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return string The detailed description for the ability.
+         */
+        public function get_description(): string
+        {
+        }
+        /**
+         * Retrieves the ability category for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return string The ability category for the ability.
+         */
+        public function get_category(): string
+        {
+        }
+        /**
+         * Retrieves the input schema for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> The input schema for the ability.
+         */
+        public function get_input_schema(): array
+        {
+        }
+        /**
+         * Retrieves the output schema for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> The output schema for the ability.
+         */
+        public function get_output_schema(): array
+        {
+        }
+        /**
+         * Retrieves the metadata for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> The metadata for the ability.
+         */
+        public function get_meta(): array
+        {
+        }
+        /**
+         * Retrieves a specific metadata item for the ability.
+         *
+         * @since 6.9.0
+         *
+         * @param string $key           The metadata key to retrieve.
+         * @param mixed  $default_value Optional. The default value to return if the metadata item is not found. Default `null`.
+         * @return mixed The value of the metadata item, or the default value if not found.
+         */
+        public function get_meta_item(string $key, $default_value = \null)
+        {
+        }
+        /**
+         * Normalizes the input for the ability, applying the default value from the input schema when needed.
+         *
+         * When no input is provided and the input schema is defined with a top-level `default` key, this method returns
+         * the value of that key. If the input schema does not define a `default`, or if the input schema is empty,
+         * this method returns null. If input is provided, it is returned as-is.
+         *
+         * @since 6.9.0
+         *
+         * @param mixed $input Optional. The raw input provided for the ability. Default `null`.
+         * @return mixed The same input, or the default from schema, or `null` if default not set.
+         */
+        public function normalize_input($input = \null)
+        {
+        }
+        /**
+         * Validates input data against the input schema.
+         *
+         * @since 6.9.0
+         *
+         * @param mixed $input Optional. The input data to validate. Default `null`.
+         * @return true|WP_Error Returns true if valid or the WP_Error object if validation fails.
+         */
+        public function validate_input($input = \null)
+        {
+        }
+        /**
+         * Invokes a callable, ensuring the input is passed through only if the input schema is defined.
+         *
+         * @since 6.9.0
+         *
+         * @param callable $callback The callable to invoke.
+         * @param mixed    $input    Optional. The input data for the ability. Default `null`.
+         * @return mixed The result of the callable execution.
+         */
+        protected function invoke_callback(callable $callback, $input = \null)
+        {
+        }
+        /**
+         * Checks whether the ability has the necessary permissions.
+         *
+         * Please note that input is not automatically validated against the input schema.
+         * Use `validate_input()` method to validate input before calling this method if needed.
+         *
+         * @since 6.9.0
+         *
+         * @see validate_input()
+         *
+         * @param mixed $input Optional. The valid input data for permission checking. Default `null`.
+         * @return bool|WP_Error Whether the ability has the necessary permission.
+         */
+        public function check_permissions($input = \null)
+        {
+        }
+        /**
+         * Executes the ability callback.
+         *
+         * @since 6.9.0
+         *
+         * @param mixed $input Optional. The input data for the ability. Default `null`.
+         * @return mixed|WP_Error The result of the ability execution, or WP_Error on failure.
+         */
+        protected function do_execute($input = \null)
+        {
+        }
+        /**
+         * Validates output data against the output schema.
+         *
+         * @since 6.9.0
+         *
+         * @param mixed $output The output data to validate.
+         * @return true|WP_Error Returns true if valid, or a WP_Error object if validation fails.
+         */
+        protected function validate_output($output)
+        {
+        }
+        /**
+         * Executes the ability after input validation and running a permission check.
+         * Before returning the return value, it also validates the output.
+         *
+         * @since 6.9.0
+         *
+         * @param mixed $input Optional. The input data for the ability. Default `null`.
+         * @return mixed|WP_Error The result of the ability execution, or WP_Error on failure.
+         */
+        public function execute($input = \null)
+        {
+        }
+        /**
+         * Wakeup magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the ability object is unserialized.
+         *                        This is a security hardening measure to prevent unserialization of the ability.
+         */
+        public function __wakeup(): void
+        {
+        }
+        /**
+         * Sleep magic method.
+         *
+         * @since 6.9.0
+         * @throws LogicException If the ability object is serialized.
+         *                        This is a security hardening measure to prevent serialization of the ability.
+         */
+        public function __sleep(): array
+        {
+        }
     }
     /**
      * Structure that store common Atom Feed Properties
@@ -29735,6 +32062,7 @@ namespace {
          *   data?: string|WP_Error,
          *   supplemental?: array,
          * } $args
+         * @phpstan-return non-falsy-string
          */
         public function add($args = '')
         {
@@ -30156,7 +32484,7 @@ namespace {
          *
          * @since 6.5.0
          *
-         * @param string $source_name The name of the source.
+         * @param string|null $source_name The name of the source.
          * @return bool `true` if the block bindings source is registered, `false` otherwise.
          */
         public function is_registered($source_name)
@@ -30304,7 +32632,7 @@ namespace {
      * Class representing a list of block instances.
      *
      * @since 5.5.0
-     * @phpstan-implements ArrayAccess<int, WP_Block>
+     * @phpstan-implements ArrayAccess<int, \WP_Block>
      */
     #[\AllowDynamicProperties]
     class WP_Block_List implements \Iterator, \ArrayAccess, \Countable
@@ -30314,7 +32642,6 @@ namespace {
          *
          * @since 5.5.0
          * @var array[]|WP_Block[]
-         * @access protected
          */
         protected $blocks;
         /**
@@ -30322,7 +32649,6 @@ namespace {
          *
          * @since 5.5.0
          * @var array
-         * @access protected
          */
         protected $available_context;
         /**
@@ -30330,7 +32656,6 @@ namespace {
          *
          * @since 5.5.0
          * @var WP_Block_Type_Registry
-         * @access protected
          */
         protected $registry;
         /**
@@ -30355,7 +32680,7 @@ namespace {
          *
          * @link https://www.php.net/manual/en/arrayaccess.offsetexists.php
          *
-         * @param string $offset Offset of block to check for.
+         * @param int $offset Offset of block to check for.
          * @return bool Whether block exists.
          * @phpstan-param int $offset
          */
@@ -30370,10 +32695,10 @@ namespace {
          *
          * @link https://www.php.net/manual/en/arrayaccess.offsetget.php
          *
-         * @param string $offset Offset of block value to retrieve.
-         * @return mixed|null Block value if exists, or null.
+         * @param int $offset Offset of block value to retrieve.
+         * @return WP_Block|null Block value if exists, or null.
          * @phpstan-param int $offset
-         * @phpstan-return WP_Block|null
+         * @phpstan-return \WP_Block|null
          */
         #[\ReturnTypeWillChange]
         public function offsetGet($offset)
@@ -30386,8 +32711,8 @@ namespace {
          *
          * @link https://www.php.net/manual/en/arrayaccess.offsetset.php
          *
-         * @param string $offset Offset of block value to set.
-         * @param mixed  $value Block value.
+         * @param int            $offset Offset of block value to set.
+         * @param array|WP_Block $value  Block value.
          * @phpstan-param int|null $offset
          * @phpstan-return void
          */
@@ -30402,7 +32727,7 @@ namespace {
          *
          * @link https://www.php.net/manual/en/arrayaccess.offsetunset.php
          *
-         * @param string $offset Offset of block value to unset.
+         * @param int $offset Offset of block value to unset.
          * @phpstan-param int $offset
          * @phpstan-return void
          */
@@ -30428,7 +32753,7 @@ namespace {
          *
          * @link https://www.php.net/manual/en/iterator.current.php
          *
-         * @return mixed Current element.
+         * @return WP_Block|null Current element.
          */
         #[\ReturnTypeWillChange]
         public function current()
@@ -30441,7 +32766,7 @@ namespace {
          *
          * @link https://www.php.net/manual/en/iterator.key.php
          *
-         * @return mixed Key of the current element.
+         * @return int|null Key of the current element.
          */
         #[\ReturnTypeWillChange]
         public function key()
@@ -30631,7 +32956,7 @@ namespace {
          *   'innerContent' => array( 'Before', null, 'Inner', null, 'After' ),
          * )
          *
-         * @since 4.2.0
+         * @since 5.0.0
          * @var array
          */
         public $innerContent;
@@ -30746,7 +33071,7 @@ namespace {
          * List of parsed blocks
          *
          * @since 5.0.0
-         * @var WP_Block_Parser_Block[]
+         * @var array[]
          */
         public $output;
         /**
@@ -30806,7 +33131,7 @@ namespace {
          * Returns a new block object for freeform HTML
          *
          * @internal
-         * @since 3.9.0
+         * @since 5.0.0
          *
          * @param string $inner_html HTML content of block.
          * @return WP_Block_Parser_Block freeform block object.
@@ -30893,7 +33218,7 @@ namespace {
          * @since 5.5.0
          *
          * @param string $category_name Pattern category name including namespace.
-         * @return array Registered pattern properties.
+         * @return array|null Registered pattern properties, or `null` if the pattern category is not registered.
          */
         public function get_registered($category_name)
         {
@@ -30914,7 +33239,7 @@ namespace {
          *
          * @since 5.5.0
          *
-         * @param string $category_name Pattern category name including namespace.
+         * @param string|null $category_name Pattern category name including namespace.
          * @return bool True if the pattern category is registered, false otherwise.
          */
         public function is_registered($category_name)
@@ -31022,7 +33347,7 @@ namespace {
          * @since 5.5.0
          *
          * @param string $pattern_name Block pattern name including namespace.
-         * @return array Registered pattern properties.
+         * @return array|null Registered pattern properties or `null` if the pattern is not registered.
          */
         public function get_registered($pattern_name)
         {
@@ -31044,7 +33369,7 @@ namespace {
          *
          * @since 5.5.0
          *
-         * @param string $pattern_name Block pattern name including namespace.
+         * @param string|null $pattern_name Block pattern name including namespace.
          * @return bool True if the pattern is registered, false otherwise.
          */
         public function is_registered($pattern_name)
@@ -31065,6 +33390,1017 @@ namespace {
         public static function get_instance()
         {
         }
+    }
+    /**
+     * Class for efficiently scanning through block structure in a document
+     * without parsing the entire block tree and JSON attributes into memory.
+     *
+     * ## Overview
+     *
+     * This class is designed to help analyze and modify block structure in a
+     * streaming fashion and to bridge the gap between parsed block trees and
+     * the text representing them.
+     *
+     * Use-cases for this class include but are not limited to:
+     *
+     *  - Counting block types in a document.
+     *  - Queuing stylesheets based on the presence of various block types.
+     *  - Modifying blocks of a given type, i.e. migrations, updates, and styling.
+     *  - Searching for content of specific kinds, e.g. checking for blocks
+     *    with certain theme support attributes, or block bindings.
+     *  - Adding CSS class names to the element wrapping a block’s inner blocks.
+     *
+     * > *Note!* If a fully-parsed block tree of a document is necessary, including
+     * >         all the parsed JSON attributes, nested blocks, and HTML, consider
+     * >         using {@see \parse_blocks()} instead which will parse the document
+     * >         in one swift pass.
+     *
+     * For typical usage, jump first to the methods {@see self::next_block()},
+     * {@see self::next_delimiter()}, or {@see self::next_token()}.
+     *
+     * ### Values
+     *
+     * As a lower-level interface than {@see parse_blocks()} this class follows
+     * different performance-focused values:
+     *
+     *  - Minimize allocations so that documents of any size may be processed
+     *    on a fixed or marginal amount of memory.
+     *  - Make hidden costs explicit so that calling code only has to pay the
+     *    performance penalty for features it needs.
+     *  - Operate with a streaming and re-entrant design to make it possible
+     *    to operate on chunks of a document and to resume after pausing.
+     *
+     * This means that some operations might appear more cumbersome than one
+     * might expect. This design tradeoff opens up opportunity to wrap this in
+     * a convenience class to add higher-level functionality.
+     *
+     * ## Concepts
+     *
+     * All text documents can be considered a block document containing a combination
+     * of “freeform HTML” and explicit block structure. Block structure forms through
+     * special HTML comments called _delimiters_ which include a block type and,
+     * optionally, block attributes encoded as a JSON object payload.
+     *
+     * This processor is designed to scan through a block document from delimiter to
+     * delimiter, tracking how the delimiters impact the structure of the document.
+     * Spans of HTML appear between delimiters. If these spans exist at the top level
+     * of the document, meaning there is no containing block around them, they are
+     * considered freeform HTML content. If, however, they appear _inside_ block
+     * structure they are interpreted as `innerHTML` for the containing block.
+     *
+     * ### Tokens and scanning
+     *
+     * As the processor scans through a document is reports information about the token
+     * on which is pauses. Tokens represent spans of text in the input comprising block
+     * delimiters and spans of HTML.
+     *
+     *  - {@see self::next_token()} visits every contiguous subspan of text in the
+     *    input document. This includes all explicit block comment delimiters and spans
+     *    of HTML content (whether freeform or inner HTML).
+     *  - {@see self::next_delimiter()} visits every explicit block comment delimiter
+     *    unless passed a block type which covers freeform HTML content. In these cases
+     *    it will stop at top-level spans of HTML and report a `null` block type.
+     *  - {@see self::next_block()} visits every block delimiter which _opens_ a block.
+     *    This includes opening block delimiters as well as void block delimiters. With
+     *    the same exception as above for freeform HTML block types, this will visit
+     *    top-level spans of HTML content.
+     *
+     * When matched on a particular token, the following methods provide structural
+     * and textual information about it:
+     *
+     *  - {@see self::get_delimiter_type()} reports whether the delimiter is an opener,
+     *    a closer, or if it represents a whole void block.
+     *  - {@see self::get_block_type()} reports the fully-qualified block type which
+     *    the delimiter represents.
+     *  - {@see self::get_printable_block_type()} reports the fully-qualified block type,
+     *    but returns `core/freeform` instead of `null` for top-level freeform HTML content.
+     *  - {@see self::is_block_type()} indicates if the delimiter represents a block of
+     *    the given block type, or wildcard or pseudo-block type described below.
+     *  - {@see self::opens_block()} indicates if the delimiter opens a block of one
+     *    of the provided block types. Opening, void, and top-level freeform HTML content
+     *    all open blocks.
+     *  - {@see static::get_attributes()} is currently reserved for a future streaming
+     *    JSON parser class.
+     *  - {@see self::allocate_and_return_parsed_attributes()} extracts the JSON attributes
+     *    for delimiters which open blocks and return the fully-parsed attributes as an
+     *    associative array. {@see static::get_last_json_error()} for when this fails.
+     *  - {@see self::is_html()} indicates if the token is a span of HTML which might
+     *    be top-level freeform content or a block’s inner HTML.
+     *  - {@see self::get_html_content()} returns the span of HTML.
+     *  - {@see self::get_span()} for the byte offset and length into the input document
+     *    representing the token.
+     *
+     * It’s possible for the processor to fail to scan forward if the input document ends
+     * in a proper prefix of an explicit block comment delimiter. For example, if the input
+     * ends in `<!-- wp:` then it _might_ be the start of another delimiter. The parser
+     * cannot know, however, and therefore refuses to proceed. {@see static::get_last_error()}
+     * to distinguish between a failure to find the next token and an incomplete input.
+     *
+     * ### Block types
+     *
+     * A block’s “type” comprises an optional _namespace_ and _name_. If the namespace
+     * isn’t provided it will be interpreted as the implicit `core` namespace. For example,
+     * the type `gallery` is the name of the block in the `core` namespace, but the type
+     * `abc/gallery` is the _fully-qualified_ block type for the block whose name is still
+     * `gallery`, but in the `abc` namespace.
+     *
+     * Methods on this class are aware of this block naming semantic and anywhere a block
+     * type is an argument to a method it will be normalized to account for implicit namespaces.
+     * Passing `paragraph` is the same as passing `core/paragraph`. On the contrary, anywhere
+     * this class returns a block type, it will return the fully-qualified and normalized form.
+     * For example, for the `<!-- wp:group -->` delimiter it will return `core/group` as the
+     * block type.
+     *
+     * There are two special block types that change the behavior of the processor:
+     *
+     *  - The wildcard `*` represents _any block_. In addition to matching all block types,
+     *    it also represents top-level freeform HTML whose block type is reported as `null`.
+     *
+     *  - The `core/freeform` block type is a pseudo-block type which explicitly matches
+     *    top-level freeform HTML.
+     *
+     * These special block types can be passed into any method which searches for blocks.
+     *
+     * There is one additional special block type which may be returned from
+     * {@see self::get_printable_block_type()}. This is the `#innerHTML` type, which
+     * indicates that the HTML span on which the processor is paused is inner HTML for
+     * a containing block.
+     *
+     * ### Spans of HTML
+     *
+     * Non-block content plays a complicated role in processing block documents. This
+     * processor exposes tools to help work with these spans of HTML.
+     *
+     *  - {@see self::is_html()} indicates if the processor is paused at a span of
+     *    HTML but does not differentiate between top-level freeform content and inner HTML.
+     *  - {@see self::is_non_whitespace_html()} indicates not only if the processor
+     *    is paused at a span of HTML, but also whether that span incorporates more than
+     *    whitespace characters. Because block serialization often inserts newlines between
+     *    block comment delimiters, this is useful for distinguishing “real” freeform
+     *    content from purely aesthetic syntax.
+     *  - {@see self::is_block_type()} matches top-level freeform HTML content when
+     *    provided one of the special block types described above.
+     *
+     * ### Block structure
+     *
+     * As the processor traverses block delimiters it maintains a stack of which blocks are
+     * open at the given place in the document where it’s paused. This stack represents the
+     * block structure of a document and is used to determine where blocks end, which blocks
+     * represent inner blocks, whether a span of HTML is top-level freeform content, and
+     * more. Investigate the stack with {@see self::get_breadcrumbs()}, which returns an
+     * array of block types starting at the outermost-open block and descending to the
+     * currently-visited block.
+     *
+     * Unlike {@parse_blocks()}, spans of HTML appear in this structure as the special
+     * reported block type `#html`. Such a span represents inner HTML for a block if the
+     * depth reported by {@see self::get_depth()} is greater than one.
+     *
+     * It will generally not be necessary to inspect the stack of open blocks, though
+     * depth may be important for finding where blocks end. When visiting a block opener,
+     * the depth will have been increased before pausing; in contrast the depth is
+     * decremented before visiting a closer. This makes the following an easy way to
+     * determine if a block is still open.
+     *
+     * Example:
+     *
+     *     $depth = $processor->get_depth();
+     *     while ( $processor->next_token() && $processor->get_depth() > $depth ) {
+     *         continue
+     *     }
+     *     // Processor is now paused at the token immediately following the closed block.
+     *
+     * #### Extracting blocks
+     *
+     * A unique feature of this processor is the ability to return the same output as
+     * {@see \parse_blocks()} would produce, but for a subset of the input document.
+     * For example, it’s possible to extract an image block, manipulate that parsed
+     * block, and re-serialize it into the original document. It’s possible to do so
+     * while skipping over the parse of the rest of the document.
+     *
+     * {@see self::extract_full_block_and_advance()} will scan forward from the current block opener
+     * and build the parsed block structure until the current block is closed. It will
+     * include all inner HTML and inner blocks, and parse all of the inner blocks. It
+     * can be used to extract a block at any depth in the document, helpful for operating
+     * on blocks within nested structure.
+     *
+     * Example:
+     *
+     *     if ( ! $processor->next_block( 'gallery' ) ) {
+     *         return $post_content;
+     *     }
+     *
+     *     $gallery_at    = $processor->get_span()->start;
+     *     $gallery_block = $processor->extract_full_block_and_advance();
+     *     $after_gallery = $processor->get_span()->start;
+     *     return (
+     *         substr( $post_content, 0, $gallery_at ) .
+     *         serialize_block( modify_gallery( $gallery_block ) .
+     *         substr( $post_content, $after_gallery )
+     *     );
+     *
+     * #### Handling of malformed structure
+     *
+     * There are situations where closing block delimiters appear for which no open block
+     * exists, or where a document ends before a block is closed, or where a closing block
+     * delimiter appears but references a different block type than the most-recently
+     * opened block does. In all of these cases, the stack of open blocks should mirror
+     * the behavior in {@see \parse_blocks()}.
+     *
+     * Unlike {@see \parse_blocks()}, however, this processor can still operate on the
+     * invalid block delimiters. It provides a few functions which can be used for building
+     * custom and non-spec-compliant error handling.
+     *
+     *  - {@see self::has_closing_flag()} indicates if the block delimiter contains the
+     *    closing flag at the end. Some invalid block delimiters might contain both the
+     *    void and closing flag, in which case {@see self::get_delimiter_type()} will
+     *    report that it’s a void block.
+     *  - {@see static::get_last_error()} indicates if the processor reached an invalid
+     *    block closing. Depending on the context, {@see \parse_blocks()} might instead
+     *    ignore the token or treat it as freeform HTML content.
+     *
+     * ## Static helpers
+     *
+     * This class provides helpers for performing semantic block-related operations.
+     *
+     *  - {@see self::normalize_block_type()} takes a block type with or without the
+     *    implicit `core` namespace and returns a fully-qualified block type.
+     *  - {@see self::are_equal_block_types()} indicates if two spans across one or
+     *    more input texts represent the same fully-qualified block type.
+     *
+     * ## Subclassing
+     *
+     * This processor is designed to accurately parse a block document. Therefore, many
+     * of its methods are not meant for subclassing. However, overall this class supports
+     * building higher-level convenience classes which may choose to subclass it. For those
+     * classes, avoid re-implementing methods except for the list below. Instead, create
+     * new names representing the higher-level concepts being introduced. For example, instead
+     * of creating a new method named `next_block()` which only advances to blocks of a given
+     * kind, consider creating a new method named something like `next_layout_block()` which
+     * won’t interfere with the base class method.
+     *
+     *  - {@see static::get_last_error()} may be reimplemented to report new errors in the subclass
+     *    which aren’t intrinsic to block parsing.
+     *  - {@see static::get_attributes()} may be reimplemented to provide a streaming interface
+     *    to reading and modifying a block’s JSON attributes. It should be fast and memory efficient.
+     *  - {@see static::get_last_json_error()} may be reimplemented to report new errors introduced
+     *    with a reimplementation of {@see static::get_attributes()}.
+     *
+     * @since 6.9.0
+     */
+    class WP_Block_Processor
+    {
+        /**
+         * Source text provided to processor.
+         *
+         * @since 6.9.0
+         *
+         * @var string
+         */
+        protected $source_text;
+        /**
+         * Internal parser state, differentiating whether the instance is currently matched,
+         * on an implicit freeform node, in error, or ready to begin parsing.
+         *
+         * @see self::READY
+         * @see self::MATCHED
+         * @see self::HTML_SPAN
+         * @see self::INCOMPLETE_INPUT
+         * @see self::COMPLETE
+         *
+         * @since 6.9.0
+         *
+         * @var string
+         */
+        protected $state = self::READY;
+        /**
+         * Creates a new block processor.
+         *
+         * Example:
+         *
+         *     $processor = new WP_Block_Processor( $post_content );
+         *     if ( $processor->next_block( 'core/image' ) ) {
+         *         echo "Found an image!\n";
+         *     }
+         *
+         * @see self::next_block() to advance to the start of the next block (skips closers).
+         * @see self::next_delimiter() to advance to the next explicit block delimiter.
+         * @see self::next_token() to advance to the next block delimiter or HTML span.
+         *
+         * @since 6.9.0
+         *
+         * @param string $source_text Input document potentially containing block content.
+         */
+        public function __construct(string $source_text)
+        {
+        }
+        /**
+         * Advance to the next block delimiter which opens a block, indicating if one was found.
+         *
+         * Delimiters which open blocks include opening and void block delimiters. To visit
+         * freeform HTML content, pass the wildcard “*” as the block type.
+         *
+         * Use this function to walk through the blocks in a document, pausing where they open.
+         *
+         * Example blocks:
+         *
+         *     // The first delimiter opens the paragraph block.
+         *     <⃨!⃨-⃨-⃨ ⃨w⃨p⃨:⃨p⃨a⃨r⃨a⃨g⃨r⃨a⃨p⃨h⃨ ⃨-⃨-⃨>⃨<p>Content</p><!-- /wp:paragraph-->
+         *
+         *     // The void block is the first opener in this sequence of closers.
+         *     <!-- /wp:group --><⃨!⃨-⃨-⃨ ⃨w⃨p⃨:⃨s⃨p⃨a⃨c⃨e⃨r⃨ ⃨{⃨"⃨h⃨e⃨i⃨g⃨h⃨t⃨"⃨:⃨"⃨2⃨0⃨0⃨p⃨x⃨"⃨}⃨ ⃨/⃨-⃨-⃨>⃨<!-- /wp:group -->
+         *
+         *     // If, however, `*` is provided as the block type, freeform content is matched.
+         *     <⃨h⃨2⃨>⃨M⃨y⃨ ⃨s⃨y⃨n⃨o⃨p⃨s⃨i⃨s⃨<⃨/⃨h⃨2⃨>⃨\⃨n⃨<!-- wp:my/table-of-contents /-->
+         *
+         *     // Inner HTML is never freeform content, and will not be matched even with the wildcard.
+         *     <!-- /wp:list-item --></ul><!-- /wp:list --><⃨!⃨-⃨-⃨ ⃨w⃨p⃨:⃨p⃨a⃨r⃨a⃨g⃨r⃨a⃨p⃨h⃨ ⃨-⃨>⃨<p>
+         *
+         * Example:
+         *
+         *     // Find all textual ranges of image block opening delimiters.
+         *     $images = array();
+         *     $processor = new WP_Block_Processor( $html );
+         *     while ( $processor->next_block( 'core/image' ) ) {
+         *         $images[] = $processor->get_span();
+         *     }
+         *
+         *  In some cases it may be useful to conditionally visit the implicit freeform
+         *  blocks, such as when determining if a post contains freeform content that
+         *  isn’t purely whitespace.
+         *
+         *  Example:
+         *
+         *      $seen_block_types = [];
+         *      $block_type       = '*';
+         *      $processor        = new WP_Block_Processor( $html );
+         *      while ( $processor->next_block( $block_type ) {
+         *          // Stop wasting time visiting freeform blocks after one has been found.
+         *          if (
+         *              '*' === $block_type &&
+         *              null === $processor->get_block_type() &&
+         *              $processor->is_non_whitespace_html()
+         *          ) {
+         *              $block_type = null;
+         *              $seen_block_types['core/freeform'] = true;
+         *              continue;
+         *          }
+         *
+         *          $seen_block_types[ $processor->get_block_type() ] = true;
+         *      }
+         *
+         * @since 6.9.0
+         *
+         * @see self::next_delimiter() to advance to the next explicit block delimiter.
+         * @see self::next_token() to advance to the next block delimiter or HTML span.
+         *
+         * @param string|null $block_type Optional. If provided, advance until a block of this type is found.
+         *                                Default is to stop at any block regardless of its type.
+         * @return bool Whether an opening delimiter for a block was found.
+         */
+        public function next_block(?string $block_type = \null): bool
+        {
+        }
+        /**
+         * Advance to the next block delimiter in a document, indicating if one was found.
+         *
+         * Delimiters may include invalid JSON. This parser does not attempt to parse the
+         * JSON attributes until requested; when invalid, the attributes will be null. This
+         * matches the behavior of {@see \parse_blocks()}. To visit freeform HTML content,
+         * pass the wildcard “*” as the block type.
+         *
+         * Use this function to walk through the block delimiters in a document.
+         *
+         * Example delimiters:
+         *
+         *     <!-- wp:paragraph {"dropCap": true} -->
+         *     <!-- wp:separator /-->
+         *     <!-- /wp:paragraph -->
+         *
+         *     // If the wildcard `*` is provided as the block type, freeform content is matched.
+         *     <⃨h⃨2⃨>⃨M⃨y⃨ ⃨s⃨y⃨n⃨o⃨p⃨s⃨i⃨s⃨<⃨/⃨h⃨2⃨>⃨\⃨n⃨<!-- wp:my/table-of-contents /-->
+         *
+         *     // Inner HTML is never freeform content, and will not be matched even with the wildcard.
+         *     ...</ul><⃨!⃨-⃨-⃨ ⃨/⃨w⃨p⃨:⃨l⃨i⃨s⃨t⃨ ⃨-⃨-⃨>⃨<!-- wp:paragraph --><p>
+         *
+         * Example:
+         *
+         *     $html      = '<!-- wp:void /-->\n<!-- wp:void /-->';
+         *     $processor = new WP_Block_Processor( $html );
+         *     while ( $processor->next_delimiter() {
+         *         // Runs twice, seeing both void blocks of type “core/void.”
+         *     }
+         *
+         *     $processor = new WP_Block_Processor( $html );
+         *     while ( $processor->next_delimiter( '*' ) ) {
+         *         // Runs thrice, seeing the void block, the newline span, and the void block.
+         *     }
+         *
+         * @since 6.9.0
+         *
+         * @param string|null $block_name Optional. Keep searching until a block of this name is found.
+         *                                Defaults to visit every block regardless of type.
+         * @return bool Whether a block delimiter was matched.
+         */
+        public function next_delimiter(?string $block_name = \null): bool
+        {
+        }
+        /**
+         * Advance to the next block delimiter or HTML span in a document, indicating if one was found.
+         *
+         * This function steps through every syntactic chunk in a document. This includes explicit
+         * block comment delimiters, freeform non-block content, and inner HTML segments.
+         *
+         * Example tokens:
+         *
+         *     <!-- wp:paragraph {"dropCap": true} -->
+         *     <!-- wp:separator /-->
+         *     <!-- /wp:paragraph -->
+         *     <p>Normal HTML content</p>
+         *     Plaintext content too!
+         *
+         * Example:
+         *
+         *     // Find span containing wrapping HTML element surrounding inner blocks.
+         *     $processor = new WP_Block_Processor( $html );
+         *     if ( ! $processor->next_block( 'gallery' ) ) {
+         *         return null;
+         *     }
+         *
+         *     $containing_span = null;
+         *     while ( $processor->next_token() && $processor->is_html() ) {
+         *         $containing_span = $processor->get_span();
+         *     }
+         *
+         * This method will visit all HTML spans including those forming freeform non-block
+         * content as well as those which are part of a block’s inner HTML.
+         *
+         * @since 6.9.0
+         *
+         * @return bool Whether a token was matched or the end of the document was reached without finding any.
+         */
+        public function next_token(): bool
+        {
+        }
+        /**
+         * Returns an array containing the names of the currently-open blocks, in order
+         * from outermost to innermost, with HTML spans indicated as “#html”.
+         *
+         * Example:
+         *
+         *     // Freeform HTML content is an HTML span.
+         *     $processor = new WP_Block_Processor( 'Just text' );
+         *     $processor->next_token();
+         *     array( '#text' ) === $processor->get_breadcrumbs();
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:a --><!-- wp:b --><!-- wp:c /--><!-- /wp:b --><!-- /wp:a -->' );
+         *     $processor->next_token();
+         *     array( 'core/a' ) === $processor->get_breadcrumbs();
+         *     $processor->next_token();
+         *     array( 'core/a', 'core/b' ) === $processor->get_breadcrumbs();
+         *     $processor->next_token();
+         *     // Void blocks are only open while visiting them.
+         *     array( 'core/a', 'core/b', 'core/c' ) === $processor->get_breadcrumbs();
+         *     $processor->next_token();
+         *     // Blocks are closed before visiting their closing delimiter.
+         *     array( 'core/a' ) === $processor->get_breadcrumbs();
+         *     $processor->next_token();
+         *     array() === $processor->get_breadcrumbs();
+         *
+         *     // Inner HTML is also an HTML span.
+         *     $processor = new WP_Block_Processor( '<!-- wp:a -->Inner HTML<!-- /wp:a -->' );
+         *     $processor->next_token();
+         *     $processor->next_token();
+         *     array( 'core/a', '#html' ) === $processor->get_breadcrumbs();
+         *
+         * @since 6.9.0
+         *
+         * @return string[]
+         */
+        public function get_breadcrumbs(): array
+        {
+        }
+        /**
+         * Returns the depth of the open blocks where the processor is currently matched.
+         *
+         * Depth increases before visiting openers and void blocks and decreases before
+         * visiting closers. HTML spans behave like void blocks.
+         *
+         * @since 6.9.0
+         *
+         * @return int
+         */
+        public function get_depth(): int
+        {
+        }
+        /**
+         * Extracts a block object, and all inner content, starting at a matched opening
+         * block delimiter, or at a matched top-level HTML span as freeform HTML content.
+         *
+         * Use this function to extract some blocks within a document, but not all. For example,
+         * one might want to find image galleries, parse them, modify them, and then reserialize
+         * them in place.
+         *
+         * Once this function returns, the parser will be matched on token following the close
+         * of the given block.
+         *
+         * The return type of this method is compatible with the return of {@see \parse_blocks()}.
+         *
+         * Example:
+         *
+         *     $processor = new WP_Block_Processor( $post_content );
+         *     if ( ! $processor->next_block( 'gallery' ) ) {
+         *         return $post_content;
+         *     }
+         *
+         *     $gallery_at  = $processor->get_span()->start;
+         *     $gallery     = $processor->extract_full_block_and_advance();
+         *     $ends_before = $processor->get_span();
+         *     $ends_before = $ends_before->start ?? strlen( $post_content );
+         *
+         *     $new_gallery = update_gallery( $gallery );
+         *     $new_gallery = serialize_block( $new_gallery );
+         *
+         *     return (
+         *         substr( $post_content, 0, $gallery_at ) .
+         *         $new_gallery .
+         *         substr( $post_content, $ends_before )
+         *     );
+         *
+         * @since 6.9.0
+         *
+         * @return array[]|null {
+         *     Array of block structures.
+         *
+         *     @type array ...$0 {
+         *         An associative array of a single parsed block object. See WP_Block_Parser_Block.
+         *
+         *         @type string|null $blockName    Name of block.
+         *         @type array       $attrs        Attributes from block comment delimiters.
+         *         @type array[]     $innerBlocks  List of inner blocks. An array of arrays that
+         *                                         have the same structure as this one.
+         *         @type string      $innerHTML    HTML from inside block comment delimiters.
+         *         @type array       $innerContent List of string fragments and null markers where
+         *                                         inner blocks were found.
+         *     }
+         * }
+         * @phpstan-return null|array<int|string, array{
+         *   blockName: string|null,
+         *   attrs: array,
+         *   innerBlocks: array[],
+         *   innerHTML: string,
+         *   innerContent: array,
+         * }>
+         */
+        public function extract_full_block_and_advance(): ?array
+        {
+        }
+        /**
+         * Indicates if the last attempt to parse a block comment delimiter
+         * failed, if set, otherwise `null` if the last attempt succeeded.
+         *
+         * @since 6.9.0
+         *
+         * @return string|null Error from last attempt at parsing next block delimiter,
+         *                     or `null` if last attempt succeeded.
+         */
+        public function get_last_error(): ?string
+        {
+        }
+        /**
+         * Indicates if the last attempt to parse a block’s JSON attributes failed.
+         *
+         * @see \json_last_error()
+         *
+         * @since 6.9.0
+         *
+         * @return int JSON_ERROR_ code from last attempt to parse block JSON attributes.
+         */
+        public function get_last_json_error(): int
+        {
+        }
+        /**
+         * Returns the type of the block comment delimiter.
+         *
+         * One of:
+         *
+         *  - {@see self::OPENER}
+         *  - {@see self::CLOSER}
+         *  - {@see self::VOID}
+         *  - `null`
+         *
+         * @since 6.9.0
+         *
+         * @return string|null type of the block comment delimiter, if currently matched.
+         */
+        public function get_delimiter_type(): ?string
+        {
+        }
+        /**
+         * Returns whether the delimiter contains the closing flag.
+         *
+         * This should be avoided except in cases of custom error-handling
+         * with block closers containing the void flag. For normative use,
+         * {@see self::get_delimiter_type()}.
+         *
+         * @since 6.9.0
+         *
+         * @return bool Whether the currently-matched block delimiter contains the closing flag.
+         */
+        public function has_closing_flag(): bool
+        {
+        }
+        /**
+         * Indicates if the block delimiter represents a block of the given type.
+         *
+         * Since the “core” namespace may be implicit, it’s allowable to pass
+         * either the fully-qualified block type with namespace and block name
+         * as well as the shorthand version only containing the block name, if
+         * the desired block is in the “core” namespace.
+         *
+         * Since freeform HTML content is non-block content, it has no block type.
+         * Passing the wildcard “*” will, however, return true for all block types,
+         * even the implicit freeform content, though not for spans of inner HTML.
+         *
+         * Example:
+         *
+         *     $is_core_paragraph = $processor->is_block_type( 'paragraph' );
+         *     $is_core_paragraph = $processor->is_block_type( 'core/paragraph' );
+         *     $is_formula        = $processor->is_block_type( 'math-block/formula' );
+         *
+         * @param string $block_type Block type name for the desired block.
+         *                           E.g. "paragraph", "core/paragraph", "math-blocks/formula".
+         * @return bool Whether this delimiter represents a block of the given type.
+         */
+        public function is_block_type(string $block_type): bool
+        {
+        }
+        /**
+         * Given two spans of text, indicate if they represent identical block types.
+         *
+         * This function normalizes block types to account for implicit core namespacing.
+         *
+         * Note! This function only returns valid results when the complete block types are
+         *       represented in the span offsets and lengths. This means that the full optional
+         *       namespace and block name must be represented in the input arguments.
+         *
+         * Example:
+         *
+         *              0    5   10   15   20   25   30   35   40
+         *     $text = '<!-- wp:block --><!-- /wp:core/block -->';
+         *
+         *     true  === WP_Block_Processor::are_equal_block_types( $text, 9, 5, $text, 27, 10 );
+         *     false === WP_Block_Processor::are_equal_block_types( $text, 9, 5, 'my/block', 0, 8 );
+         *
+         * @since 6.9.0
+         *
+         * @param string $a_text   Text in which first block type appears.
+         * @param int    $a_at     Byte offset into text in which first block type starts.
+         * @param int    $a_length Byte length of first block type.
+         * @param string $b_text   Text in which second block type appears (may be the same as the first text).
+         * @param int    $b_at     Byte offset into text in which second block type starts.
+         * @param int    $b_length Byte length of second block type.
+         * @return bool Whether the spans of text represent identical block types, normalized for namespacing.
+         */
+        public static function are_equal_block_types(string $a_text, int $a_at, int $a_length, string $b_text, int $b_at, int $b_length): bool
+        {
+        }
+        /**
+         * Indicates if the matched delimiter is an opening or void delimiter of the given type,
+         * if a type is provided, otherwise if it opens any block or implicit freeform HTML content.
+         *
+         * This is a helper method to ease handling of code inspecting where blocks start, and for
+         * checking if the blocks are of a given type. The function is variadic to allow for
+         * checking if the delimiter opens one of many possible block types.
+         *
+         * To advance to the start of a block {@see self::next_block()}.
+         *
+         * Example:
+         *
+         *     $processor = new WP_Block_Processor( $html );
+         *     while ( $processor->next_delimiter() ) {
+         *         if ( $processor->opens_block( 'core/code', 'syntaxhighlighter/code' ) ) {
+         *             echo "Found code!";
+         *             continue;
+         *         }
+         *
+         *         if ( $processor->opens_block( 'core/image' ) ) {
+         *             echo "Found an image!";
+         *             continue;
+         *         }
+         *
+         *         if ( $processor->opens_block() ) {
+         *             echo "Found a new block!";
+         *         }
+         *     }
+         *
+         * @since 6.9.0
+         *
+         * @see self::is_block_type()
+         *
+         * @param string[] $block_type Optional. Is the matched block type one of these?
+         *                             If none are provided, will not test block type.
+         * @return bool Whether the matched block delimiter opens a block, and whether it
+         *              opens a block of one of the given block types, if provided.
+         */
+        public function opens_block(string ...$block_type): bool
+        {
+        }
+        /**
+         * Indicates if the matched delimiter is an HTML span.
+         *
+         * @since 6.9.0
+         *
+         * @see self::is_non_whitespace_html()
+         *
+         * @return bool Whether the processor is matched on an HTML span.
+         */
+        public function is_html(): bool
+        {
+        }
+        /**
+         * Indicates if the matched delimiter is an HTML span and comprises more
+         * than whitespace characters, i.e. contains real content.
+         *
+         * Many block serializers introduce newlines between block delimiters,
+         * so the presence of top-level non-block content does not imply that
+         * there are “real” freeform HTML blocks. Checking if there is content
+         * beyond whitespace is a more certain check, such as for determining
+         * whether to load CSS for the freeform or fallback block type.
+         *
+         * @since 6.9.0
+         *
+         * @see self::is_html()
+         *
+         * @return bool Whether the currently-matched delimiter is an HTML
+         *              span containing non-whitespace text.
+         */
+        public function is_non_whitespace_html(): bool
+        {
+        }
+        /**
+         * Returns the string content of a matched HTML span, or `null` otherwise.
+         *
+         * @since 6.9.0
+         *
+         * @return string|null Raw HTML content, or `null` if not currently matched on HTML.
+         */
+        public function get_html_content(): ?string
+        {
+        }
+        /**
+         * Allocates a substring for the block type and returns the fully-qualified
+         * name, including the namespace, if matched on a delimiter, otherwise `null`.
+         *
+         * This function is like {@see self::get_printable_block_type()} but when
+         * paused on a freeform HTML block, will return `null` instead of “core/freeform”.
+         * The `null` behavior matches what {@see \parse_blocks()} returns but may not
+         * be as useful as having a string value.
+         *
+         * This function allocates a substring for the given block type. This
+         * allocation will be small and likely fine in most cases, but it's
+         * preferable to call {@see self::is_block_type()} if only needing
+         * to know whether the delimiter is for a given block type, as that
+         * function is more efficient for this purpose and avoids the allocation.
+         *
+         * Example:
+         *
+         *     // Avoid.
+         *     'core/paragraph' = $processor->get_block_type();
+         *
+         *     // Prefer.
+         *     $processor->is_block_type( 'core/paragraph' );
+         *     $processor->is_block_type( 'paragraph' );
+         *     $processor->is_block_type( 'core/freeform' );
+         *
+         *     // Freeform HTML content has no block type.
+         *     $processor = new WP_Block_Processor( 'non-block content' );
+         *     $processor->next_token();
+         *     null === $processor->get_block_type();
+         *
+         * @since 6.9.0
+         *
+         * @see self::are_equal_block_types()
+         *
+         * @return string|null Fully-qualified block namespace and type, e.g. "core/paragraph",
+         *                     if matched on an explicit delimiter, otherwise `null`.
+         */
+        public function get_block_type(): ?string
+        {
+        }
+        /**
+         * Allocates a printable substring for the block type and returns the fully-qualified
+         * name, including the namespace, if matched on a delimiter or freeform block, otherwise `null`.
+         *
+         * This function is like {@see self::get_block_type()} but when paused on a freeform
+         * HTML block, will return “core/freeform” instead of `null`. The `null` behavior matches
+         * what {@see \parse_blocks()} returns but may not be as useful as having a string value.
+         *
+         * This function allocates a substring for the given block type. This
+         * allocation will be small and likely fine in most cases, but it's
+         * preferable to call {@see self::is_block_type()} if only needing
+         * to know whether the delimiter is for a given block type, as that
+         * function is more efficient for this purpose and avoids the allocation.
+         *
+         * Example:
+         *
+         *     // Avoid.
+         *     'core/paragraph' = $processor->get_printable_block_type();
+         *
+         *     // Prefer.
+         *     $processor->is_block_type( 'core/paragraph' );
+         *     $processor->is_block_type( 'paragraph' );
+         *     $processor->is_block_type( 'core/freeform' );
+         *
+         *     // Freeform HTML content is given an implicit type.
+         *     $processor = new WP_Block_Processor( 'non-block content' );
+         *     $processor->next_token();
+         *     'core/freeform' === $processor->get_printable_block_type();
+         *
+         * @since 6.9.0
+         *
+         * @see self::are_equal_block_types()
+         *
+         * @return string|null Fully-qualified block namespace and type, e.g. "core/paragraph",
+         *                     if matched on an explicit delimiter or freeform block, otherwise `null`.
+         */
+        public function get_printable_block_type(): ?string
+        {
+        }
+        /**
+         * Normalizes a block name to ensure that missing implicit “core” namespaces are present.
+         *
+         * Example:
+         *
+         *     'core/paragraph' === WP_Block_Processor::normalize_block_byte( 'paragraph' );
+         *     'core/paragraph' === WP_Block_Processor::normalize_block_byte( 'core/paragraph' );
+         *     'my/paragraph'   === WP_Block_Processor::normalize_block_byte( 'my/paragraph' );
+         *
+         * @since 6.9.0
+         *
+         * @param string $block_type Valid block name, potentially without a namespace.
+         * @return string Fully-qualified block type including namespace.
+         */
+        public static function normalize_block_type(string $block_type): string
+        {
+        }
+        /**
+         * Returns a lazy wrapper around the block attributes, which can be used
+         * for efficiently interacting with the JSON attributes.
+         *
+         * This stub hints that there should be a lazy interface for parsing
+         * block attributes but doesn’t define it. It serves both as a placeholder
+         * for one to come as well as a guard against implementing an eager
+         * function in its place.
+         *
+         * @throws Exception This function is a stub for subclasses to implement
+         *                   when providing streaming attribute parsing.
+         *
+         * @since 6.9.0
+         *
+         * @see self::allocate_and_return_parsed_attributes()
+         *
+         * @return never
+         */
+        public function get_attributes()
+        {
+        }
+        /**
+         * Attempts to parse and return the entire JSON attributes from the delimiter,
+         * allocating memory and processing the JSON span in the process.
+         *
+         * This does not return any parsed attributes for a closing block delimiter
+         * even if there is a span of JSON content; this JSON is a parsing error.
+         *
+         * Consider calling {@see static::get_attributes()} instead if it's not
+         * necessary to read all the attributes at the same time, as that provides
+         * a more efficient mechanism for typical use cases.
+         *
+         * Since the JSON span inside the comment delimiter may not be valid JSON,
+         * this function will return `null` if it cannot parse the span and set the
+         * {@see static::get_last_json_error()} to the appropriate JSON_ERROR_ constant.
+         *
+         * If the delimiter contains no JSON span, it will also return `null`,
+         * but the last error will be set to {@see \JSON_ERROR_NONE}.
+         *
+         * Example:
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:image {"url": "https://wordpress.org/favicon.ico"} -->' );
+         *     $processor->next_delimiter();
+         *     $memory_hungry_and_slow_attributes = $processor->allocate_and_return_parsed_attributes();
+         *     $memory_hungry_and_slow_attributes === array( 'url' => 'https://wordpress.org/favicon.ico' );
+         *
+         *     $processor = new WP_Block_Processor( '<!-- /wp:image {"url": "https://wordpress.org/favicon.ico"} -->' );
+         *     $processor->next_delimiter();
+         *     null            = $processor->allocate_and_return_parsed_attributes();
+         *     JSON_ERROR_NONE = $processor->get_last_json_error();
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:separator {} /-->' );
+         *     $processor->next_delimiter();
+         *     array() === $processor->allocate_and_return_parsed_attributes();
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:separator /-->' );
+         *     $processor->next_delimiter();
+         *     null = $processor->allocate_and_return_parsed_attributes();
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:image {"url} -->' );
+         *     $processor->next_delimiter();
+         *     null                 = $processor->allocate_and_return_parsed_attributes();
+         *     JSON_ERROR_CTRL_CHAR = $processor->get_last_json_error();
+         *
+         * @since 6.9.0
+         *
+         * @return array|null Parsed JSON attributes, if present and valid, otherwise `null`.
+         */
+        public function allocate_and_return_parsed_attributes(): ?array
+        {
+        }
+        /**
+         * Returns the span representing the currently-matched delimiter, if matched, otherwise `null`.
+         *
+         * Example:
+         *
+         *     $processor = new WP_Block_Processor( '<!-- wp:void /-->' );
+         *     null     === $processor->get_span();
+         *
+         *     $processor->next_delimiter();
+         *     WP_HTML_Span( 0, 17 ) === $processor->get_span();
+         *
+         * @since 6.9.0
+         *
+         * @return WP_HTML_Span|null Span of text in source text spanning matched delimiter.
+         */
+        public function get_span(): ?\WP_HTML_Span
+        {
+        }
+        //
+        // Constant declarations that would otherwise pollute the top of the class.
+        //
+        /**
+         * Indicates that the block comment delimiter closes an open block.
+         *
+         * @see self::$type
+         *
+         * @since 6.9.0
+         */
+        const CLOSER = 'closer';
+        /**
+         * Indicates that the block comment delimiter opens a block.
+         *
+         * @see self::$type
+         *
+         * @since 6.9.0
+         */
+        const OPENER = 'opener';
+        /**
+         * Indicates that the block comment delimiter represents a void block
+         * with no inner content of any kind.
+         *
+         * @see self::$type
+         *
+         * @since 6.9.0
+         */
+        const VOID = 'void';
+        /**
+         * Indicates that the processor is ready to start parsing but hasn’t yet begun.
+         *
+         * @see self::$state
+         *
+         * @since 6.9.0
+         */
+        const READY = 'processor-ready';
+        /**
+         * Indicates that the processor is matched on an explicit block delimiter.
+         *
+         * @see self::$state
+         *
+         * @since 6.9.0
+         */
+        const MATCHED = 'processor-matched';
+        /**
+         * Indicates that the processor is matched on the opening of an implicit freeform delimiter.
+         *
+         * @see self::$state
+         *
+         * @since 6.9.0
+         */
+        const HTML_SPAN = 'processor-html-span';
+        /**
+         * Indicates that the parser started parsing a block comment delimiter, but
+         * the input document ended before it could finish. The document was likely truncated.
+         *
+         * @see self::$state
+         *
+         * @since 6.9.0
+         */
+        const INCOMPLETE_INPUT = 'incomplete-input';
+        /**
+         * Indicates that the processor has finished parsing and has nothing left to scan.
+         *
+         * @see self::$state
+         *
+         * @since 6.9.0
+         */
+        const COMPLETE = 'processor-complete';
     }
     /**
      * Class used for interacting with block styles.
@@ -31133,7 +34469,7 @@ namespace {
          *
          * @param string $block_name       Block type name including namespace.
          * @param string $block_style_name Block style name.
-         * @return array Registered block style properties.
+         * @return array|null Registered block style properties or `null` if the block style is not registered.
          */
         public function get_registered($block_name, $block_style_name)
         {
@@ -31164,8 +34500,8 @@ namespace {
          *
          * @since 5.3.0
          *
-         * @param string $block_name       Block type name including namespace.
-         * @param string $block_style_name Block style name.
+         * @param string|null $block_name       Block type name including namespace.
+         * @param string|null $block_style_name Block style name.
          * @return bool True if the block style is registered, false otherwise.
          */
         public function is_registered($block_name, $block_style_name)
@@ -31464,7 +34800,7 @@ namespace {
          *
          * @since 6.7.0
          *
-         * @param string $template_name Template name.
+         * @param string|null $template_name Template name.
          * @return bool True if the template is registered, false otherwise.
          */
         public function is_registered($template_name)
@@ -31566,7 +34902,7 @@ namespace {
          *
          * @since 5.0.0
          *
-         * @param string $name Block type name including namespace.
+         * @param string|null $name Block type name including namespace.
          * @return WP_Block_Type|null The registered block type, or null if it is not registered.
          */
         public function get_registered($name)
@@ -31587,7 +34923,7 @@ namespace {
          *
          * @since 5.0.0
          *
-         * @param string $name Block type name including namespace.
+         * @param string|null $name Block type name including namespace.
          * @return bool True if the block type is registered, false otherwise.
          */
         public function is_registered($name)
@@ -32086,7 +35422,7 @@ namespace {
          * @example "core/paragraph"
          *
          * @since 5.5.0
-         * @var string
+         * @var string|null
          */
         public $name;
         /**
@@ -32108,7 +35444,6 @@ namespace {
          *
          * @since 5.5.0
          * @var array
-         * @access protected
          */
         protected $available_context = array();
         /**
@@ -32116,7 +35451,6 @@ namespace {
          *
          * @since 5.9.0
          * @var WP_Block_Type_Registry
-         * @access protected
          */
         protected $registry;
         /**
@@ -32165,17 +35499,17 @@ namespace {
          * @param array                  $block             {
          *     An associative array of a single parsed block object. See WP_Block_Parser_Block.
          *
-         *     @type string   $blockName    Name of block.
-         *     @type array    $attrs        Attributes from block comment delimiters.
-         *     @type array    $innerBlocks  List of inner blocks. An array of arrays that
-         *                                  have the same structure as this one.
-         *     @type string   $innerHTML    HTML from inside block comment delimiters.
-         *     @type array    $innerContent List of string fragments and null markers where inner blocks were found.
+         *     @type string|null $blockName    Name of block.
+         *     @type array       $attrs        Attributes from block comment delimiters.
+         *     @type array       $innerBlocks  List of inner blocks. An array of arrays that
+         *                                     have the same structure as this one.
+         *     @type string      $innerHTML    HTML from inside block comment delimiters.
+         *     @type array       $innerContent List of string fragments and null markers where inner blocks were found.
          * }
          * @param array                  $available_context Optional array of ancestry context values.
          * @param WP_Block_Type_Registry $registry          Optional block type registry.
          * @phpstan-param array{
-         *   blockName?: string,
+         *   blockName?: string|null,
          *   attrs?: array,
          *   innerBlocks?: array,
          *   innerHTML?: string,
@@ -32256,7 +35590,6 @@ namespace {
      * Converts a Classic Menu to Block Menu blocks.
      *
      * @since 6.3.0
-     * @access public
      */
     class WP_Classic_To_Block_Menu_Converter
     {
@@ -32658,6 +35991,7 @@ namespace {
          * Used internally to get a list of comment IDs matching the query vars.
          *
          * @since 4.4.0
+         * @since 6.9.0 Excludes the 'note' comment type, unless 'all' or the 'note' types are requested.
          *
          * @global wpdb $wpdb WordPress database abstraction object.
          *
@@ -33086,7 +36420,7 @@ namespace {
         /**
          * List of custom input attributes for control output, where attribute names are the keys and values are the values.
          *
-         * Not used for 'checkbox', 'radio', 'select', 'textarea', or 'dropdown-pages' control types.
+         * Not used for 'checkbox', 'radio', 'select', or 'dropdown-pages' control types.
          *
          * @since 4.0.0
          * @var array
@@ -33158,8 +36492,8 @@ namespace {
          *                                                 Default empty array.
          *     @type array                $input_attrs     List of custom input attributes for control output, where
          *                                                 attribute names are the keys and values are the values. Not
-         *                                                 used for 'checkbox', 'radio', 'select', 'textarea', or
-         *                                                 'dropdown-pages' control types. Default empty array.
+         *                                                 used for 'checkbox', 'radio', 'select', or 'dropdown-pages'
+         *                                                 control types. Default empty array.
          *     @type bool                 $allow_addition  Show UI for adding new content, currently only used for the
          *                                                 dropdown-pages control. Default false.
          *     @type array                $json            Deprecated. Use WP_Customize_Control::json() instead.
@@ -36410,6 +39744,7 @@ namespace {
          * @see WP_Customize_Panel::$active_callback
          *
          * @global array $wp_registered_sidebars
+         *
          * @return bool Active.
          */
         public function is_panel_active()
@@ -36833,14 +40168,14 @@ namespace {
          *
          * @since 4.5.0
          *
+         * @see WP_Customize_Nav_Menus::filter_wp_nav_menu_args()
+         *
          * @param array $params {
          *     Dynamic sidebar params.
          *
          *     @type array $args        Sidebar args.
          *     @type array $widget_args Widget args.
          * }
-         * @see WP_Customize_Nav_Menus::filter_wp_nav_menu_args()
-         *
          * @return array Params.
          * @phpstan-param array{
          *   args?: array,
@@ -37438,6 +40773,7 @@ namespace {
          * @since 2.8.0
          *
          * @var (int|false)[]
+         * @phpstan-var array<string, int|false>
          */
         public $groups = array();
         /**
@@ -37617,6 +40953,8 @@ namespace {
          * @param string $handle Name of the item. Should be unique.
          * @param string $status Optional. Status of the item to query. Default 'registered'.
          * @return bool|_WP_Dependency Found, or object Item data.
+         * @phpstan-template TStatus 'registered'|'scripts'|'enqueued'|'queued'|'to_do'|'to_print'|'done'|'printed'
+         * @phpstan-return ($handle is not non-empty-string ? false : ($status is not TStatus ? false : ($status is 'registered'|'scripts' ? _WP_Dependency|false : bool)))
          */
         public function query($handle, $status = 'registered')
         {
@@ -37643,8 +40981,21 @@ namespace {
          *
          * @param string[] $load Array of script or style handles to load.
          * @return string Etag header.
+         * @phpstan-return non-falsy-string
          */
         public function get_etag($load)
+        {
+        }
+        /**
+         * Gets a dependency warning message for a handle.
+         *
+         * @since 6.9.1
+         *
+         * @param string   $handle                     Handle with missing dependencies.
+         * @param string[] $missing_dependency_handles Missing dependency handles.
+         * @return string Formatted, localized warning message.
+         */
+        protected function get_dependency_warning_message($handle, $missing_dependency_handles)
         {
         }
     }
@@ -37688,14 +41039,14 @@ namespace {
          * Used for cache-busting.
          *
          * @since 2.6.0
-         * @var bool|string
+         * @var string|false|null
          */
         public $ver = \false;
         /**
          * Additional arguments for the handle.
          *
          * @since 2.6.0
-         * @var array
+         * @var mixed
          */
         public $args = \null;
         /**
@@ -38663,6 +42014,7 @@ namespace {
      *
      * @since 2.8.0
      * @since 6.7.0 Now properly implements the SimplePie\Cache\Base interface.
+     * @since 6.9.0 Switched to Multisite's global cache via the `*_site_transient()` functions.
      */
     #[\AllowDynamicProperties]
     class WP_Feed_Cache_Transient implements \SimplePie\Cache\Base
@@ -38836,16 +42188,21 @@ namespace {
          * that evaluates to false (e.g. 0), so use the `===` operator for testing the return value.
          *
          * @since 4.7.0
+         * @since 6.9.0 Added the `$priority` parameter.
          *
          * @param string                      $hook_name Optional. The name of the filter hook. Default empty.
          * @param callable|string|array|false $callback  Optional. The callback to check for.
          *                                               This method can be called unconditionally to speculatively check
          *                                               a callback that may or may not exist. Default false.
+         * @param int|false                   $priority  Optional. The specific priority at which to check for the callback.
+         *                                               Default false.
          * @return bool|int If `$callback` is omitted, returns boolean for whether the hook has
          *                  anything registered. When checking a specific function, the priority
          *                  of that hook is returned, or false if the function is not attached.
+         *                  If `$callback` and `$priority` are both provided, a boolean is returned
+         *                  for whether the specific function is registered at that priority.
          */
-        public function has_filter($hook_name = '', $callback = \false)
+        public function has_filter($hook_name = '', $callback = \false, $priority = \false)
         {
         }
         /**
@@ -40434,7 +43791,6 @@ namespace {
          * Loads image from $this->file into editor.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @return true|WP_Error True if loaded; WP_Error on failure.
          */
@@ -40444,7 +43800,6 @@ namespace {
          *
          * @since 3.5.0
          * @since 6.0.0 The `$filesize` value was added to the returned array.
-         * @abstract
          *
          * @param string $destfilename Optional. Destination filename. Default null.
          * @param string $mime_type    Optional. The mime-type. Default null.
@@ -40476,7 +43831,6 @@ namespace {
          * maintain aspect ratio according to the provided dimension.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param int|null   $max_w Image width.
          * @param int|null   $max_h Image height.
@@ -40499,7 +43853,6 @@ namespace {
          * Resize multiple images from a single source.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param array $sizes {
          *     An array of image size arrays. Default sizes are 'small', 'medium', 'large'.
@@ -40522,7 +43875,6 @@ namespace {
          * Crops Image.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param int  $src_x   The start x position to crop from.
          * @param int  $src_y   The start y position to crop from.
@@ -40538,7 +43890,6 @@ namespace {
          * Rotates current image counter-clockwise by $angle.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param float $angle
          * @return true|WP_Error
@@ -40548,7 +43899,6 @@ namespace {
          * Flips current image.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param bool $horz Flip along Horizontal Axis
          * @param bool $vert Flip along Vertical Axis
@@ -40559,7 +43909,6 @@ namespace {
          * Streams current image to browser.
          *
          * @since 3.5.0
-         * @abstract
          *
          * @param string $mime_type The mime type of the image.
          * @return true|WP_Error True on success, WP_Error object on failure.
@@ -41133,7 +44482,7 @@ namespace {
          *    image operations within the time of the HTTP request.
          *
          * @since 6.2.0
-         * @since 6.3.0 This method was deprecated.
+         * @deprecated 6.3.0 No longer used in core.
          *
          * @return int|null The new limit on success, null on failure.
          */
@@ -41731,6 +45080,7 @@ namespace {
          *
          * @since 6.2.0
          * @var string
+         * @phpstan-var 'characters_excluding_spaces'|'characters_including_spaces'|'words'
          */
         public $word_count_type;
         /**
@@ -41921,6 +45271,7 @@ namespace {
          *
          * @return string Localized word count type. Possible values are `characters_excluding_spaces`,
          *                `characters_including_spaces`, or `words`. Defaults to `words`.
+         * @phpstan-return 'characters_excluding_spaces'|'characters_including_spaces'|'words'
          */
         public function get_word_count_type()
         {
@@ -42128,7 +45479,7 @@ namespace {
          * }
          * @phpstan-return void
          */
-        public function __construct($meta_query = \false)
+        public function __construct($meta_query = array())
         {
         }
         /**
@@ -42458,7 +45809,6 @@ namespace {
     /**
      * Manages fallback behavior for Navigation menus.
      *
-     * @access public
      * @since 6.3.0
      */
     class WP_Navigation_Fallback
@@ -43060,7 +46410,7 @@ namespace {
          * @param string     $group Optional. Where the cache contents are grouped. Default 'default'.
          * @param bool       $force Optional. Unused. Whether to force an update of the local cache
          *                          from the persistent cache. Default false.
-         * @param bool       $found Optional. Whether the key was found in the cache (passed by reference).
+         * @param bool|null  $found Optional. Whether the key was found in the cache (passed by reference).
          *                          Disambiguates a return of false, a storable value. Default null.
          * @return mixed|false The cache contents on success, false on failure to retrieve contents.
          */
@@ -43093,6 +46443,7 @@ namespace {
          * @param string     $group      Optional. Where the cache contents are grouped. Default 'default'.
          * @param bool       $deprecated Optional. Unused. Default false.
          * @return bool True on success, false if the contents were not deleted.
+         * @phpstan-param false $deprecated
          */
         public function delete($key, $group = 'default', $deprecated = \false)
         {
@@ -43458,10 +46809,10 @@ namespace {
          * @since 2.9.0 as strip_scribd_newlines()
          * @since 3.0.0
          *
-         * @param string $html Existing HTML.
-         * @param object $data Data object from WP_oEmbed::data2html()
-         * @param string $url The original URL passed to oEmbed.
-         * @return string Possibly modified $html
+         * @param string|false $html Existing HTML.
+         * @param object       $data Data object from WP_oEmbed::data2html()
+         * @param string       $url The original URL passed to oEmbed.
+         * @return string|false Possibly modified $html.
          */
         public function _strip_newlines($html, $data, $url)
         {
@@ -43613,9 +46964,11 @@ namespace {
          *
          * @since 6.8.0
          *
+         * @param string $langcode  Optional. Unused. ISO 639-1 2-character language code. Default 'en'.
+         * @param string $lang_path Optional. Unused. Path to the language file directory. Default empty string.
          * @return true Always returns true.
          */
-        public function SetLanguage($langcode = 'en', $lang_path = '')
+        public static function setLanguage($langcode = 'en', $lang_path = '')
         {
         }
     }
@@ -45513,9 +48866,9 @@ namespace {
          *
          * @since 3.1.0
          *
-         * @param array $q The query variables. Passed by reference.
+         * @param array $query_vars The query variables. Passed by reference.
          */
-        public function parse_tax_query(&$q)
+        public function parse_tax_query(&$query_vars)
         {
         }
         /**
@@ -45525,10 +48878,10 @@ namespace {
          *
          * @global wpdb $wpdb WordPress database abstraction object.
          *
-         * @param array $q Query variables.
+         * @param array $query_vars Query variables.
          * @return string WHERE clause.
          */
-        protected function parse_search(&$q)
+        protected function parse_search(&$query_vars)
         {
         }
         /**
@@ -45563,10 +48916,10 @@ namespace {
          *
          * @global wpdb $wpdb WordPress database abstraction object.
          *
-         * @param array $q Query variables.
+         * @param array $query_vars Query variables.
          * @return string ORDER BY clause.
          */
-        protected function parse_search_order(&$q)
+        protected function parse_search_order(&$query_vars)
         {
         }
         /**
@@ -47792,16 +51145,34 @@ namespace {
          *
          * Updates the list of roles, if the role doesn't already exist.
          *
-         * The capabilities are defined in the following format: `array( 'read' => true )`.
-         * To explicitly deny the role a capability, set the value for that capability to false.
+         * The list of capabilities can be passed either as a numerically indexed array of capability names, or an
+         * associative array of boolean values keyed by the capability name. To explicitly deny the role a capability, set
+         * the value for that capability to false.
+         *
+         * Examples:
+         *
+         *     // Add a role that can edit posts.
+         *     wp_roles()->add_role( 'custom_role', 'Custom Role', array(
+         *         'read',
+         *         'edit_posts',
+         *     ) );
+         *
+         * Or, using an associative array:
+         *
+         *     // Add a role that can edit posts but explicitly cannot not delete them.
+         *     wp_roles()->add_role( 'custom_role', 'Custom Role', array(
+         *         'read' => true,
+         *         'edit_posts' => true,
+         *         'delete_posts' => false,
+         *     ) );
          *
          * @since 2.0.0
+         * @since 6.9.0 Support was added for a numerically indexed array of strings for the capabilities array.
          *
-         * @param string $role         Role name.
-         * @param string $display_name Role display name.
-         * @param bool[] $capabilities Optional. List of capabilities keyed by the capability name,
-         *                             e.g. `array( 'edit_posts' => true, 'delete_posts' => false )`.
-         *                             Default empty array.
+         * @param string                               $role         Role name.
+         * @param string                               $display_name Role display name.
+         * @param array<string,bool>|array<int,string> $capabilities Capabilities to be added to the role.
+         *                                                           Default empty array.
          * @return WP_Role|void WP_Role object, if the role is added.
          */
         public function add_role($role, $display_name, $capabilities = array())
@@ -47933,6 +51304,7 @@ namespace {
          * identifier has already been registered.
          *
          * @since 6.5.0
+         * @since 6.9.0 Added the $args parameter.
          *
          * @param string            $id       The identifier of the script module. Should be unique. It will be used in the
          *                                    final import map.
@@ -47958,12 +51330,59 @@ namespace {
          *                                    It is added to the URL as a query string for cache busting purposes. If $version
          *                                    is set to false, the version number is the currently installed WordPress version.
          *                                    If $version is set to null, no version is added.
+         * @param array             $args     {
+         *     Optional. An array of additional args. Default empty array.
+         *
+         *     @type bool                $in_footer     Whether to print the script module in the footer. Only relevant to block themes. Default 'false'. Optional.
+         *     @type 'auto'|'low'|'high' $fetchpriority Fetch priority. Default 'auto'. Optional.
+         * }
          * @phpstan-param array<int|string, array{
          *   id: string,
          *   import?: string,
          * }> $deps
+         * @phpstan-param array{
+         *   in_footer?: bool,
+         *   fetchpriority?: 'auto'|'low'|'high',
+         * } $args
+         * @phpstan-return void
          */
-        public function register(string $id, string $src, array $deps = array(), $version = \false)
+        public function register(string $id, string $src, array $deps = array(), $version = \false, array $args = array())
+        {
+        }
+        /**
+         * Gets IDs for queued script modules.
+         *
+         * @since 6.9.0
+         *
+         * @return string[] Script module IDs.
+         */
+        public function get_queue(): array
+        {
+        }
+        /**
+         * Sets the fetch priority for a script module.
+         *
+         * @since 6.9.0
+         *
+         * @param string              $id       Script module identifier.
+         * @param 'auto'|'low'|'high' $priority Fetch priority for the script module.
+         * @return bool Whether setting the fetchpriority was successful.
+         */
+        public function set_fetchpriority(string $id, string $priority): bool
+        {
+        }
+        /**
+         * Sets whether a script module should be printed in the footer.
+         *
+         * This is only relevant in block themes.
+         *
+         * @since 6.9.0
+         *
+         * @param string           $id        Script module identifier.
+         * @param bool             $in_footer Whether to print in the footer.
+         * @return bool Whether setting the printing location was successful.
+         */
+        public function set_in_footer(string $id, bool $in_footer): bool
         {
         }
         /**
@@ -47973,6 +51392,7 @@ namespace {
          * will be registered.
          *
          * @since 6.5.0
+         * @since 6.9.0 Added the $args parameter.
          *
          * @param string            $id       The identifier of the script module. Should be unique. It will be used in the
          *                                    final import map.
@@ -47998,12 +51418,23 @@ namespace {
          *                                    It is added to the URL as a query string for cache busting purposes. If $version
          *                                    is set to false, the version number is the currently installed WordPress version.
          *                                    If $version is set to null, no version is added.
+         * @param array             $args     {
+         *     Optional. An array of additional args. Default empty array.
+         *
+         *     @type bool                $in_footer     Whether to print the script module in the footer. Only relevant to block themes. Default 'false'. Optional.
+         *     @type 'auto'|'low'|'high' $fetchpriority Fetch priority. Default 'auto'. Optional.
+         * }
          * @phpstan-param array<int|string, array{
          *   id: string,
          *   import?: string,
          * }> $deps
+         * @phpstan-param array{
+         *   in_footer?: bool,
+         *   fetchpriority?: 'auto'|'low'|'high',
+         * } $args
+         * @phpstan-return void
          */
-        public function enqueue(string $id, string $src = '', array $deps = array(), $version = \false)
+        public function enqueue(string $id, string $src = '', array $deps = array(), $version = \false, array $args = array())
         {
         }
         /**
@@ -48040,8 +51471,17 @@ namespace {
         {
         }
         /**
-         * Prints the enqueued script modules using script tags with type="module"
-         * attributes.
+         * Prints the enqueued script modules in head.
+         *
+         * This is only used in block themes.
+         *
+         * @since 6.9.0
+         */
+        public function print_head_enqueued_script_modules()
+        {
+        }
+        /**
+         * Prints the enqueued script modules in footer.
          *
          * @since 6.5.0
          */
@@ -48049,7 +51489,7 @@ namespace {
         {
         }
         /**
-         * Prints the the static dependencies of the enqueued script modules using
+         * Prints the static dependencies of the enqueued script modules using
          * link tags with rel="modulepreload" attributes.
          *
          * If a script module is marked for enqueue, it will not be preloaded.
@@ -48466,6 +51906,18 @@ namespace {
          * @since 2.8.0
          */
         public function reset()
+        {
+        }
+        /**
+         * Gets a script-specific dependency warning message.
+         *
+         * @since 6.9.1
+         *
+         * @param string   $handle                     Script handle with missing dependencies.
+         * @param string[] $missing_dependency_handles Missing dependency handles.
+         * @return string Formatted, localized warning message.
+         */
+        protected function get_dependency_warning_message($handle, $missing_dependency_handles)
         {
         }
     }
@@ -49181,7 +52633,7 @@ namespace {
          */
         public $spam = '0';
         /**
-         * Whether the site should be treated as deleted.
+         * Whether the site should be treated as flagged for deletion.
          *
          * A numeric string, for compatibility reasons.
          *
@@ -49490,6 +52942,19 @@ namespace {
         {
         }
         /**
+         * Overrides the add_data method from WP_Dependencies, to allow unsetting dependencies for conditional styles.
+         *
+         * @since 6.9.0
+         *
+         * @param string $handle Name of the item. Should be unique.
+         * @param string $key    The data key.
+         * @param mixed  $value  The data value.
+         * @return bool True on success, false on failure.
+         */
+        public function add_data($handle, $key, $value)
+        {
+        }
+        /**
          * Determines style dependencies.
          *
          * @since 2.6.0
@@ -49550,6 +53015,18 @@ namespace {
          * @since 3.3.0
          */
         public function reset()
+        {
+        }
+        /**
+         * Gets a style-specific dependency warning message.
+         *
+         * @since 6.9.1
+         *
+         * @param string   $handle                     Style handle with missing dependencies.
+         * @param string[] $missing_dependency_handles Missing dependency handles.
+         * @return string Formatted, localized warning message.
+         */
+        protected function get_dependency_warning_message($handle, $missing_dependency_handles)
         {
         }
     }
@@ -51434,6 +54911,7 @@ namespace {
          * @phpstan-param array{
          *   with_supports?: bool,
          * } $options
+         * @phpstan-param array{} $deprecated
          */
         public static function get_theme_data($deprecated = array(), $options = array())
         {
@@ -51756,6 +55234,7 @@ namespace {
          * @since 6.6.0 Added the `dimensions.aspectRatios` and `dimensions.defaultAspectRatios` presets.
          *              Updated the 'prevent_override' value for font size presets to use 'typography.defaultFontSizes'
          *              and spacing size presets to use `spacing.defaultSpacingSizes`.
+         * @since 6.9.0 Added `border.radiusSizes`.
          * @var array
          */
         const PRESETS_METADATA = array(array('path' => array('dimensions', 'aspectRatios'), 'prevent_override' => array('dimensions', 'defaultAspectRatios'), 'use_default_names' => \false, 'value_key' => 'ratio', 'css_vars' => '--wp--preset--aspect-ratio--$slug', 'classes' => array(), 'properties' => array('aspect-ratio')), array('path' => array('color', 'palette'), 'prevent_override' => array('color', 'defaultPalette'), 'use_default_names' => \false, 'value_key' => 'color', 'css_vars' => '--wp--preset--color--$slug', 'classes' => array('.has-$slug-color' => 'color', '.has-$slug-background-color' => 'background-color', '.has-$slug-border-color' => 'border-color'), 'properties' => array('color', 'background-color', 'border-color')), array('path' => array('color', 'gradients'), 'prevent_override' => array('color', 'defaultGradients'), 'use_default_names' => \false, 'value_key' => 'gradient', 'css_vars' => '--wp--preset--gradient--$slug', 'classes' => array('.has-$slug-gradient-background' => 'background'), 'properties' => array('background')), array(
@@ -51767,7 +55246,7 @@ namespace {
             'css_vars' => \null,
             'classes' => array(),
             'properties' => array('filter'),
-        ), array('path' => array('typography', 'fontSizes'), 'prevent_override' => array('typography', 'defaultFontSizes'), 'use_default_names' => \true, 'value_func' => 'wp_get_typography_font_size_value', 'css_vars' => '--wp--preset--font-size--$slug', 'classes' => array('.has-$slug-font-size' => 'font-size'), 'properties' => array('font-size')), array('path' => array('typography', 'fontFamilies'), 'prevent_override' => \false, 'use_default_names' => \false, 'value_key' => 'fontFamily', 'css_vars' => '--wp--preset--font-family--$slug', 'classes' => array('.has-$slug-font-family' => 'font-family'), 'properties' => array('font-family')), array('path' => array('spacing', 'spacingSizes'), 'prevent_override' => array('spacing', 'defaultSpacingSizes'), 'use_default_names' => \true, 'value_key' => 'size', 'css_vars' => '--wp--preset--spacing--$slug', 'classes' => array(), 'properties' => array('padding', 'margin')), array('path' => array('shadow', 'presets'), 'prevent_override' => array('shadow', 'defaultPresets'), 'use_default_names' => \false, 'value_key' => 'shadow', 'css_vars' => '--wp--preset--shadow--$slug', 'classes' => array(), 'properties' => array('box-shadow')));
+        ), array('path' => array('typography', 'fontSizes'), 'prevent_override' => array('typography', 'defaultFontSizes'), 'use_default_names' => \true, 'value_func' => 'wp_get_typography_font_size_value', 'css_vars' => '--wp--preset--font-size--$slug', 'classes' => array('.has-$slug-font-size' => 'font-size'), 'properties' => array('font-size')), array('path' => array('typography', 'fontFamilies'), 'prevent_override' => \false, 'use_default_names' => \false, 'value_key' => 'fontFamily', 'css_vars' => '--wp--preset--font-family--$slug', 'classes' => array('.has-$slug-font-family' => 'font-family'), 'properties' => array('font-family')), array('path' => array('spacing', 'spacingSizes'), 'prevent_override' => array('spacing', 'defaultSpacingSizes'), 'use_default_names' => \true, 'value_key' => 'size', 'css_vars' => '--wp--preset--spacing--$slug', 'classes' => array(), 'properties' => array('padding', 'margin')), array('path' => array('shadow', 'presets'), 'prevent_override' => array('shadow', 'defaultPresets'), 'use_default_names' => \false, 'value_key' => 'shadow', 'css_vars' => '--wp--preset--shadow--$slug', 'classes' => array(), 'properties' => array('box-shadow')), array('path' => array('border', 'radiusSizes'), 'prevent_override' => \false, 'use_default_names' => \false, 'value_key' => 'size', 'css_vars' => '--wp--preset--border-radius--$slug', 'classes' => array(), 'properties' => array('border-radius')));
         /**
          * Metadata for style properties.
          *
@@ -51848,9 +55327,10 @@ namespace {
          *              `background.backgroundSize` and `dimensions.aspectRatio`.
          * @since 6.6.0 Added support for 'dimensions.aspectRatios', 'dimensions.defaultAspectRatios',
          *              'typography.defaultFontSizes', and 'spacing.defaultSpacingSizes'.
+         * @since 6.9.0 Added support for `border.radiusSizes`.
          * @var array
          */
-        const VALID_SETTINGS = array('appearanceTools' => \null, 'useRootPaddingAwareAlignments' => \null, 'background' => array('backgroundImage' => \null, 'backgroundSize' => \null), 'border' => array('color' => \null, 'radius' => \null, 'style' => \null, 'width' => \null), 'color' => array('background' => \null, 'custom' => \null, 'customDuotone' => \null, 'customGradient' => \null, 'defaultDuotone' => \null, 'defaultGradients' => \null, 'defaultPalette' => \null, 'duotone' => \null, 'gradients' => \null, 'link' => \null, 'heading' => \null, 'button' => \null, 'caption' => \null, 'palette' => \null, 'text' => \null), 'custom' => \null, 'dimensions' => array('aspectRatio' => \null, 'aspectRatios' => \null, 'defaultAspectRatios' => \null, 'minHeight' => \null), 'layout' => array('contentSize' => \null, 'wideSize' => \null, 'allowEditing' => \null, 'allowCustomContentAndWideSize' => \null), 'lightbox' => array('enabled' => \null, 'allowEditing' => \null), 'position' => array('fixed' => \null, 'sticky' => \null), 'spacing' => array('customSpacingSize' => \null, 'defaultSpacingSizes' => \null, 'spacingSizes' => \null, 'spacingScale' => \null, 'blockGap' => \null, 'margin' => \null, 'padding' => \null, 'units' => \null), 'shadow' => array('presets' => \null, 'defaultPresets' => \null), 'typography' => array('fluid' => \null, 'customFontSize' => \null, 'defaultFontSizes' => \null, 'dropCap' => \null, 'fontFamilies' => \null, 'fontSizes' => \null, 'fontStyle' => \null, 'fontWeight' => \null, 'letterSpacing' => \null, 'lineHeight' => \null, 'textAlign' => \null, 'textColumns' => \null, 'textDecoration' => \null, 'textTransform' => \null, 'writingMode' => \null));
+        const VALID_SETTINGS = array('appearanceTools' => \null, 'useRootPaddingAwareAlignments' => \null, 'background' => array('backgroundImage' => \null, 'backgroundSize' => \null), 'border' => array('color' => \null, 'radius' => \null, 'radiusSizes' => \null, 'style' => \null, 'width' => \null), 'color' => array('background' => \null, 'custom' => \null, 'customDuotone' => \null, 'customGradient' => \null, 'defaultDuotone' => \null, 'defaultGradients' => \null, 'defaultPalette' => \null, 'duotone' => \null, 'gradients' => \null, 'link' => \null, 'heading' => \null, 'button' => \null, 'caption' => \null, 'palette' => \null, 'text' => \null), 'custom' => \null, 'dimensions' => array('aspectRatio' => \null, 'aspectRatios' => \null, 'defaultAspectRatios' => \null, 'minHeight' => \null), 'layout' => array('contentSize' => \null, 'wideSize' => \null, 'allowEditing' => \null, 'allowCustomContentAndWideSize' => \null), 'lightbox' => array('enabled' => \null, 'allowEditing' => \null), 'position' => array('fixed' => \null, 'sticky' => \null), 'spacing' => array('customSpacingSize' => \null, 'defaultSpacingSizes' => \null, 'spacingSizes' => \null, 'spacingScale' => \null, 'blockGap' => \null, 'margin' => \null, 'padding' => \null, 'units' => \null), 'shadow' => array('presets' => \null, 'defaultPresets' => \null), 'typography' => array('fluid' => \null, 'customFontSize' => \null, 'defaultFontSizes' => \null, 'dropCap' => \null, 'fontFamilies' => \null, 'fontSizes' => \null, 'fontStyle' => \null, 'fontWeight' => \null, 'letterSpacing' => \null, 'lineHeight' => \null, 'textAlign' => \null, 'textColumns' => \null, 'textDecoration' => \null, 'textTransform' => \null, 'writingMode' => \null));
         /**
          * The valid properties for fontFamilies under settings key.
          *
@@ -51889,6 +55369,7 @@ namespace {
          * @since 6.1.0
          * @since 6.2.0 Added support for ':link' and ':any-link'.
          * @since 6.8.0 Added support for ':focus-visible'.
+         * @since 6.9.0 Added `textInput` and `select` elements.
          * @var array
          */
         const VALID_ELEMENT_PSEUDO_SELECTORS = array('link' => array(':link', ':any-link', ':visited', ':hover', ':focus', ':focus-visible', ':active'), 'button' => array(':link', ':any-link', ':visited', ':hover', ':focus', ':focus-visible', ':active'));
@@ -51914,6 +55395,8 @@ namespace {
             // The block classes are necessary to target older content that won't use the new class names.
             'caption' => '.wp-element-caption, .wp-block-audio figcaption, .wp-block-embed figcaption, .wp-block-gallery figcaption, .wp-block-image figcaption, .wp-block-table figcaption, .wp-block-video figcaption',
             'cite' => 'cite',
+            'textInput' => 'textarea, input:where([type=email],[type=number],[type=password],[type=search],[type=text],[type=tel],[type=url])',
+            'select' => 'select',
         );
         const __EXPERIMENTAL_ELEMENT_CLASS_NAMES = array('button' => 'wp-element-button', 'caption' => 'wp-element-caption');
         /**
@@ -53967,6 +57450,8 @@ namespace {
         /**
          * Converts an expiration to an array of session information.
          *
+         * @since 4.0.0
+         *
          * @param mixed $session Session or expiration.
          * @return array Session.
          */
@@ -54387,14 +57872,26 @@ namespace {
          * Generate cache key.
          *
          * @since 6.3.0
+         * @since 6.9.0 The `$args` parameter was deprecated and renamed to `$deprecated`.
          *
          * @global wpdb $wpdb WordPress database abstraction object.
          *
-         * @param array  $args Query arguments.
-         * @param string $sql  SQL statement.
+         * @param array  $deprecated Unused.
+         * @param string $sql        SQL statement.
          * @return string Cache key.
          */
-        protected function generate_cache_key(array $args, $sql)
+        protected function generate_cache_key(array $deprecated, $sql)
+        {
+        }
+        /**
+         * Retrieves the last changed cache timestamp for users and optionally posts.
+         *
+         * @since 6.9.0
+         *
+         * @param array $args Query arguments.
+         * @return string[] The last changed timestamp string for the relevant cache groups.
+         */
+        protected function get_cache_last_changed(array $args)
         {
         }
         /**
@@ -54669,7 +58166,7 @@ namespace {
          * @param int                         $site_id Optional Site ID, defaults to current site.
          * @phpstan-return void
          */
-        public function __construct($id = 0, $name = '', $site_id = '')
+        public function __construct($id = 0, $name = '', $site_id = 0)
         {
         }
         /**
@@ -54680,7 +58177,7 @@ namespace {
          * @param object $data    User DB row object.
          * @param int    $site_id Optional. The site ID to initialize for.
          */
-        public function init($data, $site_id = '')
+        public function init($data, $site_id = 0)
         {
         }
         /**
@@ -54995,7 +58492,7 @@ namespace {
          *
          * @param int $blog_id Optional. Site ID, defaults to current site.
          */
-        public function for_blog($blog_id = '')
+        public function for_blog($blog_id = 0)
         {
         }
         /**
@@ -55007,7 +58504,7 @@ namespace {
          *
          * @param int $site_id Site ID to initialize user capabilities for. Default is the current site.
          */
-        public function for_site($site_id = '')
+        public function for_site($site_id = 0)
         {
         }
         /**
@@ -55125,7 +58622,7 @@ namespace {
      *
      * @since 2.8.0
      * @since 4.4.0 Moved to its own file from wp-includes/widgets.php
-     * @phpstan-template T of array<string, mixed>
+     * @phpstan-template T of array = array<string, mixed>
      */
     #[\AllowDynamicProperties]
     class WP_Widget
@@ -55309,6 +58806,7 @@ namespace {
          *
          * @param string $field_name Field name.
          * @return string Name attribute for `$field_name`.
+         * @phpstan-return non-falsy-string
          */
         public function get_field_name($field_name)
         {
@@ -55324,6 +58822,7 @@ namespace {
          *
          * @param string $field_name Field name.
          * @return string ID attribute for `$field_name`.
+         * @phpstan-return non-falsy-string
          */
         public function get_field_id($field_name)
         {
@@ -55412,6 +58911,7 @@ namespace {
          * @phpstan-param int|array{
          *   number?: int,
          * } $widget_args
+         * @final
          * @phpstan-return void
          */
         public function display_callback($args, $widget_args = 1)
@@ -55425,6 +58925,8 @@ namespace {
          * @global array $wp_registered_widgets
          *
          * @param int $deprecated Not used.
+         * @final
+         * @phpstan-param 1 $deprecated
          * @phpstan-return void
          */
         public function update_callback($deprecated = 1)
@@ -55445,6 +58947,7 @@ namespace {
          * @phpstan-param int|array{
          *   number?: int,
          * } $widget_args
+         * @final
          */
         public function form_callback($widget_args = 1)
         {
@@ -58073,7 +61576,7 @@ namespace {
      * By default, WordPress uses this class to instantiate the global $wpdb object, providing
      * access to the WordPress database.
      *
-     * It is possible to replace this class with your own by setting the $wpdb global variable
+     * It is possible to replace the global instance with your own by setting the $wpdb global variable
      * in wp-content/db.php file to your class. The wpdb class will still be included, so you can
      * extend it or simply use your own.
      *
@@ -58248,7 +61751,6 @@ namespace {
          * WordPress table prefix.
          *
          * You can set this to have multiple WordPress installations in a single database.
-         * The second reason is for possible security precautions.
          *
          * @since 2.5.0
          *
@@ -58435,7 +61937,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $blogs;
         /**
@@ -58443,7 +61945,7 @@ namespace {
          *
          * @since 5.1.0
          *
-         * @var string
+         * @var string|null
          */
         public $blogmeta;
         /**
@@ -58451,7 +61953,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $registration_log;
         /**
@@ -58459,7 +61961,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $signups;
         /**
@@ -58467,7 +61969,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $site;
         /**
@@ -58475,7 +61977,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $sitecategories;
         /**
@@ -58483,7 +61985,7 @@ namespace {
          *
          * @since 3.0.0
          *
-         * @var string
+         * @var string|null
          */
         public $sitemeta;
         /**
@@ -58675,7 +62177,7 @@ namespace {
          *
          * @since 3.5.0
          *
-         * @param string $name  The private member to unset
+         * @param string $name The private member to unset.
          */
         public function __unset($name)
         {
@@ -58726,7 +62228,7 @@ namespace {
         /**
          * Changes the current SQL mode, and ensures its WordPress compatibility.
          *
-         * If no modes are passed, it will ensure the current MySQL server modes are compatible.
+         * If no modes are passed, it will ensure the current SQL server modes are compatible.
          *
          * @since 3.9.0
          *
@@ -58893,7 +62395,7 @@ namespace {
         {
         }
         /**
-         * Quotes an identifier for a MySQL database, e.g. table/field names.
+         * Quotes an identifier such as a table or field name.
          *
          * @since 6.2.0
          *
@@ -58938,6 +62440,13 @@ namespace {
          *     $wpdb->prepare(
          *         "SELECT DATE_FORMAT(`field`, '%%c') FROM `table` WHERE `column` = %s",
          *         'foo'
+         *     );
+         *
+         *     $wpdb->prepare(
+         *         "SELECT * FROM %i WHERE %i = %s",
+         *         $table,
+         *         $field,
+         *         $value
          *     );
          *
          * @since 2.3.0
@@ -59344,12 +62853,12 @@ namespace {
          * @see wpdb::$field_types
          * @see wp_set_wpdb_vars()
          *
-         * @param string       $table           Table name.
-         * @param array        $data            Data to update (in column => value pairs).
+         * @param string          $table        Table name.
+         * @param array           $data         Data to update (in column => value pairs).
          *                                      Both $data columns and $data values should be "raw" (neither should be SQL escaped).
          *                                      Sending a null value will cause the column to be set to NULL - the corresponding
          *                                      format is ignored in this case.
-         * @param array        $where           A named array of WHERE clauses (in column => value pairs).
+         * @param array           $where        A named array of WHERE clauses (in column => value pairs).
          *                                      Multiple clauses will be joined with ANDs.
          *                                      Both $where columns and $where values should be "raw".
          *                                      Sending a null value will create an IS NULL comparison - the corresponding
@@ -59442,13 +62951,17 @@ namespace {
          * @return array {
          *     Array of values and formats keyed by their field names.
          *
-         *     @type mixed  $value  The value to be formatted.
-         *     @type string $format The format to be mapped to the value.
+         *     @type array ...$0 {
+         *         Value and format for this field.
+         *
+         *         @type mixed  $value  The value to be formatted.
+         *         @type string $format The format to be mapped to the value.
+         *     }
          * }
-         * @phpstan-return array{
+         * @phpstan-return array<int|string, array{
          *   value: mixed,
          *   format: string,
-         * }
+         * }>
          */
         protected function process_field_formats($data, $format)
         {
@@ -59458,7 +62971,7 @@ namespace {
          *
          * @since 4.2.0
          *
-         * @param array $data {
+         * @param array  $data {
          *     Array of values and formats keyed by their field names,
          *     as it comes from the wpdb::process_field_formats() method.
          *
@@ -59500,7 +63013,7 @@ namespace {
          *
          * @since 4.2.1
          *
-         * @param array $data {
+         * @param array  $data {
          *     Array of values, formats, and charsets keyed by their field names,
          *     as it comes from the wpdb::process_field_charsets() method.
          *
@@ -59690,7 +63203,7 @@ namespace {
         {
         }
         /**
-         * Checks if the query is accessing a collation considered safe on the current version of MySQL.
+         * Checks if the query is accessing a collation considered safe.
          *
          * @since 4.2.0
          *
@@ -59821,11 +63334,11 @@ namespace {
         {
         }
         /**
-         * Determines whether MySQL database is at least the required minimum version.
+         * Determines whether the database server is at least the required minimum version.
          *
          * @since 2.5.0
          *
-         * @global string $required_mysql_version The required MySQL version string.
+         * @global string $required_mysql_version The minimum required MySQL version string.
          * @return void|WP_Error
          */
         public function check_database_version()
@@ -59861,7 +63374,7 @@ namespace {
          *
          * Capability sniffs for the database server and current version of WPDB.
          *
-         * Database sniffs are based on the version of MySQL the site is using.
+         * Database sniffs are based on the version of the database server in use.
          *
          * WPDB sniffs are added as new features are introduced to allow theme and plugin
          * developers to determine feature support. This is to account for drop-ins which may
@@ -59895,7 +63408,7 @@ namespace {
         {
         }
         /**
-         * Retrieves the database server version.
+         * Retrieves the database server version number.
          *
          * @since 2.7.0
          *
@@ -59905,11 +63418,11 @@ namespace {
         {
         }
         /**
-         * Returns the version of the MySQL server.
+         * Returns the raw version string of the database server.
          *
          * @since 5.5.0
          *
-         * @return string Server version as a string.
+         * @return string Database server version as a string.
          */
         public function db_server_info()
         {
@@ -61033,7 +64546,6 @@ namespace {
             'classes' => '',
             'xfn' => '',
             'status' => 'publish',
-            'original_title' => '',
             'nav_menu_term_id' => 0,
             // This will be supplied as the $menu_id arg for wp_update_nav_menu_item().
             '_invalid' => \false,
@@ -61158,12 +64670,22 @@ namespace {
         {
         }
         /**
+         * Prepares the value for editing on the client.
+         *
+         * @since 6.8.3
+         *
+         * @return array|false Value prepared for the client.
+         */
+        public function js_value()
+        {
+        }
+        /**
          * Get original title.
          *
          * @since 4.7.0
          *
          * @param object $item Nav menu item.
-         * @return string The original title.
+         * @return string The original title, without entity decoding.
          */
         protected function get_original_title($item)
         {
@@ -61254,7 +64776,7 @@ namespace {
          * @since 4.3.0
          * @since 5.9.0 Renamed `$menu_item_value` to `$value` for PHP 8 named parameter support.
          *
-         * @param array $value The menu item value to sanitize.
+         * @param array|false $value The menu item value to sanitize.
          * @return array|false|null|WP_Error Null or WP_Error if an input isn't valid. False if it is marked for deletion.
          *                                   Otherwise the sanitized value.
          */
@@ -63467,7 +66989,7 @@ namespace {
      * @see https://html.spec.whatwg.org/#the-doctype
      *
      * DOCTYPE declarations comprise four properties: a name, public identifier, system identifier,
-     * and an indication of which document compatability mode they would imply if an HTML parser
+     * and an indication of which document compatibility mode they would imply if an HTML parser
      * hadn't already determined it from other information.
      *
      * @see https://html.spec.whatwg.org/#the-initial-insertion-mode
@@ -63480,6 +67002,8 @@ namespace {
      * @see https://www.iso.org/standard/16387.html
      *
      * @since 6.7.0
+     *
+     * @access private
      *
      * @see WP_HTML_Processor
      */
@@ -63555,14 +67079,14 @@ namespace {
          */
         public $system_identifier = \null;
         /**
-         * Which document compatability mode this DOCTYPE declaration indicates.
+         * Which document compatibility mode this DOCTYPE declaration indicates.
          *
          * This value should be considered "read only" and not modified.
          *
-         * When an HTML parser has not already set the document compatability mode,
-         * (e.g. "quirks" or "no-quirks" mode), it will infer if from the properties
+         * When an HTML parser has not already set the document compatibility mode,
+         * (e.g. "quirks" or "no-quirks" mode), it will be inferred from the properties
          * of the appropriate DOCTYPE declaration, if one exists. The DOCTYPE can
-         * indicate one of three possible document compatability modes:
+         * indicate one of three possible document compatibility modes:
          *
          *  - "no-quirks" and "limited-quirks" modes (also called "standards" mode).
          *  - "quirks" mode (also called `CSS1Compat` mode).
@@ -63577,7 +67101,7 @@ namespace {
          *
          * @var string One of "no-quirks", "limited-quirks", or "quirks".
          */
-        public $indicated_compatability_mode;
+        public $indicated_compatibility_mode;
         /**
          * Creates a WP_HTML_Doctype_Info instance by parsing a raw DOCTYPE declaration token.
          *
@@ -63589,15 +67113,15 @@ namespace {
          *
          *     // Normative HTML DOCTYPE declaration.
          *     $doctype = WP_HTML_Doctype_Info::from_doctype_token( '<!DOCTYPE html>' );
-         *     'no-quirks' === $doctype->indicated_compatability_mode;
+         *     'no-quirks' === $doctype->indicated_compatibility_mode;
          *
          *     // A nonsensical DOCTYPE is still valid, and will indicate "quirks" mode.
          *     $doctype = WP_HTML_Doctype_Info::from_doctype_token( '<!doctypeJSON SILLY "nonsense\'>' );
-         *     'quirks' === $doctype->indicated_compatability_mode;
+         *     'quirks' === $doctype->indicated_compatibility_mode;
          *
          *     // Textual quirks present in raw HTML are handled appropriately.
          *     $doctype = WP_HTML_Doctype_Info::from_doctype_token( "<!DOCTYPE\nhtml\n>" );
-         *     'no-quirks' === $doctype->indicated_compatability_mode;
+         *     'no-quirks' === $doctype->indicated_compatibility_mode;
          *
          *     // Anything other than a proper DOCTYPE declaration token fails to parse.
          *     null === WP_HTML_Doctype_Info::from_doctype_token( ' <!DOCTYPE>' );
@@ -65180,7 +68704,6 @@ namespace {
          *     // Outputs: "free <egg> lang-en "
          *
          * @since 6.4.0
-         * @phpstan-return void
          */
         public function class_list()
         {
@@ -65657,10 +69180,22 @@ namespace {
          *         $processor->set_modifiable_text( str_replace( ':)', '🙂', $chunk ) );
          *     }
          *
+         * This function handles all necessary HTML encoding. Provide normal, unescaped string values.
+         * The HTML API will encode the strings appropriately so that the browser will interpret them
+         * as the intended value.
+         *
+         * Example:
+         *
+         *     // Renders as “Eggs & Milk” in a browser, encoded as `<p>Eggs &amp; Milk</p>`.
+         *     $processor->set_modifiable_text( 'Eggs & Milk' );
+         *
+         *     // Renders as “Eggs &amp; Milk” in a browser, encoded as `<p>Eggs &amp;amp; Milk</p>`.
+         *     $processor->set_modifiable_text( 'Eggs &amp; Milk' );
+         *
          * @since 6.7.0
+         * @since 6.9.0 Escapes all character references instead of trying to avoid double-escaping.
          *
          * @param string $plaintext_content New text content to represent in the matched token.
-         *
          * @return bool Whether the text was able to update.
          */
         public function set_modifiable_text(string $plaintext_content): bool
@@ -65669,14 +69204,31 @@ namespace {
         /**
          * Updates or creates a new attribute on the currently matched tag with the passed value.
          *
-         * For boolean attributes special handling is provided:
+         * This function handles all necessary HTML encoding. Provide normal, unescaped string values.
+         * The HTML API will encode the strings appropriately so that the browser will interpret them
+         * as the intended value.
+         *
+         * Example:
+         *
+         *     // Renders “Eggs & Milk” in a browser, encoded as `<abbr title="Eggs &amp; Milk">`.
+         *     $processor->set_attribute( 'title', 'Eggs & Milk' );
+         *
+         *     // Renders “Eggs &amp; Milk” in a browser, encoded as `<abbr title="Eggs &amp;amp; Milk">`.
+         *     $processor->set_attribute( 'title', 'Eggs &amp; Milk' );
+         *
+         *     // Renders `true` as `<abbr title>`.
+         *     $processor->set_attribute( 'title', true );
+         *
+         *     // Renders without the attribute for `false` as `<abbr>`.
+         *     $processor->set_attribute( 'title', false );
+         *
+         * Special handling is provided for boolean attribute values:
          *  - When `true` is passed as the value, then only the attribute name is added to the tag.
          *  - When `false` is passed, the attribute gets removed if it existed before.
          *
-         * For string attributes, the value is escaped using the `esc_attr` function.
-         *
          * @since 6.2.0
          * @since 6.2.1 Fix: Only create a single update for multiple calls with case-variant attribute names.
+         * @since 6.9.0 Escapes all character references instead of trying to avoid double-escaping.
          *
          * @param string      $name  The attribute name to target.
          * @param string|bool $value The new attribute value.
@@ -65946,7 +69498,7 @@ namespace {
          */
         const COMMENT_AS_INVALID_HTML = 'COMMENT_AS_INVALID_HTML';
         /**
-         * No-quirks mode document compatability mode.
+         * No-quirks mode document compatibility mode.
          *
          * > In no-quirks mode, the behavior is (hopefully) the desired behavior
          * > described by the modern HTML and CSS specifications.
@@ -65960,7 +69512,7 @@ namespace {
          */
         const NO_QUIRKS_MODE = 'no-quirks-mode';
         /**
-         * Quirks mode document compatability mode.
+         * Quirks mode document compatibility mode.
          *
          * > In quirks mode, layout emulates behavior in Navigator 4 and Internet
          * > Explorer 5. This is essential in order to support websites that were
@@ -66002,6 +69554,14 @@ namespace {
          * @since 6.7.0
          */
         const TEXT_IS_WHITESPACE = 'TEXT_IS_WHITESPACE';
+        /**
+         * Wakeup magic method.
+         *
+         * @since 6.9.2
+         */
+        public function __wakeup()
+        {
+        }
     }
     /**
      * Core class used to safely parse and modify an HTML document.
@@ -66533,10 +70093,11 @@ namespace {
          * @see static::serialize()
          *
          * @since 6.7.0
+         * @since 6.9.0 Converted from protected to public method.
          *
          * @return string Serialization of token, or empty string if no serialization exists.
          */
-        protected function serialize_token(): string
+        public function serialize_token(): string
         {
         }
         /**
@@ -66664,13 +70225,30 @@ namespace {
         /**
          * Updates or creates a new attribute on the currently matched tag with the passed value.
          *
-         * For boolean attributes special handling is provided:
+         * This function handles all necessary HTML encoding. Provide normal, unescaped string values.
+         * The HTML API will encode the strings appropriately so that the browser will interpret them
+         * as the intended value.
+         *
+         * Example:
+         *
+         *     // Renders “Eggs & Milk” in a browser, encoded as `<abbr title="Eggs &amp; Milk">`.
+         *     $processor->set_attribute( 'title', 'Eggs & Milk' );
+         *
+         *     // Renders “Eggs &amp; Milk” in a browser, encoded as `<abbr title="Eggs &amp;amp; Milk">`.
+         *     $processor->set_attribute( 'title', 'Eggs &amp; Milk' );
+         *
+         *     // Renders `true` as `<abbr title>`.
+         *     $processor->set_attribute( 'title', true );
+         *
+         *     // Renders without the attribute for `false` as `<abbr>`.
+         *     $processor->set_attribute( 'title', false );
+         *
+         * Special handling is provided for boolean attribute values:
          *  - When `true` is passed as the value, then only the attribute name is added to the tag.
          *  - When `false` is passed, the attribute gets removed if it existed before.
          *
-         * For string attributes, the value is escaped using the `esc_attr` function.
-         *
          * @since 6.6.0 Subclassed for the HTML Processor.
+         * @since 6.9.0 Escapes all character references instead of trying to avoid double-escaping.
          *
          * @param string      $name  The attribute name to target.
          * @param string|bool $value The new attribute value.
@@ -67478,6 +71056,8 @@ namespace {
          * It positions the cursor in the closer tag of the balanced template tag,
          * if it exists.
          *
+         * @since 6.5.0
+         *
          * @access private
          *
          * @param string $new_content The string to append after the closing template tag.
@@ -67618,6 +71198,7 @@ namespace {
          * interactivity stores and the configuration will be available using a `getConfig` utility.
          *
          * @since 6.7.0
+         * @since 6.9.0 Serializes derived state props accessed during directive processing.
          *
          * @param array $data Data to filter.
          * @return array Data for the Interactivity API script module.
@@ -67664,8 +71245,40 @@ namespace {
          * Adds the necessary hooks for the Interactivity API.
          *
          * @since 6.5.0
+         * @since 6.9.0 Adds support for client-side navigation in script modules.
          */
         public function add_hooks()
+        {
+        }
+        /**
+         * Adds the `data-wp-router-options` attribute to script modules that
+         * support client-side navigation.
+         *
+         * This method filters the script attributes to include loading instructions
+         * for the Interactivity API router, indicating which modules can be loaded
+         * during client-side navigation.
+         *
+         * @since 6.9.0
+         *
+         * @param array<string, string|true>|mixed $attributes The script tag attributes.
+         * @return array The modified script tag attributes.
+         */
+        public function add_load_on_client_navigation_attribute_to_script_modules($attributes)
+        {
+        }
+        /**
+         * Marks a script module as compatible with client-side navigation.
+         *
+         * This method registers a script module to be loaded during client-side
+         * navigation in the Interactivity API router. Script modules marked with
+         * this method will have the `loadOnClientNavigation` option enabled in the
+         * `data-wp-router-options` directive.
+         *
+         * @since 6.9.0
+         *
+         * @param string $script_module_id The script module identifier.
+         */
+        public function add_client_navigation_support_to_script_module(string $script_module_id)
         {
         }
         /**
@@ -69337,7 +72950,7 @@ namespace {
      * @since 4.4.0
      *
      * @link https://www.php.net/manual/en/class.arrayaccess.php
-     * @phpstan-template T of array
+     * @phpstan-template T of array = array<string, mixed>
      * @phpstan-implements ArrayAccess<key-of<T>, value-of<T>>
      */
     #[\AllowDynamicProperties]
@@ -69677,7 +73290,7 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @return array Parameter map of key to value
+         * @return array Parameter map of key to value.
          */
         public function get_query_params()
         {
@@ -69725,7 +73338,7 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @return array Parameter map of key to value
+         * @return array Parameter map of key to value.
          */
         public function get_file_params()
         {
@@ -69749,7 +73362,7 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @return array Parameter map of key to value
+         * @return array Parameter map of key to value.
          */
         public function get_default_params()
         {
@@ -69989,7 +73602,7 @@ namespace {
         /**
          * Adds a link to the response.
          *
-         * @internal The $rel parameter is first, as this looks nicer when sending multiple.
+         * {@internal The $rel parameter is first, as this looks nicer when sending multiple.}
          *
          * @since 4.4.0
          *
@@ -70009,9 +73622,9 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @param string $rel  Link relation. Either an IANA registered type, or an absolute URL.
-         * @param string $href Optional. Only remove links for the relation matching the given href.
-         *                     Default null.
+         * @param string      $rel  Link relation. Either an IANA registered type, or an absolute URL.
+         * @param string|null $href Optional. Only remove links for the relation matching the given href.
+         *                          Default null.
          * @phpstan-return void
          */
         public function remove_link($rel, $href = \null)
@@ -70045,7 +73658,7 @@ namespace {
         /**
          * Sets a single link header.
          *
-         * @internal The $rel parameter is first, as this looks nicer when sending multiple.
+         * {@internal The $rel parameter is first, as this looks nicer when sending multiple.}
          *
          * @since 4.4.0
          *
@@ -70222,8 +73835,8 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @return WP_Error|null|true WP_Error indicates unsuccessful login, null indicates successful
-         *                            or no authentication provided
+         * @return WP_Error|null|true WP_Error if authentication error occurred, null if authentication
+         *                            method wasn't used, true if authentication succeeded.
          */
         public function check_authentication()
         {
@@ -70254,10 +73867,10 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @param string $code    WP_Error-style code.
-         * @param string $message Human-readable message.
-         * @param int    $status  Optional. HTTP status code to send. Default null.
-         * @return string JSON representation of the error
+         * @param string   $code    WP_Error-style code.
+         * @param string   $message Human-readable message.
+         * @param int|null $status  Optional. HTTP status code to send. Default null.
+         * @return string JSON representation of the error.
          */
         protected function json_error($code, $message, $status = \null)
         {
@@ -70286,8 +73899,8 @@ namespace {
          *
          * @global WP_User $current_user The currently authenticated user.
          *
-         * @param string $path Optional. The request route. If not set, `$_SERVER['PATH_INFO']` will be used.
-         *                     Default null.
+         * @param string|null $path Optional. The request route. If not set, `$_SERVER['PATH_INFO']` will be used.
+         *                          Default null.
          * @return null|false Null if not served and a HEAD request, false otherwise.
          */
         public function serve_request($path = \null)
@@ -70330,12 +73943,11 @@ namespace {
         {
         }
         /**
-         * Gets the target links for a REST API Link.
+         * Gets the target hints for a REST API Link.
          *
          * @since 6.7.0
          *
-         * @param array $link
-         *
+         * @param array $link The link to get target hints for.
          * @return array|null
          */
         protected static function get_target_hints_for_link($link)
@@ -70363,6 +73975,7 @@ namespace {
          *
          * @param array         $data  Data from the request.
          * @param bool|string[] $embed Whether to embed all links or a filtered list of link relations.
+         *                             Default true.
          * @return array {
          *     Data with sub-requests embedded.
          *
@@ -70524,15 +74137,8 @@ namespace {
          *
          * @since 4.4.0
          *
-         * @param array $request {
-         *     Request.
-         *
-         *     @type string $context Context.
-         * }
+         * @param WP_REST_Request $request Request data.
          * @return WP_REST_Response The API root index data.
-         * @phpstan-param array{
-         *   context?: string,
-         * } $request
          */
         public function get_index($request)
         {
@@ -71040,11 +74646,11 @@ namespace {
         /**
          * Sanitizes the slug value.
          *
-         * @since 4.7.0
-         *
-         * @internal We can't use sanitize_title() directly, as the second
+         * {@internal We can't use sanitize_title() directly, as the second
          * parameter is the fallback title, which would end up being set to the
-         * request object.
+         * request object.}
+         *
+         * @since 4.7.0
          *
          * @see https://github.com/WP-API/WP-API/issues/1585
          *
@@ -71054,6 +74660,314 @@ namespace {
          * @return string Sanitized value for the slug.
          */
         public function sanitize_slug($slug)
+        {
+        }
+    }
+    /**
+     * Core controller used to access ability categories via the REST API.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_REST_Controller
+     */
+    class WP_REST_Abilities_V1_Categories_Controller extends \WP_REST_Controller
+    {
+        /**
+         * REST API namespace.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $namespace = 'wp-abilities/v1';
+        /**
+         * REST API base route.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $rest_base = 'categories';
+        /**
+         * Registers the routes for ability categories.
+         *
+         * @since 6.9.0
+         *
+         * @see register_rest_route()
+         */
+        public function register_routes(): void
+        {
+        }
+        /**
+         * Retrieves all ability categories.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return WP_REST_Response Response object on success.
+         */
+        public function get_items($request)
+        {
+        }
+        /**
+         * Retrieves a specific ability category.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+         */
+        public function get_item($request)
+        {
+        }
+        /**
+         * Checks if a given request has access to read ability categories.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return bool True if the request has read access.
+         */
+        public function get_items_permissions_check($request)
+        {
+        }
+        /**
+         * Checks if a given request has access to read an ability category.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return bool True if the request has read access.
+         */
+        public function get_item_permissions_check($request)
+        {
+        }
+        /**
+         * Prepares an ability category for response.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_Ability_Category $category The ability category object.
+         * @param WP_REST_Request     $request Request object.
+         * @return WP_REST_Response Response object.
+         */
+        public function prepare_item_for_response($category, $request)
+        {
+        }
+        /**
+         * Retrieves the ability category's schema, conforming to JSON Schema.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Item schema data.
+         */
+        public function get_item_schema(): array
+        {
+        }
+        /**
+         * Retrieves the query params for collections.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Collection parameters.
+         */
+        public function get_collection_params(): array
+        {
+        }
+    }
+    /**
+     * Core controller used to access abilities via the REST API.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_REST_Controller
+     */
+    class WP_REST_Abilities_V1_List_Controller extends \WP_REST_Controller
+    {
+        /**
+         * REST API namespace.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $namespace = 'wp-abilities/v1';
+        /**
+         * REST API base route.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $rest_base = 'abilities';
+        /**
+         * Registers the routes for abilities.
+         *
+         * @since 6.9.0
+         *
+         * @see register_rest_route()
+         */
+        public function register_routes(): void
+        {
+        }
+        /**
+         * Retrieves all abilities.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return WP_REST_Response Response object on success.
+         */
+        public function get_items($request)
+        {
+        }
+        /**
+         * Retrieves a specific ability.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+         */
+        public function get_item($request)
+        {
+        }
+        /**
+         * Checks if a given request has access to read ability items.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return bool True if the request has read access.
+         */
+        public function get_items_permissions_check($request)
+        {
+        }
+        /**
+         * Checks if a given request has access to read an ability item.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return bool True if the request has read access.
+         */
+        public function get_item_permissions_check($request)
+        {
+        }
+        /**
+         * Prepares an ability for response.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_Ability      $ability The ability object.
+         * @param WP_REST_Request $request Request object.
+         * @return WP_REST_Response Response object.
+         */
+        public function prepare_item_for_response($ability, $request)
+        {
+        }
+        /**
+         * Retrieves the ability's schema, conforming to JSON Schema.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Item schema data.
+         */
+        public function get_item_schema(): array
+        {
+        }
+        /**
+         * Retrieves the query params for collections.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Collection parameters.
+         */
+        public function get_collection_params(): array
+        {
+        }
+    }
+    /**
+     * Core controller used to execute abilities via the REST API.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_REST_Controller
+     */
+    class WP_REST_Abilities_V1_Run_Controller extends \WP_REST_Controller
+    {
+        /**
+         * REST API namespace.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $namespace = 'wp-abilities/v1';
+        /**
+         * REST API base route.
+         *
+         * @since 6.9.0
+         * @var string
+         */
+        protected $rest_base = 'abilities';
+        /**
+         * Registers the routes for ability execution.
+         *
+         * @since 6.9.0
+         *
+         * @see register_rest_route()
+         */
+        public function register_routes(): void
+        {
+        }
+        /**
+         * Executes an ability.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+         */
+        public function execute_ability($request)
+        {
+        }
+        /**
+         * Validates if the HTTP method matches the expected method for the ability based on its annotations.
+         *
+         * @since 6.9.0
+         *
+         * @param string                     $request_method The HTTP method of the request.
+         * @param array<string, (null|bool)> $annotations    The ability annotations.
+         * @return true|WP_Error True on success, or WP_Error object on failure.
+         */
+        public function validate_request_method(string $request_method, array $annotations)
+        {
+        }
+        /**
+         * Checks if a given request has permission to execute a specific ability.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_REST_Request $request Full details about the request.
+         * @return true|WP_Error True if the request has execution permission, WP_Error object otherwise.
+         */
+        public function check_ability_permissions($request)
+        {
+        }
+        /**
+         * Retrieves the arguments for ability execution endpoint.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Arguments for the run endpoint.
+         */
+        public function get_run_args(): array
+        {
+        }
+        /**
+         * Retrieves the schema for ability execution endpoint.
+         *
+         * @since 6.9.0
+         *
+         * @return array<string, mixed> Schema for the run endpoint.
+         */
+        public function get_run_schema(): array
         {
         }
     }
@@ -71846,6 +75760,7 @@ namespace {
          * prepares for WP_Query.
          *
          * @since 4.7.0
+         * @since 6.9.0 Extends the `media_type` and `mime_type` request arguments to support array values.
          *
          * @param array           $prepared_args Optional. Array of prepared arguments. Default empty array.
          * @param WP_REST_Request $request       Optional. Request to prepare items for.
@@ -71947,6 +75862,7 @@ namespace {
          * Applies edits to a media item and creates a new attachment record.
          *
          * @since 5.5.0
+         * @since 6.9.0 Adds flips capability and editable fields for the newly-created attachment post.
          *
          * @param WP_REST_Request $request Full details about the request.
          * @return WP_REST_Response|WP_Error Response object on success, WP_Error object on failure.
@@ -71976,6 +75892,17 @@ namespace {
          * @return WP_REST_Response Response object.
          */
         public function prepare_item_for_response($item, $request)
+        {
+        }
+        /**
+         * Prepares attachment links for the request.
+         *
+         * @since 6.9.0
+         *
+         * @param WP_Post $post Post object.
+         * @return array Links for the given attachment.
+         */
+        protected function prepare_links($post)
         {
         }
         /**
@@ -72038,6 +75965,7 @@ namespace {
          * Retrieves the query params for collections of attachments.
          *
          * @since 4.7.0
+         * @since 6.9.0 Extends the `media_type` and `mime_type` request arguments to support array values.
          *
          * @return array Query parameters for the attachment collection as an array.
          */
@@ -72087,6 +76015,7 @@ namespace {
          * Gets the request args for the edit item route.
          *
          * @since 5.5.0
+         * @since 6.9.0 Adds flips capability and editable fields for the newly-created attachment post.
          *
          * @return array
          */
@@ -73359,6 +77288,7 @@ namespace {
          *
          * @since 6.5.0
          *
+         * @param WP_REST_Request $request Full details about the request.
          * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
          */
         public function get_items($request)
@@ -73917,16 +77847,16 @@ namespace {
         {
         }
         /**
-         * Sanitize the global styles ID or stylesheet to decode endpoint.
+         * Sanitize the global styles stylesheet to decode endpoint.
          * For example, `wp/v2/global-styles/twentytwentytwo%200.4.0`
          * would be decoded to `twentytwentytwo 0.4.0`.
          *
          * @since 5.9.0
          *
-         * @param string $id_or_stylesheet Global styles ID or stylesheet.
-         * @return string Sanitized global styles ID or stylesheet.
+         * @param string $stylesheet Global styles stylesheet.
+         * @return string Sanitized global styles stylesheet.
          */
-        public function _sanitize_global_styles_callback($id_or_stylesheet)
+        public function _sanitize_global_styles_callback($stylesheet)
         {
         }
         /**
@@ -78357,7 +82287,7 @@ namespace {
          *     @type string $title Optional. Post format name.
          *     @type string $url   Optional. Post format permalink URL.
          *     @type string $type  Optional. String 'post-format'.
-         *}
+         * }
          * @phpstan-return array{
          *   id: string,
          *   title: string,
@@ -79678,7 +83608,7 @@ namespace {
          * @since 6.1.0
          * @var array
          */
-        const BLOCK_STYLE_DEFINITIONS_METADATA = array('background' => array('backgroundImage' => array('property_keys' => array('default' => 'background-image'), 'value_func' => array(self::class, 'get_url_or_value_css_declaration'), 'path' => array('background', 'backgroundImage')), 'backgroundPosition' => array('property_keys' => array('default' => 'background-position'), 'path' => array('background', 'backgroundPosition')), 'backgroundRepeat' => array('property_keys' => array('default' => 'background-repeat'), 'path' => array('background', 'backgroundRepeat')), 'backgroundSize' => array('property_keys' => array('default' => 'background-size'), 'path' => array('background', 'backgroundSize')), 'backgroundAttachment' => array('property_keys' => array('default' => 'background-attachment'), 'path' => array('background', 'backgroundAttachment'))), 'color' => array('text' => array('property_keys' => array('default' => 'color'), 'path' => array('color', 'text'), 'css_vars' => array('color' => '--wp--preset--color--$slug'), 'classnames' => array('has-text-color' => \true, 'has-$slug-color' => 'color')), 'background' => array('property_keys' => array('default' => 'background-color'), 'path' => array('color', 'background'), 'css_vars' => array('color' => '--wp--preset--color--$slug'), 'classnames' => array('has-background' => \true, 'has-$slug-background-color' => 'color')), 'gradient' => array('property_keys' => array('default' => 'background'), 'path' => array('color', 'gradient'), 'css_vars' => array('gradient' => '--wp--preset--gradient--$slug'), 'classnames' => array('has-background' => \true, 'has-$slug-gradient-background' => 'gradient'))), 'border' => array('color' => array('property_keys' => array('default' => 'border-color', 'individual' => 'border-%s-color'), 'path' => array('border', 'color'), 'classnames' => array('has-border-color' => \true, 'has-$slug-border-color' => 'color')), 'radius' => array('property_keys' => array('default' => 'border-radius', 'individual' => 'border-%s-radius'), 'path' => array('border', 'radius')), 'style' => array('property_keys' => array('default' => 'border-style', 'individual' => 'border-%s-style'), 'path' => array('border', 'style')), 'width' => array('property_keys' => array('default' => 'border-width', 'individual' => 'border-%s-width'), 'path' => array('border', 'width')), 'top' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'top'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'right' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'right'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'bottom' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'bottom'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'left' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'left'), 'css_vars' => array('color' => '--wp--preset--color--$slug'))), 'shadow' => array('shadow' => array('property_keys' => array('default' => 'box-shadow'), 'path' => array('shadow'), 'css_vars' => array('shadow' => '--wp--preset--shadow--$slug'))), 'dimensions' => array('aspectRatio' => array('property_keys' => array('default' => 'aspect-ratio'), 'path' => array('dimensions', 'aspectRatio'), 'classnames' => array('has-aspect-ratio' => \true)), 'minHeight' => array('property_keys' => array('default' => 'min-height'), 'path' => array('dimensions', 'minHeight'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug'))), 'spacing' => array('padding' => array('property_keys' => array('default' => 'padding', 'individual' => 'padding-%s'), 'path' => array('spacing', 'padding'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug')), 'margin' => array('property_keys' => array('default' => 'margin', 'individual' => 'margin-%s'), 'path' => array('spacing', 'margin'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug'))), 'typography' => array('fontSize' => array('property_keys' => array('default' => 'font-size'), 'path' => array('typography', 'fontSize'), 'css_vars' => array('font-size' => '--wp--preset--font-size--$slug'), 'classnames' => array('has-$slug-font-size' => 'font-size')), 'fontFamily' => array('property_keys' => array('default' => 'font-family'), 'css_vars' => array('font-family' => '--wp--preset--font-family--$slug'), 'path' => array('typography', 'fontFamily'), 'classnames' => array('has-$slug-font-family' => 'font-family')), 'fontStyle' => array('property_keys' => array('default' => 'font-style'), 'path' => array('typography', 'fontStyle')), 'fontWeight' => array('property_keys' => array('default' => 'font-weight'), 'path' => array('typography', 'fontWeight')), 'lineHeight' => array('property_keys' => array('default' => 'line-height'), 'path' => array('typography', 'lineHeight')), 'textColumns' => array('property_keys' => array('default' => 'column-count'), 'path' => array('typography', 'textColumns')), 'textDecoration' => array('property_keys' => array('default' => 'text-decoration'), 'path' => array('typography', 'textDecoration')), 'textTransform' => array('property_keys' => array('default' => 'text-transform'), 'path' => array('typography', 'textTransform')), 'letterSpacing' => array('property_keys' => array('default' => 'letter-spacing'), 'path' => array('typography', 'letterSpacing')), 'writingMode' => array('property_keys' => array('default' => 'writing-mode'), 'path' => array('typography', 'writingMode'))));
+        const BLOCK_STYLE_DEFINITIONS_METADATA = array('background' => array('backgroundImage' => array('property_keys' => array('default' => 'background-image'), 'value_func' => array(self::class, 'get_url_or_value_css_declaration'), 'path' => array('background', 'backgroundImage')), 'backgroundPosition' => array('property_keys' => array('default' => 'background-position'), 'path' => array('background', 'backgroundPosition')), 'backgroundRepeat' => array('property_keys' => array('default' => 'background-repeat'), 'path' => array('background', 'backgroundRepeat')), 'backgroundSize' => array('property_keys' => array('default' => 'background-size'), 'path' => array('background', 'backgroundSize')), 'backgroundAttachment' => array('property_keys' => array('default' => 'background-attachment'), 'path' => array('background', 'backgroundAttachment'))), 'color' => array('text' => array('property_keys' => array('default' => 'color'), 'path' => array('color', 'text'), 'css_vars' => array('color' => '--wp--preset--color--$slug'), 'classnames' => array('has-text-color' => \true, 'has-$slug-color' => 'color')), 'background' => array('property_keys' => array('default' => 'background-color'), 'path' => array('color', 'background'), 'css_vars' => array('color' => '--wp--preset--color--$slug'), 'classnames' => array('has-background' => \true, 'has-$slug-background-color' => 'color')), 'gradient' => array('property_keys' => array('default' => 'background'), 'path' => array('color', 'gradient'), 'css_vars' => array('gradient' => '--wp--preset--gradient--$slug'), 'classnames' => array('has-background' => \true, 'has-$slug-gradient-background' => 'gradient'))), 'border' => array('color' => array('property_keys' => array('default' => 'border-color', 'individual' => 'border-%s-color'), 'path' => array('border', 'color'), 'classnames' => array('has-border-color' => \true, 'has-$slug-border-color' => 'color')), 'radius' => array('property_keys' => array('default' => 'border-radius', 'individual' => 'border-%s-radius'), 'path' => array('border', 'radius'), 'css_vars' => array('border-radius' => '--wp--preset--border-radius--$slug')), 'style' => array('property_keys' => array('default' => 'border-style', 'individual' => 'border-%s-style'), 'path' => array('border', 'style')), 'width' => array('property_keys' => array('default' => 'border-width', 'individual' => 'border-%s-width'), 'path' => array('border', 'width')), 'top' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'top'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'right' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'right'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'bottom' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'bottom'), 'css_vars' => array('color' => '--wp--preset--color--$slug')), 'left' => array('value_func' => array(self::class, 'get_individual_property_css_declarations'), 'path' => array('border', 'left'), 'css_vars' => array('color' => '--wp--preset--color--$slug'))), 'shadow' => array('shadow' => array('property_keys' => array('default' => 'box-shadow'), 'path' => array('shadow'), 'css_vars' => array('shadow' => '--wp--preset--shadow--$slug'))), 'dimensions' => array('aspectRatio' => array('property_keys' => array('default' => 'aspect-ratio'), 'path' => array('dimensions', 'aspectRatio'), 'classnames' => array('has-aspect-ratio' => \true)), 'minHeight' => array('property_keys' => array('default' => 'min-height'), 'path' => array('dimensions', 'minHeight'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug'))), 'spacing' => array('padding' => array('property_keys' => array('default' => 'padding', 'individual' => 'padding-%s'), 'path' => array('spacing', 'padding'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug')), 'margin' => array('property_keys' => array('default' => 'margin', 'individual' => 'margin-%s'), 'path' => array('spacing', 'margin'), 'css_vars' => array('spacing' => '--wp--preset--spacing--$slug'))), 'typography' => array('fontSize' => array('property_keys' => array('default' => 'font-size'), 'path' => array('typography', 'fontSize'), 'css_vars' => array('font-size' => '--wp--preset--font-size--$slug'), 'classnames' => array('has-$slug-font-size' => 'font-size')), 'fontFamily' => array('property_keys' => array('default' => 'font-family'), 'css_vars' => array('font-family' => '--wp--preset--font-family--$slug'), 'path' => array('typography', 'fontFamily'), 'classnames' => array('has-$slug-font-family' => 'font-family')), 'fontStyle' => array('property_keys' => array('default' => 'font-style'), 'path' => array('typography', 'fontStyle')), 'fontWeight' => array('property_keys' => array('default' => 'font-weight'), 'path' => array('typography', 'fontWeight')), 'lineHeight' => array('property_keys' => array('default' => 'line-height'), 'path' => array('typography', 'lineHeight')), 'textColumns' => array('property_keys' => array('default' => 'column-count'), 'path' => array('typography', 'textColumns')), 'textDecoration' => array('property_keys' => array('default' => 'text-decoration'), 'path' => array('typography', 'textDecoration')), 'textTransform' => array('property_keys' => array('default' => 'text-transform'), 'path' => array('typography', 'textTransform')), 'letterSpacing' => array('property_keys' => array('default' => 'letter-spacing'), 'path' => array('typography', 'letterSpacing')), 'writingMode' => array('property_keys' => array('default' => 'writing-mode'), 'path' => array('typography', 'writingMode'))));
         /**
          * Stores a CSS rule using the provided CSS selector and CSS declarations.
          *
@@ -80637,7 +84567,6 @@ namespace {
          * Whether the widget has content to show.
          *
          * @since 4.9.0
-         * @access protected
          *
          * @param array $instance Widget instance props.
          * @return bool Whether widget has content.
@@ -81374,7 +85303,7 @@ namespace Avifinfo {
     /**
      * Reads an unsigned integer with most significant bits first.
      *
-     * @param binary string $input     Must be at least $num_bytes-long.
+     * @param string $input     Must be at least $num_bytes-long.
      * @param int           $num_bytes Number of parsed bytes.
      * @return int                     Value.
      */
@@ -81386,7 +85315,7 @@ namespace Avifinfo {
      *
      * @param stream               $handle    Bytes will be read from this resource.
      * @param int                  $num_bytes Number of bytes read. Must be greater than 0.
-     * @return binary string|false            The raw bytes or false on failure.
+     * @return string|false            The raw bytes or false on failure.
      */
     function read($handle, $num_bytes)
     {
@@ -82401,6 +86330,7 @@ namespace {
      * @since 2.0.0
      *
      * @return int|WP_Error Value 0 or WP_Error on failure. The link ID on success.
+     * @phpstan-return int<0, max>
      */
     function add_link()
     {
@@ -82412,6 +86342,7 @@ namespace {
      *
      * @param int $link_id Optional. ID of the link to edit. Default 0.
      * @return int|WP_Error Value 0 or WP_Error on failure. The link ID on success.
+     * @phpstan-return int<0, max>
      */
     function edit_link($link_id = 0)
     {
@@ -82422,6 +86353,8 @@ namespace {
      * @since 2.0.0
      *
      * @return stdClass Default link object.
+     * @phpstan-impure
+     * @phpstan-return object{link_url: string, link_name: string, link_visible: 'Y'}&\stdClass
      */
     function get_default_link_to_edit()
     {
@@ -82446,6 +86379,7 @@ namespace {
      *
      * @param int $link_id Link ID to look up.
      * @return int[] The IDs of the requested link's categories.
+     * @phpstan-return ($link_id is empty ? array{} : array<int, int<1, max>>)
      */
     function wp_get_link_cats($link_id = 0)
     {
@@ -82506,7 +86440,7 @@ namespace {
      *   link_rss?: string,
      *   link_category?: int,
      * } $linkdata
-     * @phpstan-return ($wp_error is false ? int<0, max> : int<1, max>|\WP_Error)
+     * @phpstan-return ($wp_error is false ? int<0, max> : int<0, max>|\WP_Error)
      */
     function wp_insert_link($linkdata, $wp_error = \false)
     {
@@ -82544,6 +86478,7 @@ namespace {
      *   link_rss?: string,
      *   link_category?: int,
      * } $linkdata See wp_insert_link()
+     * @phpstan-return int<0, max>
      */
     function wp_update_link($linkdata)
     {
@@ -82636,6 +86571,7 @@ namespace {
      * Gets the number of pending comments on a post or posts.
      *
      * @since 2.3.0
+     * @since 6.9.0 Exclude the 'note' comment type from the count.
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
@@ -82666,6 +86602,8 @@ namespace {
     }
     /**
      * Displays error message at bottom of comments.
+     *
+     * @since 2.5.0
      *
      * @param string $msg Error Message. Assumed to contain HTML and be sanitized.
      * @phpstan-return never
@@ -83120,7 +87058,7 @@ namespace {
     {
     }
     /**
-     * Calculated the new dimensions for a downsampled image.
+     * Calculates the new dimensions for a downsampled image.
      *
      * @since 2.0.0
      * @deprecated 3.5.0 Use wp_constrain_dimensions()
@@ -85321,6 +89259,7 @@ namespace {
      * @param WP_Post     $post
      * @param bool|string $check
      * @return array
+     * @phpstan-return array{label: string, input: 'html', html: string}
      */
     function image_size_input_fields($post, $check = '')
     {
@@ -85333,6 +89272,7 @@ namespace {
      * @param WP_Post $post
      * @param string  $url_type
      * @return string
+     * @phpstan-return non-falsy-string
      */
     function image_link_input_fields($post, $url_type = '')
     {
@@ -85344,6 +89284,7 @@ namespace {
      *
      * @param WP_Post $edit_post Attachment WP_Post object.
      * @return string HTML markup for the textarea element.
+     * @phpstan-return non-falsy-string
      */
     function wp_caption_input_textarea($edit_post)
     {
@@ -85437,6 +89378,7 @@ namespace {
      * @param int          $attachment_id Attachment ID for modification.
      * @param string|array $args          Optional. Override defaults.
      * @return string HTML form for attachment.
+     * @phpstan-return non-falsy-string
      */
     function get_media_item($attachment_id, $args = \null)
     {
@@ -85447,6 +89389,7 @@ namespace {
      * @param int   $attachment_id
      * @param array $args
      * @return array
+     * @phpstan-return array{item: string, meta: string}
      */
     function get_compat_media_markup($attachment_id, $args = \null)
     {
@@ -85535,6 +89478,7 @@ namespace {
      *
      * @param string $default_view
      * @return string HTML content of the form.
+     * @phpstan-return non-falsy-string
      */
     function wp_media_insert_url_form($default_view = 'image')
     {
@@ -85543,8 +89487,6 @@ namespace {
      * Displays the multi-file uploader message.
      *
      * @since 2.6.0
-     *
-     * @global int $post_ID
      */
     function media_upload_flash_bypass()
     {
@@ -85972,6 +89914,7 @@ namespace {
      *                                 if it matches the current link's relationship.
      *                                 Default empty string.
      * @param mixed  $deprecated       Deprecated. Not used.
+     * @phpstan-param '' $deprecated
      */
     function xfn_check($xfn_relationship, $xfn_value = '', $deprecated = '')
     {
@@ -86275,7 +90218,7 @@ namespace {
     {
     }
     /**
-     * Displays the default admin color scheme picker (Used in user-edit.php).
+     * Displays the default administration color scheme picker (Used in user-edit.php).
      *
      * @since 3.0.0
      *
@@ -86287,6 +90230,8 @@ namespace {
     {
     }
     /**
+     *
+     * @since 3.8.0
      *
      * @global array $_wp_admin_css_colors
      */
@@ -86787,6 +90732,8 @@ namespace {
     {
     }
     /**
+     * @since 3.0.0
+     *
      * @param array $users
      * @return bool
      */
@@ -86830,6 +90777,7 @@ namespace {
      * @since 4.9.0
      *
      * @return array Help tab arguments.
+     * @phpstan-return array{id: 'overview', title: string, content: non-falsy-string}
      */
     function get_site_screen_help_tab_args()
     {
@@ -86840,6 +90788,7 @@ namespace {
      * @since 4.9.0
      *
      * @return string Help sidebar content.
+     * @phpstan-return non-falsy-string
      */
     function get_site_screen_help_sidebar_content()
     {
@@ -87014,7 +90963,8 @@ namespace {
      * @since 3.0.0
      *
      * @param int $menu_id Optional. The ID of the menu to format. Default 0.
-     * @return string|WP_Error The menu formatted to edit or error object on failure.
+     * @return string|WP_Error|null The menu formatted to edit or error object on failure.
+     *                              Null if the `$menu_id` parameter is not supplied or the term does not exist.
      */
     function wp_get_nav_menu_to_edit($menu_id = 0)
     {
@@ -87025,6 +90975,7 @@ namespace {
      * @since 3.0.0
      *
      * @return string[] Array of column titles keyed by their column name.
+     * @phpstan-return array{_title: string, cb: '<input type="checkbox" />', link-target: string, title-attribute: string, css-classes: string, xfn: string, description: string}
      */
     function wp_nav_menu_manage_columns()
     {
@@ -87326,6 +91277,7 @@ namespace {
      * @since 4.6.0 The `$type_selector` parameter was deprecated.
      *
      * @param bool $deprecated Not used.
+     * @phpstan-param true $deprecated
      */
     function install_search_form($deprecated = \true)
     {
@@ -87770,6 +91722,8 @@ namespace {
      * @param string   $deprecated Not used.
      * @return bool|null|WP_Error True on success, false if `$plugins` is empty, `WP_Error` on failure.
      *                            `null` if filesystem credentials are required to proceed.
+     * @phpstan-param '' $deprecated
+     * @phpstan-return ($plugins is empty ? false : true|null|WP_Error)
      */
     function delete_plugins($plugins, $deprecated = '')
     {
@@ -87795,6 +91749,7 @@ namespace {
      *
      * @param string $plugin Path to the plugin file relative to the plugins directory.
      * @return int|WP_Error 0 on success, WP_Error on failure.
+     * @phpstan-return ($plugin is empty ? \WP_Error : 0|\WP_Error)
      */
     function validate_plugin($plugin)
     {
@@ -88295,6 +92250,7 @@ namespace {
      * @param string $parent_page The slug name for the parent menu (or the file name of a standard
      *                            WordPress admin page).
      * @return string Hook name for the plugin page.
+     * @phpstan-return non-falsy-string
      */
     function get_plugin_page_hookname($plugin_page, $parent_page)
     {
@@ -88738,6 +92694,7 @@ namespace {
      *
      * @param string $type The post_type you want the statuses for. Default 'post'.
      * @return string[] An array of all the statuses for the supplied post type.
+     * @phpstan-return list<string>
      */
     function get_available_post_statuses($type = 'post')
     {
@@ -88948,7 +92905,7 @@ namespace {
      * @param int $post_id Optional. Post ID.
      * @phpstan-return never
      */
-    function redirect_post($post_id = '')
+    function redirect_post($post_id = 0)
     {
     }
     /**
@@ -89523,7 +93480,7 @@ namespace {
      * @param int      $post_id    Optional. The post ID. Default empty.
      * @return int[] Array of IDs of categories assigned to the given post.
      */
-    function wp_create_categories($categories, $post_id = '')
+    function wp_create_categories($categories, $post_id = 0)
     {
     }
     /**
@@ -89570,6 +93527,7 @@ namespace {
      *
      * @param array $catarr The 'cat_ID' value is required. All other keys are optional.
      * @return int|false The ID number of the new or updated Category on success. Zero or FALSE on failure.
+     * @phpstan-return int<0, max>|false
      */
     function wp_update_category($catarr)
     {
@@ -89954,6 +93912,7 @@ namespace {
      *                                      Often this is the object that's the focus of the current screen,
      *                                      for example a `WP_Post` or `WP_Comment` object.
      * @return int Number of meta_boxes.
+     * @phpstan-return int<0, max>
      */
     function do_meta_boxes($screen, $context, $data_object)
     {
@@ -90087,9 +94046,10 @@ namespace {
      * to output all the sections and fields that were added to that $page with
      * add_settings_section() and add_settings_field()
      *
+     * @since 2.7.0
+     *
      * @global array $wp_settings_sections Storage array of all settings sections added to admin pages.
      * @global array $wp_settings_fields Storage array of settings fields and info about their pages/sections.
-     * @since 2.7.0
      *
      * @param string $page The slug name of the page whose settings sections you want to output.
      * @phpstan-return void
@@ -90104,9 +94064,9 @@ namespace {
      * a specific section. Should normally be called by do_settings_sections()
      * rather than directly.
      *
-     * @global array $wp_settings_fields Storage array of settings fields and their pages/sections.
-     *
      * @since 2.7.0
+     *
+     * @global array $wp_settings_fields Storage array of settings fields and their pages/sections.
      *
      * @param string $page Slug title of the admin page whose settings fields you want to show.
      * @param string $section Slug title of the settings section whose fields you want to show.
@@ -90278,6 +94238,7 @@ namespace {
      *
      * @param string $title      Optional. Title of the Iframe page. Default empty.
      * @param bool   $deprecated Not used.
+     * @phpstan-param false $deprecated
      */
     function iframe_header($title = '', $deprecated = \false)
     {
@@ -90400,12 +94361,15 @@ namespace {
      *                                       e.g. `id="search-submit"`, though the array format is generally preferred.
      *                                       Default empty string.
      * @return string Submit button HTML.
+     * @phpstan-return non-falsy-string
      */
     function get_submit_button($text = '', $type = 'primary large', $name = 'submit', $wrap = \true, $other_attributes = '')
     {
     }
     /**
      * Prints out the beginning of the admin HTML header.
+     *
+     * @since 3.3.0
      *
      * @global bool $is_IE
      */
@@ -91027,6 +94991,7 @@ namespace {
      * @global string[]           $_old_requests_files
      * @global string[]           $_new_bundled_files
      * @global wpdb               $wpdb                   WordPress database abstraction object.
+     * @global string             $wp_version             The WordPress version string.
      *
      * @param string $from New release unzipped path.
      * @param string $to   Path to old WordPress installation.
@@ -91427,6 +95392,7 @@ namespace {
      *   password: string,
      *   password_message: string,
      * }
+     * @phpstan-param '' $deprecated
      */
     function wp_install(
         $blog_title,
@@ -92565,6 +96531,7 @@ namespace {
     /**
      * @param string $classes
      * @return string
+     * @phpstan-return non-falsy-string
      */
     function wp_widgets_access_body_class($classes)
     {
@@ -92669,9 +96636,9 @@ namespace {
     {
     }
     /**
-     * @global int $_wp_nav_menu_max_depth
-     *
      * @since 3.0.0
+     *
+     * @global int $_wp_nav_menu_max_depth
      *
      * @param string $classes
      * @return string
@@ -92824,6 +96791,465 @@ namespace {
      * @return string|int|false Value of the `doing_cron` transient, 0|false otherwise.
      */
     function _get_cron_lock()
+    {
+    }
+    /**
+     * Registers a new ability using the Abilities API. It requires three steps:
+     *
+     *  1. Hook into the `wp_abilities_api_init` action.
+     *  2. Call `wp_register_ability()` with a namespaced name and configuration.
+     *  3. Provide execute and permission callbacks.
+     *
+     * Example:
+     *
+     *     function my_plugin_register_abilities(): void {
+     *         wp_register_ability(
+     *             'my-plugin/analyze-text',
+     *             array(
+     *                 'label'               => __( 'Analyze Text', 'my-plugin' ),
+     *                 'description'         => __( 'Performs sentiment analysis on provided text.', 'my-plugin' ),
+     *                 'category'            => 'text-processing',
+     *                 'input_schema'        => array(
+     *                     'type'        => 'string',
+     *                     'description' => __( 'The text to be analyzed.', 'my-plugin' ),
+     *                     'minLength'   => 10,
+     *                     'required'    => true,
+     *                 ),
+     *                 'output_schema'       => array(
+     *                     'type'        => 'string',
+     *                     'enum'        => array( 'positive', 'negative', 'neutral' ),
+     *                     'description' => __( 'The sentiment result: positive, negative, or neutral.', 'my-plugin' ),
+     *                     'required'    => true,
+     *                 ),
+     *                 'execute_callback'    => 'my_plugin_analyze_text',
+     *                 'permission_callback' => 'my_plugin_can_analyze_text',
+     *                 'meta'                => array(
+     *                     'annotations'   => array(
+     *                         'readonly' => true,
+     *                     ),
+     *                     'show_in_rest' => true,
+     *                 ),
+     *             )
+     *         );
+     *     }
+     *     add_action( 'wp_abilities_api_init', 'my_plugin_register_abilities' );
+     *
+     * ### Naming Conventions
+     *
+     * Ability names must follow these rules:
+     *
+     *  - Include a namespace prefix (e.g., `my-plugin/my-ability`).
+     *  - Use only lowercase alphanumeric characters, dashes, and forward slashes.
+     *  - Use descriptive, action-oriented names (e.g., `process-payment`, `generate-report`).
+     *
+     * ### Categories
+     *
+     * Abilities must be organized into categories. Ability categories provide better
+     * discoverability and must be registered before the abilities that reference them:
+     *
+     *     function my_plugin_register_categories(): void {
+     *         wp_register_ability_category(
+     *             'text-processing',
+     *             array(
+     *                 'label'       => __( 'Text Processing', 'my-plugin' ),
+     *                 'description' => __( 'Abilities for analyzing and transforming text.', 'my-plugin' ),
+     *             )
+     *         );
+     *     }
+     *     add_action( 'wp_abilities_api_categories_init', 'my_plugin_register_categories' );
+     *
+     * ### Input and Output Schemas
+     *
+     * Schemas define the expected structure, type, and constraints for ability inputs
+     * and outputs using JSON Schema syntax. They serve two critical purposes: automatic
+     * validation of data passed to and returned from abilities, and self-documenting
+     * API contracts for developers.
+     *
+     * WordPress implements a validator based on a subset of the JSON Schema Version 4
+     * specification (https://json-schema.org/specification-links.html#draft-4).
+     * For details on supported JSON Schema properties and syntax, see the
+     * related WordPress REST API Schema documentation:
+     * https://developer.wordpress.org/rest-api/extending-the-rest-api/schema/#json-schema-basics
+     *
+     * Defining schemas is mandatory when there is a value to pass or return.
+     * They ensure data integrity, improve developer experience, and enable
+     * better documentation:
+     *
+     *     'input_schema' => array(
+     *         'type'        => 'string',
+     *         'description' => __( 'The text to be analyzed.', 'my-plugin' ),
+     *         'minLength'   => 10,
+     *         'required'    => true,
+     *     ),
+     *     'output_schema'       => array(
+     *         'type'        => 'string',
+     *         'enum'        => array( 'positive', 'negative', 'neutral' ),
+     *         'description' => __( 'The sentiment result: positive, negative, or neutral.', 'my-plugin' ),
+     *         'required'    => true,
+     *     ),
+     *
+     * ### Callbacks
+     *
+     * #### Execute Callback
+     *
+     * The execute callback performs the ability's core functionality. It receives
+     * optional input data and returns either a result or `WP_Error` on failure.
+     *
+     *     function my_plugin_analyze_text( string $input ): string|WP_Error {
+     *         $score = My_Plugin::perform_sentiment_analysis( $input );
+     *         if ( is_wp_error( $score ) ) {
+     *             return $score;
+     *         }
+     *         return My_Plugin::interpret_sentiment_score( $score );
+     *     }
+     *
+     * #### Permission Callback
+     *
+     * The permission callback determines whether the ability can be executed.
+     * It receives the same input as the execute callback and must return a
+     * boolean or `WP_Error`. Common use cases include checking user capabilities,
+     * validating API keys, or verifying system state:
+     *
+     *     function my_plugin_can_analyze_text( string $input ): bool|WP_Error {
+     *         return current_user_can( 'edit_posts' );
+     *     }
+     *
+     * ### REST API Integration
+     *
+     * Abilities can be exposed through the REST API by setting `show_in_rest`
+     * to `true` in the meta configuration:
+     *
+     *     'meta' => array(
+     *         'show_in_rest' => true,
+     *     ),
+     *
+     * This allows abilities to be invoked via HTTP requests to the WordPress REST API.
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry::register()
+     * @see wp_register_ability_category()
+     * @see wp_unregister_ability()
+     *
+     * @param string               $name The name of the ability. Must be a namespaced string containing
+     *                                   a prefix, e.g., `my-plugin/my-ability`. Can only contain lowercase
+     *                                   alphanumeric characters, dashes, and forward slashes.
+     * @param array<string, mixed> $args {
+     *     An associative array of arguments for configuring the ability.
+     *
+     *     @type string               $label               Required. The human-readable label for the ability.
+     *     @type string               $description         Required. A detailed description of what the ability does
+     *                                                     and when it should be used.
+     *     @type string               $category            Required. The ability category slug this ability belongs to.
+     *                                                     The ability category must be registered via `wp_register_ability_category()`
+     *                                                     before registering the ability.
+     *     @type callable             $execute_callback    Required. A callback function to execute when the ability is invoked.
+     *                                                     Receives optional mixed input data and must return either a result
+     *                                                     value (any type) or a `WP_Error` object on failure.
+     *     @type callable             $permission_callback Required. A callback function to check permissions before execution.
+     *                                                     Receives optional mixed input data (same as `execute_callback`) and
+     *                                                     must return `true`/`false` for simple checks, or `WP_Error` for
+     *                                                     detailed error responses.
+     *     @type array<string, mixed> $input_schema        Optional. JSON Schema definition for validating the ability's input.
+     *                                                     Must be a valid JSON Schema object defining the structure and
+     *                                                     constraints for input data. Used for automatic validation and
+     *                                                     API documentation.
+     *     @type array<string, mixed> $output_schema       Optional. JSON Schema definition for the ability's output.
+     *                                                     Describes the structure of successful return values from
+     *                                                     `execute_callback`. Used for documentation and validation.
+     *     @type array<string, mixed> $meta                {
+     *         Optional. Additional metadata for the ability.
+     *
+     *         @type array<string, bool|null> $annotations  {
+     *             Optional. Semantic annotations describing the ability's behavioral characteristics.
+     *             These annotations are hints for tooling and documentation.
+     *
+     *             @type bool|null $readonly    Optional. If true, the ability does not modify its environment.
+     *             @type bool|null $destructive Optional. If true, the ability may perform destructive updates to its environment.
+     *                                          If false, the ability performs only additive updates.
+     *             @type bool|null $idempotent  Optional. If true, calling the ability repeatedly with the same arguments
+     *                                          will have no additional effect on its environment.
+     *         }
+     *         @type bool                     $show_in_rest Optional. Whether to expose this ability in the REST API.
+     *                                                      When true, the ability can be invoked via HTTP requests.
+     *                                                      Default false.
+     *     }
+     *     @type string               $ability_class       Optional. Fully-qualified custom class name to instantiate
+     *                                                     instead of the default `WP_Ability` class. The custom class
+     *                                                     must extend `WP_Ability`. Useful for advanced customization
+     *                                                     of ability behavior.
+     * }
+     * @return WP_Ability|null The registered ability instance on success, `null` on failure.
+     * @phpstan-param lowercase-string&non-falsy-string $name
+     */
+    function wp_register_ability(string $name, array $args): ?\WP_Ability
+    {
+    }
+    /**
+     * Unregisters an ability from the Abilities API.
+     *
+     * Removes a previously registered ability from the global registry. Use this to
+     * disable abilities provided by other plugins or when an ability is no longer needed.
+     *
+     * Can be called at any time after the ability has been registered.
+     *
+     * Example:
+     *
+     *     if ( wp_has_ability( 'other-plugin/some-ability' ) ) {
+     *         wp_unregister_ability( 'other-plugin/some-ability' );
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry::unregister()
+     * @see wp_register_ability()
+     *
+     * @param string $name The name of the ability to unregister, including namespace prefix
+     *                     (e.g., 'my-plugin/my-ability').
+     * @return WP_Ability|null The unregistered ability instance on success, `null` on failure.
+     */
+    function wp_unregister_ability(string $name): ?\WP_Ability
+    {
+    }
+    /**
+     * Checks if an ability is registered.
+     *
+     * Use this for conditional logic and feature detection before attempting to
+     * retrieve or use an ability.
+     *
+     * Example:
+     *
+     *     // Displays different UI based on available abilities.
+     *     if ( wp_has_ability( 'premium-plugin/advanced-export' ) ) {
+     *         echo 'Export with Premium Features';
+     *     } else {
+     *         echo 'Basic Export';
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry::is_registered()
+     * @see wp_get_ability()
+     *
+     * @param string $name The name of the ability to check, including namespace prefix
+     *                     (e.g., 'my-plugin/my-ability').
+     * @return bool `true` if the ability is registered, `false` otherwise.
+     */
+    function wp_has_ability(string $name): bool
+    {
+    }
+    /**
+     * Retrieves a registered ability.
+     *
+     * Returns the ability instance for inspection or use. The instance provides access
+     * to the ability's configuration, metadata, and execution methods.
+     *
+     * Example:
+     *
+     *     // Prints information about a registered ability.
+     *     $ability = wp_get_ability( 'my-plugin/export-data' );
+     *     if ( $ability ) {
+     *         echo $ability->get_label() . ': ' . $ability->get_description();
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry::get_registered()
+     * @see wp_has_ability()
+     *
+     * @param string $name The name of the ability, including namespace prefix
+     *                     (e.g., 'my-plugin/my-ability').
+     * @return WP_Ability|null The registered ability instance, or `null` if not registered.
+     */
+    function wp_get_ability(string $name): ?\WP_Ability
+    {
+    }
+    /**
+     * Retrieves all registered abilities.
+     *
+     * Returns an array of all ability instances currently registered in the system.
+     * Use this for discovery, debugging, or building administrative interfaces.
+     *
+     * Example:
+     *
+     *     // Prints information about all available abilities.
+     *     $abilities = wp_get_abilities();
+     *     foreach ( $abilities as $ability ) {
+     *         echo $ability->get_label() . ': ' . $ability->get_description() . "\n";
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Abilities_Registry::get_all_registered()
+     *
+     * @return WP_Ability[] An array of registered WP_Ability instances. Returns an empty
+     *                     array if no abilities are registered or if the registry is unavailable.
+     */
+    function wp_get_abilities(): array
+    {
+    }
+    /**
+     * Registers a new ability category.
+     *
+     * Ability categories provide a way to organize and group related abilities for better
+     * discoverability and management. Ability categories must be registered before abilities
+     * that reference them.
+     *
+     * Ability categories must be registered on the `wp_abilities_api_categories_init` action hook.
+     *
+     * Example:
+     *
+     *     function my_plugin_register_categories() {
+     *         wp_register_ability_category(
+     *             'content-management',
+     *             array(
+     *                 'label'       => __( 'Content Management', 'my-plugin' ),
+     *                 'description' => __( 'Abilities for managing and organizing content.', 'my-plugin' ),
+     *             )
+     *         );
+     *     }
+     *     add_action( 'wp_abilities_api_categories_init', 'my_plugin_register_categories' );
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry::register()
+     * @see wp_register_ability()
+     * @see wp_unregister_ability_category()
+     *
+     * @param string               $slug The unique slug for the ability category. Must contain only lowercase
+     *                                   alphanumeric characters and dashes (e.g., 'data-export').
+     * @param array<string, mixed> $args {
+     *     An associative array of arguments for the ability category.
+     *
+     *     @type string               $label       Required. The human-readable label for the ability category.
+     *     @type string               $description Required. A description of what abilities in this category do.
+     *     @type array<string, mixed> $meta        Optional. Additional metadata for the ability category.
+     * }
+     * @return WP_Ability_Category|null The registered ability category instance on success, `null` on failure.
+     */
+    function wp_register_ability_category(string $slug, array $args): ?\WP_Ability_Category
+    {
+    }
+    /**
+     * Unregisters an ability category.
+     *
+     * Removes a previously registered ability category from the global registry. Use this to
+     * disable ability categories that are no longer needed.
+     *
+     * Can be called at any time after the ability category has been registered.
+     *
+     * Example:
+     *
+     *     if ( wp_has_ability_category( 'deprecated-category' ) ) {
+     *         wp_unregister_ability_category( 'deprecated-category' );
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry::unregister()
+     * @see wp_register_ability_category()
+     *
+     * @param string $slug The slug of the ability category to unregister.
+     * @return WP_Ability_Category|null The unregistered ability category instance on success, `null` on failure.
+     */
+    function wp_unregister_ability_category(string $slug): ?\WP_Ability_Category
+    {
+    }
+    /**
+     * Checks if an ability category is registered.
+     *
+     * Use this for conditional logic and feature detection before attempting to
+     * retrieve or use an ability category.
+     *
+     * Example:
+     *
+     *     // Displays different UI based on available ability categories.
+     *     if ( wp_has_ability_category( 'premium-features' ) ) {
+     *         echo 'Premium Features Available';
+     *     } else {
+     *         echo 'Standard Features';
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry::is_registered()
+     * @see wp_get_ability_category()
+     *
+     * @param string $slug The slug of the ability category to check.
+     * @return bool `true` if the ability category is registered, `false` otherwise.
+     */
+    function wp_has_ability_category(string $slug): bool
+    {
+    }
+    /**
+     * Retrieves a registered ability category.
+     *
+     * Returns the ability category instance for inspection or use. The instance provides access
+     * to the ability category's configuration and metadata.
+     *
+     * Example:
+     *
+     *     // Prints information about a registered ability category.
+     *     $ability_category = wp_get_ability_category( 'content-management' );
+     *     if ( $ability_category ) {
+     *         echo $ability_category->get_label() . ': ' . $ability_category->get_description();
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry::get_registered()
+     * @see wp_has_ability_category()
+     * @see wp_get_ability_categories()
+     *
+     * @param string $slug The slug of the ability category.
+     * @return WP_Ability_Category|null The ability category instance, or `null` if not registered.
+     */
+    function wp_get_ability_category(string $slug): ?\WP_Ability_Category
+    {
+    }
+    /**
+     * Retrieves all registered ability categories.
+     *
+     * Returns an array of all ability category instances currently registered in the system.
+     * Use this for discovery, debugging, or building administrative interfaces.
+     *
+     * Example:
+     *
+     *     // Prints information about all available ability categories.
+     *     $ability_categories = wp_get_ability_categories();
+     *     foreach ( $ability_categories as $ability_category ) {
+     *         echo $ability_category->get_label() . ': ' . $ability_category->get_description() . "\n";
+     *     }
+     *
+     * @since 6.9.0
+     *
+     * @see WP_Ability_Categories_Registry::get_all_registered()
+     * @see wp_get_ability_category()
+     *
+     * @return WP_Ability_Category[] An array of registered ability category instances. Returns an empty array
+     *                               if no ability categories are registered or if the registry is unavailable.
+     */
+    function wp_get_ability_categories(): array
+    {
+    }
+    /**
+     * Registers the core ability categories.
+     *
+     * @since 6.9.0
+     *
+     * @return void
+     */
+    function wp_register_core_ability_categories(): void
+    {
+    }
+    /**
+     * Registers the default core abilities.
+     *
+     * @since 6.9.0
+     *
+     * @return void
+     */
+    function wp_register_core_abilities(): void
     {
     }
     /**
@@ -93136,6 +97562,7 @@ namespace {
      *
      * @param string $deprecated Deprecated.
      * @return string The author's display name, empty string if unknown.
+     * @phpstan-param '' $deprecated
      */
     function get_the_author($deprecated = '')
     {
@@ -93159,6 +97586,8 @@ namespace {
      * @param string $deprecated      Deprecated.
      * @param bool   $deprecated_echo Deprecated. Use get_the_author(). Echo the string or return it.
      * @return string The author's display name, from get_the_author().
+     * @phpstan-param '' $deprecated
+     * @phpstan-param true $deprecated_echo
      */
     function the_author($deprecated = '', $deprecated_echo = \true)
     {
@@ -93167,10 +97596,12 @@ namespace {
      * Retrieves the author who last edited the current post.
      *
      * @since 2.8.0
+     * @since 6.9.0 Added the `$post` parameter. Unknown return value is now explicitly null instead of void.
      *
-     * @return string|void The author's display name, empty string if unknown.
+     * @param int|WP_Post|null $post Optional. Post ID or post object. Default is global `$post` object.
+     * @return string|null The author's display name. Empty string if user is unavailable. Null if there was no last editor or the post is invalid.
      */
-    function get_the_modified_author()
+    function get_the_modified_author($post = \null)
     {
     }
     /**
@@ -93190,13 +97621,11 @@ namespace {
      * Valid values for the `$field` parameter include:
      *
      * - admin_color
-     * - aim
      * - comment_shortcuts
      * - description
      * - display_name
      * - first_name
      * - ID
-     * - jabber
      * - last_name
      * - nickname
      * - plugins_last_view
@@ -93215,9 +97644,9 @@ namespace {
      * - user_registered
      * - user_status
      * - user_url
-     * - yim
      *
      * @since 2.8.0
+     * @since 6.9.0 Removed `aim`, `jabber`, and `yim` as valid values for the `$field` parameter.
      *
      * @global WP_User $authordata The current author's data.
      *
@@ -93311,6 +97740,7 @@ namespace {
      * @since 4.4.0 Converted into a wrapper for get_the_author_posts_link()
      *
      * @param string $deprecated Unused.
+     * @phpstan-param '' $deprecated
      */
     function the_author_posts_link($deprecated = '')
     {
@@ -93535,6 +97965,17 @@ namespace {
     {
     }
     /**
+     * Retrieves the list of block attributes supported by block bindings.
+     *
+     * @since 6.9.0
+     *
+     * @param string $block_type The block type whose supported attributes are being retrieved.
+     * @return array The list of block attributes that are supported by block bindings.
+     */
+    function get_block_bindings_supported_attributes($block_type)
+    {
+    }
+    /**
      * Gets value for the Pattern Overrides source.
      *
      * @since 6.5.0
@@ -93559,6 +98000,29 @@ namespace {
     {
     }
     /**
+     * Gets value for Post Data source.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param array    $source_args    Array containing arguments used to look up the source value.
+     *                                 Example: array( "field" => "foo" ).
+     * @param WP_Block $block_instance The block instance.
+     * @return mixed The value computed for the source.
+     */
+    function _block_bindings_post_data_get_value(array $source_args, $block_instance)
+    {
+    }
+    /**
+     * Registers Post Data source in the block bindings registry.
+     *
+     * @since 6.9.0
+     * @access private
+     */
+    function _register_block_bindings_post_data_source()
+    {
+    }
+    /**
      * Gets value for Post Meta source.
      *
      * @since 6.5.0
@@ -93579,6 +98043,30 @@ namespace {
      * @access private
      */
     function _register_block_bindings_post_meta_source()
+    {
+    }
+    /**
+     * Gets value for Term Data source.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param array    $source_args    Array containing source arguments used to look up the override value.
+     *                                 Example: array( "field" => "name" ).
+     * @param WP_Block $block_instance The block instance.
+     * @return mixed The value computed for the source.
+     */
+    function _block_bindings_term_data_get_value(array $source_args, $block_instance)
+    {
+    }
+    /**
+     * Registers Term Data source in the block bindings registry.
+     *
+     * @since 6.9.0
+     * @access private
+     * @phpstan-return void
+     */
+    function _register_block_bindings_term_data_source()
     {
     }
     /**
@@ -93785,6 +98273,7 @@ namespace {
      * @since 6.3.0 Add 'pattern-directory/core' to the pattern's 'source'.
      *
      * @param WP_Screen $deprecated Unused. Formerly the screen that the current request was triggered from.
+     * @phpstan-param null $deprecated
      * @phpstan-return void
      */
     function _load_remote_block_patterns($deprecated = \null)
@@ -93996,6 +98485,19 @@ namespace {
     {
     }
     /**
+     * Render nothing if the block is hidden.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param string $block_content Rendered block content.
+     * @param array  $block         Block object.
+     * @return string Filtered block content.
+     */
+    function wp_render_block_visibility_support($block_content, $block)
+    {
+    }
+    /**
      * Registers the style attribute used by the border feature if needed for block
      * types that support borders.
      *
@@ -94145,6 +98647,7 @@ namespace {
      *
      * @param array $block Block object.
      * @return string The unique class name.
+     * @phpstan-return non-falsy-string
      */
     function wp_get_elements_class_name($block)
     {
@@ -94602,6 +99105,7 @@ namespace {
      *   slug?: string,
      *   size?: string|int|float,
      * } $preset
+     * @phpstan-param array $settings
      */
     function wp_get_typography_font_size_value($preset, $settings = array())
     {
@@ -94966,9 +99470,10 @@ namespace {
     {
     }
     /**
-     * Retrieves a unified template object based on a theme file.
+     * Retrieves a unified template object based on a theme file or plugin registration.
      *
      * This is a fallback of get_block_template(), used when no templates are found in the database.
+     * Also checks for templates registered via the Template Registration API.
      *
      * @since 5.9.0
      *
@@ -95028,6 +99533,7 @@ namespace {
      * @since 6.0.0 Adds the whole theme to the export archive.
      *
      * @return WP_Error|string Path of the ZIP file or error on failure.
+     * @phpstan-return non-falsy-string|\WP_Error
      */
     function wp_generate_block_templates_export_file()
     {
@@ -95066,6 +99572,7 @@ namespace {
      *                                    prepared for inserting or updating the database.
      * @param WP_REST_Request $deprecated Deprecated. Not used.
      * @return stdClass|WP_Error The updated object representing a template or template part.
+     * @phpstan-param null $deprecated
      */
     function inject_ignored_hooked_blocks_metadata_attributes($changes, $deprecated = \null)
     {
@@ -95816,17 +100323,17 @@ namespace {
      * @param array $block {
      *     An associative array of a single parsed block object. See WP_Block_Parser_Block.
      *
-     *     @type string   $blockName    Name of block.
-     *     @type array    $attrs        Attributes from block comment delimiters.
-     *     @type array[]  $innerBlocks  List of inner blocks. An array of arrays that
-     *                                  have the same structure as this one.
-     *     @type string   $innerHTML    HTML from inside block comment delimiters.
-     *     @type array    $innerContent List of string fragments and null markers where
-     *                                  inner blocks were found.
+     *     @type string|null $blockName    Name of block.
+     *     @type array       $attrs        Attributes from block comment delimiters.
+     *     @type array[]     $innerBlocks  List of inner blocks. An array of arrays that
+     *                                     have the same structure as this one.
+     *     @type string      $innerHTML    HTML from inside block comment delimiters.
+     *     @type array       $innerContent List of string fragments and null markers where
+     *                                     inner blocks were found.
      * }
      * @return string String of rendered HTML.
      * @phpstan-param array{
-     *   blockName?: string,
+     *   blockName?: string|null,
      *   attrs?: array,
      *   innerBlocks?: array[],
      *   innerHTML?: string,
@@ -95848,18 +100355,18 @@ namespace {
      *     @type array ...$0 {
      *         An associative array of a single parsed block object. See WP_Block_Parser_Block.
      *
-     *         @type string   $blockName    Name of block.
-     *         @type array    $attrs        Attributes from block comment delimiters.
-     *         @type array[]  $innerBlocks  List of inner blocks. An array of arrays that
-     *                                      have the same structure as this one.
-     *         @type string   $innerHTML    HTML from inside block comment delimiters.
-     *         @type array    $innerContent List of string fragments and null markers where
-     *                                      inner blocks were found.
+     *         @type string|null $blockName    Name of block.
+     *         @type array       $attrs        Attributes from block comment delimiters.
+     *         @type array[]     $innerBlocks  List of inner blocks. An array of arrays that
+     *                                         have the same structure as this one.
+     *         @type string      $innerHTML    HTML from inside block comment delimiters.
+     *         @type array       $innerContent List of string fragments and null markers where
+     *                                         inner blocks were found.
      *     }
      * }
      * @return string String of rendered HTML.
      * @phpstan-param array<int|string, array{
-     *   blockName: string,
+     *   blockName: string|null,
      *   attrs: array,
      *   innerBlocks: array[],
      *   innerHTML: string,
@@ -96086,17 +100593,17 @@ namespace {
      * @param array $parsed_block {
      *     An associative array of the block being rendered. See WP_Block_Parser_Block.
      *
-     *     @type string   $blockName    Name of block.
-     *     @type array    $attrs        Attributes from block comment delimiters.
-     *     @type array[]  $innerBlocks  List of inner blocks. An array of arrays that
-     *                                  have the same structure as this one.
-     *     @type string   $innerHTML    HTML from inside block comment delimiters.
-     *     @type array    $innerContent List of string fragments and null markers where
-     *                                  inner blocks were found.
+     *     @type string|null $blockName    Name of block.
+     *     @type array       $attrs        Attributes from block comment delimiters.
+     *     @type array[]     $innerBlocks  List of inner blocks. An array of arrays that
+     *                                     have the same structure as this one.
+     *     @type string      $innerHTML    HTML from inside block comment delimiters.
+     *     @type array       $innerContent List of string fragments and null markers where
+     *                                     inner blocks were found.
      * }
      * @return string String of rendered HTML.
      * @phpstan-param array{
-     *   blockName?: string,
+     *   blockName?: string|null,
      *   attrs?: array,
      *   innerBlocks?: array[],
      *   innerHTML?: string,
@@ -96109,6 +100616,17 @@ namespace {
     /**
      * Parses blocks out of a content string.
      *
+     * Given an HTML document, this function fully-parses block content, producing
+     * a tree of blocks and their contents, as well as top-level non-block content,
+     * which will appear as a block with no `blockName`.
+     *
+     * This function can be memory heavy for certain documents, particularly those
+     * with deeply-nested blocks or blocks with extensive attribute values. Further,
+     * this function must parse an entire document in one atomic operation.
+     *
+     * If the entire parsed document is not necessary, consider using {@see WP_Block_Processor}
+     * instead, as it provides a streaming and low-overhead interface for finding blocks.
+     *
      * @since 5.0.0
      *
      * @param string $content Post content.
@@ -96118,17 +100636,17 @@ namespace {
      *     @type array ...$0 {
      *         An associative array of a single parsed block object. See WP_Block_Parser_Block.
      *
-     *         @type string   $blockName    Name of block.
-     *         @type array    $attrs        Attributes from block comment delimiters.
-     *         @type array[]  $innerBlocks  List of inner blocks. An array of arrays that
-     *                                      have the same structure as this one.
-     *         @type string   $innerHTML    HTML from inside block comment delimiters.
-     *         @type array    $innerContent List of string fragments and null markers where
-     *                                      inner blocks were found.
+     *         @type string|null $blockName    Name of block.
+     *         @type array       $attrs        Attributes from block comment delimiters.
+     *         @type array[]     $innerBlocks  List of inner blocks. An array of arrays that
+     *                                         have the same structure as this one.
+     *         @type string      $innerHTML    HTML from inside block comment delimiters.
+     *         @type array       $innerContent List of string fragments and null markers where
+     *                                         inner blocks were found.
      *     }
      * }
      * @phpstan-return array<int|string, array{
-     *   blockName: string,
+     *   blockName: string|null,
      *   attrs: array,
      *   innerBlocks: array[],
      *   innerHTML: string,
@@ -96171,6 +100689,8 @@ namespace {
      *
      * @param string $content Content to test.
      * @return int The block format version is 1 if the content contains one or more blocks, 0 otherwise.
+     * @phpstan-pure
+     * @phpstan-return ($content is '' ? 0 : 0|1)
      */
     function block_version($content)
     {
@@ -96271,6 +100791,7 @@ namespace {
      * @param WP_Block $block   Block instance.
      * @param bool     $is_next Flag for handling `next/previous` blocks.
      * @return string|null The pagination arrow HTML or null if there is none.
+     * @phpstan-return non-falsy-string|null
      */
     function get_query_pagination_arrow($block, $is_next)
     {
@@ -96304,6 +100825,7 @@ namespace {
      *                                  Accepts 'next' or 'previous'. Default 'next'.
      * @return string|null The pagination arrow HTML or null if there is none.
      * @phpstan-param 'next'|'previous' $pagination_type
+     * @phpstan-return non-falsy-string|null
      */
     function get_comments_pagination_arrow($block, $pagination_type = 'next')
     {
@@ -96367,6 +100889,50 @@ namespace {
     {
     }
     /**
+     * Server-side rendering of the `core/accordion-item` block.
+     *
+     * @package WordPress
+     * @since 6.9.0
+     *
+     * @param array $attributes The block attributes.
+     * @param string $content The block content.
+     *
+     * @return string Returns the updated markup.
+     */
+    function block_core_accordion_item_render($attributes, $content)
+    {
+    }
+    /**
+     * Registers the `core/accordion-item` block on server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_accordion_item()
+    {
+    }
+    /**
+     * Server-side rendering of the `core/accordion` block.
+     *
+     * @package WordPress
+     * @since 6.9.0
+     *
+     * @param array $attributes The block attributes.
+     * @param string $content The block content.
+     *
+     * @return string Returns the updated markup.
+     */
+    function render_block_core_accordion($attributes, $content)
+    {
+    }
+    /**
+     * Registers the `core/accordion` block on server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_accordion()
+    {
+    }
+    /**
      * Renders the `core/archives` block on server.
      *
      * @since 5.0.0
@@ -96376,8 +100942,21 @@ namespace {
      * @param array $attributes The block attributes.
      *
      * @return string Returns the post content with archives added.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_archives($attributes)
+    {
+    }
+    /**
+     * Generates the inline script for an archives dropdown field.
+     *
+     * @since 6.9.0
+     *
+     * @param string $dropdown_id ID of the dropdown field.
+     *
+     * @return string Returns the dropdown onChange redirection script.
+     */
+    function block_core_archives_build_dropdown_script($dropdown_id)
     {
     }
     /**
@@ -96432,7 +101011,7 @@ namespace {
      *
      * @return string Rendered HTML of the referenced block.
      */
-    function render_block_core_block($attributes)
+    function render_block_core_block($attributes, $content, $block_instance)
     {
     }
     /**
@@ -96448,9 +101027,8 @@ namespace {
      *
      * @since 6.6.0
      *
-     * @param array    $attributes The block attributes.
-     * @param string   $content    The block content.
-     * @param WP_Block $block      The block object.
+     * @param array  $attributes The block attributes.
+     * @param string $content    The block content.
      *
      * @return string The block content.
      */
@@ -96549,6 +101127,7 @@ namespace {
      * @param WP_Block $block      Block instance.
      *
      * @return string Returns the categories list/dropdown markup.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_categories($attributes, $content, $block)
     {
@@ -96561,6 +101140,7 @@ namespace {
      * @param string $dropdown_id ID of the dropdown field.
      *
      * @return string Returns the dropdown onChange redirection script.
+     * @phpstan-return non-falsy-string
      */
     function build_dropdown_script_block_core_categories($dropdown_id)
     {
@@ -96918,9 +101498,8 @@ namespace {
      *
      * @since 5.8.0
      *
-     * @param array    $attributes The block attributes.
-     * @param string   $content    The block content.
-     * @param WP_Block $block      The parsed block.
+     * @param array  $attributes The block attributes.
+     * @param string $content    The block content.
      *
      * @return string Returns the block content.
      */
@@ -97061,6 +101640,7 @@ namespace {
      *
      * @param  array $context home link block context.
      * @return array Colors CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_home_link_build_css_colors($context)
     {
@@ -97073,6 +101653,7 @@ namespace {
      *
      * @param  array $context Home link block context.
      * @return array Font size CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_home_link_build_css_font_sizes($context)
     {
@@ -97137,7 +101718,7 @@ namespace {
      *
      * @param array $block Block data.
      *
-     * @return array Filtered block data.
+     * @return array|null Filtered block data.
      */
     function block_core_image_get_lightbox_settings($block)
     {
@@ -97221,6 +101802,7 @@ namespace {
      *
      * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global $post.
      * @return string The post title if set; "(no title)" if no title is set.
+     * @phpstan-return non-falsy-string
      */
     function wp_latest_comments_draft_or_post_title($post = 0)
     {
@@ -97233,8 +101815,9 @@ namespace {
      * @param array $attributes The block attributes.
      *
      * @return string Returns the post content with latest comments added.
+     * @phpstan-return non-falsy-string
      */
-    function render_block_core_latest_comments($attributes = array())
+    function render_block_core_latest_comments($attributes)
     {
     }
     /**
@@ -97262,9 +101845,13 @@ namespace {
      *
      * @since 5.0.0
      *
+     * @global WP_Post $post                                   Global post object.
+     * @global int     $block_core_latest_posts_excerpt_length Excerpt length set by the Latest Posts core block.
+     *
      * @param array $attributes The block attributes.
      *
      * @return string Returns the post content with latest posts added.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_latest_posts($attributes)
     {
@@ -97303,7 +101890,7 @@ namespace {
      *
      * @since 5.8.0
      *
-     * @global int $wp_widget_factory.
+     * @global WP_Widget_Factory $wp_widget_factory.
      *
      * @param array $attributes The block attributes.
      *
@@ -97364,6 +101951,7 @@ namespace {
      * @param array $attributes The block attributes.
      *
      * @return string Returns the login-out link or form.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_loginout($attributes)
     {
@@ -97405,8 +101993,9 @@ namespace {
      *
      * @param  array $context     Navigation block context.
      * @param  array $attributes  Block attributes.
-     * @param  bool  $is_sub_menu Whether the link is part of a sub-menu.
+     * @param  bool  $is_sub_menu Whether the link is part of a sub-menu. Default false.
      * @return array Colors CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_navigation_link_build_css_colors($context, $attributes, $is_sub_menu = \false)
     {
@@ -97419,6 +102008,7 @@ namespace {
      *
      * @param  array $context Navigation block context.
      * @return array Font size CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_navigation_link_build_css_font_sizes($context)
     {
@@ -97429,6 +102019,7 @@ namespace {
      * @since 5.9.0
      *
      * @return string
+     * @phpstan-return non-falsy-string
      */
     function block_core_navigation_link_render_submenu_icon()
     {
@@ -97513,6 +102104,7 @@ namespace {
      *
      * @param  array $context Navigation block context.
      * @return array Font size CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_navigation_submenu_build_css_font_sizes($context)
     {
@@ -97523,6 +102115,7 @@ namespace {
      * @since 5.9.0
      *
      * @return string
+     * @phpstan-return non-falsy-string
      */
     function block_core_navigation_submenu_render_submenu_icon()
     {
@@ -97610,6 +102203,7 @@ namespace {
      * @param array $attributes Navigation block attributes.
      *
      * @return array Colors CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string, overlay_css_classes: list<string>, overlay_inline_styles: string}
      */
     function block_core_navigation_build_css_colors($attributes)
     {
@@ -97623,6 +102217,7 @@ namespace {
      * @param array $attributes Navigation block attributes.
      *
      * @return array Font size CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_navigation_build_css_font_sizes($attributes)
     {
@@ -97633,6 +102228,7 @@ namespace {
      * @since 5.9.0
      *
      * @return string
+     * @phpstan-return non-falsy-string
      */
     function block_core_navigation_render_submenu_icon()
     {
@@ -97821,6 +102417,7 @@ namespace {
      * @param  array $attributes Block attributes.
      * @param  array $context    Navigation block context.
      * @return array Colors CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string, overlay_css_classes: list<string>, overlay_inline_styles: string}
      */
     function block_core_page_list_build_css_colors($attributes, $context)
     {
@@ -97833,6 +102430,7 @@ namespace {
      *
      * @param  array $context Navigation block context.
      * @return array Font size CSS classes and inline styles.
+     * @phpstan-return array{css_classes: list<string>, inline_styles: string}
      */
     function block_core_page_list_build_css_font_sizes($context)
     {
@@ -97977,6 +102575,27 @@ namespace {
     {
     }
     /**
+     * Renders the `core/post-comments-count` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block default content.
+     * @param WP_Block $block      Block instance.
+     * @return string Returns the filtered post comments count for the current post.
+     */
+    function render_block_core_post_comments_count($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/post-comments-count` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_post_comments_count()
+    {
+    }
+    /**
      * Renders the `core/post-comments-form` block on the server.
      *
      * @since 6.0.0
@@ -98010,6 +102629,27 @@ namespace {
     {
     }
     /**
+     * Renders the `core/post-comments-link` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param  array    $attributes Block attributes.
+     * @param  string   $content    Block default content.
+     * @param  WP_Block $block      Block instance.
+     * @return string   Returns the rendered link.
+     */
+    function render_block_core_post_comments_link($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/post-comments-link` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_post_comments_link()
+    {
+    }
+    /**
      * Renders the `core/post-content` block on the server.
      *
      * @since 5.8.0
@@ -98034,6 +102674,7 @@ namespace {
      * Renders the `core/post-date` block on the server.
      *
      * @since 5.8.0
+     * @since 6.9.0 Added `datetime` attribute and Block Bindings support.
      *
      * @param array    $attributes Block attributes.
      * @param string   $content    Block default content.
@@ -98206,6 +102847,52 @@ namespace {
     {
     }
     /**
+     * Counts words or characters in a provided text string.
+     *
+     * This function currently employs an array of regular expressions
+     * to parse HTML and count words, which may result in inaccurate
+     * word counts. However, it is designed primarily to agree with the
+     * corresponding JavaScript function.
+     *
+     * Any improvements in the word counting, for example with the HTML API
+     * and {@see \IntlBreakIterator::createWordInstance()} should coordinate
+     * with changes to the JavaScript implementation to ensure consistency
+     * between the editor and the rendered page.
+     *
+     * @since 6.9.0
+     *
+     * @param string $text Text to count elements in.
+     * @param string $type The type of count. Accepts 'words', 'characters_excluding_spaces', or 'characters_including_spaces'.
+     *
+     * @return string The rendered word count.
+     * @phpstan-param 'words'|'characters_excluding_spaces'|'characters_including_spaces' $type
+     * @phpstan-return int<0, max>
+     */
+    function block_core_post_time_to_read_word_count($text, $type)
+    {
+    }
+    /**
+     * Renders the `core/post-time-to-read` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param  array    $attributes Block attributes.
+     * @param  string   $content    Block default content.
+     * @param  WP_Block $block      Block instance.
+     * @return string Returns the rendered post author name block.
+     */
+    function render_block_core_post_time_to_read($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/post-time-to-read` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_post_time_to_read()
+    {
+    }
+    /**
      * Renders the `core/post-title` block on the server.
      *
      * @since 6.3.0 Omitting the $post argument from the `get_the_title`.
@@ -98344,16 +103031,18 @@ namespace {
     }
     /**
      * Renders the `core/query-title` block on the server.
-     * For now it only supports Archive title,
+     * For now it supports Archive title, Search title, and Post Type Label,
      * using queried object information
      *
      * @since 5.8.0
      *
-     * @param array $attributes Block attributes.
+     * @param array  $attributes Block attributes.
+     * @param array  $_content   Block content.
+     * @param object $block      Block instance.
      *
      * @return string Returns the query title based on the queried object.
      */
-    function render_block_core_query_title($attributes)
+    function render_block_core_query_title($attributes, $content, $block)
     {
     }
     /**
@@ -98376,6 +103065,7 @@ namespace {
      * @param WP_Block $block      Block instance.
      *
      * @return string The rendered block content.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_query_total($attributes, $content, $block)
     {
@@ -98453,6 +103143,7 @@ namespace {
      * @param array $attributes The block attributes.
      *
      * @return string Returns the block content with received rss items.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_rss($attributes)
     {
@@ -98470,11 +103161,10 @@ namespace {
      *
      * @since 6.3.0 Using block.json `viewScript` to register script, and update `view_script_handles()` only when needed.
      *
-     * @param array    $attributes The block attributes.
-     * @param string   $content    The saved content.
-     * @param WP_Block $block      The parsed block.
+     * @param array $attributes The block attributes.
      *
      * @return string The search block markup.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_search($attributes)
     {
@@ -98628,6 +103318,7 @@ namespace {
      * @param array $attributes The block attributes.
      *
      * @return string The render.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_site_logo($attributes)
     {
@@ -98923,15 +103614,39 @@ namespace {
     {
     }
     /**
+     * Renders the `core/term-count` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block default content.
+     * @param WP_Block $block      Block instance.
+     *
+     * @return string Returns the count of the current taxonomy term wrapped inside a heading tag.
+     */
+    function render_block_core_term_count($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/term-count` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_term_count()
+    {
+    }
+    /**
      * Renders the `core/term-description` block on the server.
      *
      * @since 5.9.0
      *
-     * @param array $attributes Block attributes.
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block default content.
+     * @param WP_Block $block      Block instance.
      *
      * @return string Returns the description of the current taxonomy term, if available
      */
-    function render_block_core_term_description($attributes)
+    function render_block_core_term_description($attributes, $content, $block)
     {
     }
     /**
@@ -98940,6 +103655,72 @@ namespace {
      * @since 5.9.0
      */
     function register_block_core_term_description()
+    {
+    }
+    /**
+     * Renders the `core/term-name` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block default content.
+     * @param WP_Block $block      Block instance.
+     *
+     * @return string Returns the name of the current taxonomy term wrapped inside a heading tag.
+     */
+    function render_block_core_term_name($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/term-name` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_term_name()
+    {
+    }
+    /**
+     * Renders the `core/term-template` block on the server.
+     *
+     * @since 6.9.0
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block default content.
+     * @param WP_Block $block      Block instance.
+     *
+     * @return string Returns the output of the term template.
+     */
+    function render_block_core_term_template($attributes, $content, $block)
+    {
+    }
+    /**
+     * Registers the `core/term-template` block on the server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_term_template()
+    {
+    }
+    /**
+     * Renders the `core/video` block on the server to supply the width and height attributes from the attachment metadata.
+     *
+     * @since 6.9.0
+     *
+     * @phpstan-param  array{ "id"?: positive-int } $attributes
+     *
+     * @param array   $attributes The block attributes.
+     * @param string  $content    The block content.
+     * @return string The block content with the dimensions added.
+     */
+    function render_block_core_video(array $attributes, string $content): string
+    {
+    }
+    /**
+     * Registers the `core/video` block on server.
+     *
+     * @since 6.9.0
+     */
+    function register_block_core_video(): void
     {
     }
     /**
@@ -98955,6 +103736,7 @@ namespace {
      * @param WP_Block $block The block.
      *
      * @return string Rendered block.
+     * @phpstan-return non-falsy-string
      */
     function render_block_core_widget_group($attributes, $content, $block)
     {
@@ -99155,6 +103937,8 @@ namespace {
      * @param int    $bookmark The bookmark ID to get field.
      * @param string $context  Optional. The context of how the field will be used. Default 'display'.
      * @return string|WP_Error
+     * @phpstan-param 'link_id'|'link_url'|'link_name'|'link_image'|'link_target'|'link_description'|'link_visible'|'link_owner'|'link_rating'|'link_updated'|'link_rel'|'link_notes'|'link_rss'|'link_category' $field
+     * @phpstan-return array<int, int<1, max>>|int|string|\WP_Error
      */
     function get_bookmark_field($field, $bookmark, $context = 'display')
     {
@@ -99249,6 +104033,8 @@ namespace {
      *                            'display', 'attribute', or 'js'. Default 'display'.
      * @return mixed The filtered value.
      * @phpstan-param 'raw'|'edit'|'db'|'display'|'attribute'|'js' $context
+     * @phpstan-param 'link_id'|'link_url'|'link_name'|'link_image'|'link_target'|'link_description'|'link_visible'|'link_owner'|'link_rating'|'link_updated'|'link_rel'|'link_notes'|'link_rss'|'link_category' $field
+     * @phpstan-return array<int, int>|int|string
      */
     function sanitize_bookmark_field($field, $value, $bookmark_id, $context)
     {
@@ -99380,7 +104166,7 @@ namespace {
      * @param string     $group Optional. Where the cache contents are grouped. Default empty.
      * @param bool       $force Optional. Whether to force an update of the local cache
      *                          from the persistent cache. Default false.
-     * @param bool       $found Optional. Whether the key was found in the cache (passed by reference).
+     * @param bool|null  $found Optional. Whether the key was found in the cache (passed by reference).
      *                          Disambiguates a return of false, a storable value. Default null.
      * @return mixed|false The cache contents on success, false on failure to retrieve contents.
      */
@@ -99883,12 +104669,34 @@ namespace {
     /**
      * Adds a role, if it does not exist.
      *
-     * @since 2.0.0
+     * The list of capabilities can be passed either as a numerically indexed array of capability names, or an
+     * associative array of boolean values keyed by the capability name. To explicitly deny the role a capability, set
+     * the value for that capability to false.
      *
-     * @param string $role         Role name.
-     * @param string $display_name Display name for role.
-     * @param bool[] $capabilities List of capabilities keyed by the capability name,
-     *                             e.g. array( 'edit_posts' => true, 'delete_posts' => false ).
+     * Examples:
+     *
+     *     // Add a role that can edit posts.
+     *     add_role( 'custom_role', 'Custom Role', array(
+     *         'read',
+     *         'edit_posts',
+     *     ) );
+     *
+     * Or, using an associative array:
+     *
+     *     // Add a role that can edit posts but explicitly cannot not delete them.
+     *     add_role( 'custom_role', 'Custom Role', array(
+     *         'read' => true,
+     *         'edit_posts' => true,
+     *         'delete_posts' => false,
+     *     ) );
+     *
+     * @since 2.0.0
+     * @since 6.9.0 Support was added for a numerically indexed array of strings for the capabilities array.
+     *
+     * @param string                               $role         Role name.
+     * @param string                               $display_name Display name for role.
+     * @param array<string,bool>|array<int,string> $capabilities Capabilities to be added to the role.
+     *                                                           Default empty array.
      * @return WP_Role|void WP_Role object, if the role is added.
      */
     function add_role($role, $display_name, $capabilities = array())
@@ -99945,6 +104753,7 @@ namespace {
      * Revokes Super Admin privileges.
      *
      * @since 3.0.0
+     * @since 6.9.0 Super admin privileges can be revoked regardless of email address.
      *
      * @global array $super_admins
      *
@@ -100025,6 +104834,7 @@ namespace {
      * @param bool   $nicename    Optional. Whether to use nice name for display. Default false.
      * @param array  $deprecated  Not used.
      * @return string|WP_Error A list of category parents on success, WP_Error on failure.
+     * @phpstan-param array{} $deprecated
      */
     function get_category_parents($category_id, $link = \false, $separator = '/', $nicename = \false, $deprecated = array())
     {
@@ -100039,7 +104849,7 @@ namespace {
      *
      * @since 0.71
      *
-     * @param int $post_id Optional. The post ID. Defaults to current post ID.
+     * @param int|false $post_id Optional. The post ID. Defaults to current post ID.
      * @return WP_Term[] Array of WP_Term objects, one for each category assigned to the post.
      */
     function get_the_category($post_id = \false)
@@ -100070,11 +104880,11 @@ namespace {
      *
      * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
      *
-     * @param string $separator Optional. Separator between the categories. By default, the links are placed
-     *                          in an unordered list. An empty string will result in the default behavior.
-     * @param string $parents   Optional. How to display the parents. Accepts 'multiple', 'single', or empty.
-     *                          Default empty string.
-     * @param int    $post_id   Optional. ID of the post to retrieve categories for. Defaults to the current post.
+     * @param string    $separator Optional. Separator between the categories. By default, the links are placed
+     *                             in an unordered list. An empty string will result in the default behavior.
+     * @param string    $parents   Optional. How to display the parents. Accepts 'multiple', 'single', or empty.
+     *                             Default empty string.
+     * @param int|false $post_id   Optional. ID of the post to retrieve categories for. Defaults to the current post.
      * @return string Category list for a post.
      */
     function get_the_category_list($separator = '', $parents = '', $post_id = \false)
@@ -100101,7 +104911,7 @@ namespace {
      *
      * @param int|string|int[]|string[] $category Category ID, name, slug, or array of such
      *                                            to check against.
-     * @param int|WP_Post               $post     Optional. Post to check. Defaults to the current post.
+     * @param int|null|WP_Post          $post     Optional. Post to check. Defaults to the current post.
      * @return bool True if the current post is in any of the given categories.
      */
     function in_category($category, $post = \null)
@@ -100112,11 +104922,11 @@ namespace {
      *
      * @since 0.71
      *
-     * @param string $separator Optional. Separator between the categories. By default, the links are placed
-     *                          in an unordered list. An empty string will result in the default behavior.
-     * @param string $parents   Optional. How to display the parents. Accepts 'multiple', 'single', or empty.
-     *                          Default empty string.
-     * @param int    $post_id   Optional. ID of the post to retrieve categories for. Defaults to the current post.
+     * @param string    $separator Optional. Separator between the categories. By default, the links are placed
+     *                             in an unordered list. An empty string will result in the default behavior.
+     * @param string    $parents   Optional. How to display the parents. Accepts 'multiple', 'single', or empty.
+     *                             Default empty string.
+     * @param int|false $post_id   Optional. ID of the post to retrieve categories for. Defaults to the current post.
      */
     function the_category($separator = '', $parents = '', $post_id = \false)
     {
@@ -101037,6 +105847,8 @@ namespace {
      *
      * @param string[] $extra_attributes Optional. Array of extra attributes to render on the block wrapper.
      * @return string String of HTML attributes.
+     * @phpstan-param array<string, string> $extra_attributes
+     * @phpstan-return ($extra_attributes is empty ? string : non-falsy-string)
      */
     function get_block_wrapper_attributes($extra_attributes = array())
     {
@@ -101428,6 +106240,8 @@ namespace {
      *
      * @param string $deprecated   Not Used.
      * @param string $deprecated_2 Not Used.
+     * @phpstan-param '' $deprecated
+     * @phpstan-param '' $deprecated_2
      */
     function comments_link($deprecated = '', $deprecated_2 = '')
     {
@@ -101464,10 +106278,10 @@ namespace {
      * @since 4.0.0
      * @since 5.4.0 Added the `$post` parameter to allow using the function outside of the loop.
      *
-     * @param string      $zero Optional. Text for no comments. Default false.
-     * @param string      $one  Optional. Text for one comment. Default false.
-     * @param string      $more Optional. Text for more than one comment. Default false.
-     * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is the global `$post`.
+     * @param string|false $zero Optional. Text for no comments. Default false.
+     * @param string|false $one  Optional. Text for one comment. Default false.
+     * @param string|false $more Optional. Text for more than one comment. Default false.
+     * @param int|WP_Post  $post Optional. Post ID or WP_Post object. Default is the global `$post`.
      * @return string Language string for the number of comments a post has.
      */
     function get_comments_number_text($zero = \false, $one = \false, $more = \false, $post = 0)
@@ -101553,11 +106367,11 @@ namespace {
      *
      * @since 0.71
      *
-     * @param string|false $commenttxt   Optional. String to display for comment type. Default false.
-     * @param string|false $trackbacktxt Optional. String to display for trackback type. Default false.
-     * @param string|false $pingbacktxt  Optional. String to display for pingback type. Default false.
+     * @param string|false $comment_text   Optional. String to display for comment type. Default false.
+     * @param string|false $trackback_text Optional. String to display for trackback type. Default false.
+     * @param string|false $pingback_text  Optional. String to display for pingback type. Default false.
      */
-    function comment_type($commenttxt = \false, $trackbacktxt = \false, $pingbacktxt = \false)
+    function comment_type($comment_text = \false, $trackback_text = \false, $pingback_text = \false)
     {
     }
     /**
@@ -101582,6 +106396,7 @@ namespace {
      * @param bool $deprecated_echo Not used.
      * @return void|string Should only be used to echo the trackback URL, use get_trackback_url()
      *                     for the result instead.
+     * @phpstan-param true $deprecated_echo
      */
     function trackback_url($deprecated_echo = \true)
     {
@@ -101594,6 +106409,7 @@ namespace {
      * @since 0.71
      *
      * @param int|string $deprecated Not used (Was $timezone = 0).
+     * @phpstan-param '' $deprecated
      * @phpstan-return void
      */
     function trackback_rdf($deprecated = '')
@@ -101731,7 +106547,7 @@ namespace {
      * @param int|WP_Comment $comment Optional. Comment being replied to. Default current comment.
      * @param int|WP_Post    $post    Optional. Post ID or WP_Post object the comment is going to be displayed on.
      *                                Default current post.
-     * @return string|false|null Link to show comment form, if successful. False, if comments are closed.
+     * @return string|false|null Link to show comment form on success. False if comments are closed. Null on failure.
      * @phpstan-param array{
      *   add_below?: string,
      *   respond_id?: string,
@@ -101782,9 +106598,9 @@ namespace {
      *     @type string $before     Text or HTML to add before the reply link. Default empty.
      *     @type string $after      Text or HTML to add after the reply link. Default empty.
      * }
-     * @param int|WP_Post $post    Optional. Post ID or WP_Post object the comment is going to be displayed on.
-     *                             Default current post.
-     * @return string|false|null Link to show comment form, if successful. False, if comments are closed.
+     * @param int|WP_Post $post Optional. Post ID or WP_Post object the comment is going to be displayed on.
+     *                          Default current post.
+     * @return string|false Link to show comment form on success. False if comments are closed.
      * @phpstan-param array{
      *   add_below?: string,
      *   respond_id?: string,
@@ -101874,8 +106690,8 @@ namespace {
      *
      * Only affects users with JavaScript disabled.
      *
-     * @internal The $comment global must be present to allow template tags access to the current
-     *           comment. See https://core.trac.wordpress.org/changeset/36512.
+     * {@internal The $comment global must be present to allow template tags access to the current
+     * comment. See https://core.trac.wordpress.org/changeset/36512.}
      *
      * @since 2.7.0
      * @since 6.2.0 Added the `$post` parameter.
@@ -102177,7 +106993,7 @@ namespace {
      *   update_comment_meta_cache?: bool,
      *   update_comment_post_cache?: bool,
      * } $args
-     * @phpstan-return ($args is array{count: true}&array ? int : ($args is array{fields: 'ids'}&array ?  array<int, int> : array<int, \WP_Comment>))
+     * @phpstan-return ($args is array{count: true}&array ? int : ($args is array{fields: 'ids'}&array ? array<int, int> : array<int, \WP_Comment>))
      */
     function get_approved_comments($post_id, $args = array())
     {
@@ -102342,6 +107158,8 @@ namespace {
     /**
      * Adds meta data field to a comment.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 2.9.0
      *
      * @link https://developer.wordpress.org/reference/functions/add_comment_meta/
@@ -102368,6 +107186,8 @@ namespace {
      * You can match based on the key, or key and value. Removing based on key and
      * value, will keep from removing duplicate metadata with the same key. It also
      * allows removing all metadata matching key, if needed.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 2.9.0
      *
@@ -102428,6 +107248,8 @@ namespace {
      * same key and comment ID.
      *
      * If the meta field for the comment does not exist, it will be added.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 2.9.0
      *
@@ -102531,8 +107353,8 @@ namespace {
      *
      * @since 2.7.0
      *
-     * @param WP_Comment[] $comments Array of comments
-     * @return WP_Comment[] Array of comments keyed by comment_type.
+     * @param WP_Comment[] $comments Array of comments.
+     * @return array<string, WP_Comment[]> Array of comments keyed by comment type.
      */
     function separate_comments(&$comments)
     {
@@ -102702,6 +107524,7 @@ namespace {
      * If Trash is disabled, comment is permanently deleted.
      *
      * @since 2.9.0
+     * @since 6.9.0 Any child notes are deleted when deleting a note.
      *
      * @param int|WP_Comment $comment_id Comment ID or WP_Comment object.
      * @return bool True on success, false on failure.
@@ -102749,6 +107572,7 @@ namespace {
      *
      * @param int|WP_Comment $comment_id Comment ID or WP_Comment object
      * @return string|false Status might be 'trash', 'approved', 'unapproved', 'spam'. False on failure.
+     * @phpstan-return 'approved'|'spam'|'trash'|'unapproved'|false
      */
     function wp_get_comment_status($comment_id)
     {
@@ -103004,6 +107828,16 @@ namespace {
     {
     }
     /**
+     * Send a notification to the post author when a new note is added via the REST API.
+     *
+     * @since 6.9.0
+     *
+     * @param WP_Comment $comment The comment object.
+     */
+    function wp_new_comment_via_rest_notify_postauthor($comment)
+    {
+    }
+    /**
      * Sets the status of a comment.
      *
      * The {@see 'wp_set_comment_status'} action is called after the comment is handled.
@@ -103110,6 +107944,7 @@ namespace {
      * @param string $url        URL to ping.
      * @param string $deprecated Not Used.
      * @return string|false String containing URI on success, false on failure.
+     * @phpstan-param '' $deprecated
      */
     function discover_pingback_server_uri($url, $deprecated = '')
     {
@@ -103303,9 +108138,9 @@ namespace {
      * @since 2.7.0
      * @access private
      *
-     * @param WP_Post  $posts Post data object.
-     * @param WP_Query $query Query object.
-     * @return array
+     * @param WP_Post[] $posts Array of post objects.
+     * @param WP_Query  $query Query object.
+     * @return WP_Post[]
      */
     function _close_comments_for_old_posts($posts, $query)
     {
@@ -103453,6 +108288,189 @@ namespace {
      * @since 5.5.0
      */
     function _wp_check_for_scheduled_update_comment_type()
+    {
+    }
+    /**
+     * Register initial note status meta.
+     *
+     * @since 6.9.0
+     */
+    function wp_create_initial_comment_meta()
+    {
+    }
+    /**
+     * Finds spans of valid and invalid UTF-8 bytes in a given string.
+     *
+     * This is a low-level tool to power various UTF-8 functionality.
+     * It scans through a string until it finds invalid byte spans.
+     * When it does this, it does three things:
+     *
+     *  - Assigns `$at` to the position after the last successful code point.
+     *  - Assigns `$invalid_length` to the length of the maximal subpart of
+     *    the invalid bytes starting at `$at`.
+     *  - Returns how many code points were successfully scanned.
+     *
+     * This information is enough to build a number of useful UTF-8 functions.
+     *
+     * Example:
+     *
+     *     // ñ is U+F1, which in `ISO-8859-1`/`latin1`/`Windows-1252`/`cp1252` is 0xF1.
+     *     "Pi\xF1a" === $pineapple = mb_convert_encoding( "Piña", 'Windows-1252', 'UTF-8' );
+     *     $at = $invalid_length = 0;
+     *
+     *     // The first step finds the invalid 0xF1 byte.
+     *     2 === _wp_scan_utf8( $pineapple, $at, $invalid_length );
+     *     $at === 2; $invalid_length === 1;
+     *
+     *     // The second step continues to the end of the string.
+     *     1 === _wp_scan_utf8( $pineapple, $at, $invalid_length );
+     *     $at === 4; $invalid_length === 0;
+     *
+     * Note! While passing an options array here might be convenient from a calling-code standpoint,
+     *       this function is intended to serve as a very low-level foundation upon which to build
+     *       higher level functionality. For the sake of keeping costs explicit all arguments are
+     *       passed directly.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param string    $bytes             UTF-8 encoded string which might include invalid spans of bytes.
+     * @param int       $at                Where to start scanning.
+     * @param int       $invalid_length    Will be set to how many bytes are to be ignored after `$at`.
+     * @param int|null  $max_bytes         Stop scanning after this many bytes have been seen.
+     * @param int|null  $max_code_points   Stop scanning after this many code points have been seen.
+     * @param bool|null $has_noncharacters Set to indicate if scanned string contained noncharacters.
+     * @return int How many code points were successfully scanned.
+     */
+    function _wp_scan_utf8(string $bytes, int &$at, int &$invalid_length, ?int $max_bytes = \null, ?int $max_code_points = \null, ?bool &$has_noncharacters = \null): int
+    {
+    }
+    /**
+     * Fallback mechanism for safely validating UTF-8 bytes.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @see wp_is_valid_utf8()
+     *
+     * @param string $bytes String which might contain text encoded as UTF-8.
+     * @return bool Whether the provided bytes can decode as valid UTF-8.
+     */
+    function _wp_is_valid_utf8_fallback(string $bytes): bool
+    {
+    }
+    /**
+     * Fallback mechanism for replacing invalid spans of UTF-8 bytes.
+     *
+     * Example:
+     *
+     *     'Pi�a' === _wp_scrub_utf8_fallback( "Pi\xF1a" ); // “ñ” is 0xF1 in Windows-1252.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @see wp_scrub_utf8()
+     *
+     * @param string $bytes UTF-8 encoded string which might contain spans of invalid bytes.
+     * @return string Input string with spans of invalid bytes swapped with the replacement character.
+     */
+    function _wp_scrub_utf8_fallback(string $bytes): string
+    {
+    }
+    /**
+     * Returns how many code points are found in the given UTF-8 string.
+     *
+     * Invalid spans of bytes count as a single code point according
+     * to the maximal subpart rule. This function is a fallback method
+     * for calling `mb_strlen( $text, 'UTF-8' )`.
+     *
+     * When negative values are provided for the byte offsets or length,
+     * this will always report zero code points.
+     *
+     * Example:
+     *
+     *     4  === _wp_utf8_codepoint_count( 'text' );
+     *
+     *     // Groups are 'test', "\x90" as '�', 'wp', "\xE2\x80" as '�', "\xC0" as '�', and 'test'.
+     *     13 === _wp_utf8_codepoint_count( "test\x90wp\xE2\x80\xC0test" );
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param string $text            Count code points in this string.
+     * @param ?int   $byte_offset     Start counting after this many bytes in `$text`. Must be positive.
+     * @param ?int   $max_byte_length Optional. Stop counting after having scanned past this many bytes.
+     *                                Default is to scan until the end of the string. Must be positive.
+     * @return int How many code points were found.
+     */
+    function _wp_utf8_codepoint_count(string $text, ?int $byte_offset = 0, ?int $max_byte_length = \PHP_INT_MAX): int
+    {
+    }
+    /**
+     * Given a starting offset within a string and a maximum number of code points,
+     * return how many bytes are occupied by the span of characters.
+     *
+     * Invalid spans of bytes count as a single code point according to the maximal
+     * subpart rule. This function is a fallback method for calling
+     * `strlen( mb_substr( substr( $text, $at ), 0, $max_code_points ) )`.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @param string $text              Count bytes of span in this text.
+     * @param int    $byte_offset       Start counting at this byte offset.
+     * @param int    $max_code_points   Stop counting after this many code points have been seen,
+     *                                  or at the end of the string.
+     * @param ?int   $found_code_points Optional. Will be set to number of found code points in
+     *                                  span, as this might be smaller than the maximum count if
+     *                                  the string is not long enough.
+     * @return int Number of bytes spanned by the code points.
+     */
+    function _wp_utf8_codepoint_span(string $text, int $byte_offset, int $max_code_points, ?int &$found_code_points = 0): int
+    {
+    }
+    /**
+     * Fallback support for determining if a string contains Unicode noncharacters.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @see \wp_has_noncharacters()
+     *
+     * @param string $text Are there noncharacters in this string?
+     * @return bool Whether noncharacters were found in the string.
+     */
+    function _wp_has_noncharacters_fallback(string $text): bool
+    {
+    }
+    /**
+     * Converts a string from ISO-8859-1 to UTF-8, maintaining backwards compatibility
+     * with the deprecated function from the PHP standard library.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @see \utf8_encode()
+     *
+     * @param string $iso_8859_1_text Text treated as ISO-8859-1 (latin1) bytes.
+     * @return string Text converted into UTF-8.
+     */
+    function _wp_utf8_encode_fallback($iso_8859_1_text)
+    {
+    }
+    /**
+     * Converts a string from UTF-8 to ISO-8859-1, maintaining backwards compatibility
+     * with the deprecated function from the PHP standard library.
+     *
+     * @since 6.9.0
+     * @access private
+     *
+     * @see \utf8_decode()
+     *
+     * @param string $utf8_text Text treated as UTF-8 bytes.
+     * @return string Text converted into ISO-8859-1.
+     */
+    function _wp_utf8_decode_fallback($utf8_text)
     {
     }
     /**
@@ -103699,25 +108717,22 @@ namespace {
     {
     }
     /**
-     * Registers _wp_cron() to run on the {@see 'wp_loaded'} action.
+     * Registers _wp_cron() to run on the {@see 'shutdown'} action.
      *
-     * If the {@see 'wp_loaded'} action has already fired, this function calls
-     * _wp_cron() directly.
-     *
-     * Warning: This function may return Boolean FALSE, but may also return a non-Boolean
-     * value which evaluates to FALSE. For information about casting to booleans see the
-     * {@link https://www.php.net/manual/en/language.types.boolean.php PHP documentation}. Use
-     * the `===` operator for testing the return value of this function.
+     * The spawn_cron() function attempts to make a non-blocking loopback request to `wp-cron.php` (when alternative
+     * cron is not being used). However, the wp_remote_post() function does not always respect the `timeout` and
+     * `blocking` parameters. A timeout of `0.01` may end up taking 1 second. When this runs at the {@see 'wp_loaded'}
+     * action, it increases the Time To First Byte (TTFB) since the HTML cannot be sent while waiting for the cron request
+     * to initiate. Moving the spawning of cron to the {@see 'shutdown'} hook allows for the server to flush the HTML document to
+     * the browser while waiting for the request.
      *
      * @since 2.1.0
      * @since 5.1.0 Return value added to indicate success or failure.
      * @since 5.7.0 Functionality moved to _wp_cron() to which this becomes a wrapper.
-     *
-     * @return false|int|void On success an integer indicating number of events spawned (0 indicates no
-     *                        events needed to be spawned), false if spawning fails for one or more events or
-     *                        void if the function registered _wp_cron() to run on the action.
+     * @since 6.9.0 The _wp_cron() callback is moved from {@see 'wp_loaded'} to the {@see 'shutdown'} action,
+     *              unless `ALTERNATE_WP_CRON` is enabled; the function now always returns void.
      */
-    function wp_cron()
+    function wp_cron(): void
     {
     }
     /**
@@ -107469,6 +112484,24 @@ namespace {
     {
     }
     /**
+     * Prints a CSS rule to fix potential visual issues with images using `sizes=auto`.
+     *
+     * This rule overrides the similar rule in the default user agent stylesheet, to avoid images that use e.g.
+     * `width: auto` or `width: fit-content` to appear smaller.
+     *
+     * @since 6.7.1
+     * @deprecated 6.9.0 Use wp_enqueue_img_auto_sizes_contain_css_fix() instead.
+     * @see wp_enqueue_img_auto_sizes_contain_css_fix()
+     *
+     * @see https://html.spec.whatwg.org/multipage/rendering.html#img-contain-size
+     * @see https://core.trac.wordpress.org/ticket/62413
+     * @see https://core.trac.wordpress.org/ticket/62731
+     * @phpstan-return void
+     */
+    function wp_print_auto_sizes_contain_css_fix()
+    {
+    }
+    /**
      * Registers an embed handler.
      *
      * Should probably only be used for sites that do not support oEmbed.
@@ -107668,6 +112701,8 @@ namespace {
      *
      * @since 4.4.0
      * @since 6.8.0 Output was adjusted to only embed if the post supports it.
+     * @since 6.9.0 Now runs first at `wp_head` priority 4, with a fallback to priority 10. This helps ensure the discovery links appear within the first 150KB.
+     * @phpstan-return void
      */
     function wp_oembed_add_discovery_links()
     {
@@ -107812,7 +112847,7 @@ namespace {
      * @param WP_HTTP_Response $result  Result to send to the client. Usually a `WP_REST_Response`.
      * @param WP_REST_Request  $request Request used to generate the response.
      * @param WP_REST_Server   $server  Server instance.
-     * @return true
+     * @return bool True if the request was served, false otherwise.
      */
     function _oembed_rest_pre_serve_request($served, $result, $request, $server)
     {
@@ -107835,10 +112870,10 @@ namespace {
      *
      * @since 5.2.0
      *
-     * @param string $result The oEmbed HTML result.
-     * @param object $data   A data object result from an oEmbed provider.
-     * @param string $url    The URL of the content to be embedded.
-     * @return string The filtered oEmbed result.
+     * @param string|false $result The oEmbed HTML result.
+     * @param object       $data   A data object result from an oEmbed provider.
+     * @param string       $url    The URL of the content to be embedded.
+     * @return string|false The filtered oEmbed result.
      */
     function wp_filter_oembed_iframe_title_attribute($result, $data, $url)
     {
@@ -107853,10 +112888,10 @@ namespace {
      *
      * @since 4.4.0
      *
-     * @param string $result The oEmbed HTML result.
-     * @param object $data   A data object result from an oEmbed provider.
-     * @param string $url    The URL of the content to be embedded.
-     * @return string The filtered and sanitized oEmbed result.
+     * @param string|false $result The oEmbed HTML result.
+     * @param object       $data   A data object result from an oEmbed provider.
+     * @param string       $url    The URL of the content to be embedded.
+     * @return string|false The filtered and sanitized oEmbed result.
      */
     function wp_filter_oembed_result($result, $data, $url)
     {
@@ -108107,6 +113142,7 @@ namespace {
      *
      * @param string $deprecated Unused.
      * @return string The document title.
+     * @phpstan-param '&#8211;' $deprecated
      */
     function get_wp_title_rss($deprecated = '&#8211;')
     {
@@ -108118,6 +113154,7 @@ namespace {
      * @since 4.4.0 The optional `$sep` parameter was deprecated and renamed to `$deprecated`.
      *
      * @param string $deprecated Unused.
+     * @phpstan-param '&#8211;' $deprecated
      */
     function wp_title_rss($deprecated = '&#8211;')
     {
@@ -108335,6 +113372,7 @@ namespace {
      *
      * @param string $data Input string.
      * @return array array(type, value)
+     * @phpstan-return array{'html'|'text'|'xhtml', string}
      */
     function prep_atom_text_construct($data)
     {
@@ -108709,6 +113747,7 @@ namespace {
      *
      * @param string $input The text which has to be formatted.
      * @return string[] Array of the formatted text.
+     * @phpstan-return non-empty-list<string>
      */
     function wp_html_split($input)
     {
@@ -108719,6 +113758,8 @@ namespace {
      * @since 4.4.0
      *
      * @return string The regular expression.
+     * @phpstan-pure
+     * @phpstan-return non-falsy-string
      */
     function get_html_split_regex()
     {
@@ -108797,6 +113838,7 @@ namespace {
      *
      * @author bmorel at ssi dot fr (modified)
      * @since 1.2.1
+     * @deprecated 6.9.0 Use {@see wp_is_valid_utf8()} instead.
      *
      * @param string $str The string to be checked.
      * @return bool True if $str fits a UTF-8 model, false otherwise.
@@ -108858,10 +113900,39 @@ namespace {
     /**
      * Checks for invalid UTF8 in a string.
      *
-     * @since 2.8.0
+     * Note! This function only performs its work if the `blog_charset` is set
+     * to UTF-8. For all other values it returns the input text unchanged.
      *
-     * @param string $text   The text which is to be checked.
-     * @param bool   $strip  Optional. Whether to attempt to strip out invalid UTF8. Default false.
+     * Note! Unless requested, this returns an empty string if the input contains
+     * any sequences of invalid UTF-8. To replace invalid byte sequences, pass
+     * `true` as the optional `$strip` parameter.
+     *
+     * Consider using {@see wp_scrub_utf8()} instead which does not depend on
+     * the value of `blog_charset`.
+     *
+     * Example:
+     *
+     *     // The `blog_charset` is `latin1`, so this returns the input unchanged.
+     *     $every_possible_input === wp_check_invalid_utf8( $every_possible_input );
+     *
+     *     // Valid strings come through unchanged.
+     *     'test' === wp_check_invalid_utf8( 'test' );
+     *
+     *     $invalid = "the byte \xC0 is never allowed in a UTF-8 string.";
+     *
+     *     // Invalid strings are rejected outright.
+     *     '' === wp_check_invalid_utf8( $invalid );
+     *
+     *     // “Stripping” invalid sequences produces the replacement character instead.
+     *     "the byte \u{FFFD} is never allowed in a UTF-8 string." === wp_check_invalid_utf8( $invalid, true );
+     *     'the byte � is never allowed in a UTF-8 string.' === wp_check_invalid_utf8( $invalid, true );
+     *
+     * @since 2.8.0
+     * @since 6.9.0 Stripping replaces invalid byte sequences with the Unicode replacement character U+FFFD (�).
+     *
+     * @param string $text   String which is expected to be encoded as UTF-8 unless `blog_charset` is another encoding.
+     * @param bool   $strip  Optional. Whether to replace invalid sequences of bytes with the Unicode replacement
+     *                       character (U+FFFD `�`). Default `false` returns an empty string for invalid UTF-8 inputs.
      * @return string The checked text.
      */
     function wp_check_invalid_utf8($text, $strip = \false)
@@ -109376,6 +114447,8 @@ namespace {
      *                          When set to 'save', additional entities are converted to hyphens
      *                          or stripped entirely. Default 'display'.
      * @return string The sanitized title.
+     * @phpstan-param 'display'|'save' $context
+     * @phpstan-return lowercase-string
      */
     function sanitize_title_with_dashes($title, $raw_title = '', $context = 'display')
     {
@@ -109392,6 +114465,9 @@ namespace {
      *
      * @param string $orderby Order by clause to be validated.
      * @return string|false Returns $orderby if valid, false otherwise.
+     * @phpstan-template T of string
+     * @phpstan-param T $orderby
+     * @phpstan-return (T is non-falsy-string ? T|false : false)
      */
     function sanitize_sql_orderby($orderby)
     {
@@ -109433,6 +114509,7 @@ namespace {
      * @param string $content    String of characters to be converted.
      * @param string $deprecated Not used.
      * @return string Converted string.
+     * @phpstan-param '' $deprecated
      */
     function convert_chars($content, $deprecated = '')
     {
@@ -109463,6 +114540,11 @@ namespace {
     /**
      * Balances tags of string using a modified stack.
      *
+     * {@internal Modified by Scott Reilly (coffee2code) 02 Aug 2004
+     *      1.1  Fixed handling of append/stack pop order of end text
+     *           Added Cleaning Hooks
+     *      1.0  First Version}
+     *
      * @since 2.0.4
      * @since 5.3.0 Improve accuracy and add support for custom element tags.
      *
@@ -109471,10 +114553,6 @@ namespace {
      * @copyright November 4, 2001
      * @version 1.1
      * @todo Make better - change loop condition to $text in 1.2
-     * @internal Modified by Scott Reilly (coffee2code) 02 Aug 2004
-     *      1.1  Fixed handling of append/stack pop order of end text
-     *           Added Cleaning Hooks
-     *      1.0  First Version
      *
      * @param string $text Text to be balanced.
      * @return string Balanced text.
@@ -109517,6 +114595,8 @@ namespace {
      * @param int $number     Number to append zeros to if not greater than threshold.
      * @param int $threshold  Digit places number needs to be to not have zeros added.
      * @return string Adds leading zeros to number if needed.
+     * @phpstan-param int<0, max> $threshold
+     * @phpstan-return ($threshold is 0 ? lowercase-string&non-empty-string&numeric-string : ($number is int<0, max> ? lowercase-string&non-empty-string&numeric-string : lowercase-string&non-empty-string))
      */
     function zeroise($number, $threshold)
     {
@@ -109528,6 +114608,7 @@ namespace {
      *
      * @param string $value Value to which backslashes will be added.
      * @return string String with backslashes inserted.
+     * @phpstan-pure
      */
     function backslashit($value)
     {
@@ -109545,6 +114626,8 @@ namespace {
      *
      * @param string $value Value to which trailing slash will be added.
      * @return string String with trailing slash added.
+     * @phpstan-pure
+     * @phpstan-return non-falsy-string
      */
     function trailingslashit($value)
     {
@@ -109559,6 +114642,7 @@ namespace {
      *
      * @param string $value Value from which trailing slashes will be removed.
      * @return string String without the trailing slashes.
+     * @phpstan-pure
      */
     function untrailingslashit($value)
     {
@@ -109570,9 +114654,8 @@ namespace {
      *
      * @param string|array $gpc String or array of data to slash.
      * @return string|array Slashed `$gpc`.
-     * @phpstan-template T
-     * @phpstan-param T $gpc
-     * @phpstan-return T
+     * @phpstan-pure
+     * @phpstan-return ($gpc is string ? string : array)
      */
     function addslashes_gpc($gpc)
     {
@@ -109599,8 +114682,9 @@ namespace {
      * @param mixed $value The array or string to be stripped.
      * @return mixed The stripped value.
      * @phpstan-template T
-     * @phpstan-param T $value
-     * @phpstan-return T
+     * @phpstan-param T|string $value
+     * @phpstan-pure
+     * @phpstan-return ($value is string ? ($value is '' ? '' : string) : T)
      */
     function stripslashes_from_strings_only($value)
     {
@@ -109655,6 +114739,7 @@ namespace {
      * @param string $email_address Email address.
      * @param int    $hex_encoding  Optional. Set to 1 to enable hex encoding.
      * @return string Converted email address.
+     * @phpstan-param 0|1 $hex_encoding
      */
     function antispambot($email_address, $hex_encoding = 0)
     {
@@ -109897,6 +114982,7 @@ namespace {
      * @param string $email      Email address to verify.
      * @param bool   $deprecated Deprecated.
      * @return string|false Valid email address on success, false on failure.
+     * @phpstan-param false $deprecated
      */
     function is_email($email, $deprecated = \false)
     {
@@ -110121,6 +115207,8 @@ namespace {
      * is applied to the returned cleaned URL.
      *
      * @since 2.8.0
+     * @since 6.9.0 Prepends `https://` to the URL if it does not already contain a scheme
+     *              and the first item in `$protocols` is 'https'.
      *
      * @param string   $url       The URL to be cleaned.
      * @param string[] $protocols Optional. An array of acceptable protocols.
@@ -110140,6 +115228,8 @@ namespace {
      *
      * @since 2.8.0
      * @since 6.1.0 Turned into an alias for sanitize_url().
+     * @since 6.9.0 Prepends `https://` to the URL if it does not already contain a scheme
+     *              and the first item in `$protocols` is 'https'.
      *
      * @see sanitize_url()
      *
@@ -110157,6 +115247,8 @@ namespace {
      * @since 2.3.1
      * @since 2.8.0 Deprecated in favor of esc_url_raw().
      * @since 5.9.0 Restored (un-deprecated).
+     * @since 6.9.0 Prepends `https://` to the URL if it does not already contain a scheme
+     *              and the first item in `$protocols` is 'https'.
      *
      * @see esc_url()
      *
@@ -110601,9 +115693,8 @@ namespace {
      *
      * @param string|array $value String or array of data to slash.
      * @return string|array Slashed `$value`, in the same type as supplied.
-     * @phpstan-template T
-     * @phpstan-param T $value
-     * @phpstan-return T
+     * @phpstan-pure
+     * @phpstan-return ($value is string ? string : array)
      */
     function wp_slash($value)
     {
@@ -110630,8 +115721,8 @@ namespace {
      *
      * @since 3.6.0
      *
-     * @param string $content A string which might contain a URL.
-     * @return string|false The found URL.
+     * @param string $content A string which might contain an `A` element with a non-empty `href` attribute.
+     * @return string|false Database-escaped URL via {@see esc_url()} if found, otherwise `false`.
      */
     function get_url_in_content($content)
     {
@@ -110767,8 +115858,9 @@ namespace {
      *
      * @since 3.4.0
      *
-     * @param string $color
-     * @return string|null
+     * @param string $color The color value to sanitize. Can be with or without a #.
+     * @return string|null The sanitized hex color without the hash prefix,
+     *                     empty string if input is empty, or null if invalid.
      */
     function sanitize_hex_color_no_hash($color)
     {
@@ -110781,8 +115873,9 @@ namespace {
      *
      * @since 3.4.0
      *
-     * @param string $color
-     * @return string
+     * @param string $color The color value to add the hash prefix to. Can be with or without a #.
+     * @return string The color with the hash prefix if it's a valid hex color,
+     *                otherwise the original value.
      */
     function maybe_hash_hex_color($color)
     {
@@ -110825,13 +115918,13 @@ namespace {
      * @since 1.0.0
      * @since 5.3.0 Now returns an integer if `$type` is 'U'. Previously a string was returned.
      *
-     * @param string   $type Type of time to retrieve. Accepts 'mysql', 'timestamp', 'U',
-     *                       or PHP date format string (e.g. 'Y-m-d').
-     * @param int|bool $gmt  Optional. Whether to use GMT timezone. Default false.
+     * @param string $type Type of time to retrieve. Accepts 'mysql', 'timestamp', 'U',
+     *                     or PHP date format string (e.g. 'Y-m-d').
+     * @param bool   $gmt  Optional. Whether to use GMT timezone. Default false.
      * @return int|string Integer if `$type` is 'timestamp' or 'U', string otherwise.
      * @phpstan-return ($type is 'timestamp'|'U' ? int : string)
      */
-    function current_time($type, $gmt = 0)
+    function current_time($type, $gmt = \false)
     {
     }
     /**
@@ -110916,10 +116009,10 @@ namespace {
      *
      * @global WP_Locale $wp_locale WordPress date and time locale object.
      *
-     * @param string       $format    PHP date format.
-     * @param int          $timestamp Optional. Unix timestamp. Defaults to current time.
-     * @param DateTimeZone $timezone  Optional. Timezone to output result in. Defaults to timezone
-     *                                from site settings.
+     * @param string            $format    PHP date format.
+     * @param int|null          $timestamp Optional. Unix timestamp. Defaults to current time.
+     * @param DateTimeZone|null $timezone  Optional. Timezone to output result in. Defaults to timezone
+     *                                     from site settings.
      * @return string|false The date, translated if locale specifies it. False on invalid timestamp input.
      */
     function wp_date($format, $timestamp = \null, $timezone = \null)
@@ -111022,6 +116115,9 @@ namespace {
      *
      * @param string|array|object $data Data that might be serialized.
      * @return mixed A scalar data.
+     * @phpstan-template T of mixed
+     * @phpstan-param T $data
+     * @phpstan-return (T is array|object|string ? string : T)
      */
     function maybe_serialize($data)
     {
@@ -111065,45 +116161,47 @@ namespace {
     {
     }
     /**
-     * Retrieves post title from XMLRPC XML.
+     * Retrieves post title from XML-RPC XML.
      *
-     * If the title element is not part of the XML, then the default post title from
-     * the $post_default_title will be used instead.
+     * If the `title` element is not found in the XML, the default post title
+     * from the `$post_default_title` global will be used instead.
      *
      * @since 0.71
      *
      * @global string $post_default_title Default XML-RPC post title.
      *
-     * @param string $content XMLRPC XML Request content
-     * @return string Post title
+     * @param string $content XML-RPC XML Request content.
+     * @return string Post title.
      */
     function xmlrpc_getposttitle($content)
     {
     }
     /**
-     * Retrieves the post category or categories from XMLRPC XML.
+     * Retrieves the post category or categories from XML-RPC XML.
      *
-     * If the category element is not found, then the default post category will be
-     * used. The return type then would be what $post_default_category. If the
-     * category is found, then it will always be an array.
+     * If the `category` element is not found in the XML, the default post category
+     * from the `$post_default_category` global will be used instead.
+     * The return type will then be a string.
+     *
+     * If the `category` element is found, the return type will be an array.
      *
      * @since 0.71
      *
      * @global string $post_default_category Default XML-RPC post category.
      *
-     * @param string $content XMLRPC XML Request content
-     * @return string|array List of categories or category name.
+     * @param string $content XML-RPC XML Request content.
+     * @return string[]|string An array of category names or default category name.
      */
     function xmlrpc_getpostcategory($content)
     {
     }
     /**
-     * XMLRPC XML content without title and category elements.
+     * XML-RPC XML content without title and category elements.
      *
      * @since 0.71
      *
      * @param string $content XML-RPC XML Request content.
-     * @return string XMLRPC XML Request content without title and category elements.
+     * @return string XML-RPC XML Request content without title and category elements.
      */
     function xmlrpc_removepostdata($content)
     {
@@ -111116,6 +116214,7 @@ namespace {
      *
      * @param string $content Content to extract URLs from.
      * @return string[] Array of URLs found in passed string.
+     * @phpstan-return ($content is empty ? array{} : list<string>)
      */
     function wp_extract_urls($content)
     {
@@ -111150,6 +116249,7 @@ namespace {
      * @param string $url        URL to retrieve HTTP headers from.
      * @param bool   $deprecated Not Used.
      * @return \WpOrg\Requests\Utility\CaseInsensitiveDictionary|false Headers on success, false on failure.
+     * @phpstan-param false $deprecated
      */
     function wp_get_http_headers($url, $deprecated = \false)
     {
@@ -111174,10 +116274,10 @@ namespace {
     {
     }
     /**
-     * Builds URL query based on an associative and, or indexed array.
+     * Builds a URL query based on an associative or indexed array.
      *
-     * This is a convenient function for easily building url queries. It sets the
-     * separator to '&' and uses _http_build_query() function.
+     * This is a convenient function for easily building URL queries.
+     * It sets the separator to '&' and uses the _http_build_query() function.
      *
      * @since 2.3.0
      *
@@ -111410,6 +116510,7 @@ namespace {
      *
      * @param string $yn Character string containing either 'y' (yes) or 'n' (no).
      * @return bool True if 'y', false on anything else.
+     * @phpstan-pure
      * @phpstan-return ($yn is 'y' ? true : false)
      */
     function bool_from_yn($yn)
@@ -111690,12 +116791,14 @@ namespace {
     /**
      * Determines a writable directory for temporary files.
      *
-     * Function's preference is the return value of sys_get_temp_dir(),
-     * followed by your PHP temporary upload directory, followed by WP_CONTENT_DIR,
-     * before finally defaulting to /tmp/
+     * Function's preference is the return value of `sys_get_temp_dir()`,
+     * followed by the `upload_tmp_dir` value from `php.ini`, followed by `WP_CONTENT_DIR`,
+     * before finally defaulting to `/tmp/`.
+     *
+     * Note that `sys_get_temp_dir()` honors the `TMPDIR` environment variable.
      *
      * In the event that this function does not find a writable location,
-     * It may be overridden by the WP_TEMP_DIR constant in your wp-config.php file.
+     * it may be overridden by the `WP_TEMP_DIR` constant in your `wp-config.php` file.
      *
      * @since 2.5.0
      *
@@ -111898,6 +117001,8 @@ namespace {
      *   type: string,
      *   error: string|false,
      * }
+     * @phpstan-param non-empty-string $name
+     * @phpstan-param null $deprecated
      */
     function wp_upload_bits($name, $deprecated, $bits, $time = \null)
     {
@@ -111914,14 +117019,13 @@ namespace {
     {
     }
     /**
-     * Returns first matched extension for the mime-type,
-     * as mapped from wp_get_mime_types().
+     * Returns the first matched extension for the mime type, as mapped from wp_get_mime_types().
      *
      * @since 5.8.1
      *
-     * @param string $mime_type
-     *
-     * @return string|false
+     * @param string $mime_type The mime type to search.
+     * @return string|false The first matching file extension, or false if no extensions are found
+     *                      for the given mime type.
      */
     function wp_get_default_extension_for_mime_type($mime_type)
     {
@@ -112187,7 +117291,7 @@ namespace {
     /**
      * Kills WordPress execution and displays XML response with an error message.
      *
-     * This is the handler for wp_die() when processing XMLRPC requests.
+     * This is the handler for wp_die() when processing XML-RPC requests.
      *
      * @since 3.2.0
      * @access private
@@ -112290,10 +117394,6 @@ namespace {
      * @param mixed $value Variable (usually an array or object) to encode as JSON.
      * @param int   $depth Maximum depth to walk through $value. Must be greater than 0.
      * @return mixed The sanitized data that shall be encoded to JSON.
-     * @phpstan-template T
-     * @phpstan-param T $value
-     * @phpstan-param int<1, max> $depth
-     * @phpstan-return T
      */
     function _wp_json_sanity_check($value, $depth)
     {
@@ -112684,6 +117784,8 @@ namespace {
      * Changes to this function should follow updates in the client
      * with the same logic.
      *
+     * @since 5.8.0
+     *
      * @link https://github.com/lodash/lodash/blob/4.17/dist/lodash.js#L14369
      * @link https://github.com/lodash/lodash/blob/4.17/dist/lodash.js#L278
      * @link https://github.com/lodash-php/lodash-php/blob/master/src/String/kebabCase.php
@@ -112703,10 +117805,11 @@ namespace {
      *
      * @param mixed $data Variable to check.
      * @return bool Whether the variable is a list.
-     * @template T of mixed
+     * @phpstan-template T of mixed
      * @phpstan-param T $data
-     * @phpstan-assert-if-true (T is list ? T : array<int, value-of<T>>) $data
-     * @phpstan-return (T is array ? (key-of<T> is int ? true : false) : false)
+     * @phpstan-assert-if-true (T is list ? T : array<int, mixed>) $data
+     * @phpstan-pure
+     * @phpstan-return (T is array<int, mixed> ? true : false)
      */
     function wp_is_numeric_array($data)
     {
@@ -113460,7 +118563,8 @@ namespace {
      *
      * @since 3.1.3
      *
-     * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+     * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options
+     * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/frame-ancestors
      */
     function send_frame_options_header()
     {
@@ -113635,6 +118739,7 @@ namespace {
      *
      * @param string $tag An HTML tag name. Example: 'video'.
      * @return string Tag RegEx.
+     * @phpstan-return non-falsy-string
      */
     function get_tag_regex($tag)
     {
@@ -113813,6 +118918,8 @@ namespace {
      * @since 4.7.0
      *
      * @return string UUID.
+     * @phpstan-impure
+     * @phpstan-return lowercase-string&non-falsy-string
      */
     function wp_generate_uuid4()
     {
@@ -113826,6 +118933,12 @@ namespace {
      * @param int   $version Specify which version of UUID to check against. Default is none,
      *                       to accept any UUID version. Otherwise, only version allowed is `4`.
      * @return bool The string is a valid UUID or false on failure.
+     * @phpstan-param TUuid $uuid
+     * @phpstan-param 4 $version
+     * @phpstan-template TUuid of string
+     * @phpstan-assert-if-true =TUuid&lowercase-string&non-falsy-string $uuid
+     * @phpstan-pure
+     * @phpstan-return ($version is 4|null ? bool : false)
      */
     function wp_is_uuid($uuid, $version = \null)
     {
@@ -113842,7 +118955,8 @@ namespace {
      *
      * @param string $prefix Prefix for the returned ID.
      * @return string Unique ID.
-     * @phpstan-return ($prefix is empty ? numeric-string : ($prefix is numeric ? numeric-string : string))
+     * @phpstan-impure
+     * @phpstan-return ($prefix is empty ? numeric-string : ($prefix is numeric ? numeric-string : string))&non-falsy-string
      */
     function wp_unique_id($prefix = '')
     {
@@ -113860,8 +118974,28 @@ namespace {
      *
      * @param string $prefix Optional. Prefix for the returned ID. Default empty string.
      * @return string Incremental ID per prefix.
+     * @phpstan-impure
+     * @phpstan-return ($prefix is empty ? numeric-string : ($prefix is numeric ? numeric-string : string))&non-falsy-string
      */
     function wp_unique_prefixed_id($prefix = '')
+    {
+    }
+    /**
+     * Generates a unique ID based on the structure and values of a given array.
+     *
+     * This function serializes the array into a JSON string and generates a hash
+     * that serves as a unique identifier. Optionally, a prefix can be added to
+     * the generated ID for context or categorization.
+     *
+     * @since 6.8.0
+     *
+     * @param array  $data   The input array to generate an ID from.
+     * @param string $prefix Optional. A prefix to prepend to the generated ID. Default empty string.
+     * @return string The generated unique ID for the array.
+     * @phpstan-param non-empty-array $data
+     * @phpstan-return ($prefix is lowercase-string ? lowercase-string&non-falsy-string : non-falsy-string)
+     */
+    function wp_unique_id_from_values(array $data, string $prefix = ''): string
     {
     }
     /**
@@ -114171,6 +119305,7 @@ namespace {
      * @since 6.7.0
      *
      * @return string The current WordPress version.
+     * @phpstan-return non-falsy-string
      */
     function wp_get_wp_version()
     {
@@ -114308,6 +119443,7 @@ namespace {
      *
      * @param string $message The message to hash.
      * @return string The hash of the message.
+     * @phpstan-return non-falsy-string
      */
     function wp_fast_hash(
         #[\SensitiveParameter]
@@ -114335,23 +119471,6 @@ namespace {
         string $message,
         string $hash
     ): bool
-    {
-    }
-    /**
-     * Generates a unique ID based on the structure and values of a given array.
-     *
-     * This function serializes the array into a JSON string and generates a hash
-     * that serves as a unique identifier. Optionally, a prefix can be added to
-     * the generated ID for context or categorization.
-     *
-     * @since 6.8.0
-     *
-     * @param array  $data   The input array to generate an ID from.
-     * @param string $prefix Optional. A prefix to prepend to the generated ID. Default ''.
-     *
-     * @return string The generated unique ID for the array.
-     */
-    function wp_unique_id_from_values(array $data, string $prefix = ''): string
     {
     }
     /**
@@ -114432,6 +119551,7 @@ namespace {
      * @since 2.1.0
      * @since 4.3.0 A return value was added.
      * @since 6.3.0 The $in_footer parameter of type boolean was overloaded to be an $args parameter of type array.
+     * @since 6.9.0 The $fetchpriority parameter of type string was added to the $args parameter of type array.
      *
      * @param string           $handle    Name of the script. Should be unique.
      * @param string|false     $src       Full URL of the script, or path of the script relative to the WordPress root directory.
@@ -114445,13 +119565,15 @@ namespace {
      *     Optional. An array of additional script loading strategies. Default empty array.
      *     Otherwise, it may be a boolean in which case it determines whether the script is printed in the footer. Default false.
      *
-     *     @type string    $strategy     Optional. If provided, may be either 'defer' or 'async'.
-     *     @type bool      $in_footer    Optional. Whether to print the script in the footer. Default 'false'.
+     *     @type string    $strategy      Optional. If provided, may be either 'defer' or 'async'.
+     *     @type bool      $in_footer     Optional. Whether to print the script in the footer. Default 'false'.
+     *     @type string    $fetchpriority Optional. The fetch priority for the script. Default 'auto'.
      * }
      * @return bool Whether the script has been registered. True on success, false on failure.
      * @phpstan-param bool|array{
      *   strategy?: string,
      *   in_footer?: bool,
+     *   fetchpriority?: string,
      * } $args
      */
     function wp_register_script($handle, $src, $deps = array(), $ver = \false, $args = array())
@@ -114534,6 +119656,7 @@ namespace {
      *
      * @since 2.1.0
      * @since 6.3.0 The $in_footer parameter of type boolean was overloaded to be an $args parameter of type array.
+     * @since 6.9.0 The $fetchpriority parameter of type string was added to the $args parameter of type array.
      *
      * @param string           $handle    Name of the script. Should be unique.
      * @param string           $src       Full URL of the script, or path of the script relative to the WordPress root directory.
@@ -114547,12 +119670,14 @@ namespace {
      *     Optional. An array of additional script loading strategies. Default empty array.
      *     Otherwise, it may be a boolean in which case it determines whether the script is printed in the footer. Default false.
      *
-     *     @type string    $strategy     Optional. If provided, may be either 'defer' or 'async'.
-     *     @type bool      $in_footer    Optional. Whether to print the script in the footer. Default 'false'.
+     *     @type string    $strategy      Optional. If provided, may be either 'defer' or 'async'.
+     *     @type bool      $in_footer     Optional. Whether to print the script in the footer. Default 'false'.
+     *     @type string    $fetchpriority Optional. The fetch priority for the script. Default 'auto'.
      * }
      * @phpstan-param bool|array{
      *   strategy?: string,
      *   in_footer?: bool,
+     *   fetchpriority?: string,
      * } $args
      */
     function wp_enqueue_script($handle, $src = '', $deps = array(), $ver = \false, $args = array())
@@ -114595,9 +119720,10 @@ namespace {
      * Works only if the script has already been registered.
      *
      * Possible values for $key and $value:
-     * 'conditional' string Comments for IE 6, lte IE 7, etc.
+     * 'strategy' string 'defer' or 'async'.
      *
      * @since 4.2.0
+     * @since 6.9.0 Updated possible values to remove reference to 'conditional' and add 'strategy'.
      *
      * @see WP_Dependencies::add_data()
      *
@@ -114752,7 +119878,6 @@ namespace {
      * Works only if the stylesheet has already been registered.
      *
      * Possible values for $key and $value:
-     * 'conditional' string      Comments for IE 6, lte IE 7 etc.
      * 'rtl'         bool|string To declare an RTL stylesheet.
      * 'suffix'      string      Optional suffix, used in combination with RTL.
      * 'alt'         bool        For rel="alternate stylesheet".
@@ -114765,13 +119890,15 @@ namespace {
      * @since 3.6.0
      * @since 5.8.0 Added 'path' as an official value for $key.
      *              See {@see wp_maybe_inline_styles()}.
+     * @since 6.9.0 'conditional' value changed. If the 'conditional' parameter is present
+     *              the stylesheet will be ignored.
      *
      * @param string $handle Name of the stylesheet.
      * @param string $key    Name of data point for which we're storing a value.
-     *                       Accepts 'conditional', 'rtl' and 'suffix', 'alt', 'title' and 'path'.
+     *                       Accepts 'rtl' and 'suffix', 'alt', 'title' and 'path'.
      * @param mixed  $value  String containing the CSS data to be added.
      * @return bool True on success, false on failure.
-     * @phpstan-param 'conditional'|'rtl'|'suffix'|'alt'|'title'|'path' $key
+     * @phpstan-param 'rtl'|'suffix'|'alt'|'title'|'path' $key
      */
     function wp_style_add_data($handle, $key, $value)
     {
@@ -116695,6 +121822,8 @@ namespace {
      * URL. The URL, and every URL it redirects to, are validated with wp_http_validate_url()
      * to avoid Server Side Request Forgery attacks (SSRF).
      *
+     * The only supported protocols are `http` and `https`.
+     *
      * @since 3.6.0
      *
      * @see wp_remote_request() For more information on the response array format.
@@ -116738,6 +121867,8 @@ namespace {
      * This function is ideal when the HTTP request is being made to an arbitrary
      * URL. The URL, and every URL it redirects to, are validated with wp_http_validate_url()
      * to avoid Server Side Request Forgery attacks (SSRF).
+     *
+     * The only supported protocols are `http` and `https`.
      *
      * @since 3.6.0
      *
@@ -116783,6 +121914,8 @@ namespace {
      * URL. The URL, and every URL it redirects to, are validated with wp_http_validate_url()
      * to avoid Server Side Request Forgery attacks (SSRF).
      *
+     * The only supported protocols are `http` and `https`.
+     *
      * @since 3.6.0
      *
      * @see wp_remote_request() For more information on the response array format.
@@ -116826,6 +121959,8 @@ namespace {
      * This function is ideal when the HTTP request is being made to an arbitrary
      * URL. The URL, and every URL it redirects to, are validated with wp_http_validate_url()
      * to avoid Server Side Request Forgery attacks (SSRF).
+     *
+     * The only supported protocols are `http` and `https`.
      *
      * @since 3.6.0
      *
@@ -116873,6 +122008,8 @@ namespace {
      *  - Default 'POST' for wp_remote_post()
      *  - Default 'HEAD' for wp_remote_head()
      *
+     * Important: If the URL is user-controlled, use `wp_safe_remote_request()` instead.
+     *
      * @since 2.7.0
      *
      * @see WP_Http::request() For information on default arguments.
@@ -116908,6 +122045,8 @@ namespace {
     }
     /**
      * Performs an HTTP request using the GET method and returns its response.
+     *
+     * Important: If the URL is user-controlled, use `wp_safe_remote_get()` instead.
      *
      * @since 2.7.0
      *
@@ -116946,6 +122085,8 @@ namespace {
     /**
      * Performs an HTTP request using the POST method and returns its response.
      *
+     * Important: If the URL is user-controlled, use `wp_safe_remote_post()` instead.
+     *
      * @since 2.7.0
      *
      * @see wp_remote_request() For more information on the response array format.
@@ -116982,6 +122123,8 @@ namespace {
     }
     /**
      * Performs an HTTP request using the HEAD method and returns its response.
+     *
+     * Important: If the URL is user-controlled, use `wp_safe_remote_head()` instead.
      *
      * @since 2.7.0
      *
@@ -117182,26 +122325,31 @@ namespace {
     {
     }
     /**
-     * Validates a URL for safe use in the HTTP API.
+     * Validates a URL as safe for use in the HTTP API.
+     *
+     * The only supported protocols are `http` and `https`.
      *
      * Examples of URLs that are considered unsafe:
      *
-     * - ftp://example.com/caniload.php - Invalid protocol - only http and https are allowed.
-     * - http:///example.com/caniload.php - Malformed URL.
-     * - http://user:pass@example.com/caniload.php - Login information.
-     * - http://example.invalid/caniload.php - Invalid hostname, as the IP cannot be looked up in DNS.
+     * - `ftp://example.com/caniload.php` - Invalid protocol - only http and https are allowed.
+     * - `http:///example.com/caniload.php` - Malformed URL.
+     * - `http://user:pass@example.com/caniload.php` - Login information.
+     * - `http://example.invalid/caniload.php` - Invalid hostname, as the IP cannot be looked up in DNS.
      *
-     * Examples of URLs that are considered unsafe by default:
+     * Examples of URLs that are considered unsafe by default but can be allowed with filters:
      *
-     * - http://192.168.0.1/caniload.php - IPs from LAN networks.
+     * - `http://192.168.0.1/caniload.php` - IP address from LAN network.
      *   This can be changed with the {@see 'http_request_host_is_external'} filter.
-     * - http://198.143.164.252:81/caniload.php - By default, only 80, 443, and 8080 ports are allowed.
+     * - `http://198.143.164.252:81/caniload.php` - By default, only ports 80, 443, and 8080 are allowed.
      *   This can be changed with the {@see 'http_allowed_safe_ports'} filter.
      *
      * @since 3.5.2
      *
      * @param string $url Request URL.
-     * @return string|false URL or false on failure.
+     * @return string|false Returns false if the URL is not safe, or the original URL if it is safe.
+     * @phpstan-template TUrl of string
+     * @phpstan-param TUrl $url
+     * @phpstan-return (TUrl is numeric|'' ? false : TUrl|false)
      */
     function wp_http_validate_url($url)
     {
@@ -118042,7 +123190,19 @@ namespace {
     /**
      * Determines if a Unicode codepoint is valid.
      *
+     * The definition of a valid Unicode codepoint is taken from the XML definition:
+     *
+     * > Characters
+     * >
+     * > …
+     * > Legal characters are tab, carriage return, line feed, and the legal characters of
+     * > Unicode and ISO/IEC 10646.
+     * > …
+     * > Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+     *
      * @since 2.7.0
+     *
+     * @see https://www.w3.org/TR/xml/#charsets
      *
      * @param int $i Unicode codepoint.
      * @return bool Whether or not the codepoint is a valid Unicode codepoint.
@@ -118253,10 +123413,12 @@ namespace {
      * @since 6.4.0 Added support for `writing-mode`.
      * @since 6.5.0 Added support for `background-repeat`.
      * @since 6.6.0 Added support for `grid-column`, `grid-row`, and `container-type`.
+     * @since 6.9.0 Added support for `white-space`.
      *
      * @param string $css        A string of CSS rules.
      * @param string $deprecated Not used.
      * @return string Filtered string of CSS rules.
+     * @phpstan-param '' $deprecated
      */
     function safecss_filter_attr($css, $deprecated = '')
     {
@@ -118801,6 +123963,7 @@ namespace {
      * @param string|false $plugin_rel_path Optional. Relative path to WP_PLUGIN_DIR where the .mo file resides.
      *                                      Default false.
      * @return bool True when textdomain is successfully loaded, false otherwise.
+     * @phpstan-param false $deprecated
      */
     function load_plugin_textdomain($domain, $deprecated = \false, $plugin_rel_path = \false)
     {
@@ -118872,6 +124035,8 @@ namespace {
      * @since 5.1.0 The `$domain` parameter was made optional.
      *
      * @see WP_Scripts::set_translations()
+     *
+     * @global WP_Textdomain_Registry $wp_textdomain_registry WordPress Textdomain Registry.
      *
      * @param string $handle Name of the script to register a translation domain to.
      * @param string $domain Optional. Text domain. Default 'default'.
@@ -119185,6 +124350,7 @@ namespace {
      *
      * @return string Locale-specific word count type. Possible values are `characters_excluding_spaces`,
      *                `characters_including_spaces`, or `words`. Defaults to `words`.
+     * @phpstan-return 'characters_excluding_spaces'|'characters_including_spaces'|'words'
      */
     function wp_get_word_count_type()
     {
@@ -119321,7 +124487,7 @@ namespace {
      *                               Default false.
      * @return string The page permalink.
      */
-    function get_page_link($post = \false, $leavename = \false, $sample = \false)
+    function get_page_link($post = 0, $leavename = \false, $sample = \false)
     {
     }
     /**
@@ -119340,7 +124506,7 @@ namespace {
      *                               Default false.
      * @return string The page permalink.
      */
-    function _get_page_link($post = \false, $leavename = \false, $sample = \false)
+    function _get_page_link($post = 0, $leavename = \false, $sample = \false)
     {
     }
     /**
@@ -119454,7 +124620,7 @@ namespace {
      * @param string $feed      Optional. Feed type. Possible values include 'rss2', 'atom'.
      *                          Default is the value of get_default_feed().
      */
-    function post_comments_feed_link($link_text = '', $post_id = '', $feed = '')
+    function post_comments_feed_link($link_text = '', $post_id = 0, $feed = '')
     {
     }
     /**
@@ -119712,6 +124878,7 @@ namespace {
      * @param string      $deprecated   Not used.
      * @param bool        $force_delete Optional. Whether to bypass Trash and force deletion. Default false.
      * @return string|void The delete post link URL for the given post.
+     * @phpstan-param '' $deprecated
      */
     function get_delete_post_link($post = 0, $deprecated = '', $force_delete = \false)
     {
@@ -120969,6 +126136,8 @@ namespace {
      *                                  - 'monsterid' (a monster)
      *                                  - 'wavatar' (a cartoon face)
      *                                  - 'identicon' (the "quilt", a geometric pattern)
+     *                                  - 'initials' (initials based avatar with background color)
+     *                                  - 'color' (generated background color)
      *                                  - 'mystery', 'mm', or 'mysteryman' (The Oyster Man)
      *                                  - 'blank' (transparent GIF)
      *                                  - 'gravatar_default' (the Gravatar logo)
@@ -121033,6 +126202,8 @@ namespace {
      *                                  - 'monsterid' (a monster)
      *                                  - 'wavatar' (a cartoon face)
      *                                  - 'identicon' (the "quilt", a geometric pattern)
+     *                                  - 'initials' (initials based avatar with background color)
+     *                                  - 'color' (generated background color)
      *                                  - 'mystery', 'mm', or 'mysteryman' (The Oyster Man)
      *                                  - 'blank' (transparent GIF)
      *                                  - 'gravatar_default' (the Gravatar logo)
@@ -121183,6 +126354,7 @@ namespace {
      * @since 6.2.0
      *
      * @return string[] An array of URL hosts.
+     * @phpstan-return array<lowercase-string>
      */
     function wp_internal_hosts()
     {
@@ -121206,6 +126378,7 @@ namespace {
      * @since 4.4.0
      *
      * @return string The HTTP protocol. Default: HTTP/1.0.
+     * @phpstan-return 'HTTP/1.0'|'HTTP/1.1'|'HTTP/2'|'HTTP/2.0'|'HTTP/3'
      */
     function wp_get_server_protocol()
     {
@@ -121236,15 +126409,18 @@ namespace {
     {
     }
     /**
-     * Checks for the required PHP version, and the mysqli extension or
-     * a database drop-in.
+     * Checks the server requirements.
+     *
+     *   - PHP version
+     *   - PHP extensions
+     *   - MySQL or MariaDB version (unless a database drop-in is present)
      *
      * Dies if requirements are not met.
      *
      * @since 3.0.0
      * @access private
      *
-     * @global string   $required_php_version    The required PHP version string.
+     * @global string   $required_php_version    The minimum required PHP version string.
      * @global string[] $required_php_extensions The names of required PHP extensions.
      * @global string   $wp_version              The WordPress version string.
      */
@@ -121362,8 +126538,9 @@ namespace {
      * @since 0.71
      * @access private
      *
-     * @global float $timestart Unix timestamp set at the beginning of the page load.
      * @see timer_stop()
+     *
+     * @global float $timestart Unix timestamp set at the beginning of the page load.
      *
      * @return bool Always returns true.
      */
@@ -121764,6 +126941,7 @@ namespace {
      * @return int A non-negative integer.
      * @phpstan-template T of int
      * @phpstan-param T|scalar|array|resource|null $maybeint
+     * @phpstan-pure
      * @phpstan-return ($maybeint is T&int<0, max> ? T : ($maybeint is int<min, -1> ? int<1, max> : ($maybeint is empty ? 0 : ($maybeint is numeric-string ? int<0, max> : ($maybeint is string ? 0 : ($maybeint is true|non-empty-array ? 1 : ($maybeint is bool ? 0|1 : int<0, max>)))))))
      */
     function absint($maybeint)
@@ -122718,17 +127896,18 @@ namespace {
     {
     }
     /**
-     * Prints a CSS rule to fix potential visual issues with images using `sizes=auto`.
+     * Enqueues a CSS rule to fix potential visual issues with images using `sizes=auto`.
      *
      * This rule overrides the similar rule in the default user agent stylesheet, to avoid images that use e.g.
      * `width: auto` or `width: fit-content` to appear smaller.
      *
-     * @since 6.7.1
+     * @since 6.9.0
+     *
      * @see https://html.spec.whatwg.org/multipage/rendering.html#img-contain-size
      * @see https://core.trac.wordpress.org/ticket/62413
-     * @phpstan-return void
+     * @see https://core.trac.wordpress.org/ticket/62731
      */
-    function wp_print_auto_sizes_contain_css_fix()
+    function wp_enqueue_img_auto_sizes_contain_css_fix(): void
     {
     }
     /**
@@ -123613,6 +128792,8 @@ namespace {
     /**
      * Registers the personal data exporter for media.
      *
+     * @since 4.9.6
+     *
      * @param array[] $exporters An array of personal data exporters, keyed by their ID.
      * @return array[] Updated array of personal data exporters.
      */
@@ -123824,12 +129005,14 @@ namespace {
     /**
      * Adds metadata for the specified object.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 2.9.0
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $meta_type  Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                           or any other object type with an associated meta table.
+     * @param string $meta_type  Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                           'user', or any other object type with an associated meta table.
      * @param int    $object_id  ID of the object metadata is for.
      * @param string $meta_key   Metadata key.
      * @param mixed  $meta_value Metadata value. Arrays and objects are stored as serialized data and
@@ -123851,12 +129034,14 @@ namespace {
      * Updates metadata for the specified object. If no value already exists for the specified object
      * ID and metadata key, the metadata will be added.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 2.9.0
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $meta_type  Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                           or any other object type with an associated meta table.
+     * @param string $meta_type  Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                           'user', or any other object type with an associated meta table.
      * @param int    $object_id  ID of the object metadata is for.
      * @param string $meta_key   Metadata key.
      * @param mixed  $meta_value Metadata value. Must be serializable if non-scalar.
@@ -123874,12 +129059,14 @@ namespace {
     /**
      * Deletes metadata for the specified object.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 2.9.0
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $meta_type  Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                           or any other object type with an associated meta table.
+     * @param string $meta_type  Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                           'user', or any other object type with an associated meta table.
      * @param int    $object_id  ID of the object metadata is for.
      * @param string $meta_key   Metadata key.
      * @param mixed  $meta_value Optional. Metadata value. Must be serializable if non-scalar.
@@ -123912,8 +129099,8 @@ namespace {
      * @see get_metadata_raw()
      * @see get_metadata_default()
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $object_id ID of the object metadata is for.
      * @param string $meta_key  Optional. Metadata key. If not specified, retrieve all metadata for
      *                          the specified object. Default empty string.
@@ -123939,8 +129126,8 @@ namespace {
      *
      * @since 5.5.0
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $object_id ID of the object metadata is for.
      * @param string $meta_key  Optional. Metadata key. If not specified, retrieve all metadata for
      *                          the specified object. Default empty string.
@@ -123963,8 +129150,8 @@ namespace {
      *
      * @since 5.5.0
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $object_id ID of the object metadata is for.
      * @param string $meta_key  Metadata key.
      * @param bool   $single    Optional. If true, return only the first value of the specified `$meta_key`.
@@ -123980,8 +129167,8 @@ namespace {
      *
      * @since 3.3.0
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $object_id ID of the object metadata is for.
      * @param string $meta_key  Metadata key.
      * @return bool Whether a meta field with the given key exists.
@@ -123996,8 +129183,8 @@ namespace {
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $meta_id   ID for a specific meta row.
      * @return stdClass|false {
      *     Metadata object, or boolean `false` if the metadata doesn't exist.
@@ -124006,6 +129193,7 @@ namespace {
      *     @type mixed  $meta_value The unserialized meta value.
      *     @type string $meta_id    Optional. The meta ID when the meta type is any value except 'user'.
      *     @type string $umeta_id   Optional. The meta ID when the meta type is 'user'.
+     *     @type string $blog_id    Optional. The object ID when the meta type is 'blog'.
      *     @type string $post_id    Optional. The object ID when the meta type is 'post'.
      *     @type string $comment_id Optional. The object ID when the meta type is 'comment'.
      *     @type string $term_id    Optional. The object ID when the meta type is 'term'.
@@ -124016,6 +129204,7 @@ namespace {
      *   meta_value: mixed,
      *   meta_id: string,
      *   umeta_id: string,
+     *   blog_id: string,
      *   post_id: string,
      *   comment_id: string,
      *   term_id: string,
@@ -124032,8 +129221,8 @@ namespace {
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string       $meta_type  Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                                 or any other object type with an associated meta table.
+     * @param string       $meta_type  Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                                 'user', or any other object type with an associated meta table.
      * @param int          $meta_id    ID for a specific meta row.
      * @param string       $meta_value Metadata value. Must be serializable if non-scalar.
      * @param string|false $meta_key   Optional. You can provide a meta key to update it. Default false.
@@ -124049,8 +129238,8 @@ namespace {
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @param int    $meta_id   ID for a specific meta row.
      * @return bool True on successful delete, false on failure.
      */
@@ -124064,8 +129253,8 @@ namespace {
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string       $meta_type  Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                                 or any other object type with an associated meta table.
+     * @param string       $meta_type  Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                                 'user', or any other object type with an associated meta table.
      * @param string|int[] $object_ids Array or comma delimited list of object IDs to update cache for.
      * @return array|false Metadata cache for the specified objects, or false on failure.
      */
@@ -124116,8 +129305,8 @@ namespace {
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
-     * @param string $type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                     or any other object type with an associated meta table.
+     * @param string $type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                     'user', or any other object type with an associated meta table.
      * @return string|false Metadata table name, or false if no metadata table exists
      */
     function _get_meta_table($type)
@@ -124129,8 +129318,8 @@ namespace {
      * @since 3.1.3
      *
      * @param string $meta_key  Metadata key.
-     * @param string $meta_type Optional. Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table. Default empty string.
+     * @param string $meta_type Optional. Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table. Default empty string.
      * @return bool Whether the meta key is considered protected.
      */
     function is_protected_meta($meta_key, $meta_type = '')
@@ -124144,8 +129333,8 @@ namespace {
      *
      * @param string $meta_key       Metadata key.
      * @param mixed  $meta_value     Metadata value to sanitize.
-     * @param string $object_type    Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                               or any other object type with an associated meta table.
+     * @param string $object_type    Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                               'user', or any other object type with an associated meta table.
      * @param string $object_subtype Optional. The subtype of the object type. Default empty string.
      * @return mixed Sanitized $meta_value.
      */
@@ -124159,7 +129348,7 @@ namespace {
      * an object subtype is omitted, the meta key will be registered for the entire object type, however it can be partly
      * overridden in case a more specific meta key of the same name exists for the same object type and a subtype.
      *
-     * If an object type does not support any subtypes, such as users or comments, you should commonly call this function
+     * If an object type does not support any subtypes, such as blogs, users, or comments, you should commonly call this function
      * without passing a subtype.
      *
      * @since 3.3.0
@@ -124172,8 +129361,8 @@ namespace {
      * @since 6.4.0 The `$revisions_enabled` argument was added to the arguments array.
      * @since 6.7.0 The `label` argument was added to the arguments array.
      *
-     * @param string       $object_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                                  or any other object type with an associated meta table.
+     * @param string       $object_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                                  'user', or any other object type with an associated meta table.
      * @param string       $meta_key    Meta key to register.
      * @param array        $args {
      *     Data used to describe the meta key when registered.
@@ -124216,6 +129405,7 @@ namespace {
      *   show_in_rest?: bool|array,
      *   revisions_enabled?: bool,
      * } $args
+     * @phpstan-param null $deprecated
      */
     function register_meta($object_type, $meta_key, $args, $deprecated = \null)
     {
@@ -124230,8 +129420,8 @@ namespace {
      * @param string $meta_key  Metadata key.
      * @param bool   $single    If true, return only the first value of the specified `$meta_key`.
      *                          This parameter has no effect if `$meta_key` is not specified.
-     * @param string $meta_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                          or any other object type with an associated meta table.
+     * @param string $meta_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                          'user', or any other object type with an associated meta table.
      * @return mixed An array of default values if `$single` is false.
      *               The default value of the meta field if `$single` is true.
      */
@@ -124244,8 +129434,8 @@ namespace {
      * @since 4.6.0
      * @since 4.9.8 The `$object_subtype` parameter was added.
      *
-     * @param string $object_type    Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                               or any other object type with an associated meta table.
+     * @param string $object_type    Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                               'user', or any other object type with an associated meta table.
      * @param string $meta_key       Metadata key.
      * @param string $object_subtype Optional. The subtype of the object type. Default empty string.
      * @return bool True if the meta key is registered to the object type and, if provided,
@@ -124260,8 +129450,8 @@ namespace {
      * @since 4.6.0
      * @since 4.9.8 The `$object_subtype` parameter was added.
      *
-     * @param string $object_type    Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                               or any other object type with an associated meta table.
+     * @param string $object_type    Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                               'user', or any other object type with an associated meta table.
      * @param string $meta_key       Metadata key.
      * @param string $object_subtype Optional. The subtype of the object type. Default empty string.
      * @return bool True if successful. False if the meta key was not registered.
@@ -124275,8 +129465,8 @@ namespace {
      * @since 4.6.0
      * @since 4.9.8 The `$object_subtype` parameter was added.
      *
-     * @param string $object_type    Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                               or any other object type with an associated meta table.
+     * @param string $object_type    Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                               'user', or any other object type with an associated meta table.
      * @param string $object_subtype Optional. The subtype of the object type. Default empty string.
      * @return array[] List of registered metadata args, keyed by their meta keys.
      */
@@ -124291,8 +129481,8 @@ namespace {
      *
      * @since 4.6.0
      *
-     * @param string $object_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                            or any other object type with an associated meta table.
+     * @param string $object_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                            'user', or any other object type with an associated meta table.
      * @param int    $object_id   ID of the object the metadata is for.
      * @param string $meta_key    Optional. Registered metadata key. If not specified, retrieve all registered
      *                            metadata for the specified object.
@@ -124323,8 +129513,8 @@ namespace {
      *
      * @since 4.9.8
      *
-     * @param string $object_type Type of object metadata is for. Accepts 'post', 'comment', 'term', 'user',
-     *                            or any other object type with an associated meta table.
+     * @param string $object_type Type of object metadata is for. Accepts 'blog', 'post', 'comment', 'term',
+     *                            'user', or any other object type with an associated meta table.
      * @param int    $object_id   ID of the object to retrieve its subtype.
      * @return string The object subtype or an empty string if unspecified subtype.
      */
@@ -124485,6 +129675,7 @@ namespace {
      * @param mixed  $value      The option value.
      * @param mixed  $deprecated Not used.
      * @return bool True if the value was updated, false otherwise.
+     * @phpstan-param null $deprecated
      */
     function update_blog_option($id, $option, $value, $deprecated = \null)
     {
@@ -124510,6 +129701,7 @@ namespace {
      * @param int  $new_blog_id The ID of the blog to switch to. Default: current blog.
      * @param bool $deprecated  Not used.
      * @return true Always returns true.
+     * @phpstan-param null $deprecated
      */
     function switch_to_blog($new_blog_id, $deprecated = \null)
     {
@@ -124622,6 +129814,7 @@ namespace {
      *                          Can be used for pagination. Default 0.
      * @param int   $quantity   Optional. The maximum number of blogs to retrieve. Default 40.
      * @return array The list of blogs.
+     * @phpstan-param '' $deprecated
      */
     function get_last_updated($deprecated = '', $start = 0, $quantity = 40)
     {
@@ -125551,6 +130744,7 @@ namespace {
      * @param WP_Site|int $blog_id    The new site's object or ID.
      * @param string      $deprecated Not used.
      * @return bool
+     * @phpstan-param '' $deprecated
      */
     function newblog_notify_siteadmin($blog_id, $deprecated = '')
     {
@@ -125718,6 +130912,7 @@ namespace {
      * @global wpdb $wpdb WordPress database abstraction object.
      *
      * @param string $deprecated Not used.
+     * @phpstan-param '' $deprecated
      */
     function update_posts_count($deprecated = '')
     {
@@ -125751,6 +130946,7 @@ namespace {
      * @phpstan-return array{
      *   0: string,
      * }
+     * @phpstan-param '' $deprecated
      */
     function redirect_this_site($deprecated = '')
     {
@@ -125910,10 +131106,10 @@ namespace {
      *
      * @since 2.8.5
      *
-     * @param bool $force
+     * @param bool|null $force Optional. Whether to force SSL in admin screens. Default null.
      * @return bool True if forced, false if not forced.
      */
-    function force_ssl_content($force = '')
+    function force_ssl_content($force = \null)
     {
     }
     /**
@@ -126151,9 +131347,9 @@ namespace {
     /**
      * Retrieves the closest matching network for a domain and path.
      *
-     * @since 3.9.0
+     * {@internal In 4.4.0, converted to a wrapper for WP_Network::get_by_path()}
      *
-     * @internal In 4.4.0, converted to a wrapper for WP_Network::get_by_path()
+     * @since 3.9.0
      *
      * @param string   $domain   Domain to check.
      * @param string   $path     Path to check.
@@ -126271,11 +131467,11 @@ namespace {
     /**
      * Retrieves an object containing information about the requested network.
      *
+     * {@internal In 4.6.0, converted to use get_network()}
+     *
      * @since 3.9.0
      * @deprecated 4.7.0 Use get_network()
      * @see get_network()
-     *
-     * @internal In 4.6.0, converted to use get_network()
      *
      * @param object|int $network The network's database row or ID.
      * @return WP_Network|false Object containing network information if found, false if not.
@@ -126573,7 +131769,7 @@ namespace {
      *   meta_type_key?: string,
      *   meta_query?: array,
      * } $args See WP_Site_Query::__construct()
-     * @phpstan-return ($args is array{count: true}&array ? int : ($args is array{fields: 'ids'}&array ?  array<int, int> : array<int, \WP_Site>))
+     * @phpstan-return ($args is array{count: true}&array ? int : ($args is array{fields: 'ids'}&array ? array<int, int> : array<int, \WP_Site>))
      */
     function get_sites($args = array())
     {
@@ -126753,6 +131949,8 @@ namespace {
     /**
      * Adds metadata to a site.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 5.1.0
      *
      * @param int    $site_id    Site ID.
@@ -126777,6 +131975,8 @@ namespace {
      * You can match based on the key, or key and value. Removing based on key and
      * value, will keep from removing duplicate metadata with the same key. It also
      * allows removing all metadata matching key, if needed.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 5.1.0
      *
@@ -126818,10 +132018,12 @@ namespace {
     /**
      * Updates metadata for a site.
      *
-     * Use the $prev_value parameter to differentiate between meta fields with the
+     * Use the `$prev_value` parameter to differentiate between meta fields with the
      * same key and site ID.
      *
      * If the meta field for the site does not exist, it will be added.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 5.1.0
      *
@@ -127081,6 +132283,7 @@ namespace {
      * @global array $_wp_registered_nav_menus
      *
      * @param string[] $locations Associative array of menu location identifiers (like a slug) and descriptive text.
+     * @phpstan-param array<string, string> $locations
      */
     function register_nav_menus($locations = array())
     {
@@ -127767,6 +132970,7 @@ namespace {
      *                              to not autoload them, by using false.
      *                              Default is null, which means WordPress will determine the autoload value.
      * @return bool True if the option was added, false otherwise.
+     * @phpstan-param '' $deprecated
      */
     function add_option($option, $value = '', $deprecated = '', $autoload = \null)
     {
@@ -127848,6 +133052,7 @@ namespace {
      *
      * @param string $transient Transient name. Expected to not be SQL-escaped.
      * @return mixed Value of transient.
+     * @phpstan-impure
      */
     function get_transient($transient)
     {
@@ -127878,9 +133083,9 @@ namespace {
      * The multi-table delete syntax is used to delete the transient record
      * from table a, and the corresponding transient_timeout record from table b.
      *
-     * @global wpdb $wpdb WordPress database abstraction object.
-     *
      * @since 4.9.0
+     *
+     * @global wpdb $wpdb WordPress database abstraction object.
      *
      * @param bool $force_db Optional. Force cleanup to run against the database even when an external object cache is used.
      * @phpstan-return void
@@ -127995,6 +133200,7 @@ namespace {
      * @param mixed  $default_value Optional. Value to return if the option doesn't exist. Default false.
      * @param bool   $deprecated    Whether to use cache. Multisite only. Always set to true.
      * @return mixed Value set for the option.
+     * @phpstan-param true $deprecated
      */
     function get_site_option($option, $default_value = \false, $deprecated = \true)
     {
@@ -128229,6 +133435,7 @@ namespace {
      * @param string   $option_group The settings group name used during registration.
      * @param string   $option_name  The name of the option to unregister.
      * @param callable $deprecated   Optional. Deprecated.
+     * @phpstan-param '' $deprecated
      */
     function unregister_setting($option_group, $option_name, $deprecated = '')
     {
@@ -128240,7 +133447,31 @@ namespace {
      *
      * @global array $wp_registered_settings
      *
-     * @return array List of registered settings, keyed by option name.
+     * @return array {
+     *     List of registered settings, keyed by option name.
+     *
+     *     @type array ...$0 {
+     *         Data used to describe the setting when registered.
+     *
+     *         @type string     $type              The type of data associated with this setting.
+     *                                             Valid values are 'string', 'boolean', 'integer', 'number', 'array', and 'object'.
+     *         @type string     $label             A label of the data attached to this setting.
+     *         @type string     $description       A description of the data attached to this setting.
+     *         @type callable   $sanitize_callback A callback function that sanitizes the option's value.
+     *         @type bool|array $show_in_rest      Whether data associated with this setting should be included in the REST API.
+     *                                             When registering complex settings, this argument may optionally be an
+     *                                             array with a 'schema' key.
+     *         @type mixed      $default           Default value when calling `get_option()`.
+     *     }
+     * }
+     * @phpstan-return array<int|string, array{
+     *   type: string,
+     *   label: string,
+     *   description: string,
+     *   sanitize_callback: callable,
+     *   show_in_rest: bool|array,
+     *   default: mixed,
+     * }>
      */
     function get_registered_settings()
     {
@@ -128494,9 +133725,23 @@ namespace {
      * The default charset is based on the charset used on the blog. The charset can
      * be set using the {@see 'wp_mail_charset'} filter.
      *
+     * When using the `$embeds` parameter to embed images for use in HTML emails,
+     * reference the embedded file in your HTML with a `cid:` URL whose value
+     * matches the file's Content-ID. By default, the Content-ID (`cid`) used for
+     * each embedded file is the key in the embeds array, unless modified via the
+     * {@see 'wp_mail_embed_args'} filter. For example:
+     *
+     * `<img src="cid:0" alt="Logo">`
+     * `<img src="cid:my-image" alt="Image">`
+     *
+     * You may also customize the Content-ID for each file by using the
+     * {@see 'wp_mail_embed_args'} filter and setting the `cid` value.
+     *
      * @since 1.2.1
      * @since 5.5.0 is_email() is used for email validation,
      *              instead of PHPMailer's default validator.
+     * @since 6.9.0 Added $embeds parameter.
+     * @since 6.9.0 Improved Content-Type header handling for multipart messages.
      *
      * @global PHPMailer\PHPMailer\PHPMailer $phpmailer
      *
@@ -128505,9 +133750,11 @@ namespace {
      * @param string          $message     Message contents.
      * @param string|string[] $headers     Optional. Additional headers.
      * @param string|string[] $attachments Optional. Paths to files to attach.
+     * @param string|string[] $embeds      Optional. Paths to files to embed.
      * @return bool Whether the email was sent successfully.
+     * @phpstan-impure
      */
-    function wp_mail($to, $subject, $message, $headers = '', $attachments = array())
+    function wp_mail($to, $subject, $message, $headers = '', $attachments = array(), $embeds = array())
     {
     }
     /**
@@ -128607,11 +133854,13 @@ namespace {
     {
     }
     /**
-     * Sets the authentication cookies based on user ID.
+     * Sets the authentication cookies for a given user ID.
      *
-     * The $remember parameter increases the time that the cookie will be kept. The
-     * default the cookie is kept without remembering is two days. When $remember is
-     * set, the cookies will be kept for 14 days or two weeks.
+     * The `$remember` parameter controls cookie persistence:
+     * - If true, the cookie is persistent (default 14 days, filterable via {@see 'auth_cookie_expiration'}).
+     * - If false, the cookie is a browser session cookie (expires when the browser closes).
+     *   Internally, {@see 'auth_cookie_expiration'} is still applied, to expire the login after
+     *   two days or when the browser is closed, whichever occurs first.
      *
      * @since 2.5.0
      * @since 4.3.0 Added the `$token` parameter.
@@ -128680,7 +133929,7 @@ namespace {
      * @return int|false 1 if the nonce is valid and generated between 0-12 hours ago,
      *                   2 if the nonce is valid and generated between 12-24 hours ago.
      *                   False if the nonce is invalid.
-     * @phpstan-param -1|string $action
+     * @phpstan-param string $action
      * @phpstan-return 1|2|false
      */
     function check_admin_referer($action = -1, $query_arg = '_wpnonce')
@@ -128700,7 +133949,7 @@ namespace {
      * @return int|false 1 if the nonce is valid and generated between 0-12 hours ago,
      *                   2 if the nonce is valid and generated between 12-24 hours ago.
      *                   False if the nonce is invalid.
-     * @phpstan-param -1|string $action
+     * @phpstan-param string $action
      * @phpstan-return 1|2|false
      */
     function check_ajax_referer($action = -1, $query_arg = \false, $stop = \true)
@@ -128884,6 +134133,8 @@ namespace {
      *
      * @param string|int $action Optional. The nonce action. Default -1.
      * @return float Float value rounded up to the next highest integer.
+     * @phpstan-param -1|string $action
+     * @phpstan-impure
      */
     function wp_nonce_tick($action = -1)
     {
@@ -128916,6 +134167,7 @@ namespace {
      * @param string|int $action Scalar value to add context to the nonce.
      * @return string The token.
      * @phpstan-param -1|string $action
+     * @phpstan-return lowercase-string&non-falsy-string
      */
     function wp_create_nonce($action = -1)
     {
@@ -128971,6 +134223,8 @@ namespace {
      * @param string $scheme Authentication scheme (auth, secure_auth, logged_in, nonce).
      * @param string $algo   Hashing algorithm to use. Default: 'md5'.
      * @return string Hash of $data.
+     * @phpstan-param 'auth'|'logged_in'|'nonce'|'secure_auth' $scheme
+     * @phpstan-return lowercase-string&non-falsy-string
      */
     function wp_hash($data, $scheme = 'auth', $algo = 'md5')
     {
@@ -129062,6 +134316,7 @@ namespace {
      * @param bool $extra_special_chars Optional. Whether to include other special characters.
      *                                  Used when generating secret keys and salts. Default false.
      * @return string The random password.
+     * @phpstan-impure
      */
     function wp_generate_password($length = 12, $special_chars = \true, $extra_special_chars = \false)
     {
@@ -129080,6 +134335,7 @@ namespace {
      * @param int $max Optional. Upper limit for the generated number.
      *                 Accepts positive integers. Defaults to 4294967295.
      * @return int A random non-negative number between min and max.
+     * @phpstan-impure
      */
     function wp_rand($min = \null, $max = \null)
     {
@@ -129128,6 +134384,8 @@ namespace {
      *                              - 'monsterid' (a monster)
      *                              - 'wavatar' (a cartoon face)
      *                              - 'identicon' (the "quilt", a geometric pattern)
+     *                              - 'initials' (initials based avatar with background color)
+     *                              - 'color' (generated background color)
      *                              - 'mystery', 'mm', or 'mysteryman' (The Oyster Man)
      *                              - 'blank' (transparent GIF)
      *                              - 'gravatar_default' (the Gravatar logo)
@@ -129325,6 +134583,7 @@ namespace {
      * @param mixed  $value     The value to filter.
      * @param mixed  ...$args   Optional. Additional parameters to pass to the callback functions.
      * @return mixed The filtered value after all hooked functions are applied to it.
+     * @phpstan-param non-empty-string $hook_name
      */
     function apply_filters($hook_name, $value, ...$args)
     {
@@ -129344,6 +134603,7 @@ namespace {
      * @param string $hook_name The name of the filter hook.
      * @param array  $args      The arguments supplied to the functions hooked to `$hook_name`.
      * @return mixed The filtered value after all hooked functions are applied to it.
+     * @phpstan-param non-empty-string $hook_name
      */
     function apply_filters_ref_array($hook_name, $args)
     {
@@ -129355,6 +134615,7 @@ namespace {
      * that evaluates to false (e.g. 0), so use the `===` operator for testing the return value.
      *
      * @since 2.5.0
+     * @since 6.9.0 Added the `$priority` parameter.
      *
      * @global WP_Hook[] $wp_filter Stores all of the filters and actions.
      *
@@ -129362,12 +134623,16 @@ namespace {
      * @param callable|string|array|false $callback  Optional. The callback to check for.
      *                                               This function can be called unconditionally to speculatively check
      *                                               a callback that may or may not exist. Default false.
+     * @param int|false                   $priority  Optional. The specific priority at which to check for the callback.
+     *                                               Default false.
      * @return bool|int If `$callback` is omitted, returns boolean for whether the hook has
      *                  anything registered. When checking a specific function, the priority
      *                  of that hook is returned, or false if the function is not attached.
+     *                  If `$callback` and `$priority` are both provided, a boolean is returned
+     *                  for whether the specific function is registered at that priority.
      * @phpstan-return ($callback is false ? bool : false|int)
      */
-    function has_filter($hook_name, $callback = \false)
+    function has_filter($hook_name, $callback = \false, $priority = \false)
     {
     }
     /**
@@ -129417,7 +134682,8 @@ namespace {
      *
      * @global string[] $wp_current_filter Stores the list of current filters with the current one last
      *
-     * @return string Hook name of the current filter.
+     * @return string|false Hook name of the current filter, false if no filter is running.
+     * @phpstan-return non-empty-string|false
      */
     function current_filter()
     {
@@ -129455,6 +134721,7 @@ namespace {
      *
      * @param string $hook_name The name of the filter hook.
      * @return int The number of times the filter hook has been applied.
+     * @phpstan-return int<0, max>
      */
     function did_filter($hook_name)
     {
@@ -129518,6 +134785,7 @@ namespace {
      * @param string $hook_name The name of the action to be executed.
      * @param mixed  ...$arg    Optional. Additional arguments which are passed on to the
      *                          functions hooked to the action. Default empty.
+     * @phpstan-param non-empty-string $hook_name
      * @phpstan-return void
      */
     function do_action($hook_name, ...$arg)
@@ -129537,6 +134805,7 @@ namespace {
      *
      * @param string $hook_name The name of the action to be executed.
      * @param array  $args      The arguments supplied to the functions hooked to `$hook_name`.
+     * @phpstan-param non-empty-string $hook_name
      * @phpstan-return void
      */
     function do_action_ref_array($hook_name, $args)
@@ -129549,6 +134818,7 @@ namespace {
      * that evaluates to false (e.g. 0), so use the `===` operator for testing the return value.
      *
      * @since 2.5.0
+     * @since 6.9.0 Added the `$priority` parameter.
      *
      * @see has_filter() This function is an alias of has_filter().
      *
@@ -129556,12 +134826,16 @@ namespace {
      * @param callable|string|array|false $callback  Optional. The callback to check for.
      *                                               This function can be called unconditionally to speculatively check
      *                                               a callback that may or may not exist. Default false.
+     * @param int|false                   $priority  Optional. The specific priority at which to check for the callback.
+     *                                               Default false.
      * @return bool|int If `$callback` is omitted, returns boolean for whether the hook has
      *                  anything registered. When checking a specific function, the priority
      *                  of that hook is returned, or false if the function is not attached.
+     *                  If `$callback` and `$priority` are both provided, a boolean is returned
+     *                  for whether the specific function is registered at that priority.
      * @phpstan-return ($callback is false ? bool : false|int)
      */
-    function has_action($hook_name, $callback = \false)
+    function has_action($hook_name, $callback = \false, $priority = \false)
     {
     }
     /**
@@ -129605,7 +134879,8 @@ namespace {
      *
      * @since 3.9.0
      *
-     * @return string Hook name of the current action.
+     * @return string|false Hook name of the current action, false if no action is running.
+     * @phpstan-return non-empty-string|false
      */
     function current_action()
     {
@@ -129673,6 +134948,7 @@ namespace {
      * @param string $replacement Optional. The hook that should have been used. Default empty.
      * @param string $message     Optional. A message regarding the change. Default empty.
      * @return mixed The filtered value after all hooked functions are applied to it.
+     * @phpstan-param non-empty-string $hook_name
      */
     function apply_filters_deprecated($hook_name, $args, $version, $replacement = '', $message = '')
     {
@@ -129693,6 +134969,7 @@ namespace {
      * @param string $version     The version of WordPress that deprecated the hook.
      * @param string $replacement Optional. The hook that should have been used. Default empty.
      * @param string $message     Optional. A message regarding the change. Default empty.
+     * @phpstan-param non-empty-string $hook_name
      * @phpstan-return void
      */
     function do_action_deprecated($hook_name, $args, $version, $replacement = '', $message = '')
@@ -129769,6 +135046,8 @@ namespace {
      *
      * @param string   $file     The filename of the plugin including the path.
      * @param callable $callback The function hooked to the 'activate_PLUGIN' action.
+     * @phpstan-param callable(bool): void $callback
+     * @phpstan-return void
      */
     function register_activation_hook($file, $callback)
     {
@@ -129790,6 +135069,8 @@ namespace {
      *
      * @param string   $file     The filename of the plugin including the path.
      * @param callable $callback The function hooked to the 'deactivate_PLUGIN' action.
+     * @phpstan-param callable(bool): void $callback
+     * @phpstan-return void
      */
     function register_deactivation_hook($file, $callback)
     {
@@ -129819,6 +135100,7 @@ namespace {
      * @param string   $file     Plugin file.
      * @param callable $callback The callback to run when the hook is called. Must be
      *                           a static method or function.
+     * @phpstan-param callable(): void $callback
      * @phpstan-return void
      */
     function register_uninstall_hook($file, $callback)
@@ -129865,7 +135147,8 @@ namespace {
      *                                         or may not exist.
      * @param int                   $priority  Unused. The order in which the functions
      *                                         associated with a particular action are executed.
-     * @return string Unique function ID for usage as array key.
+     * @return string|null Unique function ID for usage as array key.
+     *                     Null if a valid `$callback` is not passed.
      */
     function _wp_filter_build_unique_id($hook_name, $callback, $priority)
     {
@@ -130615,6 +135898,7 @@ namespace {
      * @param bool        $fullsize   Optional. Whether to use full size. Default false.
      * @param bool        $deprecated Deprecated. Not used.
      * @param bool        $permalink Optional. Whether to include permalink. Default false.
+     * @phpstan-param false $deprecated
      */
     function the_attachment_link($post = 0, $fullsize = \false, $deprecated = \false, $permalink = \false)
     {
@@ -130655,7 +135939,7 @@ namespace {
      * @since 1.0.0
      *
      * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global $post.
-     * @return string HTML content for password form for password protected post.
+     * @return string HTML content for password form for password-protected post.
      */
     function get_the_password_form($post = 0)
     {
@@ -130728,6 +136012,7 @@ namespace {
      *
      * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global $post.
      * @param string      $type 'all' (default), 'revision' or 'autosave'
+     * @phpstan-param 'all'|'revision'|'autosave' $type
      * @phpstan-return void
      */
     function wp_list_post_revisions($post = 0, $type = 'all')
@@ -131068,6 +136353,7 @@ namespace {
      *
      * @param int|WP_Post $post Post ID or post object.
      * @return int[] Array of ancestor IDs or empty array if there are none.
+     * @phpstan-return list<int>
      */
     function get_post_ancestors($post)
     {
@@ -131090,7 +136376,7 @@ namespace {
      * @param int|WP_Post $post    Optional. Post ID or post object. Defaults to global $post.
      * @param string      $context Optional. How to filter the field. Accepts 'raw', 'edit', 'db',
      *                             or 'display'. Default 'display'.
-     * @return string The value of the post field on success, empty string on failure.
+     * @return int|string|int[] The value of the post field on success, empty string on failure.
      * @phpstan-param 'raw'|'edit'|'db'|'display' $context
      */
     function get_post_field($field, $post = \null, $context = 'display')
@@ -131232,9 +136518,9 @@ namespace {
      *
      * @since 3.0.0
      *
-     * @global stdClass[] $wp_post_statuses List of post statuses.
-     *
      * @see register_post_status()
+     *
+     * @global stdClass[] $wp_post_statuses List of post statuses.
      *
      * @param string $post_status The name of a registered post status.
      * @return stdClass|null A post status object.
@@ -131247,9 +136533,9 @@ namespace {
      *
      * @since 3.0.0
      *
-     * @global stdClass[] $wp_post_statuses List of post statuses.
-     *
      * @see register_post_status()
+     *
+     * @global stdClass[] $wp_post_statuses List of post statuses.
      *
      * @param array|string $args     Optional. Array or string of post status arguments to compare against
      *                               properties of the global `$wp_post_statuses objects`. Default empty array.
@@ -131313,9 +136599,9 @@ namespace {
      * @since 3.0.0
      * @since 4.6.0 Object returned is now an instance of `WP_Post_Type`.
      *
-     * @global array $wp_post_types List of post types.
-     *
      * @see register_post_type()
+     *
+     * @global array $wp_post_types List of post types.
      *
      * @param string $post_type The name of a registered post type.
      * @return WP_Post_Type|null WP_Post_Type object if it exists, null otherwise.
@@ -131328,9 +136614,9 @@ namespace {
      *
      * @since 2.9.0
      *
-     * @global array $wp_post_types List of post types.
-     *
      * @see register_post_type() for accepted arguments.
+     *
+     * @global array $wp_post_types List of post types.
      *
      * @param array|string $args     Optional. An array of key => value arguments to match against
      *                               the post type objects. Default empty array.
@@ -131550,6 +136836,7 @@ namespace {
      *   _builtin?: bool,
      *   _edit_link?: string,
      * } $args
+     * @phpstan-param lowercase-string&non-empty-string $post_type
      */
     function register_post_type($post_type, $args = array())
     {
@@ -131581,7 +136868,7 @@ namespace {
      * Otherwise, an 's' will be added to the value for the plural form. After
      * registration, capability_type will always be a string of the singular value.
      *
-     * By default, eight keys are accepted as part of the capabilities array:
+     * By default, the following keys are accepted as part of the capabilities array:
      *
      * - edit_post, read_post, and delete_post are meta capabilities, which are then
      *   generally mapped to corresponding primitive capabilities depending on the
@@ -131596,8 +136883,9 @@ namespace {
      * - delete_posts - Controls whether objects of this post type can be deleted.
      * - publish_posts - Controls publishing objects of this post type.
      * - read_private_posts - Controls whether private objects can be read.
+     * - create_posts - Controls whether objects of this post type can be created.
      *
-     * These five primitive capabilities are checked in core in various locations.
+     * These primitive capabilities are checked in core in various locations.
      * There are also six other primitive capabilities which are not referenced
      * directly in core, except in map_meta_cap(), which takes the three aforementioned
      * meta capabilities and translates them into one or more primitive capabilities
@@ -131623,7 +136911,42 @@ namespace {
      * @see map_meta_cap()
      *
      * @param object $args Post type registration arguments.
-     * @return object Object with all the capabilities as member variables.
+     * @return object {
+     *     Object with all the capabilities as member variables.
+     *
+     *     @type string $edit_post              Capability to edit a post.
+     *     @type string $read_post              Capability to read a post.
+     *     @type string $delete_post            Capability to delete a post.
+     *     @type string $edit_posts             Capability to edit posts.
+     *     @type string $edit_others_posts      Capability to edit others' posts.
+     *     @type string $delete_posts           Capability to delete posts.
+     *     @type string $publish_posts          Capability to publish posts.
+     *     @type string $read_private_posts     Capability to read private posts.
+     *     @type string $create_posts           Capability to create posts.
+     *     @type string $read                   Optional. Capability to read a post.
+     *     @type string $delete_private_posts   Optional. Capability to delete private posts.
+     *     @type string $delete_published_posts Optional. Capability to delete published posts.
+     *     @type string $delete_others_posts    Optional. Capability to delete others' posts.
+     *     @type string $edit_private_posts     Optional. Capability to edit private posts.
+     *     @type string $edit_published_posts   Optional. Capability to edit published posts.
+     * }
+     * @phpstan-return object{
+     *   edit_post: string,
+     *   read_post: string,
+     *   delete_post: string,
+     *   edit_posts: string,
+     *   edit_others_posts: string,
+     *   delete_posts: string,
+     *   publish_posts: string,
+     *   read_private_posts: string,
+     *   create_posts: string,
+     *   read: string,
+     *   delete_private_posts: string,
+     *   delete_published_posts: string,
+     *   delete_others_posts: string,
+     *   edit_private_posts: string,
+     *   edit_published_posts: string,
+     * }
      */
     function get_post_type_capabilities($args)
     {
@@ -132039,6 +137362,8 @@ namespace {
      *
      * Post meta data is called "Custom Fields" on the Administration Screen.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 1.5.0
      *
      * @param int    $post_id    Post ID.
@@ -132063,6 +137388,8 @@ namespace {
      * You can match based on the key, or key and value. Removing based on key and
      * value, will keep from removing duplicate metadata with the same key. It also
      * allows removing all metadata matching the key, if needed.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 1.5.0
      *
@@ -132110,6 +137437,8 @@ namespace {
      * If the meta field for the post does not exist, it will be added and its ID returned.
      *
      * Can be used in place of add_post_meta().
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 1.5.0
      *
@@ -132257,9 +137586,9 @@ namespace {
      * @return object|WP_Post|array The now sanitized post object or array (will be the
      *                              same type as `$post`).
      * @phpstan-param 'raw'|'edit'|'db'|'display'|'attribute'|'js' $context
-     * @phpstan-template T of array|object
+     * @phpstan-template T of mixed
      * @phpstan-param T $post
-     * @phpstan-return T
+     * @phpstan-return (T is \WP_Post ? \WP_Post : (T is object ? object : (T is array ? array : T)))
      */
     function sanitize_post($post, $context = 'display')
     {
@@ -132281,6 +137610,9 @@ namespace {
      *                        'db', 'display', 'attribute' and 'js'. Default 'display'.
      * @return mixed Sanitized value.
      * @phpstan-param 'raw'|'edit'|'db'|'display'|'attribute'|'js' $context
+     * @phpstan-template T of mixed
+     * @phpstan-param T $value
+     * @phpstan-return ($field is 'ID'|'post_parent'|'menu_order' ? (T is int ? T : int) : ($field is 'ancestors' ? (T is array<int<0, max>>|list<int<0, max>> ? T : (T is list ? list<int<0, max>> : array<int<0, max>>)) : ($context is 'raw' ? T : ($context is 'attribute'|'js' ? string : ($context is 'edit' ? ($field is not 'post_content' ? string : mixed) : mixed)))))
      */
     function sanitize_post_field($field, $value, $post_id, $context = 'display')
     {
@@ -132423,7 +137755,7 @@ namespace {
      * @see wp_delete_attachment()
      * @see wp_trash_post()
      *
-     * @param int  $post_id      Optional. Post ID. Default 0.
+     * @param int  $post_id      Post ID. (The default of 0 is for historical reasons; providing it is incorrect.)
      * @param bool $force_delete Optional. Whether to bypass Trash and force deletion.
      *                           Default false.
      * @return WP_Post|false|null Post data on success, false or null on failure.
@@ -133379,7 +138711,9 @@ namespace {
      *
      * @param int   $attachment_id Attachment post ID.
      * @param array $data          Attachment meta data.
-     * @return int|false False if $post is invalid.
+     * @return int|bool Whether the metadata was successfully updated.
+     *                  True on success, the Meta ID if the key didn't exist.
+     *                  False if $post is invalid, on failure, or if $data is the same as the existing metadata.
      */
     function wp_update_attachment_metadata($attachment_id, $data)
     {
@@ -133840,6 +139174,7 @@ namespace {
      * @param string  $new_status New post status.
      * @param string  $old_status Old post status.
      * @param WP_Post $post       Post object.
+     * @phpstan-return void
      */
     function _update_term_count_on_transition_post_status($new_status, $old_status, $post)
     {
@@ -134822,6 +140157,8 @@ namespace {
      * @param bool   $override        Optional. If the route already exists, should we override it? True overrides,
      *                                false merges (with newer overriding if duplicate keys exist). Default false.
      * @return bool True on success, false on error.
+     * @phpstan-param non-falsy-string $route_namespace
+     * @phpstan-param non-falsy-string $route
      */
     function register_rest_route($route_namespace, $route, $args = array(), $override = \false)
     {
@@ -135004,7 +140341,7 @@ namespace {
      * @return WP_REST_Response|WP_Error If response generated an error, WP_Error, if response
      *                                   is already an instance, WP_REST_Response, otherwise
      *                                   returns a new WP_REST_Response instance.
-     * @phpstan-return ($response is WP_Error ? WP_Error : WP_REST_Response)
+     * @phpstan-return ($response is \WP_Error ? \WP_Error : \WP_REST_Response)
      */
     function rest_ensure_response($response)
     {
@@ -135329,6 +140666,7 @@ namespace {
      * @since 4.7.0
      *
      * @return int 401 if the user is not logged in, 403 if the user is logged in.
+     * @phpstan-return 401|403
      */
     function rest_authorization_required_code()
     {
@@ -135395,6 +140733,10 @@ namespace {
      *
      * @param bool|string|int $value The value being evaluated.
      * @return bool Returns the proper associated boolean value.
+     * @phpstan-template T of bool|string|int
+     * @phpstan-param T $value
+     * @phpstan-pure
+     * @phpstan-return (T is bool ? T : (T is ''|'false'|'FALSE'|'0'|0 ? false : true))
      */
     function rest_sanitize_boolean($value)
     {
@@ -135926,6 +141268,7 @@ namespace {
      *                                  for insertion as a post revision. Default empty array.
      * @param bool          $deprecated Not used.
      * @return string[] Array of fields that can be versioned.
+     * @phpstan-param false $deprecated
      */
     function _wp_post_revision_fields($post = array(), $deprecated = \false)
     {
@@ -135994,6 +141337,7 @@ namespace {
      *
      * @param int|WP_Post $post Post ID or post object.
      * @return int|false ID of revision's parent on success, false if not a revision.
+     * @phpstan-return ($post is \WP_Post ? false|int<0, max> : ($post is int<min, 0> ? false : false|int<0, max>))
      */
     function wp_is_post_revision($post)
     {
@@ -136395,6 +141739,8 @@ namespace {
      * @param string   $feedname Feed name. Should not start with '_'.
      * @param callable $callback Callback to run on feed display.
      * @return string Feed action name.
+     * @phpstan-param callable(bool, string): void $callback
+     * @phpstan-return non-falsy-string
      */
     function add_feed($feedname, $callback)
     {
@@ -136549,6 +141895,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_noindex(array $robots)
     {
@@ -136566,6 +141914,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_noindex_embeds(array $robots)
     {
@@ -136587,6 +141937,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_noindex_search(array $robots)
     {
@@ -136604,6 +141956,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_no_robots(array $robots)
     {
@@ -136622,6 +141976,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_sensitive_page(array $robots)
     {
@@ -136640,6 +141996,8 @@ namespace {
      *
      * @param array $robots Associative array of robots directives.
      * @return array Filtered robots directives.
+     * @phpstan-param array<string, bool|string> $robots
+     * @phpstan-return array<string, bool|string>
      */
     function wp_robots_max_image_preview_large(array $robots)
     {
@@ -136760,6 +142118,7 @@ namespace {
      *
      * @param string $type The type of suffix to retrieve.
      * @return string The script suffix.
+     * @phpstan-return ''|'.min'
      */
     function wp_scripts_get_suffix($type = '')
     {
@@ -136901,6 +142260,8 @@ namespace {
     /**
      * Prints scripts (internal use only)
      *
+     * @since 2.8.0
+     *
      * @ignore
      *
      * @global WP_Scripts $wp_scripts
@@ -136926,6 +142287,15 @@ namespace {
     }
     /**
      * Private, for use in *_footer_scripts hooks
+     *
+     * In classic themes, when block styles are loaded on demand via wp_load_classic_theme_block_styles_on_demand(),
+     * this function is replaced by a closure in wp_hoist_late_printed_styles() which will capture the printing of
+     * two sets of "late" styles to be hoisted to the HEAD by means of the template enhancement output buffer:
+     *
+     * 1. Styles related to blocks are inserted right after the wp-block-library stylesheet.
+     * 2. All other styles are appended to the end of the HEAD.
+     *
+     * The closure calls print_footer_scripts() to print scripts in the footer as usual.
      *
      * @since 3.3.0
      */
@@ -137093,8 +142463,6 @@ namespace {
      * context (only enqueuing editor scripts while in context of the editor).
      *
      * @since 5.0.0
-     *
-     * @global WP_Screen $current_screen WordPress current screen object.
      * @phpstan-return void
      */
     function wp_enqueue_registered_block_scripts_and_styles()
@@ -137158,6 +142526,8 @@ namespace {
      *
      * @param array $attributes Key-value pairs representing `<script>` tag attributes.
      * @return string String containing `<script>` opening and closing tags.
+     * @phpstan-param array<string, string|true> $attributes
+     * @phpstan-return non-falsy-string
      */
     function wp_get_script_tag($attributes)
     {
@@ -137165,7 +142535,7 @@ namespace {
     /**
      * Prints formatted `<script>` loader tag.
      *
-     * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+     * It is possible to inject attributes in the `<script>` tag via the {@see 'wp_script_attributes'} filter.
      * Automatically injects type attribute if needed.
      *
      * @since 5.7.0
@@ -137178,7 +142548,7 @@ namespace {
     /**
      * Constructs an inline script tag.
      *
-     * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+     * It is possible to inject attributes in the `<script>` tag via the {@see 'wp_inline_script_attributes'} filter.
      * Automatically injects type attribute if needed.
      *
      * @since 5.7.0
@@ -137186,6 +142556,8 @@ namespace {
      * @param string $data       Data for script tag: JavaScript, importmap, speculationrules, etc.
      * @param array  $attributes Optional. Key-value pairs representing `<script>` tag attributes.
      * @return string String containing inline JavaScript code wrapped around `<script>` tag.
+     * @phpstan-param array<string, string|true> $attributes
+     * @phpstan-return non-falsy-string
      */
     function wp_get_inline_script_tag($data, $attributes = array())
     {
@@ -137193,7 +142565,7 @@ namespace {
     /**
      * Prints an inline script tag.
      *
-     * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+     * It is possible to inject attributes in the `<script>` tag via the {@see 'wp_inline_script_attributes'} filter.
      * Automatically injects type attribute if needed.
      *
      * @since 5.7.0
@@ -137329,6 +142701,17 @@ namespace {
     {
     }
     /**
+     * Enqueues the assets required for the Command Palette.
+     *
+     * @since 6.9.0
+     *
+     * @global array  $menu
+     * @global array  $submenu
+     */
+    function wp_enqueue_command_palette_assets()
+    {
+    }
+    /**
      * Removes leading and trailing _empty_ script tags.
      *
      * This is a helper meant to be used for literal script tag construction
@@ -137362,6 +142745,92 @@ namespace {
     {
     }
     /**
+     * Adds hooks to load block styles on demand in classic themes.
+     *
+     * @since 6.9.0
+     *
+     * @see _add_default_theme_supports()
+     * @phpstan-return void
+     */
+    function wp_load_classic_theme_block_styles_on_demand()
+    {
+    }
+    /**
+     * Adds the hooks needed for CSS output to be delayed until after the content of the page has been established.
+     *
+     * @since 6.9.0
+     *
+     * @see wp_load_classic_theme_block_styles_on_demand()
+     * @see _wp_footer_scripts()
+     */
+    function wp_hoist_late_printed_styles()
+    {
+    }
+    /**
+     * Return the corresponding JavaScript `dataset` name for an attribute
+     * if it represents a custom data attribute, or `null` if not.
+     *
+     * Custom data attributes appear in an element's `dataset` property in a
+     * browser, but there's a specific way the names are translated from HTML
+     * into JavaScript. This function indicates how the name would appear in
+     * JavaScript if a browser would recognize it as a custom data attribute.
+     *
+     * Example:
+     *
+     *     // Dash-letter pairs turn into capital letters.
+     *     'postId'       === wp_js_dataset_name( 'data-post-id' );
+     *     'Before'       === wp_js_dataset_name( 'data--before' );
+     *     '-One--Two---' === wp_js_dataset_name( 'data---one---two---' );
+     *
+     *     // Not every attribute name will be interpreted as a custom data attribute.
+     *     null === wp_js_dataset_name( 'post-id' );
+     *     null === wp_js_dataset_name( 'data' );
+     *
+     *     // Some very surprising names will; for example, a property whose name is the empty string.
+     *     '' === wp_js_dataset_name( 'data-' );
+     *     0  === strlen( wp_js_dataset_name( 'data-' ) );
+     *
+     * @since 6.9.0
+     *
+     * @see https://html.spec.whatwg.org/#concept-domstringmap-pairs
+     * @see \wp_html_custom_data_attribute_name()
+     *
+     * @param string $html_attribute_name Raw attribute name as found in the source HTML.
+     * @return string|null Transformed `dataset` name, if interpretable as a custom data attribute, else `null`.
+     */
+    function wp_js_dataset_name(string $html_attribute_name): ?string
+    {
+    }
+    /**
+     * Returns a corresponding HTML attribute name for the given name,
+     * if that name were found in a JS element’s `dataset` property.
+     *
+     * Example:
+     *
+     *     'data-post-id'        === wp_html_custom_data_attribute_name( 'postId' );
+     *     'data--before'        === wp_html_custom_data_attribute_name( 'Before' );
+     *     'data---one---two---' === wp_html_custom_data_attribute_name( '-One--Two---' );
+     *
+     *     // Not every attribute name will be interpreted as a custom data attribute.
+     *     null === wp_html_custom_data_attribute_name( '/not-an-attribute/' );
+     *     null === wp_html_custom_data_attribute_name( 'no spaces' );
+     *
+     *     // Some very surprising names will; for example, a property whose name is the empty string.
+     *     'data-' === wp_html_custom_data_attribute_name( '' );
+     *
+     * @since 6.9.0
+     *
+     * @see https://html.spec.whatwg.org/#concept-domstringmap-pairs
+     * @see \wp_js_dataset_name()
+     *
+     * @param string $js_dataset_name Name of JS `dataset` property to transform.
+     * @return string|null Corresponding name of an HTML custom data attribute for the given dataset name,
+     *                     if possible to represent in HTML, otherwise `null`.
+     */
+    function wp_html_custom_data_attribute_name(string $js_dataset_name): ?string
+    {
+    }
+    /**
      * Retrieves the main WP_Script_Modules instance.
      *
      * This function provides access to the WP_Script_Modules instance, creating one
@@ -137381,6 +142850,7 @@ namespace {
      * identifier has already been registered.
      *
      * @since 6.5.0
+     * @since 6.9.0 Added the $args parameter.
      *
      * @param string            $id      The identifier of the script module. Should be unique. It will be used in the
      *                                   final import map.
@@ -137406,12 +142876,22 @@ namespace {
      *                                   It is added to the URL as a query string for cache busting purposes. If $version
      *                                   is set to false, the version number is the currently installed WordPress version.
      *                                   If $version is set to null, no version is added.
+     * @param array             $args    {
+     *     Optional. An array of additional args. Default empty array.
+     *
+     *     @type bool                $in_footer     Whether to print the script module in the footer. Only relevant to block themes. Default 'false'. Optional.
+     *     @type 'auto'|'low'|'high' $fetchpriority Fetch priority. Default 'auto'. Optional.
+     * }
      * @phpstan-param array<int|string, array{
      *   id: string,
      *   import?: string,
      * }> $deps
+     * @phpstan-param array{
+     *   in_footer?: bool,
+     *   fetchpriority?: 'auto'|'low'|'high',
+     * } $args
      */
-    function wp_register_script_module(string $id, string $src, array $deps = array(), $version = \false)
+    function wp_register_script_module(string $id, string $src, array $deps = array(), $version = \false, array $args = array())
     {
     }
     /**
@@ -137421,6 +142901,7 @@ namespace {
      * will be registered.
      *
      * @since 6.5.0
+     * @since 6.9.0 Added the $args parameter.
      *
      * @param string            $id      The identifier of the script module. Should be unique. It will be used in the
      *                                   final import map.
@@ -137446,12 +142927,22 @@ namespace {
      *                                   It is added to the URL as a query string for cache busting purposes. If $version
      *                                   is set to false, the version number is the currently installed WordPress version.
      *                                   If $version is set to null, no version is added.
+     * @param array             $args    {
+     *     Optional. An array of additional args. Default empty array.
+     *
+     *     @type bool                $in_footer     Whether to print the script module in the footer. Only relevant to block themes. Default 'false'. Optional.
+     *     @type 'auto'|'low'|'high' $fetchpriority Fetch priority. Default 'auto'. Optional.
+     * }
      * @phpstan-param array<int|string, array{
      *   id: string,
      *   import?: string,
      * }> $deps
+     * @phpstan-param array{
+     *   in_footer?: bool,
+     *   fetchpriority?: 'auto'|'low'|'high',
+     * } $args
      */
-    function wp_enqueue_script_module(string $id, string $src = '', array $deps = array(), $version = \false)
+    function wp_enqueue_script_module(string $id, string $src = '', array $deps = array(), $version = \false, array $args = array())
     {
     }
     /**
@@ -137500,6 +142991,8 @@ namespace {
      *                           including an array of attributes (`$atts`), the shortcode content
      *                           or null if not set (`$content`), and finally the shortcode tag
      *                           itself (`$shortcode_tag`), in that order.
+     * @phpstan-param non-empty-string $tag
+     * @phpstan-param callable(array<string>, string|null, string): string $callback
      * @phpstan-return void
      */
     function add_shortcode($tag, $callback)
@@ -137539,6 +143032,7 @@ namespace {
      *
      * @param string $tag Shortcode tag to check.
      * @return bool Whether the given shortcode exists.
+     * @phpstan-assert-if-true =non-empty-string $tag
      */
     function shortcode_exists($tag)
     {
@@ -137553,6 +143047,9 @@ namespace {
      * @param string $content Content to search for shortcodes.
      * @param string $tag     Shortcode tag to check.
      * @return bool Whether the passed content contains the given shortcode.
+     * @phpstan-assert-if-true =non-falsy-string $content
+     * @phpstan-assert-if-true =non-empty-string $tag
+     * @phpstan-return ($tag is empty ? false : ($content is empty ? false : bool))
      */
     function has_shortcode($content, $tag)
     {
@@ -137569,6 +143066,7 @@ namespace {
      *
      * @param string $content The content to check.
      * @return string[] An array of registered shortcode names found in the content.
+     * @phpstan-return list<non-empty-string>
      */
     function get_shortcode_tags_in_content($content)
     {
@@ -137644,7 +143142,8 @@ namespace {
      * @global array $shortcode_tags
      *
      * @param array $tagnames Optional. List of shortcodes to find. Defaults to all registered shortcodes.
-     * @return string The shortcode search regular expression
+     * @return string The shortcode search regular expression.
+     * @phpstan-return non-falsy-string
      */
     function get_shortcode_regex($tagnames = \null)
     {
@@ -137719,6 +143218,8 @@ namespace {
      * @since 4.4.0
      *
      * @return string The shortcode attribute regular expression.
+     * @phpstan-pure
+     * @phpstan-return non-falsy-string
      */
     function get_shortcode_atts_regex()
     {
@@ -137851,6 +143352,7 @@ namespace {
      *
      * @return array<string, string>|null Associative array with 'mode' and 'eagerness' keys, or null if speculative
      *                                    loading is disabled.
+     * @phpstan-return array{mode: 'prefetch'|'prerender', eagerness: 'conservative'|'eager'|'moderate'}|null
      */
     function wp_get_speculation_rules_configuration(): ?array
     {
@@ -137880,7 +143382,6 @@ namespace {
      *
      * @since 6.8.0
      * @access private
-     * @phpstan-return void
      */
     function wp_print_speculation_rules(): void
     {
@@ -138127,6 +143628,8 @@ namespace {
      *
      * @param string $taxonomy Name of taxonomy object.
      * @return bool Whether the taxonomy exists.
+     * @phpstan-assert-if-true =non-falsy-string $taxonomy
+     * @phpstan-return ($taxonomy is non-falsy-string ? bool : false)
      */
     function taxonomy_exists($taxonomy)
     {
@@ -138675,6 +144178,8 @@ namespace {
      *
      * Prior to 4.5.0, taxonomy was passed as the first parameter of `get_terms()`.
      *
+     * {@internal The `$deprecated` parameter is parsed for backward compatibility only.}
+     *
      * @since 2.3.0
      * @since 4.2.0 Introduced 'name' and 'childless' parameters.
      * @since 4.4.0 Introduced the ability to pass 'term_id' as an alias of 'id' for the `orderby` parameter.
@@ -138683,8 +144188,6 @@ namespace {
      * @since 4.5.0 Changed the function signature so that the `$args` array can be provided as the first parameter.
      *              Introduced 'meta_key' and 'meta_value' parameters. Introduced the ability to order results by metadata.
      * @since 4.8.0 Introduced 'suppress_filter' parameter.
-     *
-     * @internal The `$deprecated` parameter is parsed for backward compatibility only.
      *
      * @param array|string $args       Optional. Array or string of arguments. See WP_Term_Query::__construct()
      *                                 for information on accepted arguments. Default empty array.
@@ -138730,6 +144233,7 @@ namespace {
      *   meta_type_key?: string,
      *   meta_query?: array,
      * } $args See WP_Term_Query::__construct()
+     * @phpstan-param '' $deprecated
      * @phpstan-return ($args is array{fields: 'count'}&array ? numeric-string : ($args is array{fields: 'names'|'slugs'}&array ? list<string> : ($args is array{fields: 'id=>name'|'id=>slug'}&array ? array<int, string> : ($args is array{fields: 'id=>parent'}&array ? array<int, int> : ($args is array{fields: 'ids'|'tt_ids'}&array ? list<int> : array<int, \WP_Term>)))))|\WP_Error
      */
     function get_terms($args = array(), $deprecated = '')
@@ -138737,6 +144241,8 @@ namespace {
     }
     /**
      * Adds metadata to a term.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 4.4.0
      *
@@ -138759,6 +144265,8 @@ namespace {
     }
     /**
      * Removes metadata matching criteria from a term.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 4.4.0
      *
@@ -138803,6 +144311,8 @@ namespace {
      * Use the `$prev_value` parameter to differentiate between meta fields with the same key and term ID.
      *
      * If the meta field for the term does not exist, it will be added.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 4.4.0
      *
@@ -138989,6 +144499,9 @@ namespace {
      *                         'attribute', or 'js'. Default 'display'.
      * @return mixed Sanitized field.
      * @phpstan-param 'raw'|'edit'|'db'|'display'|'rss'|'attribute'|'js' $context
+     * @phpstan-template T of string
+     * @phpstan-param T $value
+     * @phpstan-return ($field is 'parent'|'term_id'|'count'|'term_group'|'term_taxonomy_id'|'object_id' ? int<0, max> : ($context is 'raw' ? T : ($context is 'attribute'|'edit'|'js' ? string : mixed)))
      */
     function sanitize_term_field($field, $value, $term_id, $taxonomy, $context)
     {
@@ -138998,10 +144511,10 @@ namespace {
      *
      * Default $args is 'hide_empty' which can be 'hide_empty=true' or array('hide_empty' => true).
      *
+     * {@internal The `$deprecated` parameter is parsed for backward compatibility only.}
+     *
      * @since 2.3.0
      * @since 5.6.0 Changed the function signature so that the `$args` array can be provided as the first parameter.
-     *
-     * @internal The `$deprecated` parameter is parsed for backward compatibility only.
      *
      * @param array|string $args       Optional. Array or string of arguments. See WP_Term_Query::__construct()
      *                                 for information on accepted arguments. Default empty array.
@@ -139046,6 +144559,8 @@ namespace {
      *   meta_type_key?: string,
      *   meta_query?: array,
      * } $args See WP_Term_Query::__construct()
+     * @phpstan-param '' $deprecated
+     * @phpstan-return numeric-string|\WP_Error
      */
     function wp_count_terms($args = array(), $deprecated = '')
     {
@@ -140094,14 +145609,16 @@ namespace {
      * The hierarchy for this template looks like:
      *
      * 1. taxonomy-{taxonomy_slug}-{term_slug}.php
-     * 2. taxonomy-{taxonomy_slug}.php
-     * 3. taxonomy.php
+     * 2. taxonomy-{taxonomy_slug}-{term_id}.php
+     * 3. taxonomy-{taxonomy_slug}.php
+     * 4. taxonomy.php
      *
      * An example of this is:
      *
      * 1. taxonomy-location-texas.php
-     * 2. taxonomy-location.php
-     * 3. taxonomy.php
+     * 2. taxonomy-location-67.php
+     * 3. taxonomy-location.php
+     * 4. taxonomy.php
      *
      * The template hierarchy and template path are filterable via the {@see '$type_template_hierarchy'}
      * and {@see '$type_template'} dynamic hooks, where `$type` is 'taxonomy'.
@@ -140109,6 +145626,7 @@ namespace {
      * @since 2.5.0
      * @since 4.7.0 The decoded form of `taxonomy-{taxonomy_slug}-{term_slug}.php` was added to the top of the
      *              template hierarchy when the term slug contains multibyte characters.
+     * @since 6.9.0 Added `taxonomy-{taxonomy_slug}-{term_id}.php` to the hierarchy.
      *
      * @see get_query_template()
      *
@@ -140296,7 +145814,7 @@ namespace {
      *
      * @see get_query_template()
      *
-     * @return string Full path to singular template file
+     * @return string Full path to singular template file.
      */
     function get_singular_template()
     {
@@ -140394,6 +145912,49 @@ namespace {
      *                               Default empty array.
      */
     function load_template($_template_file, $load_once = \true, $args = array())
+    {
+    }
+    /**
+     * Checks whether the template should be output buffered for enhancement.
+     *
+     * By default, an output buffer is only started if a {@see 'wp_template_enhancement_output_buffer'} filter has been
+     * added by the time a template is included at the {@see 'wp_before_include_template'} action. This allows template
+     * responses to be streamed as much as possible when no template enhancements are registered to apply.
+     *
+     * @since 6.9.0
+     *
+     * @return bool Whether the template should be output-buffered for enhancement.
+     */
+    function wp_should_output_buffer_template_for_enhancement(): bool
+    {
+    }
+    /**
+     * Starts the template enhancement output buffer.
+     *
+     * This function is called immediately before the template is included.
+     *
+     * @since 6.9.0
+     *
+     * @return bool Whether the output buffer successfully started.
+     */
+    function wp_start_template_enhancement_output_buffer(): bool
+    {
+    }
+    /**
+     * Finalizes the template enhancement output buffer.
+     *
+     * Checks to see if the output buffer is complete and contains HTML. If so, runs the content through
+     * the `wp_template_enhancement_output_buffer` filter.  If not, the original content is returned.
+     *
+     * @since 6.9.0
+     *
+     * @see wp_start_template_enhancement_output_buffer()
+     *
+     * @param string $output Output buffer.
+     * @param int    $phase  Phase.
+     * @return string Finalized output buffer.
+     */
+    function wp_finalize_template_enhancement_output_buffer(string $output, int $phase): string
     {
     }
     /**
@@ -141770,6 +147331,8 @@ namespace {
      *
      * @since 5.9.0
      *
+     * @global string[] $wp_theme_directories
+     *
      * @return bool Whether the active theme is a block-based theme or not.
      */
     function wp_is_block_theme()
@@ -141810,14 +147373,12 @@ namespace {
      *
      * @since 2.3.0
      *
-     * @global string $wp_version       Used to check against the newest WordPress version.
      * @global wpdb   $wpdb             WordPress database abstraction object.
      * @global string $wp_local_package Locale code of the package.
      *
      * @param array $extra_stats Extra statistics to report to the WordPress.org API.
      * @param bool  $force_check Whether to bypass the transient cache and force a fresh update check.
      *                           Defaults to false, true if $extra_stats is set.
-     * @phpstan-return void
      */
     function wp_version_check($extra_stats = array(), $force_check = \false)
     {
@@ -141833,8 +147394,6 @@ namespace {
      * if WordPress isn't installing.
      *
      * @since 2.3.0
-     *
-     * @global string $wp_version The WordPress version string.
      *
      * @param array $extra_stats Extra statistics to report to the WordPress.org API.
      */
@@ -141852,8 +147411,6 @@ namespace {
      * if WordPress isn't installing.
      *
      * @since 2.7.0
-     *
-     * @global string $wp_version The WordPress version string.
      *
      * @param array $extra_stats Extra statistics to report to the WordPress.org API.
      * @phpstan-return void
@@ -142154,13 +147711,14 @@ namespace {
      * Gets the number of posts written by a list of users.
      *
      * @since 3.0.0
+     * @since 6.9.0 The results are now cached.
      *
      * @global wpdb $wpdb WordPress database abstraction object.
      *
      * @param int[]           $users       Array of user IDs.
      * @param string|string[] $post_type   Optional. Single post type or array of post types to check. Defaults to 'post'.
      * @param bool            $public_only Optional. Only return counts for public posts.  Defaults to false.
-     * @return string[] Amount of posts each user has written, as strings, keyed by user ID.
+     * @return array<int, string> Amount of posts each user has written, as strings, keyed by user ID.
      */
     function count_many_users_posts($users, $post_type = 'post', $public_only = \false)
     {
@@ -142171,6 +147729,7 @@ namespace {
      * @since MU (3.0.0)
      *
      * @return int The current user's ID, or 0 if no user is logged in.
+     * @phpstan-return int<0, max>
      */
     function get_current_user_id()
     {
@@ -142193,6 +147752,7 @@ namespace {
      * @param int    $user       Optional. User ID.
      * @param string $deprecated Use get_option() to check for an option in the options table.
      * @return mixed User option value on success, false on failure.
+     * @phpstan-param '' $deprecated
      */
     function get_user_option($option, $user = 0, $deprecated = '')
     {
@@ -142385,6 +147945,8 @@ namespace {
     /**
      * Adds meta data to a user.
      *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
+     *
      * @since 3.0.0
      *
      * @param int    $user_id    User ID.
@@ -142409,6 +147971,8 @@ namespace {
      * You can match based on the key, or key and value. Removing based on key and
      * value, will keep from removing duplicate metadata with the same key. It also
      * allows removing all metadata matching key, if needed.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 3.0.0
      *
@@ -142458,6 +148022,8 @@ namespace {
      * same key and user ID.
      *
      * If the meta field for the user does not exist, it will be added.
+     *
+     * For historical reasons both the meta key and the meta value are expected to be "slashed" (slashes escaped) on input.
      *
      * @since 3.0.0
      *
@@ -142970,9 +148536,13 @@ namespace {
     /**
      * Sets up the user contact methods.
      *
-     * Default contact methods were removed in 3.6. A filter dictates contact methods.
+     * Default contact methods were removed for new installations in WordPress 3.6
+     * and completely removed from the codebase in WordPress 6.9.
+     *
+     * Use the {@see 'user_contactmethods'} filter to add or remove contact methods.
      *
      * @since 3.7.0
+     * @since 6.9.0 Removed references to `aim`, `jabber`, and `yim` contact methods.
      *
      * @param WP_User|null $user Optional. WP_User object.
      * @return string[] Array of contact method labels keyed by contact method.
@@ -143011,6 +148581,7 @@ namespace {
      *
      * @param WP_User $user User to retrieve password reset key for.
      * @return string|WP_Error Password reset key on success. WP_Error on error.
+     * @phpstan-impure
      */
     function get_password_reset_key($user)
     {
@@ -143332,7 +148903,7 @@ namespace {
      *
      * @since 4.9.6
      *
-     * @param string $request_id ID of the request created via wp_create_user_request().
+     * @param int $request_id ID of the request created via wp_create_user_request().
      * @return true|WP_Error True on success, `WP_Error` on failure.
      */
     function wp_send_user_request($request_id)
@@ -143354,7 +148925,7 @@ namespace {
      *
      * @since 4.9.6
      *
-     * @param string $request_id ID of the request being confirmed.
+     * @param int    $request_id ID of the request being confirmed.
      * @param string $key        Provided key to validate.
      * @return true|WP_Error True on success, WP_Error on failure.
      */
@@ -143451,6 +149022,119 @@ namespace {
     {
     }
     /**
+     * Determines if a given byte string represents a valid UTF-8 encoding.
+     *
+     * Note that it’s unlikely for non-UTF-8 data to validate as UTF-8, but
+     * it is still possible. Many texts are simultaneously valid UTF-8,
+     * valid US-ASCII, and valid ISO-8859-1 (`latin1`).
+     *
+     * Example:
+     *
+     *     true === wp_is_valid_utf8( '' );
+     *     true === wp_is_valid_utf8( 'just a test' );
+     *     true === wp_is_valid_utf8( "\xE2\x9C\x8F" );    // Pencil, U+270F.
+     *     true === wp_is_valid_utf8( "\u{270F}" );        // Pencil, U+270F.
+     *     true === wp_is_valid_utf8( '✏' );              // Pencil, U+270F.
+     *
+     *     false === wp_is_valid_utf8( "just \xC0 test" ); // Invalid bytes.
+     *     false === wp_is_valid_utf8( "\xE2\x9C" );       // Invalid/incomplete sequences.
+     *     false === wp_is_valid_utf8( "\xC1\xBF" );       // Overlong sequences.
+     *     false === wp_is_valid_utf8( "\xED\xB0\x80" );   // Surrogate halves.
+     *     false === wp_is_valid_utf8( "B\xFCch" );        // ISO-8859-1 high-bytes.
+     *                                                     // E.g. The “ü” in ISO-8859-1 is a single byte 0xFC,
+     *                                                     // but in UTF-8 is the two-byte sequence 0xC3 0xBC.
+     *
+     *  A “valid” string consists of “well-formed UTF-8 code unit sequence[s],” meaning
+     *  that the bytes conform to the UTF-8 encoding scheme, all characters use the minimal
+     *  byte sequence required by UTF-8, and that no sequence encodes a UTF-16 surrogate
+     *  code point or any character above the representable range.
+     *
+     * @see https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G32860
+     *
+     * @since 6.9.0
+     *
+     * @param string $bytes String which might contain text encoded as UTF-8.
+     * @return bool Whether the provided bytes can decode as valid UTF-8.
+     */
+    function wp_is_valid_utf8(string $bytes): bool
+    {
+    }
+    /**
+     * Replaces ill-formed UTF-8 byte sequences with the Unicode Replacement Character.
+     *
+     * Knowing what to do in the presence of text encoding issues can be complicated.
+     * This function replaces invalid spans of bytes to neutralize any corruption that
+     * may be there and prevent it from causing further problems downstream.
+     *
+     * However, it’s not always ideal to replace those bytes. In some settings it may
+     * be best to leave the invalid bytes in the string so that downstream code can handle
+     * them in a specific way. Replacing the bytes too early, like escaping for HTML too
+     * early, can introduce other forms of corruption and data loss.
+     *
+     * When in doubt, use this function to replace spans of invalid bytes.
+     *
+     * Replacement follows the “maximal subpart” algorithm for secure and interoperable
+     * strings. This can lead to sequences of multiple replacement characters in a row.
+     *
+     * Example:
+     *
+     *     // Valid strings come through unchanged.
+     *     'test' === wp_scrub_utf8( 'test' );
+     *
+     *     // Invalid sequences of bytes are replaced.
+     *     $invalid = "the byte \xC0 is never allowed in a UTF-8 string.";
+     *     "the byte \u{FFFD} is never allowed in a UTF-8 string." === wp_scrub_utf8( $invalid, true );
+     *     'the byte � is never allowed in a UTF-8 string.' === wp_scrub_utf8( $invalid, true );
+     *
+     *     // Maximal subparts are replaced individually.
+     *     '.�.' === wp_scrub_utf8( ".\xC0." );              // C0 is never valid.
+     *     '.�.' === wp_scrub_utf8( ".\xE2\x8C." );          // Missing A3 at end.
+     *     '.��.' === wp_scrub_utf8( ".\xE2\x8C\xE2\x8C." ); // Maximal subparts replaced separately.
+     *     '.��.' === wp_scrub_utf8( ".\xC1\xBF." );         // Overlong sequence.
+     *     '.���.' === wp_scrub_utf8( ".\xED\xA0\x80." );    // Surrogate half.
+     *
+     * Note! The Unicode Replacement Character is itself a Unicode character (U+FFFD).
+     * Once a span of invalid bytes has been replaced by one, it will not be possible
+     * to know whether the replacement character was originally intended to be there
+     * or if it is the result of scrubbing bytes. It is ideal to leave replacement for
+     * display only, but some contexts (e.g. generating XML or passing data into a
+     * large language model) require valid input strings.
+     *
+     * @since 6.9.0
+     *
+     * @see https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-5/#G40630
+     *
+     * @param string $text String which is assumed to be UTF-8 but may contain invalid sequences of bytes.
+     * @return string Input text with invalid sequences of bytes replaced with the Unicode replacement character.
+     */
+    function wp_scrub_utf8($text)
+    {
+    }
+    /**
+     * Returns whether the given string contains Unicode noncharacters.
+     *
+     * XML recommends against using noncharacters and HTML forbids their
+     * use in attribute names. Unicode recommends that they not be used
+     * in open exchange of data.
+     *
+     * Noncharacters are code points within the following ranges:
+     *  - U+FDD0–U+FDEF
+     *  - U+FFFE–U+FFFF
+     *  - U+1FFFE, U+1FFFF, U+2FFFE, U+2FFFF, …, U+10FFFE, U+10FFFF
+     *
+     * @see https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-23/#G12612
+     * @see https://www.w3.org/TR/xml/#charsets
+     * @see https://html.spec.whatwg.org/#attributes-2
+     *
+     * @since 6.9.0
+     *
+     * @param string $text Are there noncharacters in this string?
+     * @return bool Whether noncharacters were found in the string.
+     */
+    function wp_has_noncharacters(string $text): bool
+    {
+    }
+    /**
      * Test if the current browser runs on a mobile device (smart phone, tablet, etc.).
      *
      * @since 3.4.0
@@ -143475,6 +149159,8 @@ namespace {
      * @global WP_Widget_Factory $wp_widget_factory
      *
      * @param string|WP_Widget $widget Either the name of a `WP_Widget` subclass or an instance of a `WP_Widget` subclass.
+     * @phpstan-param class-string<\WP_Widget>|\WP_Widget $widget
+     * @phpstan-return void
      */
     function register_widget($widget)
     {
@@ -143902,6 +149588,7 @@ namespace {
      *
      * @param bool $deprecated Not used (argument deprecated).
      * @return array Upgraded list of widgets to version 3 array format when called from the admin.
+     * @phpstan-param true $deprecated
      */
     function wp_get_sidebars_widgets($deprecated = \true)
     {
@@ -144112,6 +149799,7 @@ namespace {
      * @param array $widget_rss RSS widget feed data. Expects unescaped data.
      * @param bool  $check_feed Optional. Whether to check feed for errors. Default true.
      * @return array
+     * @phpstan-return array{title: string, url: string, link: string, items: int<1, 20>, error: string|false, show_summary: int, show_author: int, show_date: int}
      */
     function wp_widget_rss_process($widget_rss, $check_feed = \true)
     {

@@ -10,6 +10,11 @@ if (file_exists($updateApiAutoload)) {
     require_once $updateApiAutoload;
 }
 
+$pluginAutoload = __DIR__ . '/../v-wp-updater/vendor/autoload.php';
+if (file_exists($pluginAutoload)) {
+    require_once $pluginAutoload;
+}
+
 $local = __DIR__ . '/../tests/bootstrap-local.php';
 if (file_exists($local)) {
     require_once $local;

@@ -6,6 +6,8 @@ v-update-api/storage/*.sqlite
 node_modules/
 .phpunit.result.cache
 .phpunit.cache/
+vendor/
+.phpstan-cache/
 
 
 #Ignore insiders AI rules

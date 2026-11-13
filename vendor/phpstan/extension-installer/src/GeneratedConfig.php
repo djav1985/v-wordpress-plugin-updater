@@ -12,7 +12,7 @@ final class GeneratedConfig
 	public const EXTENSIONS = array (
   'szepeviktor/phpstan-wordpress' => 
   array (
-    'install_path' => '/home/runner/work/v-wordpress-plugin-updater/v-wordpress-plugin-updater/vendor/szepeviktor/phpstan-wordpress',
+    'install_path' => 'C:\\Users\\djav1\\Documents\\Projects\\appsbyv\\v-wordpress-plugin-updater\\vendor/szepeviktor/phpstan-wordpress',
     'relative_install_path' => '../../../szepeviktor/phpstan-wordpress',
     'extra' => 
     array (
@@ -21,7 +21,7 @@ final class GeneratedConfig
         0 => 'extension.neon',
       ),
     ),
-    'version' => 'v2.0.3',
+    'version' => 'v2.0.4',
     'phpstanVersionConstraint' => '>=2.0.0.0-dev, <3.0.0.0-dev',
   ),
 );

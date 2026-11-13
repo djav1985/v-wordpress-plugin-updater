@@ -1,16 +1,17 @@
+includes:
+  - phpstan-baseline.neon
+
 parameters:
+  tmpDir: .phpstan-cache
   level: 6
   paths:
     - v-wp-updater
     - v-update-api
   excludePaths:
+    - v-wp-updater/vendor
+    - v-wp-updater/vendor/*
     - v-update-api/vendor
     - v-update-api/vendor/*
   bootstrapFiles:
     - .github/phpstan-bootstrap.php
     - v-update-api/vendor/autoload.php
-
-  # Optional: silence WP globals noise you don’t care about
-  ignoreErrors:
-    - '#Negated boolean expression is always true#'
-    - '#Function vontmnt_schedule_unique_single_event\(\) has parameter \$args with no value type specified in iterable type array#'

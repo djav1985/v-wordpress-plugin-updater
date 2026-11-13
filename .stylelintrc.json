@@ -1,7 +1,22 @@
 {
   "extends": "stylelint-config-standard",
+  "plugins": ["@stylistic/stylelint-plugin"],
+  "ignoreFiles": ["**/vendor/**", "**/node_modules/**"],
   "rules": {
-    "indentation": 2,
-    "color-hex-length": "short"
+    "@stylistic/indentation": 2,
+    "color-hex-length": null,
+    "color-function-notation": null,
+    "color-function-alias-notation": null,
+    "alpha-value-notation": null,
+    "length-zero-no-unit": null,
+    "rule-empty-line-before": null,
+    "no-descending-specificity": null,
+    "media-feature-range-notation": null,
+    "at-rule-no-vendor-prefix": null,
+    "property-no-vendor-prefix": null,
+    "function-url-quotes": null,
+    "shorthand-property-no-redundant-values": null,
+    "selector-id-pattern": null,
+    "value-no-vendor-prefix": null
   }
 }

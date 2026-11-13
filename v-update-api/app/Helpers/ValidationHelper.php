@@ -17,6 +17,9 @@ namespace App\Helpers;
 use App\Core\SessionManager;
 use Respect\Validation\Validator as v;
 
+/**
+ * Validation helpers for application inputs.
+ */
 class ValidationHelper
 {
     /**
