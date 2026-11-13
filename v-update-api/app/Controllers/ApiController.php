@@ -23,6 +23,8 @@ use App\Models\ThemeModel;
 use App\Models\LogModel;
 use App\Core\ErrorManager;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
 
 class ApiController
 {
@@ -39,10 +41,11 @@ class ApiController
      *
     * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
-        $ip     = $_SERVER['REMOTE_ADDR'] ?? '';
-        $method = $_SERVER['REQUEST_METHOD'] ?? '';
+        $serverParams = $request->getServerParams();
+        $ip     = RequestInput::string($serverParams, 'REMOTE_ADDR') ?? '';
+        $method = $request->getMethod();
 
         if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
             ErrorManager::log('Forbidden: missing or invalid IP address');
@@ -66,13 +69,15 @@ class ApiController
                    'slug',
                    'version',
                   ];
+        $query = $request->getQueryParams();
         $values = [];
         foreach ($params as $p) {
-            if (!isset($_GET[$p]) || $_GET[$p] === '' || ($p === 'type' && !in_array($_GET[$p], ['plugin', 'theme']))) {
-                ErrorManager::log('Bad request missing parameter: ' . $p);
+            $value = RequestInput::string($query, $p);
+            if ($value === null || $value === '' || ($p === 'type' && !in_array($value, ['plugin', 'theme'], true))) {
+                ErrorManager::log('Bad request missing or malformed parameter: ' . $p);
                 return new Response(400);
             }
-            $values[] = $_GET[$p];
+            $values[] = $value;
         }
         list($type, $domain, $key, $slug, $version) = $values;
 
@@ -125,17 +130,17 @@ class ApiController
         }
 
         if ($type === 'theme') {
-            $dbVersion = ThemeModel::getVersionBySlug($slug);
+            $availableVersion = ThemeModel::getVersionBySlug($slug);
         } else {
-            $dbVersion = PluginModel::getVersionBySlug($slug);
+            $availableVersion = PluginModel::getVersionBySlug($slug);
         }
-        if ($dbVersion === null) {
+        if ($availableVersion === null) {
             ErrorManager::log('Not found: unknown ' . $type . ' slug "' . $slug . '" for ' . $domain);
             return new Response(404);
         }
 
-        if (version_compare($dbVersion, $version, '>')) {
-            $filePath = $dir . '/' . $slug . '_' . $dbVersion . '.zip';
+        if (version_compare($availableVersion, $version, '>')) {
+            $filePath = $dir . '/' . $slug . '_' . $availableVersion . '.zip';
             $contentLength = @filesize($filePath);
             if (is_file($filePath) && is_readable($filePath) && is_int($contentLength)) {
                 LogModel::addLog($domain, $type, 'Success');

@@ -20,6 +20,9 @@ use App\Core\ErrorManager;
 use App\Models\ThemeModel;
 use App\Helpers\MessageHelper;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 
 class ThemesController
 {
@@ -28,7 +31,7 @@ class ThemesController
      *
      * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
         $themesTableHtml = $this->getThemesTableHtml();
         return Response::view('thupdate', [
@@ -41,14 +44,17 @@ class ThemesController
      *
     * @return Response
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(ServerRequestInterface $request): Response
     {
-        $token = $_POST['csrf_token'] ?? '';
+        $post = $request->getParsedBody();
+        if (!is_array($post)) {
+            return new Response(400);
+        }
+        $token = RequestInput::string($post, 'csrf_token') ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
-            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            $isAjax = strtolower($request->getHeaderLine('X-Requested-With')) === 'xmlhttprequest';
             if ($isAjax) {
                 return Response::text($error, 400);
             }
@@ -56,10 +62,14 @@ class ThemesController
             return Response::redirect('/thupdate');
         }
 
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-        if (isset($_FILES['theme_file'])) {
-            $messages = ThemeModel::uploadFiles($_FILES['theme_file'], $isAjax);
+        $isAjax = strtolower($request->getHeaderLine('X-Requested-With')) === 'xmlhttprequest';
+        $uploadedFiles = $request->getUploadedFiles();
+        if (isset($uploadedFiles['theme_file'])) {
+            $upload = $uploadedFiles['theme_file'];
+            if (!is_array($upload) && !$upload instanceof UploadedFileInterface) {
+                return Response::text('Invalid upload payload.', 400);
+            }
+            $messages = ThemeModel::uploadPsrFiles($upload, $isAjax);
             if ($isAjax) {
                 return Response::text(implode("\n", $messages));
             }
@@ -67,8 +77,10 @@ class ThemesController
                 MessageHelper::addMessage($message);
             }
             return Response::redirect('/thupdate');
-        } elseif (isset($_POST['delete_theme'])) {
-            $themeName = isset($_POST['theme_name']) ? ValidationHelper::validateSlug($_POST['theme_name']) : null;
+        } elseif (isset($post['delete_theme'])) {
+            $themeName = ValidationHelper::validateFilename(
+                RequestInput::string($post, 'theme_name') ?? ''
+            );
             if ($themeName !== null && ThemeModel::deleteTheme($themeName)) {
                 MessageHelper::addMessage('Theme deleted successfully!');
             } else {

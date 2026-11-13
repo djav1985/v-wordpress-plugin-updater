@@ -41,7 +41,7 @@
 
 The V-WordPress-Plugin-Updater is a **dual-component system** designed to streamline WordPress plugin and theme updates through a centralized management approach:
 
-1. **Update API Server** (`v-update-api/`): A standalone PHP web application that hosts and serves plugin/theme update packages. Built with a modern MVC architecture using FastRoute for routing, Doctrine DBAL for SQLite database management, and comprehensive security features including encrypted API keys, IP blacklisting, and session management.
+1. **Update API Server** (`v-update-api/`): A standalone PHP web application that hosts and serves plugin/theme update packages. Built with FastRoute, PSR-7 HTTP messages, Doctrine DBAL for SQLite database management, and security features including encrypted API keys, IP blacklisting, and session management.
 
 2. **WordPress Client Plugin** (`v-wp-updater/`): A WordPress plugin that automatically checks for and installs updates from the API server. It integrates with WordPress core update mechanisms, providing scheduled daily checks, a dashboard settings widget for configuration, and plugin-side update logging.
 
@@ -54,14 +54,14 @@ This architecture enables centralized control over plugin and theme updates acro
 |      | Component            | Details                                                                                     |
 | :--- | :------------------- | :------------------------------------------------------------------------------------------ |
 | ⚙️  | **Architecture**     | <ul><li>Dual-component system: standalone Update API server + WordPress client plugin</li><li>MVC architecture with FastRoute routing and Doctrine DBAL</li><li>Separate namespaces: `App\` (server) and `VWPU\` (client)</li></ul> |
-| 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>PHPUnit tests currently cover router dispatch/guards and secure random-byte generation</li></ul> |
+| 🔩 | **Code Quality**     | <ul><li>PSR-12 coding standards for API server</li><li>WordPress Coding Standards for client plugin</li><li>PHPStan static analysis at level 6</li><li>PHPUnit tests cover router dispatch/guards, secure random-byte generation, and file-based package models</li></ul> |
 | 📄 | **Documentation**    | <ul><li>Detailed README with installation and usage instructions</li><li>Inline PHPDoc comments throughout codebase</li></ul> |
-| 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based synchronization between filesystem and database</li></ul> |
-| 🧩 | **Modularity**        | <ul><li>Separate API, login, home/host, plugin, theme, and log controllers</li><li>Helpers provide encryption, validation, and messages; models handle filesystem synchronization and database operations</li><li>Router guards enforce blacklist, session, and CSRF checks</li></ul> |
-| 🧪 | **Testing**           | <ul><li>Checked-in PHPUnit tests cover router dispatch, router guards, and secure random-byte generation</li><li>The current suite does not provide comprehensive test coverage for both components</li></ul> |
-| ⚡️  | **Performance**       | <ul><li>SQLite database for update metadata</li><li>Daily cron synchronization of plugin/theme ZIP metadata and blacklist cleanup</li><li>Client reuses the ZIP body fetched during a successful update check rather than downloading it a second time</li></ul> |
+| 🔌 | **Integrations**      | <ul><li>WordPress hooks and filters integration</li><li>Cron-based cleanup of expired blacklist entries</li></ul> |
+| 🧩 | **Modularity**        | <ul><li>Separate API, login, home/host, plugin, theme, and log controllers</li><li>Plugin and theme versions are read from package filenames; host, log, and blacklist records use SQLite</li><li>Router guards enforce blacklist, session, and CSRF checks</li></ul> |
+| 🧪 | **Testing**           | <ul><li>Checked-in PHPUnit tests cover router dispatch and guards, secure random-byte generation, and Update API package lookup, API responses, upload rules, replacement, and deletion</li><li>The current suite does not provide comprehensive test coverage for both components</li></ul> |
+| ⚡️  | **Performance**       | <ul><li>SQLite stores host credentials, update logs, and blacklist state</li><li>Plugin/theme versions are read directly from ZIP filenames, with no metadata sync job</li><li>Daily cron cleanup removes expired blacklist entries and keeps API activity logs to seven calendar days</li><li>Client reuses the ZIP body fetched during a successful update check rather than downloading it a second time</li></ul> |
 | 🛡️ | **Security**          | <ul><li>Encrypted API keys using AES-256-GCM (with legacy ciphertext migration)</li><li>IP-based blacklisting for repeated authentication failures</li><li>Session timeout and user agent validation</li><li>CSRF protection on non-API forms</li><li>Input validation and sanitization</li></ul> |
-| 📦 | **Dependencies**      | <ul><li>PHP 8.2+ for `v-update-api` and PHP 8.0+ for `v-wp-updater`</li><li>Composer packages: FastRoute, Doctrine DBAL, Respect/Validation</li><li>WordPress core functions for client plugin</li><li>Web server with PHP support (Apache/Nginx)</li></ul> |
+| 📦 | **Dependencies**      | <ul><li>PHP 8.2+ for `v-update-api` and PHP 8.0+ for `v-wp-updater`</li><li>Composer packages: FastRoute, Guzzle PSR-7, Doctrine DBAL, Respect/Validation</li><li>WordPress core functions for client plugin</li><li>Web server with PHP support (Apache/Nginx)</li></ul> |
 
 ---
 
@@ -140,6 +140,7 @@ This architecture enables centralized control over plugin and theme updates acro
 6. Ensure the web server user owns the `v-update-api/storage/` directory so uploads and logs can be written. Application logs are written to `LOG_FILE` (default `v-update-api/storage/logs/app.log`).
 
 7. Run `php v-update-api/public/install.php` from the repository root, or visit `/install.php` on the API server, to create the SQLite database and required tables. Ensure `v-update-api/storage/` is writable by the web server.
+   If a `HOSTS` import file is present, it adds only domains not already in the database; existing host keys are preserved.
 
 8. Configure a system cron to run once daily (the script is CLI-only and takes no arguments):
 
@@ -147,7 +148,7 @@ This architecture enables centralized control over plugin and theme updates acro
 	0 2 * * * cd /path/to/v-update-api && php cron.php
    ```
 
-	This keeps the database in sync with plugin and theme ZIP files in the storage directories and also cleans up expired blacklist entries. The script is CLI-only and accepts no worker argument.
+	This removes expired blacklist entries. Plugin and theme versions are read from ZIP filenames, so package uploads are available immediately without a database sync. The script is CLI-only and accepts no worker argument.
 
 #### WordPress Client Plugin Setup
 
@@ -177,13 +178,13 @@ This architecture enables centralized control over plugin and theme updates acro
 
 2. **Manage Hosts**: Add authorized WordPress domains and generate API keys in the `/home` route.
 
-3. **Upload Plugins**: Navigate to `/plupdate` to upload plugin ZIP files. Files must be named following the pattern `{slug}_{version}.zip` (e.g., `my-plugin_1.2.3.zip`).
+3. **Upload Plugins**: Navigate to `/plupdate` to upload plugin ZIP files. Files must be named following the pattern `{slug}_{version}.zip` (e.g., `my-plugin_1.2.3.zip`). Uploading a newer version replaces the previous ZIP for that slug.
 
-4. **Upload Themes**: Navigate to `/thupdate` to upload theme ZIP files. Files must follow the same naming pattern as plugins.
+4. **Upload Themes**: Navigate to `/thupdate` to upload theme ZIP files. Files must follow the same naming pattern as plugins, and uploading a newer version replaces the previous ZIP for that slug.
 
-5. **View Logs**: Check `/logs` for plugin and theme update activity logs.
+5. **View Logs**: Check `/logs` for plugin and theme update activity from the current day and previous six calendar days.
 
-6. The daily cron job will automatically sync uploaded files to the database. Ensure the cron job is configured as described in the installation steps.
+6. Plugin and theme versions are read directly from ZIP filenames, so no cron sync is needed after upload. Configure cron as described in the installation steps to clean expired blacklist entries and retain only seven calendar days of API activity logs.
 
 #### Using the WordPress Client Plugin
 

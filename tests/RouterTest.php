@@ -31,7 +31,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            new Request('GET', '/api/missing', ['type' => 'plugin'], [], ['REMOTE_ADDR' => '127.0.0.1'])
+            Request::create('GET', '/api/missing', ['type' => 'plugin'])
         );
 
         self::assertSame(404, $response->getStatusCode());
@@ -48,12 +48,12 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'router-test-token');
 
         $router = new Router();
-        $request = new Request(
+        $request = Request::create(
             'PUT',
             '/home',
             [],
             ['csrf_token' => 'router-test-token'],
-            ['HTTP_USER_AGENT' => 'phpunit-agent', 'REMOTE_ADDR' => '127.0.0.1']
+            ['HTTP_USER_AGENT' => 'phpunit-agent']
         );
 
         $response = $router->dispatch($request);
@@ -70,12 +70,12 @@ final class RouterTest extends TestCase
         SessionManager::getInstance()->set('timeout', time());
 
         $router = new Router();
-        $request = new Request(
+        $request = Request::create(
             'GET',
             '/',
             [],
             [],
-            ['HTTP_USER_AGENT' => 'phpunit-agent', 'REMOTE_ADDR' => '127.0.0.1']
+            ['HTTP_USER_AGENT' => 'phpunit-agent']
         );
 
         $response = $router->dispatch($request);
@@ -90,7 +90,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $response = $router->dispatch(
-            new Request('GET', '/login', [], [], ['REMOTE_ADDR' => '127.0.0.1'])
+            Request::create('GET', '/login')
         );
 
         self::assertInstanceOf(Response::class, $response);

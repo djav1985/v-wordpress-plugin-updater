@@ -16,6 +16,7 @@ namespace App\Models;
 
 use App\Core\DatabaseManager;
 use App\Helpers\EncryptionHelper;
+use Doctrine\DBAL\Connection;
 
 class HostsModel
 {
@@ -121,11 +122,17 @@ class HostsModel
      */
     public static function deleteEntry(string $domain): bool
     {
-        $result = DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]) > 0;
-        if ($result) {
-            DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM logs WHERE domain = ?', [$domain]);
-        }
-        return $result;
+        $connection = DatabaseManager::getInstance()->getConnection();
+
+        return $connection->transactional(static function (Connection $connection) use ($domain): bool {
+            $deleted = $connection->executeStatement('DELETE FROM hosts WHERE domain = ?', [$domain]);
+            if ($deleted === 0) {
+                return false;
+            }
+
+            $connection->executeStatement('DELETE FROM logs WHERE domain = ?', [$domain]);
+            return true;
+        });
     }
 }
 

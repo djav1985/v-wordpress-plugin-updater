@@ -110,14 +110,15 @@ class SessionManager
     /**
      * Check session timeout, user agent and login state; destroys the session when expired.
      */
-    public function isValid(): bool
+    public function isValid(?string $currentUserAgent = null): bool
     {
         $timeoutLimit = defined('SESSION_TIMEOUT_LIMIT') ? SESSION_TIMEOUT_LIMIT : 1800;
         $timeout = $this->get('timeout');
         $timeoutExceeded = is_int($timeout) && (time() - $timeout > $timeoutLimit);
 
         $userAgent = $this->get('user_agent');
-        $userAgentChanged = is_string($userAgent) && $userAgent !== ($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $currentUserAgent ??= $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $userAgentChanged = is_string($userAgent) && $userAgent !== $currentUserAgent;
 
         if ($timeoutExceeded || $userAgentChanged) {
             $this->destroy();
@@ -132,9 +133,9 @@ class SessionManager
     /**
      * Whether the current request comes from an authenticated user.
      */
-    public function requireAuth(): bool
+    public function requireAuth(?string $currentUserAgent = null): bool
     {
-        return $this->isValid();
+        return $this->isValid($currentUserAgent);
     }
 
     /**

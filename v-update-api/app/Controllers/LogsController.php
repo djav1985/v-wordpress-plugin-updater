@@ -19,6 +19,8 @@ use App\Models\LogModel;
 use App\Helpers\MessageHelper;
 use App\Helpers\ValidationHelper;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
 
 class LogsController
 {
@@ -27,7 +29,7 @@ class LogsController
      *
      * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
         $ploutput = LogModel::getLogs('plugin');
         $thoutput = LogModel::getLogs('theme');
@@ -43,9 +45,13 @@ class LogsController
      *
     * @return Response
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(ServerRequestInterface $request): Response
     {
-        $token = $_POST['csrf_token'] ?? '';
+        $post = $request->getParsedBody();
+        if (!is_array($post)) {
+            return new Response(400);
+        }
+        $token = RequestInput::string($post, 'csrf_token') ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
@@ -53,7 +59,7 @@ class LogsController
             return Response::redirect('/logs');
         }
 
-        if (isset($_POST['clear_logs'])) {
+        if (isset($post['clear_logs'])) {
             LogModel::clearAllLogs();
             MessageHelper::addMessage('Logs cleared successfully.');
         }

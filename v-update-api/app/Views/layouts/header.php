@@ -42,16 +42,16 @@
     </div>
 </header>
 <div class="tab">
-    <a href="/home"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/home') {
+    <a href="/home"><button class="tablinks <?php if ($requestPath === '/home') {
         echo 'active';
                                         } ?>">Manage Hosts</button></a>
-    <a href="/plupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/plupdate') {
+    <a href="/plupdate"><button class="tablinks <?php if ($requestPath === '/plupdate') {
         echo 'active';
                                                 } ?>">Manage Plugins</button></a>
-    <a href="/thupdate"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/thupdate') {
+    <a href="/thupdate"><button class="tablinks <?php if ($requestPath === '/thupdate') {
         echo 'active';
                                                 } ?>">Manage Themes</button></a>
-    <a href="/logs"><button class="tablinks <?php if ($_SERVER['REQUEST_URI'] === '/logs') {
+    <a href="/logs"><button class="tablinks <?php if ($requestPath === '/logs') {
         echo 'active';
                                             } ?>">View Logs</button></a>
 </div>

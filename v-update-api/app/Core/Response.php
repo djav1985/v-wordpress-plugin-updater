@@ -1,345 +1,121 @@
 <?php
 
-/**
- * Project: UpdateAPI
- * Author:  Vontainment <services@vontainment.com>
- * License: https://opensource.org/licenses/MIT MIT License
- * Link:    https://vontainment.com
- * Version: 4.5.0
- *
- * File: Response.php
- * Description: WordPress Update API
- */
+declare(strict_types=1);
 
 namespace App\Core;
 
+use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\Psr7\Response as PsrResponse;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
-/**
- * Simple HTTP response representation implementing PSR-7 ResponseInterface.
- *
- * @phpstan-type Headers array<string, list<string>>
- */
-class Response implements ResponseInterface
+/** PSR-7 response with application view and file-streaming support. */
+class Response extends PsrResponse
 {
-    /** @var int */
-    private int $statusCode;
-
-    /** @var string */
-    private string $reasonPhrase;
-
-    /**
-     * Headers stored as name => list of values (multiple values per header are
-     * supported, e.g. multiple Set-Cookie headers).
-     *
-     * @var array<string, list<string>>
-     */
-    private array $headers;
-
-    /** @var string */
-    private string $body;
-
-    /**
-     * Optional view name to render (relative to the Views directory, without .php).
-     *
-     * @var string|null
-     */
     private ?string $view = null;
-
-    /**
-     * Variables made available inside the rendered view via extract().
-     *
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     private array $viewData = [];
-
-    /**
-     * Absolute path to a file whose contents should be streamed to the client.
-     *
-     * @var string|null
-     */
     private ?string $file = null;
 
-    /** @var array<int, string> */
-    private static array $reasonPhrases = [
-        200 => 'OK',
-        201 => 'Created',
-        204 => 'No Content',
-        301 => 'Moved Permanently',
-        302 => 'Found',
-        303 => 'See Other',
-        304 => 'Not Modified',
-        400 => 'Bad Request',
-        401 => 'Unauthorized',
-        403 => 'Forbidden',
-        404 => 'Not Found',
-        405 => 'Method Not Allowed',
-        422 => 'Unprocessable Entity',
-        429 => 'Too Many Requests',
-        500 => 'Internal Server Error',
-        503 => 'Service Unavailable',
-    ];
-
-    /**
-     * @param int    $statusCode  HTTP status code (default 200).
-     * @param array<string, string|list<string>> $headers Initial headers.
-     * @param string $body        Response body.
-     * @param string $reasonPhrase Custom reason phrase; resolved from $statusCode when empty.
-     */
     public function __construct(
         int $statusCode = 200,
         array $headers = [],
-        string $body = '',
+        $body = '',
         string $reasonPhrase = ''
     ) {
-        $this->statusCode   = $statusCode;
-        $this->body         = $body;
-        $this->reasonPhrase = $reasonPhrase !== ''
-            ? $reasonPhrase
-            : (self::$reasonPhrases[$statusCode] ?? '');
-        $this->headers = [];
-
-        foreach ($headers as $name => $value) {
-            $this->headers[self::normalizeHeaderName($name)] = is_array($value) ? $value : [$value];
-        }
+        parent::__construct($statusCode, $headers, $body, '1.1', $reasonPhrase);
     }
 
-    // -------------------------------------------------------------------------
-    // Accessors
-    // -------------------------------------------------------------------------
-
-    /**
-     * Return the HTTP status code.
-     */
-    public function getStatusCode(): int
+    public static function redirect(string $url, int $statusCode = 302): self
     {
-        return $this->statusCode;
+        return new self($statusCode, ['Location' => $url]);
     }
 
-    /**
-     * Return the reason phrase.
-     */
-    public function getReasonPhrase(): string
+    public static function text(string $body, int $statusCode = 200): self
     {
-        return $this->reasonPhrase;
+        return new self($statusCode, ['Content-Type' => 'text/plain; charset=UTF-8'], $body);
     }
 
-    /**
-     * Return all header values for the given name, or an empty array when the
-     * header is not present.
-     *
-     * @return list<string>
-     */
-    public function getHeader(string $name): array
+    public static function html(string $body, int $statusCode = 200): self
     {
-        return $this->headers[self::normalizeHeaderName($name)] ?? [];
+        return new self($statusCode, ['Content-Type' => 'text/html; charset=UTF-8'], $body);
     }
 
-    /**
-     * Return all header values for the given name joined by ', '.
-     * Returns an empty string when the header is not present.
-     */
-    public function getHeaderLine(string $name): string
+    /** @param array<mixed>|object $data @throws \JsonException */
+    public static function json(array|object $data, int $statusCode = 200, int $flags = JSON_THROW_ON_ERROR): self
     {
-        $values = $this->getHeader($name);
-        return implode(', ', $values);
+        return new self(
+            $statusCode,
+            ['Content-Type' => 'application/json; charset=UTF-8'],
+            json_encode($data, $flags | JSON_THROW_ON_ERROR)
+        );
     }
 
-    /**
-     * Return true when the response carries the named header.
-     */
-    public function hasHeader(string $name): bool
+    /** @param array<string, mixed> $data */
+    public static function view(string $view, array $data = [], int $statusCode = 200): self
     {
-        return isset($this->headers[self::normalizeHeaderName($name)]);
+        return (new self($statusCode))->withView($view, $data);
     }
 
-    /**
-     * Return all headers as name => list<string>.
-     *
-     * @return array<string, list<string>>
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
+    public static function file(
+        string $filePath,
+        string $contentType = 'application/octet-stream',
+        int $statusCode = 200
+    ): self {
+        $response = new self($statusCode, ['Content-Type' => $contentType]);
+        return $response->withFile($filePath);
     }
 
-    /**
-     * Return the protocol version (PSR-7).
-     */
-    public function getProtocolVersion(): string
-    {
-        return '1.1';
-    }
-
-    /**
-     * Return a new instance with the specified protocol version (PSR-7).
-     */
-    public function withProtocolVersion(string $version): static
-    {
-        return $this;
-    }
-
-    /**
-     * Return the response body as a string.
-     *
-     * Note: This is not PSR-7 compatible (returns string, not StreamInterface).
-     * For PSR-7 compatibility, use this method anyway as it's what we use internally.
-     */
     public function getBodyAsString(): string
     {
-        return $this->body;
+        return (string) $this->getBody();
     }
 
-    /**
-     * Return a body (PSR-7 compatibility stub - returns empty stream).
-     */
-    public function getBody(): StreamInterface
-    {
-        throw new \RuntimeException('getBody() not implemented - use getBodyAsString()');
-    }
-
-    /**
-     * Return the view name to render, or null when no view is set.
-     */
     public function getView(): ?string
     {
         return $this->view;
     }
 
-    /**
-     * Return the data array to be extracted inside the rendered view.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function getViewData(): array
     {
         return $this->viewData;
     }
 
-    /**
-     * Return the absolute file path to stream, or null when no file is set.
-     */
     public function getFile(): ?string
     {
         return $this->file;
     }
 
-    // -------------------------------------------------------------------------
-    // Immutable-style mutators (return a new instance)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Return a new instance with the given status code (and optional reason phrase).
-     */
-    public function withStatus(int $code, string $reasonPhrase = ''): self
-    {
-        $clone = clone $this;
-        $clone->statusCode   = $code;
-        $clone->reasonPhrase = $reasonPhrase !== ''
-            ? $reasonPhrase
-            : (self::$reasonPhrases[$code] ?? '');
-        return $clone;
-    }
-
-    /**
-     * Return a new instance with the specified header value(s) replacing any
-     * existing values for that header name.
-     * PSR-7 compatible signature.
-     *
-     * @param string $value
-     */
-    public function withHeader(string $name, $value): static
-    {
-        $clone = clone $this;
-        $clone->headers[self::normalizeHeaderName($name)] = [(string)$value];
-        return $clone;
-    }
-
-    /**
-     * Return a new instance with an additional value appended to the header.
-     * PSR-7 compatible signature.
-     *
-     * @param string $value
-     */
-    public function withAddedHeader(string $name, $value): static
-    {
-        $clone = clone $this;
-        $key = self::normalizeHeaderName($name);
-        $existing = $clone->headers[$key] ?? [];
-        $existing[] = (string)$value;
-        $clone->headers[$key] = $existing;
-        return $clone;
-    }
-
-    /**
-     * Return a new instance without the specified header.
-     */
-    public function withoutHeader(string $name): self
-    {
-        $clone = clone $this;
-        unset($clone->headers[self::normalizeHeaderName($name)]);
-        return $clone;
-    }
-
-    /**
-     * Return a new instance with the given body.
-     * PSR-7 compatible signature - accepts StreamInterface but we work with strings internally.
-     *
-     * @param StreamInterface|string $body
-     */
-    public function withBody($body): static
-    {
-        $clone = clone $this;
-        // Convert StreamInterface to string if needed (for PSR-7 compatibility)
-        $clone->body = is_string($body) ? $body : (string)$body;
-        return $clone;
-    }
-
-    /**
-     * Return a new instance that renders the named view (without .php extension).
-     * When the Router calls sendResponse(), it will require the view file and
-     * extract $data into the view's scope instead of echoing the body.
-     *
-     * @param string               $view View name relative to the Views directory.
-     * @param array<string, mixed> $data Variables to extract inside the view.
-     */
+    /** @param array<string, mixed> $data */
     public function withView(string $view, array $data = []): self
     {
         $clone = clone $this;
-        $clone->view     = $view;
+        $clone->view = $view;
         $clone->viewData = $data;
         return $clone;
     }
 
-    /**
-     * Return a new instance that streams the given file.
-     * When send() is called, the file contents are streamed to the client
-     * instead of echoing the body string.
-     *
-     * @param string $filePath Absolute path to the file to stream.
-     */
+    /** @param array<string, mixed> $data */
+    public function withViewData(array $data): self
+    {
+        $clone = clone $this;
+        $clone->viewData = array_merge($clone->viewData, $data);
+        return $clone;
+    }
+
     public function withFile(string $filePath): self
     {
         $clone = clone $this;
         $clone->file = $filePath;
-        return $clone;
+        return $clone->withBody(new LazyOpenStream($filePath, 'r'));
     }
 
-    // -------------------------------------------------------------------------
-    // Emit
-    // -------------------------------------------------------------------------
-
-    /**
-     * Send the response: emit the status code, headers, and body (or file) to the client.
-     *
-     * View responses are rendered from the Views directory after headers are emitted.
-     *
-     * Should be called only once, and only when no output has already been sent.
-     */
+    /** Emit the response for the native PHP web server. */
     public function send(): void
     {
-        if ($this->file !== null && !$this->isReadableFile($this->file)) {
+        if ($this->file !== null && (!is_file($this->file) || !is_readable($this->file))) {
             ErrorManager::log('File stream failed readability check: ' . $this->file);
             if (!headers_sent()) {
                 http_response_code(500);
@@ -350,13 +126,12 @@ class Response implements ResponseInterface
         }
 
         if (!headers_sent()) {
-            http_response_code($this->statusCode);
-
-            foreach ($this->headers as $name => $values) {
+            http_response_code($this->getStatusCode());
+            foreach ($this->getHeaders() as $name => $values) {
                 $replace = true;
                 foreach ($values as $value) {
                     header($name . ': ' . $value, $replace);
-                    $replace = false; // subsequent values for same name must not replace
+                    $replace = false;
                 }
             }
         }
@@ -366,37 +141,13 @@ class Response implements ResponseInterface
             return;
         }
 
-        if ($this->file !== null) {
-            $readError = null;
-            set_error_handler(
-                static function (int $severity, string $message) use (&$readError): bool {
-                    $readError = $message;
-                    return true;
-                }
-            );
-            try {
-                $result = readfile($this->file);
-            } finally {
-                restore_error_handler();
-            }
-
-            if ($result === false) {
-                ErrorManager::log(
-                    'File stream failed during readfile for "' . $this->file . '"'
-                    . ($readError !== null ? ': ' . $readError : '')
-                );
-            }
-            return;
+        $body = $this->getBody();
+        while (!$body->eof()) {
+            echo $body->read(8192);
         }
-
-        echo $this->body;
     }
 
-    /**
-     * Require a view file with the given data extracted into its scope.
-     *
-     * @param array<string, mixed> $data
-     */
+    /** @param array<string, mixed> $data */
     private static function renderView(string $view, array $data): void
     {
         if (!preg_match('/^[A-Za-z0-9_\/-]+$/', $view)) {
@@ -405,106 +156,5 @@ class Response implements ResponseInterface
 
         extract($data, EXTR_SKIP);
         require __DIR__ . '/../Views/' . $view . '.php';
-    }
-
-    // -------------------------------------------------------------------------
-    // Static factories
-    // -------------------------------------------------------------------------
-
-    /**
-     * Create a redirect response.
-     *
-     * @param string $url        Target URL.
-     * @param int    $statusCode 301, 302, 303, or 307 (defaults to 302).
-     */
-    public static function redirect(string $url, int $statusCode = 302): self
-    {
-        return new self($statusCode, ['Location' => $url]);
-    }
-
-    /**
-     * Create a plain-text response.
-     */
-    public static function text(string $body, int $statusCode = 200): self
-    {
-        return new self($statusCode, ['Content-Type' => 'text/plain; charset=UTF-8'], $body);
-    }
-
-    /**
-     * Create an HTML response.
-     */
-    public static function html(string $body, int $statusCode = 200): self
-    {
-        return new self($statusCode, ['Content-Type' => 'text/html; charset=UTF-8'], $body);
-    }
-
-    /**
-     * Create a JSON response.
-     *
-     * @param array<mixed>|object $data Data to JSON-encode.
-     * @param int                 $statusCode HTTP status code.
-     * @param int                 $flags json_encode() flags (defaults to JSON_THROW_ON_ERROR).
-     *                                  JSON_THROW_ON_ERROR is always OR-ed in to guarantee that
-     *                                  a \JsonException is thrown rather than returning false.
-     * @throws \JsonException When encoding fails.
-     */
-    public static function json(array|object $data, int $statusCode = 200, int $flags = JSON_THROW_ON_ERROR): self
-    {
-        // Always include JSON_THROW_ON_ERROR so the function never silently
-        // returns false regardless of what the caller passes in $flags.
-        $body = json_encode($data, $flags | JSON_THROW_ON_ERROR);
-        return new self($statusCode, ['Content-Type' => 'application/json; charset=UTF-8'], $body);
-    }
-
-    /**
-     * Create a view response.
-     *
-     * The Router's sendResponse() will render the named view file, extracting
-     * $data into its scope. Nothing is echoed if send() is called directly.
-     *
-     * @param string               $view       View name relative to the Views directory (no .php).
-     * @param array<string, mixed> $data       Variables to extract inside the view.
-     * @param int                  $statusCode HTTP status code (default 200).
-     */
-    public static function view(string $view, array $data = [], int $statusCode = 200): self
-    {
-        return (new self($statusCode))->withView($view, $data);
-    }
-
-    /**
-     * Create a file-streaming response.
-     *
-     * @param string $filePath    Absolute path to the file to stream.
-     * @param string $contentType MIME type sent as Content-Type header.
-     * @param int    $statusCode  HTTP status code (default 200).
-     */
-    public static function file(
-        string $filePath,
-        string $contentType = 'application/octet-stream',
-        int $statusCode = 200
-    ): self {
-        return (new self($statusCode, ['Content-Type' => $contentType]))->withFile($filePath);
-    }
-
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Normalize a header name to Title-Case so lookups are case-insensitive.
-     *
-     * e.g. "content-type" -> "Content-Type"
-     */
-    private static function normalizeHeaderName(string $name): string
-    {
-        return implode('-', array_map('ucfirst', explode('-', strtolower(trim($name)))));
-    }
-
-    /**
-     * Return true when the provided path points to a readable regular file.
-     */
-    private function isReadableFile(string $path): bool
-    {
-        return is_file($path) && is_readable($path);
     }
 }

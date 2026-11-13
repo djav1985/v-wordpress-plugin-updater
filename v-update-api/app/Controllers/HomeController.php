@@ -21,6 +21,8 @@ use App\Core\ErrorManager;
 use App\Models\HostsModel;
 use App\Helpers\MessageHelper;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
 
 class HomeController
 {
@@ -31,7 +33,7 @@ class HomeController
      *
      * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
         $this->pruneExpiredReveals();
         return Response::view('home', [
@@ -44,9 +46,13 @@ class HomeController
      *
     * @return Response
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(ServerRequestInterface $request): Response
     {
-        $token = $_POST['csrf_token'] ?? '';
+        $post = $request->getParsedBody();
+        if (!is_array($post)) {
+            return new Response(400);
+        }
+        $token = RequestInput::string($post, 'csrf_token') ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
@@ -54,8 +60,8 @@ class HomeController
             return Response::redirect('/home');
         }
 
-        $domain = isset($_POST['domain']) ? ValidationHelper::validateDomain($_POST['domain']) : null;
-        if (isset($_POST['add_entry'])) {
+        $domain = ValidationHelper::validateDomain(RequestInput::string($post, 'domain') ?? '');
+        if (isset($post['add_entry'])) {
             $newKey = ValidationHelper::generateKey();
             if ($domain !== null && HostsModel::addEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Entry added successfully.');
@@ -64,7 +70,7 @@ class HomeController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-        } elseif (isset($_POST['regen_entry'])) {
+        } elseif (isset($post['regen_entry'])) {
             $newKey = ValidationHelper::generateKey();
             if ($domain !== null && HostsModel::updateEntry($domain, $newKey)) {
                 MessageHelper::addMessage('Key regenerated successfully.');
@@ -73,7 +79,7 @@ class HomeController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-        } elseif (isset($_POST['reveal_entry'])) {
+        } elseif (isset($post['reveal_entry'])) {
             if ($domain !== null && $this->revealKey($domain)) {
                 MessageHelper::addMessage('Key revealed for 30 seconds.');
             } else {
@@ -81,7 +87,7 @@ class HomeController
                 ErrorManager::log($error);
                 MessageHelper::addMessage($error);
             }
-        } elseif (isset($_POST['delete_entry'])) {
+        } elseif (isset($post['delete_entry'])) {
             if ($domain !== null && HostsModel::deleteEntry($domain)) {
                 MessageHelper::addMessage('Entry deleted successfully.');
             } else {

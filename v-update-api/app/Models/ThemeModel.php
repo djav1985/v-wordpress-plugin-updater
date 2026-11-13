@@ -14,8 +14,8 @@
 
 namespace App\Models;
 
-use App\Core\DatabaseManager;
 use App\Helpers\ValidationHelper;
+use Psr\Http\Message\UploadedFileInterface;
 
 class ThemeModel
 {
@@ -29,12 +29,13 @@ class ThemeModel
      */
     public static function getVersionBySlug(string $slug): ?string
     {
-        $version = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$slug]);
-        if ($version === false || $version === null) {
-            return null;
+        foreach (self::getThemes() as $theme) {
+            if ($theme['slug'] === $slug) {
+                return $theme['version'];
+            }
         }
 
-        return (string) $version;
+        return null;
     }
 
     /**
@@ -44,15 +45,29 @@ class ThemeModel
      */
     public static function getThemes(): array
     {
-        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug, version FROM themes ORDER BY slug');
-        $themes = [];
-        foreach ($rows as $row) {
-            $themes[] = [
-                'slug' => $row['slug'],
-                'version' => $row['version'],
-            ];
+        $files = glob(self::DIR . '/*.zip');
+        if ($files === false) {
+            error_log('ThemeModel::getThemes could not list package files in "' . self::DIR . '".');
+            return [];
         }
-        return $themes;
+
+        $themesBySlug = [];
+        foreach ($files as $file) {
+            if (!is_file($file) || !is_readable($file)) {
+                continue;
+            }
+            $package = ValidationHelper::parsePackageFilename(basename($file));
+            if ($package === null) {
+                continue;
+            }
+            $slug = $package['slug'];
+            if (!isset($themesBySlug[$slug]) || version_compare($package['version'], $themesBySlug[$slug]['version'], '>')) {
+                $themesBySlug[$slug] = $package;
+            }
+        }
+
+        ksort($themesBySlug, SORT_STRING);
+        return array_values($themesBySlug);
     }
 
     /**
@@ -70,7 +85,6 @@ class ThemeModel
             return false;
         }
 
-        $slug = $parsed['slug'];
         $themePath = self::DIR . '/' . $basename;
         if (!file_exists($themePath)) {
             error_log('Theme delete skipped: file missing "' . $themePath . '".');
@@ -89,7 +103,6 @@ class ThemeModel
             return false;
         }
 
-        DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$slug]);
         return true;
     }
 
@@ -103,29 +116,77 @@ class ThemeModel
      */
     public static function uploadFiles(array $fileArray, bool $isAjax = false): array
     {
-        $messages = [];
-        $allowedExtensions = ['zip'];
         $normalized = self::normalizeUploadPayload($fileArray);
-        foreach ($normalized['errors'] as $errorMessage) {
-            $messages[] = $errorMessage;
-        }
+        return self::processUploads($normalized['entries'], $normalized['errors'], $isAjax);
+    }
 
-        foreach ($normalized['entries'] as $entry) {
+    /**
+     * Accept normalized PSR-7 uploaded files, including nested multi-file fields.
+     *
+     * @param array<mixed>|UploadedFileInterface $files
+     * @return list<string>
+     */
+    public static function uploadPsrFiles(array|UploadedFileInterface $files, bool $isAjax = false): array
+    {
+        $entries = [];
+        $errors = [];
+        $collect = static function (mixed $value) use (&$collect, &$entries, &$errors): void {
+            if (is_array($value)) {
+                foreach ($value as $child) {
+                    $collect($child);
+                }
+                return;
+            }
+            if (!$value instanceof UploadedFileInterface) {
+                $errors[] = 'Error uploading: malformed PSR-7 uploaded file.';
+                return;
+            }
+            $name = $value->getClientFilename();
+            if ($name === null) {
+                $errors[] = 'Error uploading: uploaded file is missing a filename.';
+                return;
+            }
+            $entries[] = [
+                'name' => $name,
+                'tmp_name' => '',
+                'error' => $value->getError(),
+                'size' => $value->getSize() ?? 0,
+                'uploaded_file' => $value,
+            ];
+        };
+        $collect($files);
+        return self::processUploads($entries, $errors, $isAjax);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $entries
+     * @param list<string> $messages
+     * @return list<string>
+     */
+    private static function processUploads(array $entries, array $messages, bool $isAjax): array
+    {
+        $allowedExtensions = ['zip'];
+        foreach ($entries as $entry) {
+            $uploadedFile = $entry['uploaded_file'] ?? null;
             $originalFilename = basename($entry['name']);
             $fileName = ValidationHelper::validateFilename($entry['name']) ?? '';
-            $fileTmp = $entry['tmp_name'];
-            $fileError = $entry['error'];
+            $fileError = $uploadedFile instanceof UploadedFileInterface
+                ? $uploadedFile->getError()
+                : $entry['error'];
+            $fileSize = $uploadedFile instanceof UploadedFileInterface
+                ? ($uploadedFile->getSize() ?? 0)
+                : $entry['size'];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
             $parsedFilename = $fileName ? ValidationHelper::parsePackageFilename($fileName) : null;
             $themeSlug = $parsedFilename['slug'] ?? '';
-            $current = DatabaseManager::getInstance()->getConnection()->fetchOne('SELECT version FROM themes WHERE slug = ?', [$themeSlug]);
+            $current = self::getVersionBySlug($themeSlug);
             $maxUploadSize = min(
                 self::parseIniSize(ini_get('upload_max_filesize')),
                 self::parseIniSize(ini_get('post_max_size'))
             );
 
-            if ($entry['size'] > $maxUploadSize) {
+            if ($fileSize > $maxUploadSize) {
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8')
                     . '. File size exceeds the maximum allowed size of '
@@ -160,6 +221,10 @@ class ThemeModel
                 continue;
             }
 
+            $fileTmp = $uploadedFile instanceof UploadedFileInterface
+                ? (string) $uploadedFile->getStream()->getMetadata('uri')
+                : $entry['tmp_name'];
+
             if (class_exists('\\ZipArchive')) {
                 $za = new \ZipArchive();
                 if ($za->open($fileTmp) !== true) {
@@ -178,13 +243,23 @@ class ThemeModel
 
             $tempPath  = self::DIR . '/' . uniqid('tmp_upload_', true) . '.zip';
             $finalPath = self::DIR . '/' . $fileName;
-            if (!move_uploaded_file($fileTmp, $tempPath)) {
+            try {
+                if ($uploadedFile instanceof UploadedFileInterface) {
+                    $uploadedFile->moveTo($tempPath);
+                    $moved = is_file($tempPath);
+                } else {
+                    $moved = move_uploaded_file($fileTmp, $tempPath);
+                }
+            } catch (\Throwable) {
+                $moved = false;
+            }
+            if (!$moved) {
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
                 continue;
             }
 
-            $result = self::persistUploadedArtifact('themes', $slug, $version, $tempPath, $finalPath);
+            $result = self::persistUploadedArtifact($slug, $tempPath, $finalPath);
             if (!$result['success']) {
                 $messages[] = 'Error uploading: '
                     . htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8');
@@ -194,25 +269,18 @@ class ThemeModel
 
             $messages[] = htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8')
                 . ' uploaded successfully.';
+        
         }
-
         return $messages;
     }
 
     /**
-     * Persist upload with transactional DB update and filesystem compensation.
+     * Persist an uploaded ZIP while keeping only one version for its slug.
      *
-     * @param string $table     Database table name.
-     * @param string $slug      Theme slug.
-     * @param string $version   Theme version.
-     * @param string $tempPath  Temporary file path.
-     * @param string $finalPath Final destination path.
-     * @return array{success: bool, error: string} Result array with success status and error message.
+     * @return array{success: bool, error: string}
      */
     private static function persistUploadedArtifact(
-        string $table,
         string $slug,
-        string $version,
         string $tempPath,
         string $finalPath
     ): array {
@@ -220,36 +288,34 @@ class ThemeModel
         $movedToFinal = false;
 
         try {
-            DatabaseManager::getInstance()->getConnection()->beginTransaction();
-
-            if (!rename($tempPath, $finalPath)) {
+            if (!@rename($tempPath, $finalPath)) {
                 throw new \RuntimeException('Failed to move staged upload into final path.');
             }
             $movedToFinal = true;
+            $finalRealPath = realpath($finalPath);
+            if ($finalRealPath === false) {
+                throw new \RuntimeException('Unable to resolve the uploaded theme path.');
+            }
 
-            $existing = glob(self::DIR . '/' . $slug . '_*');
+            $existing = glob(self::DIR . '/' . $slug . '_*.zip');
             if ($existing === false) {
                 throw new \RuntimeException('Failed to list existing theme artifacts.');
             }
 
             foreach ($existing as $artifact) {
-                if (!is_file($artifact) || $artifact === $finalPath) {
+                if (!is_file($artifact) || realpath($artifact) === $finalRealPath) {
+                    continue;
+                }
+                $existingPackage = ValidationHelper::parsePackageFilename(basename($artifact));
+                if ($existingPackage === null || $existingPackage['slug'] !== $slug) {
                     continue;
                 }
                 $backupPath = $artifact . '.bak_upload_' . uniqid('', true);
-                if (!rename($artifact, $backupPath)) {
+                if (!@rename($artifact, $backupPath)) {
                     throw new \RuntimeException('Failed to stage old theme artifact for replacement.');
                 }
                 $deletedBackups[] = ['original' => $artifact, 'backup' => $backupPath];
             }
-
-            DatabaseManager::getInstance()->getConnection()->executeStatement(
-                "INSERT INTO $table (slug, version) VALUES (?, ?) "
-                . 'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                [$slug, $version]
-            );
-
-            DatabaseManager::getInstance()->getConnection()->commit();
 
             foreach ($deletedBackups as $backup) {
                 @unlink($backup['backup']);
@@ -257,10 +323,6 @@ class ThemeModel
 
             return ['success' => true, 'error' => ''];
         } catch (\Throwable $exception) {
-            if (DatabaseManager::getInstance()->getConnection()->isTransactionActive()) {
-                DatabaseManager::getInstance()->getConnection()->rollBack();
-            }
-
             foreach ($deletedBackups as $backup) {
                 if (file_exists($backup['backup'])) {
                     @rename($backup['backup'], $backup['original']);
@@ -276,7 +338,7 @@ class ThemeModel
 
             return [
                 'success' => false,
-                'error' => 'Theme upload transaction failed for slug "' . $slug . '": ' . $exception->getMessage(),
+                'error' => 'Theme upload failed for slug "' . $slug . '": ' . $exception->getMessage(),
             ];
         }
     }
@@ -385,6 +447,7 @@ class ThemeModel
                 'tmp_name' => $tmpName,
                 'error' => $parsedError,
                 'size' => max(0, $parsedSize),
+                'uploaded_file' => null,
             ],
             'error' => null,
         ];
@@ -413,47 +476,6 @@ class ThemeModel
         }
     }
 
-    /**
-     * Sync ZIP files from directory into the themes table.
-     *
-     * @param string $dir Directory path to sync from.
-     * @return void
-     */
-    public static function syncFromDirectory(string $dir): void
-    {
-        if (!is_dir($dir) || !is_readable($dir)) {
-            error_log(sprintf('ThemeModel::syncFromDirectory cannot read directory "%s".', $dir));
-            return;
-        }
-
-        $files = glob($dir . '/*.zip');
-        if ($files === false) {
-            error_log(sprintf('ThemeModel::syncFromDirectory glob() failed for directory "%s".', $dir));
-            return;
-        }
-
-        $found = [];
-        foreach ($files as $file) {
-            $name = basename($file);
-            if (preg_match('/^(.+)_([\d\.]+)\.zip$/', $name, $matches)) {
-                $slug = $matches[1];
-                $version = $matches[2];
-                $found[$slug] = true;
-                DatabaseManager::getInstance()->getConnection()->executeStatement(
-                    'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
-                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                    [$slug, $version]
-                );
-            }
-        }
-
-        $rows = DatabaseManager::getInstance()->getConnection()->fetchAllAssociative('SELECT slug FROM themes');
-        foreach ($rows as $row) {
-            if (!isset($found[$row['slug']])) {
-                DatabaseManager::getInstance()->getConnection()->executeStatement('DELETE FROM themes WHERE slug = ?', [$row['slug']]);
-            }
-        }
-    }
 }
 
 

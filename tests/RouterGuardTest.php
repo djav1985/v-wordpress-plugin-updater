@@ -38,7 +38,7 @@ final class RouterGuardTest extends TestCase
         SessionManager::getInstance()->destroy();
 
         $response = (new Router())->dispatch(
-            new Request('GET', '/home', [], [], ['REMOTE_ADDR' => '127.0.0.1'])
+            Request::create('GET', '/home', [], [], [])
         );
 
         self::assertSame(302, $response->getStatusCode());
@@ -76,7 +76,20 @@ final class RouterGuardTest extends TestCase
         SessionManager::getInstance()->set('csrf_token', 'expected-token');
 
         $response = (new Router())->dispatch(
-            new Request('POST', '/home', [], ['csrf_token' => 'wrong-token'], ['REMOTE_ADDR' => '127.0.0.1'])
+            Request::create('POST', '/home', [], ['csrf_token' => 'wrong-token'], ['HTTP_USER_AGENT' => 'phpunit-agent'])
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/home', $response->getHeaderLine('Location'));
+    }
+
+    public function testRedirectsWhenCsrfTokenIsAnArray(): void
+    {
+        $this->loginSession();
+        SessionManager::getInstance()->set('csrf_token', 'expected-token');
+
+        $response = (new Router())->dispatch(
+            Request::create('POST', '/home', [], ['csrf_token' => ['unexpected']], ['HTTP_USER_AGENT' => 'phpunit-agent'])
         );
 
         self::assertSame(302, $response->getStatusCode());

@@ -15,11 +15,13 @@
 namespace App\Core;
 
 use App\Helpers\ValidationHelper;
+use App\Helpers\RequestInput;
 use App\Models\BlacklistModel;
 use FastRoute\Dispatcher;
 use FastRoute\ConfigureRoutes;
 use FastRoute\FastRoute;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Router
 {
@@ -31,7 +33,7 @@ class Router
     public function __construct()
     {
         $fastRoute = FastRoute::recommendedSettings(function (ConfigureRoutes $r): void {
-            $r->addRoute('GET', '/', function (): Response {
+            $r->addRoute('GET', '/', function (ServerRequestInterface $request): Response {
                 return Response::redirect('/home');
             });
             $r->addRoute('GET', '/login', ['\\App\\Controllers\\LoginController', 'handleRequest']);
@@ -50,17 +52,21 @@ class Router
         $this->dispatcher = $fastRoute->dispatcher();
     }
 
-    public function dispatch(Request $request): Response
+    public function dispatch(ServerRequestInterface $request): Response
     {
-        ErrorManager::logRequest($request->method, $request->path);
+        $path = $request->getUri()->getPath() ?: '/';
+        $server = $request->getServerParams();
+        ErrorManager::logRequest($request->getMethod(), $path, [
+            'ip' => RequestInput::string($server, 'REMOTE_ADDR') ?? 'unknown',
+        ]);
 
         return $this->dispatchRoute($request);
     }
 
-    private function dispatchRoute(Request $request): Response
+    private function dispatchRoute(ServerRequestInterface $request): Response
     {
-        $method = $request->method;
-        $uri = $request->path;
+        $method = $request->getMethod();
+        $uri = $request->getUri()->getPath() ?: '/';
 
         $guard = $this->guard($request);
         if ($guard !== null) {
@@ -81,32 +87,36 @@ class Router
         $handler = $routeInfo[1];
         $vars = $routeInfo[2];
 
-        $response = $this->invokeHandler($handler, $vars);
-        return $this->logAndReturn($method, $uri, $response);
+        $response = $this->invokeHandler($handler, $vars, $request);
+        return $this->logAndReturn($method, $uri, $response->withViewData(['requestPath' => $uri]));
     }
 
     /**
      * Blacklist, session and CSRF checks; returns a response to short-circuit, or null to continue.
      */
-    private function guard(Request $request): ?Response
+    private function guard(ServerRequestInterface $request): ?Response
     {
-        if (BlacklistModel::isCurrentRequestIpBlacklisted()) {
+        $server = $request->getServerParams();
+        $ip = filter_var(RequestInput::string($server, 'REMOTE_ADDR') ?? '', FILTER_VALIDATE_IP);
+        if ($ip !== false && BlacklistModel::isBlacklisted($ip)) {
             return new Response(403);
         }
 
         $session = SessionManager::getInstance();
         $session->ensureCsrfToken();
 
-        $isApi = str_starts_with($request->path, '/api');
+        $path = $request->getUri()->getPath();
+        $isApi = str_starts_with($path, '/api');
 
-        if ($request->path !== '/login' && !$isApi && !$session->requireAuth()) {
+        if ($path !== '/login' && !$isApi && !$session->requireAuth(RequestInput::string($server, 'HTTP_USER_AGENT') ?? '')) {
             return Response::redirect('/login');
         }
 
-        if (!$isApi && !in_array($request->method, ['GET', 'HEAD', 'OPTIONS'], true)) {
-            $token = $request->post['csrf_token'] ?? '';
-            if (!ValidationHelper::validateCsrfToken(is_string($token) ? $token : '')) {
-                return Response::redirect($request->path);
+        if (!$isApi && !in_array($request->getMethod(), ['GET', 'HEAD', 'OPTIONS'], true)) {
+            $post = $request->getParsedBody();
+            $token = is_array($post) ? RequestInput::string($post, 'csrf_token') : null;
+            if (!ValidationHelper::validateCsrfToken($token ?? '')) {
+                return Response::redirect($path);
             }
         }
 
@@ -119,19 +129,19 @@ class Router
      * @param mixed $handler
      * @param array<string, string> $vars
      */
-    private function invokeHandler(mixed $handler, array $vars): Response
+    private function invokeHandler(mixed $handler, array $vars, ServerRequestInterface $request): Response
     {
         $arguments = array_values($vars);
 
         if (is_array($handler) && count($handler) === 2) {
             [$class, $action] = $handler;
             $controller = new $class();
-            $response = $controller->{$action}(...$arguments);
+            $response = $controller->{$action}($request, ...$arguments);
             return $this->normalizeResponse($response, 'Controller action must return a ResponseInterface');
         }
 
         if (is_callable($handler)) {
-            $response = $handler(...$arguments);
+            $response = $handler($request, ...$arguments);
             return $this->normalizeResponse($response, 'Route callback must return a ResponseInterface');
         }
 
@@ -149,7 +159,12 @@ class Router
 
         return $response instanceof Response
             ? $response
-            : new Response($response->getStatusCode(), $response->getHeaders());
+            : new Response(
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                $response->getBody(),
+                $response->getReasonPhrase()
+            );
     }
 
     private function logAndReturn(string $method, string $uri, Response $response): Response

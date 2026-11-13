@@ -20,6 +20,9 @@ use App\Core\ErrorManager;
 use App\Models\PluginModel;
 use App\Helpers\MessageHelper;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 
 class PluginsController
 {
@@ -28,7 +31,7 @@ class PluginsController
      *
      * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
         $pluginsTableHtml = $this->getPluginsTableHtml();
         return Response::view('plupdate', [
@@ -41,14 +44,17 @@ class PluginsController
      *
     * @return Response
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(ServerRequestInterface $request): Response
     {
-        $token = $_POST['csrf_token'] ?? '';
+        $post = $request->getParsedBody();
+        if (!is_array($post)) {
+            return new Response(400);
+        }
+        $token = RequestInput::string($post, 'csrf_token') ?? '';
         if (!ValidationHelper::validateCsrfToken($token)) {
             $error = 'Invalid Form Action.';
             ErrorManager::log($error);
-            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            $isAjax = strtolower($request->getHeaderLine('X-Requested-With')) === 'xmlhttprequest';
             if ($isAjax) {
                 return Response::text($error, 400);
             }
@@ -56,10 +62,14 @@ class PluginsController
             return Response::redirect('/plupdate');
         }
 
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-        if (isset($_FILES['plugin_file'])) {
-            $messages = PluginModel::uploadFiles($_FILES['plugin_file'], $isAjax);
+        $isAjax = strtolower($request->getHeaderLine('X-Requested-With')) === 'xmlhttprequest';
+        $uploadedFiles = $request->getUploadedFiles();
+        if (isset($uploadedFiles['plugin_file'])) {
+            $upload = $uploadedFiles['plugin_file'];
+            if (!is_array($upload) && !$upload instanceof UploadedFileInterface) {
+                return Response::text('Invalid upload payload.', 400);
+            }
+            $messages = PluginModel::uploadPsrFiles($upload, $isAjax);
             if ($isAjax) {
                 return Response::text(implode("\n", $messages));
             }
@@ -67,10 +77,10 @@ class PluginsController
                 MessageHelper::addMessage($message);
             }
             return Response::redirect('/plupdate');
-        } elseif (isset($_POST['delete_plugin'])) {
-            $pluginName = isset($_POST['plugin_name'])
-                ? ValidationHelper::validateSlug($_POST['plugin_name'])
-                : null;
+        } elseif (isset($post['delete_plugin'])) {
+            $pluginName = ValidationHelper::validateFilename(
+                RequestInput::string($post, 'plugin_name') ?? ''
+            );
             if ($pluginName !== null && PluginModel::deletePlugin($pluginName)) {
                 MessageHelper::addMessage('Plugin deleted successfully!');
             } else {

@@ -107,24 +107,6 @@ try {
 
     echo "Creating tables...<br>";
     flush();
-    if (!isset($existingTableMap['plugins'])) {
-        $plugins = $schema->createTable('plugins');
-        $plugins->addColumn('slug', 'text');
-        $plugins->addColumn('version', 'text');
-        $plugins->addPrimaryKeyConstraint(
-            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
-        );
-    }
-
-    if (!isset($existingTableMap['themes'])) {
-        $themes = $schema->createTable('themes');
-        $themes->addColumn('slug', 'text');
-        $themes->addColumn('version', 'text');
-        $themes->addPrimaryKeyConstraint(
-            PrimaryKeyConstraint::editor()->setUnquotedColumnNames('slug')->create()
-        );
-    }
-
     if (!isset($existingTableMap['hosts'])) {
         $hosts = $schema->createTable('hosts');
         $hosts->addColumn('domain', 'text');
@@ -177,43 +159,54 @@ try {
         ];
         $issues = [];
 
-        foreach ($lines as $lineNumber => $line) {
-            $summary['total']++;
+        $conn->beginTransaction();
+        try {
+            foreach ($lines as $lineNumber => $line) {
+                $summary['total']++;
 
-            $parts = preg_split('/\s+/', trim($line), 2);
-            if (!is_array($parts) || count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
-                $summary['malformed']++;
-                $issues[] = 'line ' . ($lineNumber + 1) . ': malformed entry';
-                continue;
+                $parts = preg_split('/\s+/', trim($line), 2);
+                if (!is_array($parts) || count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+                    $summary['malformed']++;
+                    $issues[] = 'line ' . ($lineNumber + 1) . ': malformed entry';
+                    continue;
+                }
+
+                $domain = ValidationHelper::validateDomain($parts[0]);
+                if ($domain === null) {
+                    $summary['invalid_domain']++;
+                    $issues[] = 'line ' . ($lineNumber + 1) . ': invalid domain "' . $parts[0] . '"';
+                    continue;
+                }
+
+                $rawKey = trim($parts[1]);
+                $normalizedKey = $rawKey;
+                $decrypted = EncryptionHelper::decrypt($rawKey);
+
+                if ($decrypted !== null && !EncryptionHelper::needsMigration($rawKey)) {
+                    $summary['already_encrypted']++;
+                } elseif ($decrypted !== null && EncryptionHelper::needsMigration($rawKey)) {
+                    $normalizedKey = EncryptionHelper::encrypt($decrypted);
+                    $summary['normalized_legacy']++;
+                } else {
+                    $normalizedKey = EncryptionHelper::encrypt($rawKey);
+                    $summary['normalized_plaintext']++;
+                }
+
+                $inserted = $conn->executeStatement(
+                    'INSERT INTO hosts (domain, key) VALUES (?, ?) ' .
+                    'ON CONFLICT(domain) DO NOTHING',
+                    [$domain, $normalizedKey]
+                );
+                if ($inserted > 0) {
+                    $summary['imported']++;
+                }
             }
-
-            $domain = ValidationHelper::validateDomain($parts[0]);
-            if ($domain === null) {
-                $summary['invalid_domain']++;
-                $issues[] = 'line ' . ($lineNumber + 1) . ': invalid domain "' . $parts[0] . '"';
-                continue;
+            $conn->commit();
+        } catch (\Throwable $exception) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
             }
-
-            $rawKey = trim($parts[1]);
-            $normalizedKey = $rawKey;
-            $decrypted = EncryptionHelper::decrypt($rawKey);
-
-            if ($decrypted !== null && !EncryptionHelper::needsMigration($rawKey)) {
-                $summary['already_encrypted']++;
-            } elseif ($decrypted !== null && EncryptionHelper::needsMigration($rawKey)) {
-                $normalizedKey = EncryptionHelper::encrypt($decrypted);
-                $summary['normalized_legacy']++;
-            } else {
-                $normalizedKey = EncryptionHelper::encrypt($rawKey);
-                $summary['normalized_plaintext']++;
-            }
-
-            $conn->executeStatement(
-                'INSERT INTO hosts (domain, key) VALUES (?, ?) ' .
-                'ON CONFLICT(domain) DO UPDATE SET key = excluded.key',
-                [$domain, $normalizedKey]
-            );
-            $summary['imported']++;
+            throw $exception;
         }
 
         unlink($hostsFile);
@@ -274,46 +267,6 @@ try {
                 . ").</span><br>";
             flush();
         }
-    }
-
-    // Import plugins from storage/plugins
-    $pluginsDir = dirname(__DIR__) . '/storage/plugins';
-    if (is_dir($pluginsDir)) {
-        echo "Importing plugins from storage...<br>";
-        flush();
-        foreach (glob($pluginsDir . '/*.zip') as $pluginFile) {
-            if (preg_match('/([A-Za-z0-9._-]+)_([\d.]+)\.zip$/', basename($pluginFile), $matches)) {
-                $slug = $matches[1];
-                $version = $matches[2];
-                $conn->executeStatement(
-                    'INSERT INTO plugins (slug, version) VALUES (?, ?) ' .
-                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                    [$slug, $version]
-                );
-            }
-        }
-        echo "<span class='success'>Plugins imported from storage.</span><br>";
-        flush();
-    }
-
-    // Import themes from storage/themes
-    $themesDir = dirname(__DIR__) . '/storage/themes';
-    if (is_dir($themesDir)) {
-        echo "Importing themes from storage...<br>";
-        flush();
-        foreach (glob($themesDir . '/*.zip') as $themeFile) {
-            if (preg_match('/([A-Za-z0-9._-]+)_([\d.]+)\.zip$/', basename($themeFile), $matches)) {
-                $slug = $matches[1];
-                $version = $matches[2];
-                $conn->executeStatement(
-                    'INSERT INTO themes (slug, version) VALUES (?, ?) ' .
-                    'ON CONFLICT(slug) DO UPDATE SET version = excluded.version',
-                    [$slug, $version]
-                );
-            }
-        }
-        echo "<span class='success'>Themes imported from storage.</span><br>";
-        flush();
     }
 
     echo "<strong class='success'>Installation complete!</strong>";

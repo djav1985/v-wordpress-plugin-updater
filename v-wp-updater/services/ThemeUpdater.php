@@ -96,6 +96,10 @@ class ThemeUpdater extends AbstractRemoteUpdater {
 			return array( 'status' => 'unauthorized' );
 		}
 
+		if ( 404 === $http_code ) {
+			return array( 'status' => 'not_managed' );
+		}
+
 		if ( 200 !== $http_code ) {
 			return array( 'status' => 'error' );
 		}

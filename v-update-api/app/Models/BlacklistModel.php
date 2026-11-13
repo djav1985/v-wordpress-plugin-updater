@@ -93,7 +93,7 @@ class BlacklistModel
     }
 
     /**
-     * Cleanup expired blacklist entries.
+     * Cleanup expired blacklist entries and API logs older than seven calendar days.
      *
      * @return void
      */
@@ -113,6 +113,13 @@ class BlacklistModel
         DatabaseManager::getInstance()->getConnection()->executeStatement(
             'DELETE FROM blacklist WHERE blacklisted = 0 AND timestamp < ?',
             [$threeDaysAgo]
+        );
+
+        // Retain today and the previous six calendar days of API activity.
+        $logHistoryStart = date('Y-m-d', strtotime('-6 days'));
+        DatabaseManager::getInstance()->getConnection()->executeStatement(
+            'DELETE FROM logs WHERE date < ?',
+            [$logHistoryStart]
         );
     }
 }

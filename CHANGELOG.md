@@ -5,6 +5,12 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Completed the Update API PSR-7 request/response integration, added Guzzle PSR-7 streams and uploaded-file handling, fixed plugin/theme delete filename validation, preserved password whitespace, and rejected malformed request values without type errors.
+- Made host deletion and `HOSTS` imports transactional; rerunning a `HOSTS` import now preserves existing host keys.
+- Added seven-calendar-day retention for API activity logs through the daily cleanup job.
+- WordPress plugin and theme updater clients now skip API `404` responses for packages not managed by this server instead of reporting the update run as failed.
+- Moved Update API plugin/theme version lookup and admin listings to ZIP filenames, removed their SQLite tables and cron sync, and kept upload replacement behavior; added PHPUnit coverage for listings, API responses, upload version rules, replacement, deletion, and missing directories.
+- Updated README and API reference to document package files as the version source, host import behavior, and cron cleanup for blacklist entries and seven-day log retention.
 - Added a root-level `API.MD` reference describing the update API request contract, responses, package naming, and security considerations; README now links to it.
 - Renamed `RequestManager` and `ResponseManager` to `Request` and `Response` in `v-update-api`.
 - Removed `App\Middleware\*` and `MiddlewareManager` from `v-update-api`; blacklist, session, and CSRF guards now run in `Router::guard()`.

@@ -21,6 +21,8 @@ use App\Models\BlacklistModel;
 use App\Core\ErrorManager;
 use App\Helpers\MessageHelper;
 use App\Core\Response;
+use App\Helpers\RequestInput;
+use Psr\Http\Message\ServerRequestInterface;
 
 class LoginController
 {
@@ -29,7 +31,7 @@ class LoginController
      *
      * @return Response
      */
-    public function handleRequest(): Response
+    public function handleRequest(ServerRequestInterface $request): Response
     {
         if (SessionManager::getInstance()->get('logged_in') === true) {
             return Response::redirect('/home');
@@ -42,27 +44,32 @@ class LoginController
      *
     * @return Response
      */
-    public function handleSubmission(): Response
+    public function handleSubmission(ServerRequestInterface $request): Response
     {
+        $post = $request->getParsedBody();
+        if (!is_array($post)) {
+            return new Response(400);
+        }
+
         // Redirect already-logged-in users away from login form
-        if (SessionManager::getInstance()->get('logged_in') === true && !isset($_POST['logout'])) {
+        if (SessionManager::getInstance()->get('logged_in') === true && !isset($post['logout'])) {
             return Response::redirect('/home');
         }
 
         // Handle logout
-        if (SessionManager::getInstance()->get('logged_in') === true && isset($_POST['logout'])) {
+        if (SessionManager::getInstance()->get('logged_in') === true && isset($post['logout'])) {
             return $this->logoutUser();
         }
 
         // Trim and validate input
-        $username = trim($_POST['username'] ?? '');
-        $password = trim($_POST['password'] ?? '');
+        $username = RequestInput::string($post, 'username') ?? '';
+        $password = RequestInput::string($post, 'password') ?? '';
 
         // Validate credentials
         if ($this->validateCredentials($username, $password)) {
             SessionManager::getInstance()->set('logged_in', true);
             SessionManager::getInstance()->set('username', $username);
-            SessionManager::getInstance()->set('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            SessionManager::getInstance()->set('user_agent', RequestInput::string($request->getServerParams(), 'HTTP_USER_AGENT') ?? '');
             SessionManager::getInstance()->set('csrf_token', \bin2hex(EncryptionHelper::bytes(32)));
             SessionManager::getInstance()->set('timeout', time());
             SessionManager::getInstance()->regenerate();
@@ -70,7 +77,7 @@ class LoginController
         }
 
         // Handle failed login attempt
-        $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP);
+        $ip = filter_var(RequestInput::string($request->getServerParams(), 'REMOTE_ADDR') ?? '', FILTER_VALIDATE_IP);
         if (!$ip) {
             $error = 'Unable to determine client IP.';
             ErrorManager::log($error);

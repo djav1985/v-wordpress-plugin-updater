@@ -155,7 +155,6 @@ class ValidationHelper
      */
     public static function validatePassword(string $password): ?string
     {
-        $password = trim($password);
         return strlen($password) >= 6 ? $password : null;
     }
 
