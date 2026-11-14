@@ -39,7 +39,7 @@ jobs:
         run: npm ci
       # PHP coding standard
       - name: PHPCS
-        run: php -d auto_prepend_file=vendor/autoload.php vendor/bin/phpcs --standard=phpcs.xml --extensions=php v-wp-updater/ v-update-api/
+        run: php -d auto_prepend_file=vendor/wp-coding-standards/wpcs/WordPress/Helpers/IsUnitTestTrait.php vendor/bin/phpcs --standard=phpcs.xml --extensions=php v-wp-updater/ v-update-api/
       # PHPStan
       - name: PHPStan (root)
         run: composer phpstan
