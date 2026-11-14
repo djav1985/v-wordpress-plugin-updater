@@ -12,10 +12,17 @@
  */
 
 ?>
+            </div>
+        </main>
+        <footer class="footer admin-footer">
+            <div class="container-xl">
+                <p>&copy; <?php echo date('Y'); ?> Vontainment. All Rights Reserved.</p>
+            </div>
+        </footer>
+    </div>
 </div>
-<footer>
-    <p>&copy; <?php echo date("Y"); ?> Vontainment. All Rights Reserved.</p>
-</footer>
+<script src="/assets/lib/tabler/js/tabler.min.js"></script>
+<script src="/assets/js/header-scripts.js"></script>
 <script src="/assets/js/footer-scripts.js"></script>
 <?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>

@@ -36,12 +36,12 @@ class LogModel
 
 
     /**
-     * Process log entries from the database and generate grouped HTML output.
+     * Return the latest log entry per domain for display.
      *
      * @param string $type Log type (e.g., 'plugin', 'theme').
-     * @return string HTML output of grouped log entries.
+     * @return list<array{domain: string, date: string, status: string, age_days: int}>
      */
-    public static function getLogs(string $type): string
+    public static function getLogs(string $type): array
     {
         $connection = DatabaseManager::getInstance()->getConnection();
         $rows = $connection->fetchAllAssociative(
@@ -58,37 +58,18 @@ class LogModel
             }
         }
 
-        if (empty($logByDomain)) {
-            return 'No log entries found.';
-        }
-
-        ob_start();
-        echo '<div class="log-row">';
+        $logs = [];
         foreach ($logByDomain as $domain => $entry) {
             $dateDiff = (strtotime(date('Y-m-d')) - strtotime($entry['date'])) / (60 * 60 * 24);
-            $classes = '';
-            if ($entry['status'] == 'Failed') {
-                $classes .= ' error';
-            } elseif ($entry['status'] == 'Success') {
-                $classes .= ' success';
-            }
-            if ($dateDiff > 30) {
-                $classes .= ' lost';
-            }
-            $classes = trim($classes);
-            echo '<div class="log-sub-box' . ($classes ? " $classes" : '') . '">';
-            echo '<h3>' . htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') . '</h3>';
-            $color = $entry['status'] == 'Failed' ? 'red' : 'green';
-            echo '<p class="log-entry" style="color:' . $color . ';">' .
-                htmlspecialchars($entry['date'], ENT_QUOTES, 'UTF-8') . ' ' .
-                htmlspecialchars($entry['status'], ENT_QUOTES, 'UTF-8') .
-                '</p>';
-            echo '</div>';
+            $logs[] = [
+                'domain' => $domain,
+                'date' => $entry['date'],
+                'status' => $entry['status'],
+                'age_days' => (int) $dateDiff,
+            ];
         }
-        echo '</div>';
-        $output = ob_get_contents();
-        ob_end_clean();
-        return $output;
+
+        return $logs;
     }
 
     /**

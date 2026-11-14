@@ -24,7 +24,7 @@ Plugin and theme versions are read directly from package filenames. The Update A
 
 | Area | Details |
 | :--- | :--- |
-| Update API | PHP MVC application using FastRoute, PSR-7 requests and responses, Doctrine DBAL, and SQLite. |
+| Update API | PHP MVC application using FastRoute, PSR-7 requests and responses, Doctrine DBAL, and SQLite, with a Tabler-based responsive admin interface. |
 | WordPress client | Separate plugin and theme updaters integrate with WordPress update mechanisms and the admin settings widget. |
 | Package management | Uploads and serves ZIP files named `{slug}_{version}.zip`; a new upload replaces the previous package for that slug. |
 | Host security | Stores encrypted API keys, validates host access, and applies blacklist, session, and CSRF router guards. |

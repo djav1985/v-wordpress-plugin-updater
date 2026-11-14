@@ -36,7 +36,7 @@ class HomeController
     {
         $this->pruneExpiredReveals();
         return Response::view('home', [
-            'hostsTableHtml' => $this->getHostsTableHtml(),
+            'hosts' => $this->getHosts(),
         ]);
     }
 
@@ -99,108 +99,42 @@ class HomeController
     }
 
     /**
-     * Generates an HTML table row for a host entry.
-     */
-    private function generateHostsTableRow(int $lineNumber, string $domain, string $key): string
-    {
-        $revealed = $this->getRevealedKey($domain);
-        $showingPlaintext = $revealed !== null && $revealed['key'] === $key;
-        $displayKey = $showingPlaintext ? $key : $this->maskKey($key);
-        $expiresAt = $showingPlaintext ? (int) $revealed['expires_at'] : 0;
-        $copyDisabled = $showingPlaintext ? '' : ' disabled';
-        $rowId = 'host-key-' . $lineNumber;
-
-        return '<tr>
-            <form method="post" action="/home">
-                <input type="hidden" name="csrf_token" value="' .
-                    htmlspecialchars(SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8') . '">
-                <td><input class="hosts-domain" type="text" name="domain" value="' .
-                htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') .
-            '" readonly></td>
-                <td>
-                    <input id="' . htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '"
-                        class="hosts-key" type="text" value="'
-                    . htmlspecialchars($displayKey, ENT_QUOTES, 'UTF-8')
-                    . '" data-masked-value="'
-                    . htmlspecialchars($this->maskKey($key), ENT_QUOTES, 'UTF-8')
-                    . '" data-expires-at="'
-                    . htmlspecialchars((string) $expiresAt, ENT_QUOTES, 'UTF-8') . '" readonly>
-                </td>
-                <td>
-                    <input class="hosts-submit" type="submit" name="reveal_entry" value="Reveal">
-                    <button class="hosts-submit copy-key-btn" type="button" data-copy-target="' .
-                        htmlspecialchars($rowId, ENT_QUOTES, 'UTF-8') . '"' . $copyDisabled . '>Copy</button>
-                    <input class="hosts-submit" type="submit" name="regen_entry" value="Regen">
-                    <input class="hosts-submit" type="submit" name="delete_entry" value="Delete">
-                </td>
-            </form>
-        </tr>';
-    }
-
-    /**
-     * Generates the hosts table HTML for display.
+     * Prepare host rows for the view, including the short-lived key reveal state.
      *
-     * @return string HTML table or message.
+     * @return list<array{domain: string, display_key: string, masked_key: string, expires_at: int, key_input_id: string, revealed: bool}>
      */
-    private function getHostsTableHtml(): string
+    private function getHosts(): array
     {
         $entries = HostsModel::getEntries();
-        $hostsTableHtml = '';
-        if (count($entries) > 0) {
-            $halfCount = (int) ceil(count($entries) / 2);
-            $entriesColumn1 = array_slice($entries, 0, $halfCount);
-            $entriesColumn2 = array_slice($entries, $halfCount);
-            $hostsTableHtml .= '<div class="row">';
-            // Column 1
-            $hostsTableHtml .= '<div class="column">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Domain</th>
-                            <th>Key</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-            foreach ($entriesColumn1 as $index => $entry) {
-                $lineNumber = $index; // Correct line number for column 1
-                $domain = $entry['domain'];
-                $encryptedKey = $entry['key'];
-                $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
-                if ($key !== '') {
-                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
-                }
-                $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
+        $hosts = [];
+        foreach ($entries as $index => $entry) {
+            $domain = $entry['domain'];
+            $encryptedKey = $entry['key'];
+            $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
+            if ($key !== '') {
+                HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
             }
 
-            $hostsTableHtml .= '</tbody></table></div>';
-            // Column 2
-            $hostsTableHtml .= '<div class="column">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Domain</th>
-                            <th>Key</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-            foreach ($entriesColumn2 as $index => $entry) {
-                $lineNumber = $index + $halfCount; // Correct line number for column 2
-                $domain = $entry['domain'];
-                $encryptedKey = $entry['key'];
-                $key = EncryptionHelper::decrypt($encryptedKey) ?? '';
-                if ($key !== '') {
-                    HostsModel::migrateLegacyKey($domain, $encryptedKey, $key);
-                }
-                $hostsTableHtml .= $this->generateHostsTableRow($lineNumber, $domain, $key);
+            $revealed = $this->getRevealedKey($domain);
+            $isRevealed = false;
+            $displayKey = $this->maskKey($key);
+            $expiresAt = 0;
+            if ($revealed !== null && $revealed['key'] === $key) {
+                $isRevealed = true;
+                $displayKey = $key;
+                $expiresAt = $revealed['expires_at'];
             }
-
-            $hostsTableHtml .= '</tbody></table></div></div>';
-        } else {
-            $hostsTableHtml = "No entries found.";
+            $hosts[] = [
+                'domain' => $domain,
+                'display_key' => $displayKey,
+                'masked_key' => $this->maskKey($key),
+                'expires_at' => $expiresAt,
+                'key_input_id' => 'host-key-' . $index,
+                'revealed' => $isRevealed,
+            ];
         }
-        return $hostsTableHtml;
+
+        return $hosts;
     }
 
     /**
