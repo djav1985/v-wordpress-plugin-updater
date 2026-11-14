@@ -12,7 +12,7 @@
  */
 
 define('VALID_USERNAME', 'admin');
-define('VALID_PASSWORD', 'password');
+define('VALID_PASSWORD', 'admin');
 
 define('ENCRYPTION_KEY', '98aafe518ece74e33d92a2e7c4833dd4632afc208f1a978ed13b2b59d74e9af3');
 

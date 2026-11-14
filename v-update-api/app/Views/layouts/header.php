@@ -38,24 +38,35 @@ $navigation = [
             <a class="logo" href="/home" aria-label="Update API home">
                 <img src="/assets/images/logo.png" alt="Vontainment">
             </a>
-            <form action="/login" method="POST" class="m-0">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                <button class="btn btn-outline-light btn-logout" type="submit" name="logout">Log out</button>
-            </form>
+            <div class="admin-header-actions">
+                <form action="/login" method="POST" class="m-0 desktop-logout">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                    <button class="btn btn-outline-light btn-logout" type="submit" name="logout">Log out</button>
+                </form>
+                <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="admin-nav-links" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </header>
     <div class="admin-nav-wrap">
         <div class="container-xl">
-            <nav class="nav nav-tabs admin-nav" aria-label="Admin sections">
+            <nav id="admin-nav-links" class="nav nav-tabs admin-nav" aria-label="Admin sections">
                 <?php foreach ($navigation as $path => $label) : ?>
                     <a class="nav-link<?php echo $currentPath === $path ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($path, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $currentPath === $path ? ' aria-current="page"' : ''; ?>>
                         <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
                 <?php endforeach; ?>
+                <form action="/login" method="POST" class="mobile-nav-logout">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                    <button class="btn btn-logout" type="submit" name="logout">Log out</button>
+                </form>
             </nav>
         </div>
     </div>
     <div class="page-wrapper">
         <main class="page-body">
             <div class="container-xl">
-                <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>
+                <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>

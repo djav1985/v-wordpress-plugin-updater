@@ -23,21 +23,17 @@ function showToast(message, variant = "info") {
   toast.setAttribute("aria-live", safeVariant === "error" ? "assertive" : "polite");
   toast.setAttribute("aria-atomic", "true");
 
-  const header = document.createElement("div");
-  header.className = "toast-header";
-  const title = document.createElement("strong");
-  title.className = "me-auto";
-  title.textContent = "Update API";
+  const body = document.createElement("div");
+  body.className = "toast-body d-flex align-items-start gap-2";
+  const text = document.createElement("span");
+  text.className = "flex-grow-1";
+  text.textContent = String(message);
   const close = document.createElement("button");
   close.type = "button";
   close.className = "btn-close";
   close.setAttribute("aria-label", "Dismiss notification");
-  header.append(title, close);
-
-  const body = document.createElement("div");
-  body.className = "toast-body";
-  body.textContent = String(message);
-  toast.append(header, body);
+  body.append(text, close);
+  toast.append(body);
   container.appendChild(toast);
 
   const dismiss = () => {
@@ -94,6 +90,44 @@ function scheduleMaskExpiration(input) {
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("input.hosts-key").forEach((input) => {
     scheduleMaskExpiration(input);
+  });
+
+  const navWrap = document.querySelector(".admin-nav-wrap");
+  const navToggle = document.querySelector(".mobile-menu-toggle");
+  const nav = navWrap?.querySelector(".admin-nav");
+  if (!navWrap || !navToggle || !nav) return;
+
+  navToggle.hidden = false;
+  navWrap.classList.add("mobile-nav-ready");
+  const mobileViewport = window.matchMedia("(max-width: 767.98px)");
+
+  const setNavOpen = (open) => {
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    navWrap.classList.toggle("is-open", open);
+    nav.inert = mobileViewport.matches && !open;
+  };
+
+  setNavOpen(false);
+
+  navToggle.addEventListener("click", () => {
+    setNavOpen(navToggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!navWrap.contains(event.target) && !navToggle.contains(event.target)) setNavOpen(false);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && navToggle.getAttribute("aria-expanded") === "true") {
+      setNavOpen(false);
+      navToggle.focus();
+    }
+  });
+
+  mobileViewport.addEventListener("change", (event) => {
+    setNavOpen(false);
+    nav.inert = event.matches;
   });
 });
 

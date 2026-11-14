@@ -2,6 +2,8 @@
 
 > A self-hosted update service and WordPress plugin for distributing plugin and theme packages.
 
+![Update API hosts page](./screenshots/updater-hosts-desktop.png)
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -119,13 +121,28 @@ When a host is created or its API key is regenerated on the server, update the c
 
 ## Usage
 
-### Manage Packages and Hosts
+### Manage Hosts
 
 1. Sign in to the Update API admin panel using the credentials configured in `v-update-api/config.php`.
 2. Add an authorized WordPress domain and generate its API key in the `/home` route.
-3. Upload plugin ZIP files at `/plupdate` and theme ZIP files at `/thupdate`. Use the filename format `{slug}_{version}.zip`, for example `my-plugin_1.2.3.zip`.
-4. Uploading another version for the same slug replaces the existing ZIP package.
-5. Review update activity at `/logs`. The page covers the current day and the previous six calendar days.
+
+### Manage Plugins
+
+Upload plugin ZIP files at `/plupdate`. Use the filename format `{slug}_{version}.zip`, for example `my-plugin_1.2.3.zip`. Uploading another version for the same slug replaces the existing ZIP package.
+
+![Update API plugin management page](./screenshots/updater-plugins-desktop.png)
+
+### Manage Themes
+
+Upload theme ZIP files at `/thupdate` using the same `{slug}_{version}.zip` filename format. Uploading another version for the same slug replaces the existing ZIP package.
+
+![Update API theme management page](./screenshots/updater-themes-desktop.png)
+
+### Review Logs
+
+Review update activity at `/logs`. The page covers the current day and the previous six calendar days.
+
+![Update API logs page](./screenshots/updater-logs-desktop.png)
 
 The WordPress client requests updates only for the enabled update types. It skips packages the server does not manage and installs a newer package through the WordPress plugin or theme upgrader.
 

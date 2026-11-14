@@ -22,7 +22,6 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
         <div class="col">
             <div class="page-pretitle">WordPress Update API</div>
             <h1 class="page-title">Allowed hosts</h1>
-            <div class="text-secondary">Manage the sites authorized to request plugin and theme updates.</div>
         </div>
     </div>
 </div>

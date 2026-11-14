@@ -25,7 +25,7 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
     <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body class="login-page">
-    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>
+    <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>
     <main class="login-shell">
         <section class="card login-card">
             <div class="card-body">
