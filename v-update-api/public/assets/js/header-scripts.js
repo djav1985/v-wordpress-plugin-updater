@@ -42,7 +42,17 @@ function showToast(message, variant = "info") {
   };
   close.addEventListener("click", dismiss, { once: true });
   window.requestAnimationFrame(() => toast.classList.add("show"));
-  window.setTimeout(dismiss, 5000);
+  let remaining = 5000;
+  let startedAt = Date.now();
+  let timeoutId = window.setTimeout(dismiss, remaining);
+  toast.addEventListener("mouseenter", () => {
+    window.clearTimeout(timeoutId);
+    remaining -= Date.now() - startedAt;
+  });
+  toast.addEventListener("mouseleave", () => {
+    startedAt = Date.now();
+    timeoutId = window.setTimeout(dismiss, Math.max(remaining, 500));
+  });
 }
 
 window.showToast = showToast;

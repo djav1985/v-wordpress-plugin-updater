@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 final class UpdateApiRequestTest extends TestCase
 {
-    public function testFromGlobalsLeavesPathEmptyWhenRequestUriIsMissing(): void
+    public function testFromGlobalsUsesRootPathWhenRequestUriIsMissing(): void
     {
         $originalServer = $_SERVER;
 
@@ -31,7 +31,7 @@ final class UpdateApiRequestTest extends TestCase
             $request = Request::fromGlobals();
 
             self::assertSame('GET', $request->getMethod());
-            self::assertSame('', $request->getUri()->getPath());
+            self::assertSame('/', $request->getUri()->getPath());
         } finally {
             $_SERVER = $originalServer;
         }

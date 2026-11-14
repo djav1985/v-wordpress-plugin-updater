@@ -3,9 +3,11 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 
-function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
+function loadHeaderScript({ clipboard, execCommand = () => true, dateNow = () => Date.now() } = {}) {
   const documentListeners = {};
   const buttonListeners = {};
+  const toastElements = [];
+  const timeouts = [];
   const nav = {
     inert: false,
     querySelector: () => ({ textContent: "Manage Plugins" }),
@@ -35,7 +37,7 @@ function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
       buttonListeners[name] = callback;
     },
   };
-  const toastContainer = { appendChild() {} };
+  const toastContainer = { appendChild: (toast) => toastElements.push(toast) };
   const document = {
     activeElement: null,
     body: { appendChild() {} },
@@ -43,18 +45,22 @@ function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
       documentListeners[name] ??= [];
       documentListeners[name].push(callback);
     },
-    createElement: () => ({
+    createElement: () => {
+      const listeners = {};
+      return {
       dataset: {},
       append() {},
-      addEventListener() {},
+      addEventListener: (name, callback) => { listeners[name] = callback; },
       classList: { add() {}, remove() {} },
+      listeners,
       setAttribute() {},
       style: {},
       focus() {},
       select() {},
       setSelectionRange() {},
       remove() {},
-    }),
+      };
+    },
     execCommand,
     getElementById: (id) => id === "toast-container" ? toastContainer : null,
     querySelector: (selector) => {
@@ -66,11 +72,17 @@ function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
   };
   const context = {
     document,
+    Date: { now: dateNow },
     navigator: { clipboard },
     window: {
       matchMedia: () => ({ matches: true, addEventListener() {} }),
       requestAnimationFrame: (callback) => callback(),
-      setTimeout: () => 1,
+      setTimeout: (callback, delay) => {
+        const timeout = { callback, delay, cleared: false };
+        timeouts.push(timeout);
+        return timeout;
+      },
+      clearTimeout: (timeout) => { timeout.cleared = true; },
     },
   };
   const source = readFileSync(
@@ -80,7 +92,7 @@ function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
   runInNewContext(source, context);
   documentListeners.DOMContentLoaded[0]();
 
-  return { attributes, buttonListeners, context, documentListeners, navToggle };
+  return { attributes, buttonListeners, context, documentListeners, navToggle, timeouts, toastElements };
 }
 
 function runCopyAction(loaded) {
@@ -145,6 +157,24 @@ test("uses the textarea fallback when Clipboard API rejects", async () => {
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.equal(fallbackUsed, true);
+});
+
+test("toast timer pauses on hover and resumes with the remaining time", () => {
+  let now = 0;
+  const loaded = loadHeaderScript({ dateNow: () => now });
+
+  loaded.context.window.showToast("Saved");
+  const toast = loaded.toastElements[0];
+  const initialTimer = loaded.timeouts.find((timeout) => timeout.delay === 5000);
+
+  assert.equal(typeof toast.listeners.mouseenter, "function");
+  now = 1700;
+  toast.listeners.mouseenter();
+  assert.equal(initialTimer.cleared, true);
+
+  now = 4500;
+  toast.listeners.mouseleave();
+  assert.equal(loaded.timeouts.at(-1).delay, 3300);
 });
 
 test("mobile menu toggle names the active section and exposes its expanded state", () => {

@@ -23,6 +23,11 @@ final class Request
 {
     public static function fromGlobals(): ServerRequestInterface
     {
-        return ServerRequest::fromGlobals();
+        $request = ServerRequest::fromGlobals();
+        if ($request->getUri()->getPath() === '') {
+            return $request->withUri($request->getUri()->withPath('/'));
+        }
+
+        return $request;
     }
 }
