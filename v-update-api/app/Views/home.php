@@ -40,7 +40,6 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
         <section class="card">
             <div class="card-header">
                 <h2 class="card-title">Allowed hosts</h2>
-                <p class="text-secondary mb-0 ms-auto">Keys are masked by default and revealed for 30 seconds.</p>
             </div>
             <div class="table-card" id="hosts_table">
                 <?php if ($hosts === []) : ?>
