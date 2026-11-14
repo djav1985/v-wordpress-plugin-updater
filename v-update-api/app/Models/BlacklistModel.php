@@ -80,7 +80,7 @@ class BlacklistModel
             ->fetchAssociative('SELECT * FROM blacklist WHERE ip = ?', [$ip]);
 
         if ($record && (int) $record['blacklisted'] === 1) {
-            if (time() - (int) $record['timestamp'] > 7 * 24 * 60 * 60) {
+            if (time() - (int) $record['timestamp'] > 3 * 24 * 60 * 60) {
                 DatabaseManager::getInstance()->getConnection()->update('blacklist', [
                     'blacklisted'   => 0,
                     'login_attempts' => 0,
@@ -101,13 +101,12 @@ class BlacklistModel
     public static function cleanup(): void
     {
         $currentTime = time();
-        $sevenDaysAgo = $currentTime - (7 * 24 * 60 * 60);
         $threeDaysAgo = $currentTime - (3 * 24 * 60 * 60);
 
-        // Remove IPs that were blocked more than 7 days ago
+        // Remove IPs that were blocked more than 3 days ago.
         DatabaseManager::getInstance()->getConnection()->executeStatement(
             'DELETE FROM blacklist WHERE blacklisted = 1 AND timestamp < ?',
-            [$sevenDaysAgo]
+            [$threeDaysAgo]
         );
 
         // Remove IPs that are not blocked and haven't been updated in 3 days
