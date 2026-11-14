@@ -197,5 +197,5 @@ test("PR auto-fix workflow commits fixes to the PR branch", () => {
 
   assert.match(workflow, /lint-fix:[\s\S]*?permissions:[\s\S]*?contents:\s*write/);
   assert.match(workflow, /git commit -m "chore: auto-lint fixes"/);
-  assert.match(workflow, /git push origin HEAD:\$\{\{ github\.head_ref \}\}/);
+  assert.match(workflow, /git push origin ["']?HEAD:\$\{\{ github\.head_ref \}\}["']?/);
 });
