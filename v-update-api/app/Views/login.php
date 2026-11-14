@@ -23,7 +23,7 @@ $escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
     <title>API Update Admin Login</title>
     <link rel="stylesheet" href="/assets/lib/tabler/css/tabler.min.css">
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/login.css">
+    <link rel="stylesheet" href="/assets/css/admin-base.css">
 </head>
 <body class="login-page">
         <div

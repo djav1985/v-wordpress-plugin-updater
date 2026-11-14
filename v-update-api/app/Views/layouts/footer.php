@@ -23,7 +23,6 @@
 </div>
 <script src="/assets/lib/tabler/js/tabler.min.js"></script>
 <script src="<?php echo \App\Helpers\AssetHelper::url('/assets/js/header-scripts.js'); ?>"></script>
-<script src="<?php echo \App\Helpers\AssetHelper::url('/assets/js/footer-scripts.js'); ?>"></script>
 <?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>
 </html>

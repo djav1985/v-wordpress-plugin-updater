@@ -92,7 +92,7 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                                                     >
                                                     <input type="hidden" name="domain" value="<?php echo $domain; ?>">
                                                     <button
-                                                        class="btn btn-sm btn-secondary copy-key-btn"
+                                                        class="btn btn-sm btn-light-blue copy-key-btn"
                                                         type="<?php echo $host['revealed'] ? 'button' : 'submit'; ?>"
                                                         name="reveal_entry"
                                                         data-key-action="<?php
@@ -109,7 +109,7 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                                                     >
                                                     <input type="hidden" name="domain" value="<?php echo $domain; ?>">
                                                     <button
-                                                        class="btn btn-sm btn-outline-primary"
+                                                        class="btn btn-sm btn-blue"
                                                         type="submit"
                                                         name="regen_entry"
                                                     >Regenerate</button>

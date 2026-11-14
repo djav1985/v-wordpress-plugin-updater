@@ -124,7 +124,7 @@ $escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
                     <div class="dz-message">Drop theme ZIP files here or click to browse.</div>
                 </form>
                 <button
-                    class="btn btn-outline-primary mt-3"
+                    class="btn btn-blue mt-3"
                     type="button"
                     onclick="window.location.reload();"
                 >Reload list</button>

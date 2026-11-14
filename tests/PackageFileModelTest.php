@@ -461,12 +461,10 @@ final class PackageFileModelTest extends TestCase
         $html = (string) ob_get_clean();
 
         self::assertMatchesRegularExpression('~src="/assets/js/uploads\.js\?v=[a-f0-9]{12}"~', $html);
-        foreach (['header-scripts.js', 'footer-scripts.js'] as $script) {
-            $assetUrl = '/assets/js/' . $script;
-            $assetFile = dirname(__DIR__) . '/v-update-api/public' . $assetUrl;
-            $expectedUrl = $assetUrl . '?v=' . substr(hash_file('sha256', $assetFile), 0, 12);
-            self::assertSame($expectedUrl, \App\Helpers\AssetHelper::url($assetUrl));
-        }
+        $assetUrl = '/assets/js/header-scripts.js';
+        $assetFile = dirname(__DIR__) . '/v-update-api/public' . $assetUrl;
+        $expectedUrl = $assetUrl . '?v=' . substr(hash_file('sha256', $assetFile), 0, 12);
+        self::assertSame($expectedUrl, \App\Helpers\AssetHelper::url($assetUrl));
     }
 
     /** @return array{success: bool, error: string} */

@@ -35,6 +35,7 @@ $escapedActiveNavigationLabel = htmlspecialchars($activeNavigationLabel, ENT_QUO
     <title>API Admin Page</title>
     <link rel="stylesheet" href="/assets/lib/tabler/css/tabler.min.css">
     <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/admin-base.css">
     <link
         href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css"
         rel="stylesheet"
