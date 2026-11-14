@@ -12,69 +12,135 @@
  */
 
 require_once __DIR__ . '/layouts/header.php';
-?>
 
-<div class="content-box">
-  <h2>Themes</h2>
-  <div id="themes_table">
-    <?php
-    /** @var string $themesTableHtml */
-    $themesTableHtml = $themesTableHtml ?? '';
-    echo $themesTableHtml;
-    ?>
-  </div>
-  <div class="plupload section">
-    <div id="upload-container">
-      <h2>Upload Theme</h2>
-      <form action="/thupdate" method="post" enctype="multipart/form-data" class="dropzone" id="upload_theme_form">
-        <input type="hidden" name="csrf_token"
-            value="<?php echo htmlspecialchars(
-                \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '',
-                ENT_QUOTES,
-                'UTF-8'
-            ); ?>">
-        <div class="fallback">
-          <input name="theme_file[]" type="file" multiple />
-        </div>
-      </form>
-      <button class="reload-btn" onclick="window.location.reload();">Reload Page</button>
-    </div>
-    <div id="message-container">
-      <h2>Upload Status</h2>
-    </div>
-  </div>
+/** @var list<array{slug: string, version: string}> $themes */
+$themes = $themes ?? [];
+$csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+$escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
+?>
+<div class="page-header d-print-none">
+    <div class="page-pretitle">WordPress Update API</div>
+    <h1 class="page-title">Manage themes</h1>
 </div>
 
-<script>
-  Dropzone.autoDiscover = false;
-
-  $(document).ready(function() {
-    var myDropzone = new Dropzone("#upload_theme_form", {
-      paramName: "theme_file[]",
-      maxFilesize: 200,
-      acceptedFiles: "application/zip,application/x-zip-compressed,multipart/x-zip",
-      autoProcessQueue: true,
-      parallelUploads: 6,
-      init: function() {
-        var dz = this;
-
-        this.on("success", function(file, response) {
-          console.log(response);
-          var successMsg = $('<div class="success-message"></div>');
-          successMsg.text(response);
-
-          $('#message-container').append(successMsg);
-        });
-
-        this.on("error", function(file, errorMessage) {
-          console.log(errorMessage);
-          var errorMsg = $('<div class="error-message"></div>');
-          errorMsg.text(errorMessage);
-
-          $('#message-container').append(errorMsg);
-        });
-      }
-    });
-  });
-</script>
+<div class="row row-cards">
+    <div class="col-12">
+        <section class="card">
+            <div class="card-header">
+                <h2 class="card-title">Available themes</h2>
+                <span class="badge bg-blue-lt ms-auto"><?php echo count($themes); ?> packages</span>
+            </div>
+            <?php if ($themes === []) : ?>
+                <div class="empty py-5">
+                    <p class="empty-title">No themes available</p>
+                    <p class="empty-subtitle text-secondary">Upload a theme package below.</p>
+                </div>
+            <?php else : ?>
+                <div class="table-responsive" id="themes_table">
+                    <table class="table table-vcenter table-hover admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Version</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($themes as $theme) : ?>
+                                <?php
+                                $slug = (string) $theme['slug'];
+                                $version = (string) $theme['version'];
+                                $displayName = str_replace(['-', '_'], ' ', $slug);
+                                $packageFile = $slug . '_' . $version . '.zip';
+                                $escapedDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+                                $escapedVersion = htmlspecialchars($version, ENT_QUOTES, 'UTF-8');
+                                $escapedPackageFile = htmlspecialchars($packageFile, ENT_QUOTES, 'UTF-8');
+                                ?>
+                                <tr>
+                                    <td data-label="Name" class="package-name">
+                                        <?php echo $escapedDisplayName; ?>
+                                    </td>
+                                    <td data-label="Version">
+                                        <span class="badge bg-azure-lt"><?php echo $escapedVersion; ?></span>
+                                    </td>
+                                    <td data-label="Action">
+                                        <form method="post" action="/thupdate" class="inline-action-form">
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?php echo $escapedCsrfToken; ?>"
+                                            >
+                                            <input
+                                                type="hidden"
+                                                name="theme_name"
+                                                value="<?php echo $escapedPackageFile; ?>"
+                                            >
+                                            <button
+                                                class="btn btn-sm btn-danger"
+                                                type="submit"
+                                                name="delete_theme"
+                                            >Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+    </div>
+    <div class="col-12 col-lg-7">
+        <section class="card upload-card">
+            <div class="card-header">
+                <h2 class="card-title">Upload theme</h2>
+            </div>
+            <div class="card-body">
+                <form
+                    action="/thupdate"
+                    method="post"
+                    enctype="multipart/form-data"
+                    class="dropzone"
+                    id="upload_theme_form"
+                    data-dropzone
+                    data-param-name="theme_file[]"
+                >
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?php echo $escapedCsrfToken; ?>"
+                    >
+                    <div class="fallback">
+                        <label class="form-label" for="theme-files">Choose theme ZIP files</label>
+                        <input
+                            class="form-control"
+                            id="theme-files"
+                            name="theme_file[]"
+                            type="file"
+                            accept=".zip"
+                            multiple
+                        >
+                    </div>
+                    <div class="dz-message">Drop theme ZIP files here or click to browse.</div>
+                </form>
+                <button
+                    class="btn btn-outline-primary mt-3"
+                    type="button"
+                    onclick="window.location.reload();"
+                >Reload list</button>
+            </div>
+        </section>
+    </div>
+    <div class="col-12 col-lg-5">
+        <section class="card upload-card">
+            <div class="card-header">
+                <h2 class="card-title">Upload status</h2>
+            </div>
+            <div class="card-body upload-status" id="message-container" aria-live="polite">
+                <p id="upload-status-placeholder" class="text-secondary mb-0">Upload results will appear here.</p>
+            </div>
+        </section>
+    </div>
+</div>
+<script src="<?php echo \App\Helpers\AssetHelper::url('/assets/js/uploads.js'); ?>"></script>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

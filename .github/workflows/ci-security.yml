@@ -20,33 +20,38 @@ jobs:
   build-test-scan:
     name: CI Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: phpstan
+          coverage: xdebug
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      # PHP coding standard
+      - name: PHPCS
+        run: composer phpcs
       # PHPStan
       - name: PHPStan (root)
-        if: hashFiles('phpstan.neon') != ''
-        continue-on-error: true
-        run: |
-          if [ -f vendor/bin/phpstan ]; then
-            chmod +x vendor/bin/phpstan
-            vendor/bin/phpstan analyse --memory-limit=1G --autoload-file .github/phpstan-bootstrap.php
-          else
-            echo "PHPStan not found in vendor/, skipping."
-          fi
-      # PHPUnit – only if installed in vendor/
+        run: composer phpstan
+      # PHPUnit
       - name: PHPUnit (root)
-        if: hashFiles('phpunit.xml') != ''
-        run: |
-          if [ -f vendor/bin/phpunit ]; then
-            chmod +x vendor/bin/phpunit
-            vendor/bin/phpunit --coverage-clover coverage.xml
-          else
-            echo "PHPUnit not found in vendor/, skipping."
-          fi
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
+      - name: ESLint
+        run: npm run lint:js
+      - name: JavaScript tests
+        run: npm run test:js
+      - name: Stylelint
+        run: npm run lint:css
   # ---------- Security: CodeQL (JS) ----------
   codeql-js:
     name: CodeQL (JavaScript)
@@ -72,31 +77,77 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Create dependency file first so caching has a key
-      - name: Seed pip cache key
-        run: echo "semgrep" > requirements-semgrep.txt
-
-      - name: Set up Python (with pip cache)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-          cache: 'pip'
-          cache-dependency-path: 'requirements-semgrep.txt'
 
       - name: Install Semgrep
-        run: pip install -r requirements-semgrep.txt
+        run: pip install semgrep
 
       - name: Run Semgrep (PHP) and output SARIF
         run: |
           semgrep --config=p/php \
-                  --include mu-plugin \
+                  --include v-wp-updater \
                   --include v-update-api \
                   --exclude vendor \
                   --exclude node_modules \
                   --exclude dist \
                   --sarif --output=semgrep.sarif
 
+      - name: Sanitize Semgrep SARIF for GitHub Code Scanning
+        run: |
+          if [ -f semgrep.sarif ]; then
+            tmp_file="$(mktemp)"
+            jq '(.runs[]?.results[]? |= (del(.fingerprints)))' semgrep.sarif > "$tmp_file"
+            mv "$tmp_file" semgrep.sarif
+          fi
+
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+
+  # ---------- PR auto-fix ----------
+  lint-fix:
+    name: Lint and auto-fix PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      - name: PHPCBF
+        run: composer phpcbf || true
+      - name: ESLint Fix
+        run: node node_modules/eslint/bin/eslint.js 'v-update-api/**/*.js' --ignore-pattern 'vendor/**' --ignore-pattern 'v-update-api/vendor/**' --fix || true
+      - name: Stylelint Fix
+        run: node node_modules/stylelint/bin/stylelint.mjs 'v-update-api/**/*.css' --ignore-pattern 'vendor/**' --ignore-pattern 'v-update-api/vendor/**' --fix || true
+      - name: Commit fixes to PR branch
+        continue-on-error: true
+        run: |
+          git config core.filemode false
+          git add -A
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: auto-lint fixes"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No changes to commit."
+          fi

@@ -13,28 +13,77 @@
 
 require_once __DIR__ . '/layouts/header.php';
 
+/** @var list<array{domain: string, date: string, status: string, age_days: int}> $pluginLogs */
+$pluginLogs = $pluginLogs ?? [];
+/** @var list<array{domain: string, date: string, status: string, age_days: int}> $themeLogs */
+$themeLogs = $themeLogs ?? [];
+$logGroups = [
+    ['title' => 'Plugin updates', 'logs' => $pluginLogs],
+    ['title' => 'Theme updates', 'logs' => $themeLogs],
+];
+$csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+$escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
 ?>
-<div class="content-box">
-    <h2>Plugin Log</h2>
-    <?php
-    /** @var string $ploutput */
-    $ploutput = $ploutput ?? '';
-    echo $ploutput;
-    ?>
-    <h2>Theme Log</h2>
-    <?php
-    /** @var string $thoutput */
-    $thoutput = $thoutput ?? '';
-    echo $thoutput;
-    ?>
-    <form method="post" action="/logs" style="margin-top:20px;">
-        <input type="hidden" name="csrf_token"
-            value="<?php echo htmlspecialchars(
-                \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '',
-                ENT_QUOTES,
-                'UTF-8'
-            ); ?>">
-        <button class="red-button" type="submit" name="clear_logs">Clear Logs</button>
-    </form>
+<div class="page-header d-print-none">
+    <div class="page-pretitle">WordPress Update API</div>
+    <h1 class="page-title">Update logs</h1>
+</div>
+
+<div class="row row-cards">
+    <?php foreach ($logGroups as $logGroup) : ?>
+        <div class="col-12">
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><?php echo htmlspecialchars($logGroup['title'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                    <span class="badge bg-blue-lt ms-auto"><?php echo count($logGroup['logs']); ?> sites</span>
+                </div>
+                <?php if ($logGroup['logs'] === []) : ?>
+                    <div class="empty py-4">
+                        <p class="empty-title">No log entries found</p>
+                    </div>
+                <?php else : ?>
+                    <div class="card-body">
+                        <div class="log-row">
+                            <?php foreach ($logGroup['logs'] as $log) : ?>
+                                <?php
+                                $status = (string) $log['status'];
+                                $escapedDate = htmlspecialchars($log['date'], ENT_QUOTES, 'UTF-8');
+                                $statusClass = $status === 'Failed'
+                                    ? 'bg-red-lt text-red'
+                                    : ($status === 'Success' ? 'bg-green-lt text-green' : 'bg-azure-lt');
+                                $ageClass = (int) $log['age_days'] > 30 ? ' is-stale' : '';
+                                ?>
+                                <article class="log-sub-box<?php echo $ageClass; ?>">
+                                    <h3><?php echo htmlspecialchars($log['domain'], ENT_QUOTES, 'UTF-8'); ?></h3>
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge <?php echo $statusClass; ?>">
+                                            <?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
+                                        <time
+                                            class="log-entry"
+                                            datetime="<?php echo $escapedDate; ?>"
+                                        ><?php echo $escapedDate; ?></time>
+                                        <?php if ((int) $log['age_days'] > 30) : ?>
+                                            <span class="badge bg-azure-lt">Older than 30 days</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </div>
+    <?php endforeach; ?>
+    <div class="col-12">
+        <form method="post" action="/logs" class="d-flex justify-content-end">
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?php echo $escapedCsrfToken; ?>"
+            >
+            <button class="btn btn-danger" type="submit" name="clear_logs">Clear all logs</button>
+        </form>
+    </div>
 </div>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

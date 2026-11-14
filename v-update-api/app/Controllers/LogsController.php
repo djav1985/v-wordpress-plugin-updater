@@ -30,12 +30,12 @@ class LogsController
      */
     public function handleRequest(ServerRequestInterface $request): Response
     {
-        $ploutput = LogModel::getLogs('plugin');
-        $thoutput = LogModel::getLogs('theme');
+        $pluginLogs = LogModel::getLogs('plugin');
+        $themeLogs = LogModel::getLogs('theme');
 
         return Response::view('logs', [
-            'ploutput' => $ploutput,
-            'thoutput' => $thoutput,
+            'pluginLogs' => $pluginLogs,
+            'themeLogs' => $themeLogs,
         ]);
     }
 
