@@ -50,7 +50,7 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
         </section>
     </main>
     <script src="/assets/lib/tabler/js/tabler.min.js"></script>
-    <script src="/assets/js/header-scripts.js"></script>
+    <script src="<?php echo \App\Helpers\AssetHelper::url('/assets/js/header-scripts.js'); ?>"></script>
     <?php App\Helpers\MessageHelper::displayAndClearMessages(); ?>
 </body>
 </html>

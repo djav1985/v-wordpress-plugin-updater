@@ -15,7 +15,7 @@ document.querySelectorAll("form[data-dropzone]").forEach((form) => {
   }
 
   const appendStatus = (message, level) => {
-    const emptyState = status.querySelector("p");
+    const emptyState = status.querySelector("#upload-status-placeholder");
     if (emptyState) {
       emptyState.remove();
     }

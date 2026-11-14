@@ -94,10 +94,10 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                 <h2 class="card-title">Upload status</h2>
             </div>
             <div class="card-body upload-status" id="message-container" aria-live="polite">
-                <p class="text-secondary mb-0">Upload results will appear here.</p>
+                <p id="upload-status-placeholder" class="text-secondary mb-0">Upload results will appear here.</p>
             </div>
         </section>
     </div>
 </div>
-<script src="/assets/js/uploads.js"></script>
+<script src="<?php echo \App\Helpers\AssetHelper::url('/assets/js/uploads.js'); ?>"></script>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

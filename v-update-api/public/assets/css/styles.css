@@ -5,7 +5,7 @@
   --brand-slate: #4b5161;
   --tblr-primary: var(--brand-green);
   --tblr-primary-rgb: 102, 204, 51;
-  --tblr-body-font-family: Arial, sans-serif;
+  --tblr-body-font-family: arial, sans-serif;
   --tblr-body-bg: #f5f7fa;
   --tblr-body-color: #202936;
 }
@@ -83,7 +83,7 @@ body {
   padding: 0.9rem 1rem 0.75rem;
   color: #202936;
   font-weight: 600;
-  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
 .admin-nav .nav-link:hover,
@@ -145,6 +145,7 @@ body {
 
 .card {
   --tblr-card-border-color: #e1e7ee;
+
   margin-bottom: 1.25rem;
   box-shadow: 0 1px 3px rgb(32 41 54 / 7%);
 }
@@ -220,7 +221,7 @@ body {
   color: #fff;
 }
 
-.btn.btn-secondary:not(:disabled):not(.disabled):active {
+.btn.btn-secondary:not(:disabled, .disabled):active {
   border-color: #69b4ff;
   background: #69b4ff;
   color: #fff;
@@ -233,7 +234,7 @@ body {
   color: #fff;
 }
 
-.btn.btn-outline-primary:not(:disabled):not(.disabled):active {
+.btn.btn-outline-primary:not(:disabled, .disabled):active {
   border-color: #014a9b;
   background: #014a9b;
   color: #fff;
@@ -350,9 +351,6 @@ body {
   padding: 0.45rem 0.55rem;
   color: var(--tblr-body-color);
   overflow-wrap: anywhere;
-}
-
-.admin-table .hosts-key {
   cursor: text;
 }
 
@@ -412,8 +410,7 @@ body {
 .upload-status {
   min-height: 6rem;
   max-height: 18rem;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden auto;
 }
 
 .upload-status .success-message,
@@ -516,10 +513,6 @@ body {
 
 .flash-fallback {
   margin: 0 0 0.75rem;
-}
-
-.admin-nav .nav-link {
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .mobile-menu-toggle,
@@ -661,7 +654,7 @@ body {
     padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
   }

@@ -48,6 +48,8 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover coverage.xml
       - name: ESLint
         run: npm run lint:js
+      - name: JavaScript tests
+        run: npm run test:js
       - name: Stylelint
         run: npm run lint:css
   # ---------- Security: CodeQL (JS) ----------

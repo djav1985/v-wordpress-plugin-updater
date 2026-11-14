@@ -5,6 +5,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Preserved every plugin and theme upload result, added content-hash cache busting for local admin scripts, and covered the view/controller refactor with regression tests.
 - Rebuilt the Update API admin interface with locally hosted Tabler assets, the Vontainment brand palette, responsive data tables, accessible toast feedback, and reduced-motion-aware transitions; moved host, plugin, theme, and log markup out of controllers and into PHP views.
 - Reworked the README to use consistent Markdown formatting and aligned package, cron, installation, and development guidance with the current server and client code.
 - Removed redundant file-wide PHPCS ignores from the Update API; its configured PSR12 rules report no PSR1 side-effect violations.

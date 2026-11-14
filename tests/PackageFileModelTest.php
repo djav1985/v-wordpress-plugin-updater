@@ -22,6 +22,8 @@ use App\Core\SessionManager;
 use App\Controllers\PluginsController;
 use App\Controllers\ThemesController;
 use App\Controllers\ApiController;
+use App\Controllers\HomeController;
+use App\Controllers\LogsController;
 use PHPUnit\Framework\TestCase;
 
 final class PackageFileModelTest extends TestCase
@@ -362,7 +364,109 @@ final class PackageFileModelTest extends TestCase
         $connection->executeStatement('DELETE FROM logs');
         $connection->executeStatement('DELETE FROM blacklist');
         $_GET = [];
+        $_SESSION = [];
         unset($_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_METHOD']);
+    }
+
+    public function testHomeControllerSuppliesHostViewDataForEmptyAndPopulatedLists(): void
+    {
+        $controller = new HomeController();
+        $request = SharedRequestFactory::create('GET', '/home');
+
+        $emptyResponse = $controller->handleRequest($request);
+        self::assertSame('home', $emptyResponse->getView());
+        self::assertSame([], $emptyResponse->getViewData()['hosts']);
+        ob_start();
+        $emptyResponse->send();
+        $emptyHtml = (string) ob_get_clean();
+        self::assertStringContainsString('No hosts yet', $emptyHtml);
+
+        HostsModel::addEntry('example.com', 'fixture-api-key');
+        $populatedResponse = $controller->handleRequest($request);
+        self::assertSame(
+            [
+                [
+                    'domain' => 'example.com',
+                    'display_key' => str_repeat('•', 15),
+                    'masked_key' => str_repeat('•', 15),
+                    'expires_at' => 0,
+                    'key_input_id' => 'host-key-0',
+                    'revealed' => false,
+                ],
+            ],
+            $populatedResponse->getViewData()['hosts']
+        );
+        ob_start();
+        $populatedResponse->send();
+        $populatedHtml = (string) ob_get_clean();
+        self::assertStringContainsString('example.com', $populatedHtml);
+        self::assertStringContainsString('Reveal', $populatedHtml);
+    }
+
+    public function testHomeControllerDoesNotRevealExpiredKeysAndKeepsValidRevealState(): void
+    {
+        HostsModel::addEntry('expired.example', 'expired-key');
+        HostsModel::addEntry('active.example', 'active-key');
+        $_SESSION['revealed_keys'] = [
+            'expired.example' => ['key' => 'expired-key', 'expires_at' => time() - 1],
+            'active.example' => ['key' => 'active-key', 'expires_at' => time() + 30],
+        ];
+
+        $response = (new HomeController())->handleRequest(SharedRequestFactory::create('GET', '/home'));
+        $hosts = $response->getViewData()['hosts'];
+
+        $hostsByDomain = array_column($hosts, null, 'domain');
+        self::assertFalse($hostsByDomain['expired.example']['revealed']);
+        self::assertSame(str_repeat('•', 11), $hostsByDomain['expired.example']['display_key']);
+        self::assertTrue($hostsByDomain['active.example']['revealed']);
+        self::assertSame('active-key', $hostsByDomain['active.example']['display_key']);
+    }
+
+    public function testLogsControllerSuppliesPopulatedAndEmptyViewData(): void
+    {
+        $controller = new LogsController();
+        $request = SharedRequestFactory::create('GET', '/logs');
+
+        $emptyResponse = $controller->handleRequest($request);
+        self::assertSame('logs', $emptyResponse->getView());
+        self::assertSame([], $emptyResponse->getViewData()['pluginLogs']);
+        self::assertSame([], $emptyResponse->getViewData()['themeLogs']);
+        ob_start();
+        $emptyResponse->send();
+        $emptyHtml = (string) ob_get_clean();
+        self::assertStringContainsString('No log entries found', $emptyHtml);
+
+        DatabaseManager::getInstance()->getConnection()->insert('logs', [
+            'domain' => 'example.com',
+            'type' => 'plugin',
+            'date' => date('Y-m-d'),
+            'status' => 'Success',
+        ]);
+        $populatedResponse = $controller->handleRequest($request);
+        self::assertCount(1, $populatedResponse->getViewData()['pluginLogs']);
+        self::assertSame('example.com', $populatedResponse->getViewData()['pluginLogs'][0]['domain']);
+        self::assertSame([], $populatedResponse->getViewData()['themeLogs']);
+        ob_start();
+        $populatedResponse->send();
+        $populatedHtml = (string) ob_get_clean();
+        self::assertStringContainsString('example.com', $populatedHtml);
+        self::assertStringContainsString('Success', $populatedHtml);
+    }
+
+    public function testAdminViewsRenderVersionedApplicationScripts(): void
+    {
+        $response = \App\Core\Response::view('plupdate', ['plugins' => []]);
+        ob_start();
+        $response->send();
+        $html = (string) ob_get_clean();
+
+        self::assertMatchesRegularExpression('~src="/assets/js/uploads\.js\?v=[a-f0-9]{12}"~', $html);
+        foreach (['header-scripts.js', 'footer-scripts.js'] as $script) {
+            $assetUrl = '/assets/js/' . $script;
+            $assetFile = dirname(__DIR__) . '/v-update-api/public' . $assetUrl;
+            $expectedUrl = $assetUrl . '?v=' . substr(hash_file('sha256', $assetFile), 0, 12);
+            self::assertSame($expectedUrl, \App\Helpers\AssetHelper::url($assetUrl));
+        }
     }
 
     /** @return array{success: bool, error: string} */
