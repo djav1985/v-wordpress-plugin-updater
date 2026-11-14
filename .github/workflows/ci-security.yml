@@ -39,7 +39,7 @@ jobs:
         run: npm ci
       # PHP coding standard
       - name: PHPCS
-        run: composer phpcs
+        run: php -d auto_prepend_file=vendor/autoload.php vendor/bin/phpcs --standard=phpcs.xml --extensions=php v-wp-updater/ v-update-api/
       # PHPStan
       - name: PHPStan (root)
         run: composer phpstan
@@ -73,16 +73,14 @@ jobs:
   # ---------- Security: Semgrep (PHP) with pip cache ----------
   semgrep-php:
     name: Semgrep (PHP)
-    runs-on: ubuntu-latest
-    env:
-      EIO_BACKEND: posix
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install Semgrep
         run: pip install semgrep
