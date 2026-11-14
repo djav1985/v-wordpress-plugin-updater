@@ -159,13 +159,13 @@ test("mobile menu toggle names the active section and exposes its expanded state
   assert.equal(loaded.attributes["aria-expanded"], "true");
 });
 
-test("PR auto-fix workflow has no write token or direct push", () => {
+test("PR auto-fix workflow commits fixes to the PR branch", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/ci-security.yml", import.meta.url),
     "utf8",
   );
 
-  assert.match(workflow, /lint-fix:[\s\S]*?permissions:\s*contents:\s*read/);
-  assert.doesNotMatch(workflow, /contents:\s*write|pull-requests:\s*write|git push/);
-  assert.match(workflow, /actions\/upload-artifact@v4/);
+  assert.match(workflow, /lint-fix:[\s\S]*?permissions:[\s\S]*?contents:\s*write/);
+  assert.match(workflow, /git commit -m "chore: auto-lint fixes"/);
+  assert.match(workflow, /git push origin HEAD:\$\{\{ github\.head_ref \}\}/);
 });
