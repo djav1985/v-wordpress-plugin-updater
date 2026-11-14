@@ -5,6 +5,12 @@
          colors="true"
          stopOnFailure="false"
          cacheDirectory=".phpunit.cache">
+    <source>
+        <include>
+            <directory suffix=".php">v-wp-updater</directory>
+            <directory suffix=".php">v-update-api</directory>
+        </include>
+    </source>
     <testsuites>
         <testsuite name="Application Test Suite">
             <directory>tests</directory>
