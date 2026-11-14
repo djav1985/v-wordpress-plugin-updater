@@ -45,7 +45,7 @@ jobs:
         run: composer phpstan
       # PHPUnit
       - name: PHPUnit (root)
-        run: vendor/bin/phpunit --coverage-clover coverage.xml
+        run: php vendor/bin/phpunit --coverage-clover coverage.xml
       - name: ESLint
         run: npm run lint:js
       - name: JavaScript tests
@@ -88,6 +88,7 @@ jobs:
       - name: Run Semgrep (PHP) and output SARIF
         run: |
           semgrep --config=p/php \
+                  --jobs 1 \
                   --include v-wp-updater \
                   --include v-update-api \
                   --exclude vendor \
