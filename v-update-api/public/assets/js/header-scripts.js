@@ -47,6 +47,37 @@ function showToast(message, variant = "info") {
 
 window.showToast = showToast;
 
+async function copyTextToClipboard(value) {
+  if (typeof navigator.clipboard?.writeText === "function") {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Fall through to the selection-based fallback for HTTP and restricted contexts.
+    }
+  }
+
+  const previousFocus = document.activeElement;
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.setAttribute("aria-hidden", "true");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  let copied;
+  try {
+    copied = document.execCommand?.("copy") === true;
+  } catch {
+    copied = false;
+  }
+  textarea.remove();
+  if (typeof previousFocus?.focus === "function") previousFocus.focus({ preventScroll: true });
+  return copied;
+}
+
 function lockMaskedKey(input) {
   const maskedValue = input.dataset.maskedValue || "••••••••";
   input.value = maskedValue;
@@ -96,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const navToggle = document.querySelector(".mobile-menu-toggle");
   const nav = navWrap?.querySelector(".admin-nav");
   if (!navWrap || !navToggle || !nav) return;
+  const activeSection = navToggle.dataset.menuSection || "section";
 
   navToggle.hidden = false;
   navWrap.classList.add("mobile-nav-ready");
@@ -103,7 +135,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const setNavOpen = (open) => {
     navToggle.setAttribute("aria-expanded", String(open));
-    navToggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    navToggle.setAttribute(
+      "aria-label",
+      `${open ? "Close" : "Open"} ${activeSection} navigation menu`,
+    );
     navWrap.classList.toggle("is-open", open);
     nav.inert = mobileViewport.matches && !open;
   };
@@ -148,9 +183,13 @@ document.addEventListener("click", (e) => {
       return;
     }
 
-    navigator.clipboard
-      .writeText(keyInput.value)
-      .then(() => showToast("Key copied to clipboard", "success"))
+    copyTextToClipboard(keyInput.value)
+      .then((copied) => {
+        showToast(
+          copied ? "Key copied to clipboard" : "Could not copy the key to the clipboard",
+          copied ? "success" : "error",
+        );
+      })
       .catch(() => showToast("Could not copy the key to the clipboard", "error"));
   }
 });

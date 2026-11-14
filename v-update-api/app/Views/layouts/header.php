@@ -23,6 +23,8 @@ $navigation = [
     '/thupdate' => 'Manage Themes',
     '/logs' => 'View Logs',
 ];
+$activeNavigationLabel = $navigation[$currentPath] ?? 'Menu';
+$escapedActiveNavigationLabel = htmlspecialchars($activeNavigationLabel, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -57,29 +59,34 @@ $navigation = [
                     <input type="hidden" name="csrf_token" value="<?php echo $escapedCsrfToken; ?>">
                     <button class="btn btn-outline-light btn-logout" type="submit" name="logout">Log out</button>
                 </form>
-                <button
-                    class="mobile-menu-toggle"
-                    type="button"
-                    aria-label="Open navigation menu"
-                    aria-expanded="false"
-                    aria-controls="admin-nav-links"
-                    hidden
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                            d="M4 6h16M4 12h16M4 18h16"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
-                    </svg>
-                </button>
             </div>
         </div>
     </header>
     <div class="admin-nav-wrap">
         <div class="container-xl">
+            <button
+                class="mobile-menu-toggle"
+                type="button"
+                data-menu-section="<?php echo $escapedActiveNavigationLabel; ?>"
+                aria-label="Open <?php echo $escapedActiveNavigationLabel; ?> navigation menu"
+                aria-expanded="false"
+                aria-controls="admin-nav-links"
+                hidden
+            >
+                <span class="mobile-menu-current">
+                    <?php echo $escapedActiveNavigationLabel; ?>
+                </span>
+                <svg class="mobile-menu-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                        d="m6 9 6 6 6-6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </button>
             <nav id="admin-nav-links" class="nav nav-tabs admin-nav" aria-label="Admin sections">
                 <?php foreach ($navigation as $path => $label) : ?>
                     <?php

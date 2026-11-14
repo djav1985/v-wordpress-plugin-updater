@@ -24,6 +24,7 @@ function loadHeaderScript({ clipboard, execCommand = () => true } = {}) {
   };
   const attributes = {};
   const navToggle = {
+    dataset: { menuSection: "Manage Plugins" },
     hidden: true,
     contains: () => false,
     setAttribute: (name, value) => {
@@ -115,6 +116,9 @@ test("copies a revealed key with the textarea fallback when Clipboard API is una
   loaded.context.document.createElement = () => ({
     dataset: {},
     value: "",
+    append() {},
+    addEventListener() {},
+    classList: { add() {}, remove() {} },
     style: {},
     setAttribute() {},
     focus() {},
@@ -146,12 +150,12 @@ test("uses the textarea fallback when Clipboard API rejects", async () => {
 test("mobile menu toggle names the active section and exposes its expanded state", () => {
   const loaded = loadHeaderScript();
 
-  assert.equal(loaded.attributes["aria-label"], "Open Manage Plugins navigation");
+  assert.equal(loaded.attributes["aria-label"], "Open Manage Plugins navigation menu");
   assert.equal(loaded.attributes["aria-expanded"], "false");
 
   loaded.buttonListeners.click();
 
-  assert.equal(loaded.attributes["aria-label"], "Close Manage Plugins navigation");
+  assert.equal(loaded.attributes["aria-label"], "Close Manage Plugins navigation menu");
   assert.equal(loaded.attributes["aria-expanded"], "true");
 });
 
