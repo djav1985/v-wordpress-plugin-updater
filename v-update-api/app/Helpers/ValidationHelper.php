@@ -150,14 +150,14 @@ class ValidationHelper
     }
 
     /**
-     * Validate a password (minimum 6 characters).
+     * Validate a password (minimum 5 characters).
      *
      * @param string $password Raw password input.
      * @return string|null Trimmed password, or null when too short.
      */
     public static function validatePassword(string $password): ?string
     {
-        return strlen($password) >= 6 ? $password : null;
+        return strlen($password) >= 5 ? $password : null;
     }
 
     /**

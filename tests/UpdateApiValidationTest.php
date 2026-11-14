@@ -77,7 +77,8 @@ final class UpdateApiValidationTest extends TestCase
     public function testPasswordValidationPreservesSubmittedWhitespace(): void
     {
         self::assertSame(' secret ', ValidationHelper::validatePassword(' secret '));
-        self::assertNull(ValidationHelper::validatePassword('12345'));
+        self::assertNull(ValidationHelper::validatePassword('1234'));
+        self::assertSame('admin', ValidationHelper::validatePassword('admin'));
         self::assertSame('123456', ValidationHelper::validatePassword('123456'));
     }
 
