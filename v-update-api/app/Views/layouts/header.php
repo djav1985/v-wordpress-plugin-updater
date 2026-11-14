@@ -69,7 +69,13 @@ $escapedActiveNavigationLabel = htmlspecialchars($activeNavigationLabel, ENT_QUO
                     hidden
                 >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <path
+                            d="M4 6h16M4 12h16M4 18h16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
                     </svg>
                 </button>
             </div>
