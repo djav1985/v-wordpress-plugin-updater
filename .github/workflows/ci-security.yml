@@ -113,22 +113,24 @@ jobs:
 
   # ---------- PR auto-fix ----------
   lint-fix:
-    name: Prepare lint fixes for PR
+    name: Lint and auto-fix PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
-          persist-credentials: false
+          persist-credentials: true
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
       - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: |
+          rm -rf vendor
+          composer install --no-interaction --prefer-dist
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -141,11 +143,15 @@ jobs:
         run: node node_modules/eslint/bin/eslint.js 'v-update-api/**/*.js' --ignore-pattern 'vendor/**' --ignore-pattern 'v-update-api/vendor/**' --fix || true
       - name: Stylelint Fix
         run: node node_modules/stylelint/bin/stylelint.mjs 'v-update-api/**/*.css' --ignore-pattern 'vendor/**' --ignore-pattern 'v-update-api/vendor/**' --fix || true
-      - name: Save proposed fixes
-        run: git diff --binary > auto-fixes.patch
-      - name: Upload proposed fixes
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-fixes
-          path: auto-fixes.patch
-          if-no-files-found: error
+      - name: Commit fixes to PR branch
+        run: |
+          git config core.filemode false
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -- v-wp-updater v-update-api
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: auto-lint fixes"
+            git push origin "HEAD:${{ github.head_ref }}"
+          fi
