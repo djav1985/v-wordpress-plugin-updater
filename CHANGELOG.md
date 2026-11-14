@@ -5,6 +5,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Kept PR auto-formatting read-only and published proposed fixes as an artifact, added a clipboard fallback for HTTP contexts, and labeled the mobile navigation toggle with the active section.
 - Updated Composer quality-check scripts to invoke PHP tools through the PHP interpreter and limited Semgrep to one job to make CI more robust across runner environments.
 - Updated PHPStan baseline paths to the current WordPress client filenames, removed an obsolete suppression, and formatted the Update API views to pass PHPCS.
 - Preserved every plugin and theme upload result, added content-hash cache busting for local admin scripts, and covered the view/controller refactor with regression tests.
