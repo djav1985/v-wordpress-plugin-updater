@@ -37,118 +37,112 @@ parameters:
 			path: v-update-api/app/Models/PluginModel.php
 
 		-
-			message: '#^Variable \$requestPath might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: v-update-api/app/Views/layouts/header.php
-
-		-
 			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:enumerate_installed_items\(\) return type has no value type specified in iterable type iterable\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:fetch_package\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:fetch_package\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:get_current_version\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:perform_install\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\AbstractRemoteUpdater\:\:process_item_update\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/AbstractRemoteUpdater.php
+			path: v-wp-updater/helpers/class-abstractremoteupdater.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\Logger\:\:debug\(\) has parameter \$context with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/Logger.php
+			path: v-wp-updater/helpers/class-logger.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\Logger\:\:error\(\) has parameter \$context with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/Logger.php
+			path: v-wp-updater/helpers/class-logger.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\Logger\:\:format_message\(\) has parameter \$context with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/Logger.php
+			path: v-wp-updater/helpers/class-logger.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\Logger\:\:info\(\) has parameter \$context with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/Logger.php
+			path: v-wp-updater/helpers/class-logger.php
 
 		-
 			message: '#^Parameter \#3 \$autoload of function update_option expects bool\|null, string given\.$#'
 			identifier: argument.type
 			count: 1
-			path: v-wp-updater/helpers/Options.php
+			path: v-wp-updater/helpers/class-options.php
 
 		-
 			message: '#^Parameter \#4 \$autoload of function add_option expects bool\|null, string given\.$#'
 			identifier: argument.type
 			count: 1
-			path: v-wp-updater/helpers/Options.php
+			path: v-wp-updater/helpers/class-options.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\SilentUpgraderSkin\:\:after\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
-			path: v-wp-updater/helpers/SilentUpgraderSkin.php
+			path: v-wp-updater/helpers/class-silentupgraderskin.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\SilentUpgraderSkin\:\:before\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
-			path: v-wp-updater/helpers/SilentUpgraderSkin.php
+			path: v-wp-updater/helpers/class-silentupgraderskin.php
 
 		-
 			message: '#^Method VWPU\\Helpers\\SilentUpgraderSkin\:\:error\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
-			path: v-wp-updater/helpers/SilentUpgraderSkin.php
+			path: v-wp-updater/helpers/class-silentupgraderskin.php
 
 		-
 			message: '#^Property VWPU\\Helpers\\SilentUpgraderSkin\:\:\$errors type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/SilentUpgraderSkin.php
+			path: v-wp-updater/helpers/class-silentupgraderskin.php
 
 		-
 			message: '#^Property VWPU\\Helpers\\SilentUpgraderSkin\:\:\$messages type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/helpers/SilentUpgraderSkin.php
+			path: v-wp-updater/helpers/class-silentupgraderskin.php
 
 		-
 			message: '#^Parameter \#4 \$autoload of function add_option expects bool\|null, string given\.$#'
@@ -160,73 +154,73 @@ parameters:
 			message: '#^Method VWPU\\Services\\PluginUpdater\:\:enumerate_installed_items\(\) return type has no value type specified in iterable type iterable\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\PluginUpdater\:\:fetch_package\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\PluginUpdater\:\:fetch_package\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\PluginUpdater\:\:get_current_version\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\PluginUpdater\:\:perform_install\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between false and string will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
-			path: v-wp-updater/services/PluginUpdater.php
+			path: v-wp-updater/services/class-pluginupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\ThemeUpdater\:\:enumerate_installed_items\(\) return type has no value type specified in iterable type iterable\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\ThemeUpdater\:\:fetch_package\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\ThemeUpdater\:\:fetch_package\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\ThemeUpdater\:\:get_current_version\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Method VWPU\\Services\\ThemeUpdater\:\:perform_install\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between false and string will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
-			path: v-wp-updater/services/ThemeUpdater.php
+			path: v-wp-updater/services/class-themeupdater.php
 
 		-
 			message: '#^Function vwpu_run_plugin_updater\(\) has no return type specified\.$#'

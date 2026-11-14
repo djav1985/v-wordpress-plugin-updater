@@ -13,7 +13,16 @@
 
 require_once __DIR__ . '/layouts/header.php';
 
-/** @var list<array{domain: string, display_key: string, masked_key: string, expires_at: int, key_input_id: string, revealed: bool}> $hosts */
+/**
+ * @var list<array{
+ *     domain: string,
+ *     display_key: string,
+ *     masked_key: string,
+ *     expires_at: int,
+ *     key_input_id: string,
+ *     revealed: bool
+ * }> $hosts
+ */
 $hosts = $hosts ?? [];
 $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
 ?>
@@ -54,16 +63,21 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                                     <?php
                                     $domain = htmlspecialchars($host['domain'], ENT_QUOTES, 'UTF-8');
                                     $escapedToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
+                                    $keyInputId = htmlspecialchars($host['key_input_id'], ENT_QUOTES, 'UTF-8');
+                                    $displayKey = htmlspecialchars($host['display_key'], ENT_QUOTES, 'UTF-8');
+                                    $maskedKey = htmlspecialchars($host['masked_key'], ENT_QUOTES, 'UTF-8');
                                     ?>
                                     <tr>
-                                        <td data-label="Domain"><span class="host-domain-text"><?php echo $domain; ?></span></td>
+                                        <td data-label="Domain">
+                                            <span class="host-domain-text"><?php echo $domain; ?></span>
+                                        </td>
                                         <td data-label="Key">
                                             <input
-                                                id="<?php echo htmlspecialchars($host['key_input_id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                id="<?php echo $keyInputId; ?>"
                                                 class="hosts-key"
                                                 type="text"
-                                                value="<?php echo htmlspecialchars($host['display_key'], ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-masked-value="<?php echo htmlspecialchars($host['masked_key'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                value="<?php echo $displayKey; ?>"
+                                                data-masked-value="<?php echo $maskedKey; ?>"
                                                 data-expires-at="<?php echo (int) $host['expires_at']; ?>"
                                                 readonly
                                                 aria-label="API key for <?php echo $domain; ?>"
@@ -72,25 +86,47 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                                         <td data-label="Actions" class="host-actions-cell">
                                             <div class="host-actions">
                                                 <form method="post" action="/home" class="m-0">
-                                                    <input type="hidden" name="csrf_token" value="<?php echo $escapedToken; ?>">
+                                                    <input
+                                                        type="hidden"
+                                                        name="csrf_token"
+                                                        value="<?php echo $escapedToken; ?>"
+                                                    >
                                                     <input type="hidden" name="domain" value="<?php echo $domain; ?>">
                                                     <button
                                                         class="btn btn-sm btn-secondary copy-key-btn"
                                                         type="<?php echo $host['revealed'] ? 'button' : 'submit'; ?>"
                                                         name="reveal_entry"
-                                                        data-key-action="<?php echo $host['revealed'] ? 'copy' : 'reveal'; ?>"
-                                                        data-key-target="<?php echo htmlspecialchars($host['key_input_id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-key-action="<?php
+                                                            echo $host['revealed'] ? 'copy' : 'reveal';
+                                                        ?>"
+                                                        data-key-target="<?php echo $keyInputId; ?>"
                                                     ><?php echo $host['revealed'] ? 'Copy' : 'Reveal'; ?></button>
                                                 </form>
                                                 <form method="post" action="/home" class="m-0">
-                                                    <input type="hidden" name="csrf_token" value="<?php echo $escapedToken; ?>">
+                                                    <input
+                                                        type="hidden"
+                                                        name="csrf_token"
+                                                        value="<?php echo $escapedToken; ?>"
+                                                    >
                                                     <input type="hidden" name="domain" value="<?php echo $domain; ?>">
-                                                    <button class="btn btn-sm btn-outline-primary" type="submit" name="regen_entry">Regenerate</button>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        type="submit"
+                                                        name="regen_entry"
+                                                    >Regenerate</button>
                                                 </form>
                                                 <form method="post" action="/home" class="m-0">
-                                                    <input type="hidden" name="csrf_token" value="<?php echo $escapedToken; ?>">
+                                                    <input
+                                                        type="hidden"
+                                                        name="csrf_token"
+                                                        value="<?php echo $escapedToken; ?>"
+                                                    >
                                                     <input type="hidden" name="domain" value="<?php echo $domain; ?>">
-                                                    <button class="btn btn-sm btn-danger" type="submit" name="delete_entry">Delete</button>
+                                                    <button
+                                                        class="btn btn-sm btn-danger"
+                                                        type="submit"
+                                                        name="delete_entry"
+                                                    >Delete</button>
                                                 </form>
                                             </div>
                                         </td>
@@ -110,7 +146,11 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
             </div>
             <div class="card-body">
                 <form class="entry-form" method="post" action="/home">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>"
+                    >
                     <div class="form-group">
                         <label class="form-label" for="domain">Domain</label>
                         <input class="form-control" type="text" name="domain" id="domain" autocomplete="url" required>

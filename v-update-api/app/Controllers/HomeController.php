@@ -101,7 +101,14 @@ class HomeController
     /**
      * Prepare host rows for the view, including the short-lived key reveal state.
      *
-     * @return list<array{domain: string, display_key: string, masked_key: string, expires_at: int, key_input_id: string, revealed: bool}>
+     * @return list<array{
+     *     domain: string,
+     *     display_key: string,
+     *     masked_key: string,
+     *     expires_at: int,
+     *     key_input_id: string,
+     *     revealed: bool
+     * }>
      */
     private function getHosts(): array
     {

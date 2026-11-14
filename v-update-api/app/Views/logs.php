@@ -17,7 +17,12 @@ require_once __DIR__ . '/layouts/header.php';
 $pluginLogs = $pluginLogs ?? [];
 /** @var list<array{domain: string, date: string, status: string, age_days: int}> $themeLogs */
 $themeLogs = $themeLogs ?? [];
+$logGroups = [
+    ['title' => 'Plugin updates', 'logs' => $pluginLogs],
+    ['title' => 'Theme updates', 'logs' => $themeLogs],
+];
 $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+$escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
 ?>
 <div class="page-header d-print-none">
     <div class="page-pretitle">WordPress Update API</div>
@@ -25,7 +30,7 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
 </div>
 
 <div class="row row-cards">
-    <?php foreach ([['title' => 'Plugin updates', 'logs' => $pluginLogs], ['title' => 'Theme updates', 'logs' => $themeLogs]] as $logGroup) : ?>
+    <?php foreach ($logGroups as $logGroup) : ?>
         <div class="col-12">
             <section class="card">
                 <div class="card-header">
@@ -42,14 +47,22 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                             <?php foreach ($logGroup['logs'] as $log) : ?>
                                 <?php
                                 $status = (string) $log['status'];
-                                $statusClass = $status === 'Failed' ? 'bg-red-lt text-red' : ($status === 'Success' ? 'bg-green-lt text-green' : 'bg-azure-lt');
+                                $escapedDate = htmlspecialchars($log['date'], ENT_QUOTES, 'UTF-8');
+                                $statusClass = $status === 'Failed'
+                                    ? 'bg-red-lt text-red'
+                                    : ($status === 'Success' ? 'bg-green-lt text-green' : 'bg-azure-lt');
                                 $ageClass = (int) $log['age_days'] > 30 ? ' is-stale' : '';
                                 ?>
                                 <article class="log-sub-box<?php echo $ageClass; ?>">
                                     <h3><?php echo htmlspecialchars($log['domain'], ENT_QUOTES, 'UTF-8'); ?></h3>
                                     <div class="d-flex flex-wrap align-items-center gap-2">
-                                        <span class="badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?></span>
-                                        <time class="log-entry" datetime="<?php echo htmlspecialchars($log['date'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($log['date'], ENT_QUOTES, 'UTF-8'); ?></time>
+                                        <span class="badge <?php echo $statusClass; ?>">
+                                            <?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
+                                        <time
+                                            class="log-entry"
+                                            datetime="<?php echo $escapedDate; ?>"
+                                        ><?php echo $escapedDate; ?></time>
                                         <?php if ((int) $log['age_days'] > 30) : ?>
                                             <span class="badge bg-azure-lt">Older than 30 days</span>
                                         <?php endif; ?>
@@ -64,7 +77,11 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
     <?php endforeach; ?>
     <div class="col-12">
         <form method="post" action="/logs" class="d-flex justify-content-end">
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?php echo $escapedCsrfToken; ?>"
+            >
             <button class="btn btn-danger" type="submit" name="clear_logs">Clear all logs</button>
         </form>
     </div>

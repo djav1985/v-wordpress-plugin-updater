@@ -12,6 +12,7 @@
  */
 
 $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+$escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -25,7 +26,12 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
     <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body class="login-page">
-    <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>
+        <div
+            id="toast-container"
+            class="toast-container position-fixed bottom-0 end-0 p-3"
+            aria-live="polite"
+            aria-atomic="false"
+        ></div>
     <main class="login-shell">
         <section class="card login-card">
             <div class="card-body">
@@ -35,14 +41,33 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                 <div class="page-pretitle text-center">WordPress Update API</div>
                 <h1 class="login-title">Admin sign in</h1>
                 <form method="post" action="/login">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?php echo $escapedCsrfToken; ?>"
+                    >
                     <div class="mb-3">
                         <label class="form-label" for="username">Username</label>
-                        <input class="form-control" id="username" type="text" name="username" autocomplete="username" required autofocus>
+                    <input
+                        class="form-control"
+                        id="username"
+                        type="text"
+                        name="username"
+                        autocomplete="username"
+                        required
+                        autofocus
+                    >
                     </div>
                     <div class="mb-4">
                         <label class="form-label" for="password">Password</label>
-                        <input class="form-control" id="password" type="password" name="password" autocomplete="current-password" required>
+                    <input
+                        class="form-control"
+                        id="password"
+                        type="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
                     </div>
                     <button class="btn btn-primary w-100" type="submit">Sign in</button>
                 </form>

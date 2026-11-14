@@ -5,6 +5,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ## Unreleased
 
+- Updated PHPStan baseline paths to the current WordPress client filenames, removed an obsolete suppression, and formatted the Update API views to pass PHPCS.
 - Preserved every plugin and theme upload result, added content-hash cache busting for local admin scripts, and covered the view/controller refactor with regression tests.
 - Rebuilt the Update API admin interface with locally hosted Tabler assets, the Vontainment brand palette, responsive data tables, accessible toast feedback, and reduced-motion-aware transitions; moved host, plugin, theme, and log markup out of controllers and into PHP views.
 - Reworked the README to use consistent Markdown formatting and aligned package, cron, installation, and development guidance with the current server and client code.

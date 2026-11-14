@@ -12,6 +12,11 @@
  */
 
 $currentPath = $requestPath ?? '/';
+$escapedCsrfToken = htmlspecialchars(
+    \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '',
+    ENT_QUOTES,
+    'UTF-8'
+);
 $navigation = [
     '/home' => 'Manage Hosts',
     '/plupdate' => 'Manage Plugins',
@@ -28,8 +33,17 @@ $navigation = [
     <title>API Admin Page</title>
     <link rel="stylesheet" href="/assets/lib/tabler/css/tabler.min.css">
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet" integrity="sha512-WvVX1YO12zmsvTpUQV8s7ZU98DnkaAokcciMZJfnNWyNzm7//QRV61t4aEr0WdIa4pe854QHLTV302vH92FSMw==" crossorigin="anonymous">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js" integrity="sha512-oQq8uth41D+gIH/NJvSJvVB85MFk1eWpMK6glnkg6I7EdMqC1XVkW7RxLheXwmFdG03qScCM7gKS/Cx3FYt7Tg==" crossorigin="anonymous"></script>
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css"
+        rel="stylesheet"
+        integrity="sha512-WvVX1YO12zmsvTpUQV8s7ZU98DnkaAokcciMZJfnNWyNzm7//QRV61t4aEr0WdIa4pe854QHLTV302vH92FSMw=="
+        crossorigin="anonymous"
+    >
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"
+        integrity="sha512-oQq8uth41D+gIH/NJvSJvVB85MFk1eWpMK6glnkg6I7EdMqC1XVkW7RxLheXwmFdG03qScCM7gKS/Cx3FYt7Tg=="
+        crossorigin="anonymous"
+    ></script>
 </head>
 <body>
 <div class="page">
@@ -40,12 +54,25 @@ $navigation = [
             </a>
             <div class="admin-header-actions">
                 <form action="/login" method="POST" class="m-0 desktop-logout">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo $escapedCsrfToken; ?>">
                     <button class="btn btn-outline-light btn-logout" type="submit" name="logout">Log out</button>
                 </form>
-                <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="admin-nav-links" hidden>
+                <button
+                    class="mobile-menu-toggle"
+                    type="button"
+                    aria-label="Open navigation menu"
+                    aria-expanded="false"
+                    aria-controls="admin-nav-links"
+                    hidden
+                >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <path
+                            d="M4 6h16M4 12h16M4 18h16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
                     </svg>
                 </button>
             </div>
@@ -55,12 +82,20 @@ $navigation = [
         <div class="container-xl">
             <nav id="admin-nav-links" class="nav nav-tabs admin-nav" aria-label="Admin sections">
                 <?php foreach ($navigation as $path => $label) : ?>
-                    <a class="nav-link<?php echo $currentPath === $path ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($path, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $currentPath === $path ? ' aria-current="page"' : ''; ?>>
+                    <?php
+                    $isActive = $currentPath === $path;
+                    $activeClass = $isActive ? ' active' : '';
+                    $ariaCurrent = $isActive ? ' aria-current="page"' : '';
+                    ?>
+                    <a
+                        class="nav-link<?php echo $activeClass; ?>"
+                        href="<?php echo htmlspecialchars($path, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $ariaCurrent; ?>
+                    >
                         <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
                 <?php endforeach; ?>
                 <form action="/login" method="POST" class="mobile-nav-logout">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(\App\Core\SessionManager::getInstance()->get('csrf_token') ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo $escapedCsrfToken; ?>">
                     <button class="btn btn-logout" type="submit" name="logout">Log out</button>
                 </form>
             </nav>
@@ -69,4 +104,9 @@ $navigation = [
     <div class="page-wrapper">
         <main class="page-body">
             <div class="container-xl">
-                <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="false"></div>
+                <div
+                    id="toast-container"
+                    class="toast-container position-fixed bottom-0 end-0 p-3"
+                    aria-live="polite"
+                    aria-atomic="false"
+                ></div>

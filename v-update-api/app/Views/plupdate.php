@@ -16,6 +16,7 @@ require_once __DIR__ . '/layouts/header.php';
 /** @var list<array{slug: string, version: string}> $plugins */
 $plugins = $plugins ?? [];
 $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
+$escapedCsrfToken = htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8');
 ?>
 <div class="page-header d-print-none">
     <div class="page-pretitle">WordPress Update API</div>
@@ -51,15 +52,34 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                                 $version = (string) $plugin['version'];
                                 $displayName = str_replace(['-', '_'], ' ', $slug);
                                 $packageFile = $slug . '_' . $version . '.zip';
+                                $escapedDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+                                $escapedVersion = htmlspecialchars($version, ENT_QUOTES, 'UTF-8');
+                                $escapedPackageFile = htmlspecialchars($packageFile, ENT_QUOTES, 'UTF-8');
                                 ?>
                                 <tr>
-                                    <td data-label="Name" class="package-name"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td data-label="Version"><span class="badge bg-azure-lt"><?php echo htmlspecialchars($version, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                                    <td data-label="Name" class="package-name">
+                                        <?php echo $escapedDisplayName; ?>
+                                    </td>
+                                    <td data-label="Version">
+                                        <span class="badge bg-azure-lt"><?php echo $escapedVersion; ?></span>
+                                    </td>
                                     <td data-label="Action">
                                         <form method="post" action="/plupdate" class="inline-action-form">
-                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
-                                            <input type="hidden" name="plugin_name" value="<?php echo htmlspecialchars($packageFile, ENT_QUOTES, 'UTF-8'); ?>">
-                                            <button class="btn btn-sm btn-danger" type="submit" name="delete_plugin">Delete</button>
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?php echo $escapedCsrfToken; ?>"
+                                            >
+                                            <input
+                                                type="hidden"
+                                                name="plugin_name"
+                                                value="<?php echo $escapedPackageFile; ?>"
+                                            >
+                                            <button
+                                                class="btn btn-sm btn-danger"
+                                                type="submit"
+                                                name="delete_plugin"
+                                            >Delete</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -76,15 +96,38 @@ $csrfToken = \App\Core\SessionManager::getInstance()->get('csrf_token') ?? '';
                 <h2 class="card-title">Upload plugin</h2>
             </div>
             <div class="card-body">
-                <form action="/plupdate" method="post" enctype="multipart/form-data" class="dropzone" id="upload_plugin_form" data-dropzone data-param-name="plugin_file[]">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                <form
+                    action="/plupdate"
+                    method="post"
+                    enctype="multipart/form-data"
+                    class="dropzone"
+                    id="upload_plugin_form"
+                    data-dropzone
+                    data-param-name="plugin_file[]"
+                >
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?php echo $escapedCsrfToken; ?>"
+                    >
                     <div class="fallback">
                         <label class="form-label" for="plugin-files">Choose plugin ZIP files</label>
-                        <input class="form-control" id="plugin-files" name="plugin_file[]" type="file" accept=".zip" multiple>
+                        <input
+                            class="form-control"
+                            id="plugin-files"
+                            name="plugin_file[]"
+                            type="file"
+                            accept=".zip"
+                            multiple
+                        >
                     </div>
                     <div class="dz-message">Drop plugin ZIP files here or click to browse.</div>
                 </form>
-                <button class="btn btn-outline-primary mt-3" type="button" onclick="window.location.reload();">Reload list</button>
+                <button
+                    class="btn btn-outline-primary mt-3"
+                    type="button"
+                    onclick="window.location.reload();"
+                >Reload list</button>
             </div>
         </section>
     </div>
