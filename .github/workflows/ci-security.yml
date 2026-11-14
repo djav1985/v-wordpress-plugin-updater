@@ -74,6 +74,8 @@ jobs:
   semgrep-php:
     name: Semgrep (PHP)
     runs-on: ubuntu-latest
+    env:
+      EIO_BACKEND: posix
     steps:
       - uses: actions/checkout@v4
 

@@ -10,6 +10,11 @@
     "phpstan/extension-installer": "^1.4",
     "phpunit/phpunit": "^11.5.58"
   },
+  "autoload-dev": {
+    "psr-4": {
+      "WordPressCS\\WordPress\\": "vendor/wp-coding-standards/wpcs/WordPress/"
+    }
+  },
   "config": {
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true,
